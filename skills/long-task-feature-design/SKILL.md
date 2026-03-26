@@ -15,7 +15,7 @@ Delegate feature detailed design production to a SubAgent with fresh context. Th
 - For every feature (condensed version for `category: "bugfix"` features)
 - Invoked by `long-task-work` as a sub-skill (not directly by router)
 
-> **For `category: "bugfix"` features**: SubAgent should focus on: (1) root cause documentation (from `root_cause` field), (2) targeted fix approach, (3) regression test inventory from `verification_steps`. Skip full interface contracts, data flow diagrams, and state diagrams unless the bug directly touches those surfaces.
+> **For `category: "bugfix"` features**: SubAgent should focus on: (1) root cause documentation (from `root_cause` field), (2) targeted fix approach, (3) regression test inventory from SRS acceptance criteria (via `srs_trace`). Skip full interface contracts, data flow diagrams, and state diagrams unless the bug directly touches those surfaces.
 
 ## Step 1: Gather Path Parameters
 
@@ -47,7 +47,7 @@ You are a Feature Design execution SubAgent.
 3. Read design section: Read {design_doc_path} lines {design_start} to {design_end}
 4. Read SRS section: Read {srs_doc_path} lines {srs_start} to {srs_end}
 5. Read UCD sections: Read {ucd_doc_path} lines {ucd_start} to {ucd_end} (only if ui:true)
-5b. Read ATS mapping table: Read {ats_doc_path} (only if ATS doc exists) — locate the mapping rows for the feature's requirement ID(s); extract required categories and minimum case counts
+5b. Read ATS mapping table: Read {ats_doc_path} (only if ATS doc exists) — locate the mapping rows for the feature's requirement ID(s) (from srs_trace); extract required categories
 6. Follow the execution rules to produce the detailed design document
 7. Write the document to: {output_path}
 8. Return your result using the Structured Return Contract in the execution rules

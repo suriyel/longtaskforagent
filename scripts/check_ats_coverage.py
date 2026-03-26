@@ -3,9 +3,9 @@
 Check ATS coverage against feature-list.json and ST test case documents.
 
 Cross-validates that:
-- Every ATS mapping row has a corresponding feature in feature-list.json
-- Feature verification_steps cover ATS-required categories
-- ST test case documents (if generated) meet ATS minimum case counts per category
+- Every ATS mapping row has a corresponding feature via srs_trace
+- Features cover all ATS-required categories (union of srs_trace requirements)
+- ST test case documents (if generated) include the required categories
 - Reports gaps between ATS requirements and actual test coverage
 
 Usage:
@@ -51,23 +51,16 @@ def _extract_ats_rows(ats_path: str) -> tuple[list[dict], list[str]]:
         if match:
             req_id = match.group(1)
             cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) >= 5:
+            if len(cells) >= 4:
                 categories = set()
                 for c in cells[3].split(","):
                     c = c.strip().upper()
                     if c in VALID_CATEGORIES:
                         categories.add(c)
 
-                min_cases = 0
-                try:
-                    min_cases = int(cells[4])
-                except (ValueError, IndexError):
-                    pass
-
                 rows.append({
                     "req_id": req_id,
                     "categories": categories,
-                    "min_cases": min_cases,
                 })
 
     return rows, errors
@@ -100,7 +93,9 @@ def check_coverage(
 ) -> tuple[list[str], list[str]]:
     """Check ATS coverage. Returns (errors, warnings).
 
-    In strict mode, ATS minimum count violations are errors (not warnings).
+    Uses srs_trace to map features to ATS requirements. Required categories
+    are the UNION of all ATS-required categories for the feature's traced
+    requirements. In strict mode, category coverage gaps are errors.
     """
     errors = []
     warnings = []
@@ -147,28 +142,24 @@ def check_coverage(
         title = feat.get("title", "?")
         ui = feat.get("ui", False)
         st_case_path = feat.get("st_case_path")
+        srs_trace = feat.get("srs_trace", [])
 
         total_checked += 1
 
-        # Determine which ATS rows apply to this feature
-        # (Features map to requirements — we check if the feature's verification_steps
-        # should satisfy ATS category requirements)
-        # Since ATS maps req→categories and features map to reqs via verification_steps,
-        # we aggregate ATS requirements that mention this feature's related reqs.
+        # Determine required categories via srs_trace → ATS mapping (union)
+        expected_cats = {"FUNC", "BNDRY"}  # Always required
+        if ui:
+            expected_cats.add("UI")
 
-        # For now, check feature-level category coverage:
-        # If the feature has ui:true, it must have UI categories in its ST cases
-        # If any ATS row requires SEC and the feature handles input, it should have SEC
+        # Union ATS-required categories for all traced requirements
+        for req_id in srs_trace:
+            ats_row = ats_by_req.get(req_id)
+            if ats_row:
+                expected_cats |= ats_row["categories"]
 
         if st_case_path and os.path.exists(st_case_path):
             # Count actual ST cases by category
             actual_counts = _count_st_cases_by_category(st_case_path, fid)
-            total_actual = sum(actual_counts.values())
-
-            # Check mandatory categories based on feature properties
-            expected_cats = {"FUNC", "BNDRY"}
-            if ui:
-                expected_cats.add("UI")
 
             for cat in expected_cats:
                 if cat not in actual_counts or actual_counts[cat] == 0:
@@ -181,32 +172,6 @@ def check_coverage(
                     else:
                         warnings.append(msg)
                     total_gaps += 1
-
-            # Check against ATS minimum case counts
-            # Find ATS rows that could apply (by matching requirement references in the ST doc)
-            try:
-                with open(st_case_path, "r", encoding="utf-8") as f:
-                    st_content = f.read()
-            except Exception:
-                st_content = ""
-
-            for ats_row in ats_rows:
-                req_id = ats_row["req_id"]
-                # Check if this ST document references this requirement
-                if req_id in st_content:
-                    # This feature's ST doc covers this requirement
-                    for cat in ats_row["categories"]:
-                        actual = actual_counts.get(cat, 0)
-                        if actual == 0:
-                            msg = (
-                                f"Feature #{fid} ({title}): ATS requires {cat} for {req_id} "
-                                f"but no {cat} cases found in ST document"
-                            )
-                            if strict:
-                                errors.append(msg)
-                            else:
-                                warnings.append(msg)
-                            total_gaps += 1
 
         elif st_case_path and not os.path.exists(st_case_path):
             warnings.append(

@@ -57,7 +57,7 @@ Collect new/changed requirements using structured elicitation (same rigor as Pha
 Compare new requirements against the existing feature set:
 
 1. For each **new** requirement → identify which existing features (if any) it depends on
-2. For each **modified** requirement → identify which existing features have verification_steps derived from the original acceptance criteria; these features will need re-verification
+2. For each **modified** requirement → identify which existing features have `srs_trace` referencing the original requirement ID; these features will need re-verification
 3. For each **deprecated** requirement → identify which features implement it; these will be marked deprecated
 4. Check for dependency chain impacts — if a modified feature is depended upon by others, those may need re-verification too
 
@@ -67,7 +67,7 @@ Compare new requirements against the existing feature set:
 | Change | Type | Affected Features | Action |
 |--------|------|-------------------|--------|
 | FR-021 | New | (none) | Add feature(s) |
-| FR-005 (modified) | Modified | Feature 5, Feature 8 | Reset to failing, update verification_steps |
+| FR-005 (modified) | Modified | Feature 5, Feature 8 | Reset to failing, update srs_trace |
 | FR-012 (deprecated) | Deprecated | Feature 12 | Mark deprecated |
 ```
 
@@ -107,14 +107,13 @@ Update the existing ATS document **in place** for affected requirements:
 
 1. Read `docs/plans/*-ats.md`
 2. For **new** requirements:
-   - Add mapping table rows with requirement ID, scenarios, required categories, minimum case counts
+   - Add mapping table rows with requirement ID, scenarios, required categories
    - Apply category assignment rules (FUNC+BNDRY for all FRs; +SEC for input/auth; +UI for ui:true; +PERF for NFRs with metrics)
-   - Use minimum case count heuristics based on acceptance criteria complexity
    - Update the coverage statistics table (Section 2.4)
    - If new NFRs: add rows to the NFR Test Method Matrix (Section 4)
    - If new cross-feature interactions: add rows to Integration Scenarios (Section 5)
 3. For **modified** requirements:
-   - Update the corresponding mapping table row in place (scenarios, categories, minimum counts)
+   - Update the corresponding mapping table row in place (scenarios, categories)
    - Adjust NFR test methods if thresholds changed
    - Update integration scenarios if data flows changed
 4. For **deprecated** requirements:
@@ -184,13 +183,15 @@ Update the SRS and decompose into features:
    - `id`: max existing ID + 1 (continue incrementing)
    - `wave`: current wave number N
    - `status`: `"failing"`
-   - `verification_steps`: from new acceptance criteria (Given/When/Then)
+   - `srs_trace`: array of new SRS requirement IDs (e.g. `["FR-021"]`)
+   - `verification_steps`: optional — from new acceptance criteria (Given/When/Then)
    - `dependencies`: reference existing feature IDs as needed
    - `ui`, `ui_entry`: set appropriately
 
 2. **Modified features**: For each affected existing feature:
    - Set `status` back to `"failing"` (will require re-implementation/re-verification)
-   - Update `verification_steps` to match the revised acceptance criteria
+   - Update `srs_trace` to reflect the revised requirement IDs
+   - Optionally update `verification_steps` if present
    - Optionally set `wave` to N (to indicate when the modification occurred)
 
 3. **Deprecated features**: For each deprecated feature:
@@ -271,7 +272,6 @@ The router will now detect failing features in `feature-list.json` and route to 
 - **ID continuity** — new feature IDs always increment from max existing; never reuse deprecated IDs
 - **Wave tracking** — every new/modified feature gets the current wave number
 - **Deprecated features are immutable** — once deprecated, never un-deprecate; create a new feature instead
-- **verification_steps updates are scoped** — only this skill can update them; Worker still cannot
 - **One increment per signal** — process one increment-request.json fully before accepting another
 
 ## Red Flags

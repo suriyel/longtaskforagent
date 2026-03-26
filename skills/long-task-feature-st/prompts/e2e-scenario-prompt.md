@@ -47,11 +47,11 @@ Every UI category test case MUST follow this execution flow:
 
 ## Expansion Rules
 
-### Rule 1: Every [devtools] verification_step → Full E2E Scenario
+### Rule 1: Every UI SRS Acceptance Criterion → Full E2E Scenario
 
-A `[devtools]` verification step like:
+A UI-related SRS acceptance criterion or Feature Design Test Inventory row like:
 ```
-"[devtools] /orders | EXPECT: order list table with columns | REJECT: empty state when orders exist"
+"FR-012: Given user navigates to /orders, When orders exist, Then order list table with columns is displayed"
 ```
 Must expand to a test case with ≥ 5 steps:
 

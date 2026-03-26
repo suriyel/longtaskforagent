@@ -99,7 +99,7 @@ Most AI coding assistants lose context after one conversation. Long-Task Agent s
 | AI generates code without understanding requirements | ISO/IEC/IEEE 29148-aligned requirements elicitation produces an approved SRS before any code is written |
 | AI skips testing or writes shallow tests | Strict TDD (Red→Green→Refactor) with coverage gates (≥90% line, ≥80% branch) and mutation testing (≥80% score) |
 | AI produces inconsistent UI | UCD style guide with token-based design system ensures visual consistency across all features |
-| AI generates thin acceptance tests | ATS (Acceptance Test Strategy) pre-plans test categories and minimum case counts per requirement after design, with independent subagent review ensuring no coverage blind spots |
+| AI generates thin acceptance tests | ATS (Acceptance Test Strategy) pre-plans test categories per requirement after design, with independent subagent review ensuring no coverage blind spots |
 | AI drifts from the approved design | Design interface coverage gate + inline compliance check after every feature |
 | No way to add features to an existing project safely | Increment skill performs impact analysis, updates SRS/Design/UCD in place, tracks changes with waves |
 | "Works on my machine" syndrome | System Testing phase (IEEE 829) with regression, integration, E2E, and NFR verification |
@@ -175,7 +175,7 @@ Each worker session focuses on exactly one feature. This prevents context exhaus
 
 ### Phase 0d: Acceptance Test Strategy (ATS)
 
-- Maps every FR/NFR/IFR to acceptance scenarios with required test categories (FUNC, BNDRY, SEC, PERF, UI) and minimum case counts
+- Maps every FR/NFR/IFR to acceptance scenarios with required test categories (FUNC, BNDRY, SEC, PERF, UI)
 - NFR test method matrix (tools + thresholds + load parameters)
 - Cross-feature integration scenario pre-planning
 - Risk-driven test priority ordering
@@ -526,7 +526,7 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 | Design process | Ad-hoc | 2-3 approaches with trade-offs, section-by-section approval |
 | TDD discipline | Optional, often skipped | Mandatory Red→Green→Refactor for every feature |
 | Test quality verification | Line coverage only (if any) | Coverage + mutation testing with configurable thresholds |
-| Acceptance test planning | Ad-hoc, category-biased toward functional | ATS pre-plans test categories and minimum case counts per requirement, with independent subagent review |
+| Acceptance test planning | Ad-hoc, category-biased toward functional | ATS pre-plans test categories per requirement, with independent subagent review |
 | UI consistency | Per-developer taste | UCD style guide with token-based design system |
 | Post-implementation verification | None | Design interface coverage gate + inline compliance check |
 | System testing | Manual QA | IEEE 829-aligned with RTM, Go/No-Go verdict |

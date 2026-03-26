@@ -29,11 +29,11 @@ MINIMAL_ATS = """\
 
 ## 2. 需求→验收场景映射
 
-| Req ID | 需求摘要 | 验收场景 | 必须类别 | 最低用例数 | 优先级 |
-|--------|---------|---------|---------|----------|--------|
-| FR-001 | 用户登录 | 正常登录/错误密码 | FUNC,BNDRY,SEC | 8 | High |
-| FR-002 | 用户注册 | 正常注册/重复邮箱 | FUNC,BNDRY | 5 | Medium |
-| NFR-001 | 响应时间 | P95延迟 | PERF | 3 | High |
+| Req ID | 需求摘要 | 验收场景 | 必须类别 | 优先级 |
+|--------|---------|---------|---------|--------|
+| FR-001 | 用户登录 | 正常登录/错误密码 | FUNC,BNDRY,SEC | High |
+| FR-002 | 用户注册 | 正常注册/重复邮箱 | FUNC,BNDRY | Medium |
+| NFR-001 | 响应时间 | P95延迟 | PERF | High |
 
 ## 3. 测试类别策略
 
@@ -96,17 +96,8 @@ class TestValidateAts:
         finally:
             os.unlink(path)
 
-    def test_invalid_min_cases(self):
-        content = MINIMAL_ATS.replace("| 8 |", "| abc |")
-        path = _write_tmp(content)
-        try:
-            errors, _ = validate(path)
-            assert any("integer" in e.lower() for e in errors)
-        finally:
-            os.unlink(path)
-
     def test_duplicate_req_id(self):
-        content = MINIMAL_ATS + "| FR-001 | 重复 | 场景 | FUNC,BNDRY | 3 | Low |\n"
+        content = MINIMAL_ATS + "| FR-001 | 重复 | 场景 | FUNC,BNDRY | Low |\n"
         path = _write_tmp(content)
         try:
             errors, _ = validate(path)
@@ -136,7 +127,7 @@ class TestValidateAts:
 
     def test_srs_cross_validation_orphan_row(self):
         # Add a row for FR-099 which is not in SRS
-        content = MINIMAL_ATS + "| FR-099 | 不存在 | 场景 | FUNC,BNDRY | 3 | Low |\n"
+        content = MINIMAL_ATS + "| FR-099 | 不存在 | 场景 | FUNC,BNDRY | Low |\n"
         ats_path = _write_tmp(content)
         srs_path = _write_tmp(MINIMAL_SRS)
         try:
@@ -164,11 +155,3 @@ class TestValidateAts:
         finally:
             os.unlink(path)
 
-    def test_negative_min_cases(self):
-        content = MINIMAL_ATS.replace("| 8 |", "| -1 |")
-        path = _write_tmp(content)
-        try:
-            errors, _ = validate(path)
-            assert any("positive" in e.lower() for e in errors)
-        finally:
-            os.unlink(path)

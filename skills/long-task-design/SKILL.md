@@ -106,7 +106,7 @@ For non-trivial projects, break the design into sections and get approval per se
    - Test philosophy: TDD with quality gates (Red → Green → Refactor → Coverage → Mutation)
    - Tool selections: test framework, coverage tool, mutation tool (with versions — these are design decisions)
    - Coverage thresholds: line >= X%, branch >= Y%, mutation >= Z%
-   - **Boundary**: "Detailed requirement-to-test-category mapping, minimum case counts, NFR test methods, and cross-feature integration scenarios are defined in the ATS phase — not here."
+   - **Boundary**: "Detailed requirement-to-test-category mapping, NFR test methods, and cross-feature integration scenarios are defined in the ATS phase — not here."
 8. **Deployment / infrastructure** (if applicable) — hosting, CI/CD, environments
 9. **Development plan** — milestones, task decomposition, priority ordering
    - Must define milestones with clear exit criteria

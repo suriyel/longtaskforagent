@@ -15,7 +15,7 @@ This skill answers "WHAT each method does internally, WHAT can go wrong, and HOW
 
 Read ALL of these BEFORE writing any design content:
 
-1. **Feature object** from feature-list.json — ID, title, description, verification_steps, ui flag, dependencies, priority
+1. **Feature object** from feature-list.json — ID, title, description, srs_trace, ui flag, dependencies, priority (verification_steps if present)
 2. **System design section** — full §4.N from the design document (read the entire subsection, NOT grep)
 3. **SRS requirement** — full FR-xxx from the SRS document
 4. **UCD sections** (if `"ui": true`) — component/page prompts from the UCD document
@@ -58,7 +58,7 @@ For each PUBLIC method this feature exposes or modifies:
 Rules:
 - Preconditions use Given/When style from SRS acceptance criteria
 - Postconditions are specific and testable (not "returns correct result")
-- Every verification_step must trace to at least one method's postcondition
+- Every SRS acceptance criterion (from srs_trace requirements) must trace to at least one method's postcondition
 - Include internal methods only if they contain non-trivial logic
 
 ### 4. Internal Sequence Diagram
@@ -125,7 +125,7 @@ Build this table as the FINAL design step — it synthesizes all sections above 
 
 | ID | Category | Traces To | Input / Setup | Expected | Kills Which Bug? |
 |----|----------|-----------|---------------|----------|-----------------|
-| A  | FUNC/happy | VS-1, FR-xxx | [specific values] | [exact result] | [wrong impl] |
+| A  | FUNC/happy | FR-xxx AC-1 | [specific values] | [exact result] | [wrong impl] |
 | B  | FUNC/error | §3 Raises row | [trigger] | [exception type + msg] | [missing branch] |
 | C  | BNDRY/edge | §5c boundary table | [edge value] | [behavior] | [off-by-one] |
 | D  | FUNC/state | §6 transition | [pre-state + event] | [post-state] | [missing guard] |
@@ -133,7 +133,7 @@ Build this table as the FINAL design step — it synthesizes all sections above 
 Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF` and subtag is a free-form label.
 
 Rules:
-- Minimum 1 row per verification_step
+- Minimum 1 row per SRS acceptance criterion (from srs_trace requirements)
 - Negative tests (FUNC/error + BNDRY/*) >= 40% of total rows
 - "Traces To" references the design section the test derives from
 - "Kills Which Bug?" names a specific wrong implementation this test catches
@@ -200,8 +200,8 @@ After the design is complete, decompose into TDD tasks.
 3. Record mutation output as evidence.
 
 ### Verification Checklist
-- [ ] All verification_steps traced to Interface Contract postconditions
-- [ ] All verification_steps traced to Test Inventory rows
+- [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
+- [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
 - [ ] Algorithm pseudocode covers all non-trivial methods
 - [ ] Boundary table covers all algorithm parameters
 - [ ] Error handling table covers all Raises entries
@@ -243,7 +243,7 @@ When the design document is complete, return your result in EXACTLY this format:
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
 | Sections Complete | N/8 | 8/8 (or N/A justified) | PASS/FAIL |
-| Test Inventory Rows | N | ≥ verification_steps count | PASS/FAIL |
+| Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
 | Verification Checklist | N/8 | 8/8 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |

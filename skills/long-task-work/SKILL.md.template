@@ -113,8 +113,8 @@ Output: `docs/features/YYYY-MM-DD-<feature-name>.md` — feature detailed design
 Context to carry forward:
 - Current feature object from feature-list.json
 - `quality_gates` and `tech_stack` from feature-list.json
-- Feature detailed design document from Step 4 (includes Test Inventory table, Interface Contract, Algorithm pseudocode)
-- Full `{srs_section}` from Document Lookup Protocol — TDD Red uses this as primary specification input alongside `verification_steps`
+- Feature detailed design document from Step 4 (includes Test Inventory table, Interface Contract, Algorithm pseudocode) — **Test Inventory (section 7) is the primary TDD spec input**
+- Full `{srs_section}` from Document Lookup Protocol — TDD Red uses this as specification input alongside Feature Design Test Inventory; `verification_steps` are optional supplementary input
 - Full `{design_section}` from Document Lookup Protocol — architectural constraints and interface contracts
 - **Test commands**: from `long-task-guide.md` — use these directly (no wrapper scripts)
 
@@ -122,7 +122,7 @@ Context to carry forward:
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-quality` and follow it exactly.
 
 Context to carry forward:
-- Feature ID and verification_steps
+- Feature ID (and verification_steps if present)
 - `quality_gates` thresholds from feature-list.json
 - `tech_stack` tool names for coverage/mutation commands
 - **Test commands**: from `long-task-guide.md` — use directly
@@ -221,7 +221,6 @@ Record in `task-progress.md`:
 - **Sub-skills are non-negotiable** — ST Test Cases, TDD, Quality MUST be invoked via Skill tool
 - **Config gate before planning** — never plan or code when required configs are missing
 - **Never mark "passing" without fresh evidence** — run tests, read output, then mark
-- **Never remove or edit `verification_steps` in Worker** — use the `long-task-increment` skill for requirement changes
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause, never guess-and-fix
 - **Update RELEASE_NOTES.md after every git commit**
 - **Always commit + update progress before ending session** — bridges context gap
@@ -244,7 +243,6 @@ Record in `task-progress.md`:
 | "ST test case failed but the code is fine" | Report to user. No bypass. Fix code or use the `long-task-increment` skill to modify test case. |
 | "Port is busy, let me kill manually" | Use env-guide.md "Stop All Services" (port fallback) to kill it, then restart via env-guide.md Start — update env-guide.md if the command needed correction. |
 | "Environment is down, skip ST cases" | BLOCKED, not skipped. Fix environment or ask user. |
-| "I need to change the verification_steps" | Invoke the `long-task-increment` skill — Worker cannot modify them. |
 | "This deprecated feature still needs work" | Skip it. Deprecated features are excluded. |
 | "Backend isn't ready but I'll mock it for now" | Dependency check exists for a reason. Develop backend features first. |
 | "I'll skip the dependency check this once" | Never skip. Reorder features so deps are satisfied. |

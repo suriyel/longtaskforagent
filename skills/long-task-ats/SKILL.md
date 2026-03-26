@@ -1,11 +1,11 @@
 ---
 name: long-task-ats
-description: "Use when design doc exists but no ATS doc and no feature-list.json - generate a global Acceptance Test Strategy mapping every requirement to acceptance scenarios with category and minimum count constraints"
+description: "Use when design doc exists but no ATS doc and no feature-list.json - generate a global Acceptance Test Strategy mapping every requirement to acceptance scenarios with category constraints"
 ---
 
 # Acceptance Test Strategy (ATS) Generation
 
-Take the approved SRS, Design, and UCD (if applicable) as input. Produce a global Acceptance Test Strategy document that maps every requirement to acceptance scenarios with required test categories and minimum case counts — constraining downstream Init (verification_steps) and feature-st (test case derivation).
+Take the approved SRS, Design, and UCD (if applicable) as input. Produce a global Acceptance Test Strategy document that maps every requirement to acceptance scenarios with required test categories — constraining downstream feature-st (test case derivation via srs_trace).
 
 **Announce at start:** "I'm using the long-task-ats skill to generate the Acceptance Test Strategy."
 
@@ -17,7 +17,6 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, ru
 
 Without a global acceptance test strategy, per-feature ST test cases suffer from:
 - Category imbalance (heavy FUNC/BNDRY, near-zero SEC/PERF/UI)
-- No systematic basis for minimum case counts per feature
 - NFR test methods decided ad-hoc during feature-st
 - Cross-feature integration scenarios discovered too late in ST phase
 - Risk-based test prioritization missing entirely
@@ -69,11 +68,11 @@ Count FR-xxx requirements. If ≤ 5, apply the **Tiny project auto-skip** rule (
 For each FR/NFR/IFR, generate one or more acceptance scenarios with:
 
 ```markdown
-| Req ID | 需求摘要 | 验收场景 | 必须类别 | 最低用例数 | 优先级 | 备注 |
-|--------|---------|---------|---------|----------|--------|------|
-| FR-001 | 用户登录 | 正常登录/错误密码/账户锁定/会话过期 | FUNC,BNDRY,SEC | 8 | Critical | 处理用户输入→SEC必选 |
-| NFR-001 | 响应时间<200ms | P95延迟/并发负载/降级/冷启动 | PERF | 5 | High | 阈值: P95<200ms @100并发 |
-| FR-010 | 搜索结果页 | 搜索/空结果/分页/排序/筛选 | FUNC,BNDRY,UI | 12 | High | ui:true→UI必选 |
+| Req ID | 需求摘要 | 验收场景 | 必须类别 | 优先级 | 备注 |
+|--------|---------|---------|---------|--------|------|
+| FR-001 | 用户登录 | 正常登录/错误密码/账户锁定/会话过期 | FUNC,BNDRY,SEC | Critical | 处理用户输入→SEC必选 |
+| NFR-001 | 响应时间<200ms | P95延迟/并发负载/降级/冷启动 | PERF | High | 阈值: P95<200ms @100并发 |
+| FR-010 | 搜索结果页 | 搜索/空结果/分页/排序/筛选 | FUNC,BNDRY,UI | High | ui:true→UI必选 |
 ```
 
 **Category assignment rules:**
@@ -84,15 +83,6 @@ For each FR/NFR/IFR, generate one or more acceptance scenarios with:
 | 处理用户输入/认证/授权/外部数据 | + SEC |
 | 对应 `ui: true` 的 feature | + UI |
 | 关联 NFR-xxx 且有性能指标 | + PERF |
-
-**Minimum case count heuristics:**
-
-| 需求复杂度 | 最低用例数 |
-|-----------|----------|
-| 简单 (1-2 验收标准) | 3-5 |
-| 中等 (3-4 验收标准) | 5-8 |
-| 复杂 (5+ 验收标准) | 8-15 |
-| NFR 带性能指标 | 3-5 |
 
 ### 4. Define Test Category Strategies
 
@@ -214,7 +204,7 @@ Once the ATS document is saved and committed:
 1. Summarize key inputs the Initializer will need:
    - **From SRS**: requirements, acceptance criteria → features
    - **From Design**: tech stack, architecture → project skeleton
-   - **From ATS**: category constraints, minimum case counts → verification_steps quality, feature-st constraints
+   - **From ATS**: category constraints → feature-st test case category requirements (via srs_trace)
 2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-init` to scaffold the project
 
 ## Boundary with Design Doc Testing Strategy
@@ -226,14 +216,13 @@ The **design doc** (Section 7, Testing Strategy) describes the *approach*:
 
 The **ATS document** describes the *detailed mapping*:
 - Which specific requirement gets which specific test categories
-- Minimum case counts per requirement
 - NFR test methods with exact thresholds and load parameters
 - Cross-feature integration scenarios
 - Risk-driven test depth
 
 The design doc testing strategy section SHOULD reference the ATS document once it exists:
 ```markdown
-See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-category mapping and minimum case counts.
+See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-category mapping.
 ```
 
 ## Critical Rules
@@ -241,7 +230,6 @@ See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-cate
 - **Requirements-driven**: Every mapping row traces to a specific SRS requirement ID
 - **No orphan requirements**: Every FR/NFR/IFR must appear in the mapping table
 - **Category assignment is auditable**: Every required category has a documented reason
-- **Minimum counts are binding**: feature-st MUST generate at least the specified number of cases per category
 - **Review is mandatory**: ATS reviewer subagent runs before save — no skip
 - **Scaling applies**: Tiny projects (≤5 FR) skip standalone ATS; see Scaling Guide
 - **Immutable after approval**: Changes to ATS require the `long-task-increment` skill (ATS Revision step)
@@ -250,7 +238,7 @@ See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-cate
 
 | Rationalization | Correct Response |
 |---|---|
-| "The SRS already has acceptance criteria, ATS is redundant" | SRS has business criteria; ATS maps them to test categories and counts |
+| "The SRS already has acceptance criteria, ATS is redundant" | SRS has business criteria; ATS maps them to test categories |
 | "We'll figure out test categories during feature-st" | Ad-hoc category assignment leads to SEC/PERF gaps |
 | "This project is too small for ATS" | Check Scaling Guide — Tiny projects auto-skip; Small projects get lightweight ATS |
 | "NFR testing can be decided during ST phase" | NFR test methods must be specified upfront with tools and thresholds |
@@ -263,7 +251,7 @@ See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-cate
 **Chains to:** long-task-init (after ATS approval)
 **Produces:** `docs/plans/YYYY-MM-DD-<topic>-ats.md`
 **Downstream consumers:**
-- `long-task-init` — reads ATS to constrain verification_steps category coverage
-- `long-task-feature-st` — reads ATS to enforce category requirements and minimum case counts
+- `long-task-init` — reads ATS to set `ui` flags based on category assignment
+- `long-task-feature-st` — reads ATS to enforce category requirements (via srs_trace lookup)
 - `long-task-st` — uses ATS as baseline for RTM verification
 - `long-task-increment` — updates ATS in place when requirements change

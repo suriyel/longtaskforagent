@@ -17,7 +17,7 @@ This skill reads from **three** approved documents:
 |----------|----------|----------|
 | **SRS** | `docs/plans/*-srs.md` | Functional requirements (FR-xxx), NFRs (NFR-xxx), constraints (CON-xxx), assumptions (ASM-xxx), interface requirements (IFR-xxx), glossary, user personas, acceptance criteria |
 | **Design** | `docs/plans/*-design.md` | Tech stack, architecture, data model, API design, testing strategy |
-| **ATS** | `docs/plans/*-ats.md` | Requirement→scenario mapping, required test categories per requirement, minimum case counts (constrains verification_steps and downstream feature-st) |
+| **ATS** | `docs/plans/*-ats.md` | Requirement→scenario mapping, required test categories per requirement (constrains downstream feature-st via srs_trace lookup) |
 
 ## Checklist
 
@@ -26,7 +26,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
 1. **Read the approved SRS, design, and ATS documents** from `docs/plans/`
    - SRS: `docs/plans/*-srs.md` — for requirements, constraints, assumptions, NFRs, glossary, personas
    - Design: `docs/plans/*-design.md` — for tech stack, architecture decisions
-   - ATS: `docs/plans/*-ats.md` — for requirement→category mapping, minimum case counts (constrains verification_steps quality in Step 8)
+   - ATS: `docs/plans/*-ats.md` — for requirement→category mapping (constrains `ui` flag and downstream feature-st category requirements via srs_trace)
 2. **Run `scripts/init_project.py`** to scaffold deterministic artifacts:
    ```bash
    python scripts/init_project.py <project-name> --path . --lang <language>
@@ -171,12 +171,13 @@ You MUST create a TodoWrite task for each step and complete them in order:
 7. **Populate SRS fields in `feature-list.json`** — from the **SRS document**:
    - `constraints[]` — copy CON-xxx items from SRS "Constraints" section; each a concise string
    - `assumptions[]` — copy ASM-xxx items from SRS "Assumptions & Dependencies" section; each a concise string
-   - NFR-xxx rows → create `category: "non-functional"` features with measurable `verification_steps`; coverage/mutation gates do not apply to NFR features
+   - NFR-xxx rows → create `category: "non-functional"` features with `srs_trace` (e.g. `["NFR-001"]`) and optionally measurable `verification_steps`; coverage/mutation gates do not apply to NFR features
 8. **Decompose requirements into features** — from the **SRS document** and **design document's Development Plan** (section 11), populate `feature-list.json` `features[]`:
-   - Each FR-xxx → one or more features with `id`, `category`, `title`, `description`, `priority`, `status` (always `"failing"`), `verification_steps`, `dependencies`
-   - `verification_steps` should trace to SRS acceptance criteria (Given/When/Then)
-   - For UI features: set `"ui": true`, optionally `"ui_entry": "/path"`; include `[devtools]`-prefixed verification steps
-   - **Verification steps quality rules** (drives downstream ST case and TDD quality):
+   - Each FR-xxx → one or more features with `id`, `category`, `title`, `description`, `priority`, `status` (always `"failing"`), `srs_trace`, `dependencies`
+   - Each feature MUST include `srs_trace`: an array of SRS requirement IDs (e.g. `["FR-001", "FR-002"]`) that this feature implements
+   - `verification_steps` is OPTIONAL — if provided, should trace to SRS acceptance criteria (Given/When/Then)
+   - For UI features: set `"ui": true`, optionally `"ui_entry": "/path"`; include `[devtools]`-prefixed verification steps if verification_steps are provided
+   - **If verification_steps are provided** — quality rules (drives downstream ST case and TDD quality):
      - Each step MUST be a behavioral scenario with Given/When/Then structure, not a simple assertion
      - BAD: `"Login page displays correctly"` → no action, no assertion
      - GOOD: `"[devtools] Navigate /login → EXPECT: email input, password input, 'Sign In' button; fill valid creds → click Sign In → EXPECT: redirect to /dashboard, user name in header; REJECT: console errors, broken images"`
@@ -185,7 +186,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - For `"ui": true` features: every `[devtools]` step MUST describe a multi-step interaction chain (navigate → interact → verify → interact → verify)
      - For features with backend dependencies: at least one step MUST verify real data flow across the dependency boundary
      - **Minimum complexity**: each feature SHOULD have ≥ 1 verification_step with 3+ chained actions
-   - **ATS category constraint** (if ATS document exists): for each feature, check the ATS mapping table for the corresponding requirement(s). Ensure verification_steps cover scenarios sufficient to generate the ATS-required test categories and minimum case counts. For example, if ATS requires SEC for FR-005, include a verification_step that exercises input validation or auth behavior so feature-st can derive SEC test cases from it.
+   - **ATS category constraint** (if ATS document exists): for each feature, use srs_trace to look up ATS-required categories. If ANY srs_trace requirement has UI in its ATS categories, set `ui: true`.
    - **Backend-frontend pairing rule**: Frontend features (`"ui": true`) MUST list their backend API dependency features in `dependencies[]`. Additionally, features MUST be ordered in the `features[]` array using **paired grouping**: after each backend feature, place its corresponding frontend feature(s) immediately next in the array. This ensures the Worker develops Backend A → Frontend A → Backend B → Frontend B, rather than all backends then all frontends.
    - Aim for 10-200+ features; each independently verifiable and completable in one session
    - **Priority ordering**: follow the design document's Task Decomposition table (section 11.2) — P0/P1/P2/P3 maps to high/high/medium/low
@@ -295,6 +296,7 @@ Each feature:
   "description": "What it does",
   "priority": "high|medium|low",
   "status": "failing|passing",
+  "srs_trace": ["FR-001", "FR-002"],
   "verification_steps": ["step 1", "step 2"],
   "dependencies": [],
   "ui": false,

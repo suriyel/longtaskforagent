@@ -210,10 +210,10 @@ For `"ui": true` features, UI category test cases **MUST** be generated and **CA
 
 ## Derivation Rules
 
-When generating test cases from a feature's `verification_steps`:
+When generating test cases from a feature's SRS acceptance criteria (via `srs_trace`):
 
-1. Each `verification_step` must produce **at least one** test case
-2. Steps prefixed with `[devtools]` produce `ui` category test cases
+1. Each `srs_trace` requirement must be covered by **at least one** test case
+2. Features with `"ui": true` produce `ui` category test cases
 3. Every feature gets at least one `functional` and one `boundary` test case
 4. If the feature handles user input → add `security` test cases
 5. If the feature has `"ui": true` → add `ui` test cases

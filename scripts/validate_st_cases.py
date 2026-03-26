@@ -7,7 +7,7 @@ Checks:
 - Each test case has all required fields (Case ID, Related Requirement, etc.)
 - Case IDs are unique and follow the ST-{CAT}-{FID}-{SEQ} format
 - When --feature-list and --feature are given:
-  - Every verification_step has at least one corresponding test case
+  - Every srs_trace requirement ID is referenced in the ST document
   - Feature ID in case IDs matches the specified feature
 
 Usage:
@@ -134,7 +134,7 @@ def _parse_case_blocks(content: str) -> list[dict]:
 def _extract_ats_requirements(ats_path: str, feature_id: int = None) -> dict:
     """Extract ATS requirements for cross-validation.
 
-    Returns dict: {req_id: {"categories": set, "min_cases": int}} or empty dict on failure.
+    Returns dict: {req_id: {"categories": set}} or empty dict on failure.
     """
     ats_row_pattern = re.compile(r"^\|\s*((?:FR|NFR|IFR)-\d{3})\s*\|")
     valid_cats = {"FUNC", "BNDRY", "UI", "SEC", "PERF"}
@@ -150,18 +150,13 @@ def _extract_ats_requirements(ats_path: str, feature_id: int = None) -> dict:
         if match:
             req_id = match.group(1)
             cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) >= 5:
+            if len(cells) >= 4:
                 categories = set()
                 for c in cells[3].split(","):
                     c = c.strip().upper()
                     if c in valid_cats:
                         categories.add(c)
-                min_cases = 0
-                try:
-                    min_cases = int(cells[4])
-                except (ValueError, IndexError):
-                    pass
-                result[req_id] = {"categories": categories, "min_cases": min_cases}
+                result[req_id] = {"categories": categories}
     return result
 
 
@@ -336,7 +331,7 @@ def validate(path: str, feature_list_path: str = None, feature_id: int = None, a
             "— add at least one case for invalid input, error state, or access denial"
         )
 
-    # If --feature-list and --feature provided, check verification_step coverage
+    # If --feature-list and --feature provided, check srs_trace coverage
     if feature_list_path and feature_id is not None:
         try:
             with open(feature_list_path, "r", encoding="utf-8") as f:
@@ -355,31 +350,21 @@ def validate(path: str, feature_list_path: str = None, feature_id: int = None, a
         if not target_feature:
             errors.append(f"Feature id={feature_id} not found in {feature_list_path}")
         else:
+            # Check that every srs_trace requirement ID is referenced in the ST document
+            srs_trace = target_feature.get("srs_trace", [])
+            for req_id in srs_trace:
+                if isinstance(req_id, str) and req_id not in content:
+                    warnings.append(
+                        f"srs_trace requirement {req_id} not referenced in ST document"
+                    )
+
+            # Backward compatibility: also check verification_steps if present
             v_steps = target_feature.get("verification_steps", [])
             if v_steps and len(cases) == 0:
-                errors.append(
+                warnings.append(
                     f"Feature id={feature_id} has {len(v_steps)} verification_steps "
                     f"but no test cases found"
                 )
-            elif v_steps:
-                # Check that every verification step is mentioned somewhere
-                # in the traceability matrix or case content
-                for vi, vstep in enumerate(v_steps):
-                    if not isinstance(vstep, str):
-                        continue
-                    # Look for the step text (or index reference) in the document
-                    step_ref = f"verification_step[{vi}]"
-                    vstep_short = vstep[:40]
-                    found = (
-                        step_ref in content
-                        or vstep_short in content
-                        or vstep in content
-                    )
-                    if not found:
-                        warnings.append(
-                            f"verification_step[{vi}] may not be covered: "
-                            f"'{vstep_short}{'...' if len(vstep) > 40 else ''}'"
-                        )
 
     # ATS cross-validation (if --ats provided)
     if ats_path and cases:
@@ -404,14 +389,6 @@ def validate(path: str, feature_list_path: str = None, feature_id: int = None, a
                                 f"[ATS] ATS requires {required_cat} test cases for {req_id} "
                                 f"but none found in this document"
                             )
-
-                    # Check total count against ATS minimum
-                    total_actual = sum(actual_by_cat.values())
-                    if ats_info["min_cases"] > 0 and total_actual < ats_info["min_cases"]:
-                        warnings.append(
-                            f"[ATS] ATS requires minimum {ats_info['min_cases']} cases for {req_id} "
-                            f"but only {total_actual} total cases found"
-                        )
 
     return errors, warnings
 

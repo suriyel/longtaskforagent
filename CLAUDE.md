@@ -276,7 +276,7 @@ using-long-task (router)
 
 0d. **Acceptance Test Strategy** (`long-task-ats`):
    - Takes approved SRS + Design + UCD as input (WHAT + HOW + LOOK → TEST STRATEGY)
-   - Maps every FR/NFR/IFR to acceptance scenarios with required test categories and minimum case counts
+   - Maps every FR/NFR/IFR to acceptance scenarios with required test categories
    - Category assignment: FUNC+BNDRY (all FRs), +SEC (input/auth), +UI (ui:true), +PERF (NFR with metrics)
    - NFR test method matrix with tools, thresholds, and load parameters
    - Cross-feature integration scenarios pre-planned for ST phase
@@ -285,7 +285,7 @@ using-long-task (router)
    - Auto-skip for tiny projects (≤5 FR): embeds simplified mapping in design doc
    - Save ATS to `docs/plans/YYYY-MM-DD-<topic>-ats.md`
    - **Hard gate**: no Init until ATS approved (or auto-skipped)
-   - Downstream: constrains Init verification_steps and feature-st test case derivation
+   - Downstream: constrains Init `srs_trace` → ATS category lookup and feature-st test case derivation
 
 **Hotfix** (`long-task-hotfix`):
    - Triggered by `bugfix-request.json` signal file (HIGHEST routing priority — above increment)
@@ -314,7 +314,7 @@ using-long-task (router)
 
 2. **Worker Session** (`long-task-work` orchestrator):
    - Orient → Bootstrap → Config Gate → DevTools Gate → Plan
-   - **TDD** (`long-task-tdd`): Red → Green → Refactor (driven by verification_steps + SRS)
+   - **TDD** (`long-task-tdd`): Red → Green → Refactor (driven by Feature Design Test Inventory + SRS)
    - **Quality** (`long-task-quality`): Coverage Gate → Feature-Scoped Mutation Gate
    - **ST Acceptance** (`long-task-feature-st`): Black-box acceptance testing — self-managed start/cleanup, Chrome DevTools MCP UI execution + ISO/IEC/IEEE 29119 per feature
    - **Inline Check**: Mechanical compliance verification (interface contracts, test inventory, dependency versions, UCD tokens)
@@ -340,7 +340,7 @@ using-long-task (router)
 - **UCD before design (UI projects)**: Run UCD style guide generation; no design until UCD approved (auto-skips for non-UI projects)
 - **Design before ATS**: Run design phase; no ATS until design approved
 - **ATS before implementation**: Run ATS phase; no coding until ATS approved (auto-skips for tiny projects ≤5 FR)
-- **ATS constrains downstream**: Init verification_steps and feature-st test case derivation must satisfy ATS category requirements and minimum case counts
+- **ATS constrains downstream**: Init `srs_trace` → ATS category lookup drives `ui` flag assignment; feature-st test case derivation must satisfy ATS category requirements
 - **ATS reviewer is mandatory**: Independent subagent reviews ATS before approval; max 2 fix rounds then user escalation
 - **Strict TDD**: Always Red→Green→Refactor→Coverage→Mutation
 - **Coverage gate after TDD Green**: Run coverage tool, verify line >= 90%, branch >= 80%
@@ -354,7 +354,7 @@ using-long-task (router)
 - **Hotfix before increment**: When both `bugfix-request.json` and `increment-request.json` exist, hotfix runs first; `increment-request.json` is preserved for next session
 - **Bug fixes via hotfix skill only**: Never manually add bugfix features to feature-list.json; use the `long-task-hotfix` skill so root cause is confirmed and the fix is fully traceable
 - **Incremental changes via increment skill only**: Never manually edit feature-list.json to add/modify/deprecate features; use the `long-task-increment` skill for audited, tracked changes
-- **verification_steps immutable in Worker**: Only the increment skill can update verification_steps; Worker must invoke the `long-task-increment` skill for requirement changes
+- **srs_trace required per feature**: Every feature must include `srs_trace` (array of SRS requirement IDs); `verification_steps` is optional
 - **ST acceptance test cases after Quality Gates**: Generate and execute ISO/IEC/IEEE 29119 acceptance test cases per feature after TDD and Quality Gates; test cases validate implementation against requirements
 - **Deprecated features excluded**: Worker skips deprecated features; ST readiness ignores them; routing counts only active features
 - **Service lifecycle via env-guide.md**: All service start/stop/restart operations use the commands in `env-guide.md`. No implicit hook-based cleanup exists. Always follow the 4-step Restart Protocol between test cycles. Always capture the first 30 lines of startup output to extract PID/port.
@@ -456,6 +456,7 @@ Each feature in `features` array:
   "description": "What it does",
   "priority": "high|medium|low",
   "status": "failing|passing",
+  "srs_trace": ["FR-001", "FR-002"],
   "verification_steps": ["step 1", "step 2"],
   "dependencies": [],
   "ui": false,
@@ -467,6 +468,10 @@ Each feature in `features` array:
   "st_case_count": 8
 }
 ```
+
+Traceability fields:
+- `srs_trace` (feature): Array of SRS requirement IDs (e.g. `["FR-001", "FR-002"]`) — required; maps feature to source requirements for ATS category lookup and ST traceability
+- `verification_steps` (feature): Array of behavioral scenario strings — optional; if present, provides supplementary test context
 
 ST test case fields (all optional, backward-compatible):
 - `st_case_template_path` (root): Custom ST test case template path (defines structure)

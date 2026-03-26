@@ -99,7 +99,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 | AI 不理解需求就生成代码 | 符合 ISO/IEC/IEEE 29148 的需求收集在编写任何代码前产生经批准的 SRS |
 | AI 跳过测试或编写浅层测试 | 严格的 TDD（红→绿→重构）配合覆盖率门禁（≥90% 行覆盖，≥80% 分支覆盖）和变异测试（≥80% 得分） |
 | AI 产生不一致的 UI | 带令牌化设计系统的 UCD 风格指南确保所有功能的视觉一致性 |
-| AI 验收测试覆盖不全 | ATS（验收测试策略）在设计后前置规划每个需求的测试类别和最低用例数，独立 subagent 审核确保无覆盖盲区 |
+| AI 验收测试覆盖不全 | ATS（验收测试策略）在设计后前置规划每个需求的测试类别，独立 subagent 审核确保无覆盖盲区 |
 | AI 偏离批准的设计 | 设计接口覆盖门 + 每个功能后内联合规检查 |
 | 无法安全地向现有项目添加功能 | 增量技能执行影响分析，就地更新 SRS/设计/UCD，用波次跟踪变更 |
 | "在我机器上能跑"综合症 | 系统测试阶段（IEEE 829）包含回归、集成、端到端和 NFR 验证 |
@@ -175,7 +175,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 
 ### 阶段 0d：验收测试策略（ATS）
 
-- 将每个 FR/NFR/IFR 映射到验收场景，标注必须的测试类别（FUNC、BNDRY、SEC、PERF、UI）和最低用例数
+- 将每个 FR/NFR/IFR 映射到验收场景，标注必须的测试类别（FUNC、BNDRY、SEC、PERF、UI）
 - NFR 测试方法矩阵（工具 + 阈值 + 负载参数）
 - 跨功能集成场景预规划
 - 风险驱动测试优先级排序
@@ -520,7 +520,7 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 | 设计流程 | 临时性 | 2-3 种方案带权衡，逐节批准 |
 | TDD 纪律 | 可选，经常跳过 | 每个功能强制 红→绿→重构 |
 | 测试质量验证 | 仅行覆盖（如果有） | 覆盖率 + 变异测试，可配置阈值 |
-| 验收测试规划 | 临时性，类别偏向功能测试 | ATS 前置规划每个需求的测试类别和最低用例数，独立 subagent 审核 |
+| 验收测试规划 | 临时性，类别偏向功能测试 | ATS 前置规划每个需求的测试类别，独立 subagent 审核 |
 | UI 一致性 | 每个开发者的口味 | 带令牌化设计系统的 UCD 风格指南 |
 | 实现后验证 | 无 | 设计接口覆盖门 + 内联合规检查 |
 | 系统测试 | 手动 QA | 符合 IEEE 829，带 RTM、Go/No-Go 结论 |

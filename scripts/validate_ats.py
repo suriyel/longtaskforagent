@@ -55,14 +55,13 @@ def _extract_mapping_rows(content: str) -> list[dict]:
         if match:
             req_id = match.group(1)
             cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) >= 5:
+            if len(cells) >= 4:
                 rows.append({
                     "req_id": req_id,
                     "summary": cells[1] if len(cells) > 1 else "",
                     "scenarios": cells[2] if len(cells) > 2 else "",
                     "categories_raw": cells[3] if len(cells) > 3 else "",
-                    "min_cases_raw": cells[4] if len(cells) > 4 else "",
-                    "priority": cells[5] if len(cells) > 5 else "",
+                    "priority": cells[4] if len(cells) > 4 else "",
                     "line": line.strip(),
                 })
     return rows
@@ -131,7 +130,6 @@ def validate(path: str, srs_path: str = None) -> tuple[list[str], list[str]]:
         return errors, warnings
 
     ats_req_ids = set()
-    total_min_cases = 0
 
     for row in rows:
         req_id = row["req_id"]
@@ -164,18 +162,6 @@ def validate(path: str, srs_path: str = None) -> tuple[list[str], list[str]]:
                     warnings.append(f"{req_id}: FR missing BNDRY category")
                 if len(cats) < 2:
                     warnings.append(f"{req_id}: FR has only one category — should have at least FUNC + BNDRY")
-
-        # Validate minimum case count
-        min_cases_raw = row["min_cases_raw"]
-        if min_cases_raw:
-            try:
-                min_cases = int(min_cases_raw)
-                if min_cases <= 0:
-                    errors.append(f"{req_id}: minimum case count must be positive, got {min_cases}")
-                else:
-                    total_min_cases += min_cases
-            except ValueError:
-                errors.append(f"{req_id}: minimum case count must be an integer, got '{min_cases_raw}'")
 
         # Check for empty scenarios
         if not row["scenarios"].strip():

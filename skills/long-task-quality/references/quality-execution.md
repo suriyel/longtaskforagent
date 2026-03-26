@@ -215,7 +215,7 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 | After Coverage Gate | Coverage report (line% + branch%) |
 | After TDD Refactor | Full test suite (still passing) |
 | After Mutation Gate | Mutation report (score%) |
-| Before marking "passing" | ALL of the above + verification_steps |
+| Before marking "passing" | ALL of the above + SRS acceptance criteria (via srs_trace) |
 | Before git commit | Full test suite (no broken code committed) |
 
 ## Anti-Patterns

@@ -94,7 +94,7 @@ END
 
 | ID | Category | Traces To | Input / Setup | Expected | Kills Which Bug? |
 |----|----------|-----------|---------------|----------|-----------------|
-| A  | FUNC/happy | VS-1, FR-xxx | [specific values] | [exact result] | [wrong impl this catches] |
+| A  | FUNC/happy | FR-xxx AC-1 | [specific values] | [exact result] | [wrong impl this catches] |
 | B  | FUNC/error | §Interface Contract Raises | [trigger condition] | [exception type + msg] | [missing branch] |
 | C  | BNDRY/edge | §Algorithm boundary table | [edge value] | [exact behavior] | [off-by-one or missing guard] |
 | D  | FUNC/state | §State Diagram transition | [pre-state + event] | [post-state] | [missing guard condition] |
@@ -134,8 +134,8 @@ END
 3. Record mutation output as evidence.
 
 ## Verification Checklist
-- [ ] All verification_steps traced to Interface Contract postconditions
-- [ ] All verification_steps traced to Test Inventory rows
+- [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
+- [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
 - [ ] Algorithm pseudocode covers all non-trivial methods
 - [ ] Boundary table covers all algorithm parameters
 - [ ] Error handling table covers all Raises entries

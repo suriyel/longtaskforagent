@@ -6,13 +6,13 @@ Long-running tasks exceed a single context window. The solution: split work into
 
 ### ATS Downstream Impact
 
-The ATS document (`docs/plans/*-ats.md`) maps every SRS requirement to acceptance scenarios with required test categories (`FUNC, BNDRY, SEC, UI, PERF`) and minimum case counts. It flows downstream:
+The ATS document (`docs/plans/*-ats.md`) maps every SRS requirement to acceptance scenarios with required test categories (`FUNC, BNDRY, SEC, UI, PERF`). It flows downstream:
 
 - **SRS → ATS**: Acceptance criteria written in the SRS (Given/When/Then) drive ATS scenario derivation. Well-structured acceptance criteria with explicit boundary conditions and error cases produce stronger ATS coverage.
 - **UCD → ATS**: UI components and pages defined in the UCD have corresponding UI test categories assigned in the ATS phase. Components with interactive states and accessibility constraints become ATS test scenarios.
-- **ATS → Init**: Init constrains `verification_steps` to satisfy ATS-required categories and minimum case counts.
+- **ATS → Init**: Init uses `srs_trace` → ATS category lookup to set `ui` flags and guide feature decomposition.
 - **ATS → Feature-Design**: Test Inventory (§7) must cover all ATS-required main categories for the feature's requirement(s).
-- **ATS → Feature-ST**: Hard gate — ST test cases must meet ATS category requirements and minimum case counts.
+- **ATS → Feature-ST**: Hard gate — ST test cases must cover ATS-required categories.
 - **ATS → System-ST**: Hard gate — `check_ats_coverage.py --strict` must exit 0.
 
 ## Persistent Artifacts
@@ -64,6 +64,7 @@ Structured task inventory. JSON format prevents accidental model corruption. Als
       "description": "POST /auth/login returns JWT token on valid credentials",
       "priority": "high",
       "status": "passing",
+      "srs_trace": ["FR-001"],
       "verification_steps": [
         "Send POST with valid credentials, verify 200 + token",
         "Send POST with invalid credentials, verify 401",
@@ -78,6 +79,7 @@ Structured task inventory. JSON format prevents accidental model corruption. Als
       "description": "POST /auth/register creates new user account",
       "priority": "high",
       "status": "failing",
+      "srs_trace": ["FR-002"],
       "verification_steps": [
         "Send POST with valid data, verify 201",
         "Send POST with duplicate email, verify 409",
@@ -91,7 +93,8 @@ Structured task inventory. JSON format prevents accidental model corruption. Als
 
 **Rules**:
 - Status is only `"failing"` or `"passing"` — never `"partial"` or `"in-progress"`
-- Never remove or edit verification_steps — only change `status`
+- `srs_trace` is required per feature — maps to SRS requirement IDs for ATS category lookup
+- `verification_steps` is optional — if present, provides supplementary test context
 - Features marked `"passing"` must be re-verified at session start
 
 ### 3. `init.sh` / `init.ps1`
@@ -247,7 +250,7 @@ Its job:
 2. **Run `init_project.py`** — scaffolds deterministic artifacts: `feature-list.json`, `task-progress.md`, `RELEASE_NOTES.md`, `examples/`, `scripts/`, `docs/plans/`
 3. **LLM generates `long-task-guide.md`** — project-tailored Worker guide based on SKILL.md + references + design doc; only includes the project's language-specific commands; validated by `validate_guide.py`
 4. **LLM generates `init.sh`/`init.ps1`** — real, runnable bootstrap scripts based on the design doc's tech stack; must support the project's environment manager (conda/miniconda/mamba, venv, poetry, uv, nvm, fnm, sdkman, docker, etc.); see `skills/long-task-init/references/init-script-recipes.md` for per-tool templates; must be idempotent and cross-platform
-5. **Populate `feature-list.json`** — from SRS: `constraints[]` (CON-xxx), `assumptions[]` (ASM-xxx), NFR-xxx → non-functional features, FR-xxx → functional features with acceptance criteria as `verification_steps`; from design: `required_configs` for external dependencies
+5. **Populate `feature-list.json`** — from SRS: `constraints[]` (CON-xxx), `assumptions[]` (ASM-xxx), NFR-xxx → non-functional features, FR-xxx → functional features with `srs_trace` (requirement IDs) and optional `verification_steps`; from design: `required_configs` for external dependencies
 7. **Set up project skeleton** — directory structure, config files, package.json / pyproject.toml etc. (based on design doc architecture)
 8. **Initial git commit** — establish baseline
 9. **Verify environment** — run init script, confirm basic setup works
@@ -262,7 +265,7 @@ Its job:
 | `examples/README.md` | Script | — | Universal format template |
 | `long-task-guide.md` | **LLM** | Design | Project-tailored; only relevant language/tools; validated by `validate_guide.py` |
 | `init.sh` / `init.ps1` | **LLM** | Design | Completely project-specific; generic stubs are useless |
-| `features[]` content | **LLM** | **SRS** | FR-xxx → features with acceptance criteria as verification_steps |
+| `features[]` content | **LLM** | **SRS** | FR-xxx → features with `srs_trace` (requirement IDs) and optional `verification_steps` |
 | `constraints[]` content | **LLM** | **SRS** | Extracted from SRS "Constraints" section (CON-xxx) |
 | `assumptions[]` content | **LLM** | **SRS** | Extracted from SRS "Assumptions" section (ASM-xxx) |
 | `required_configs[]` | **LLM** | **SRS** + Design | Interface requirements (IFR-xxx) + design integration points |
@@ -294,7 +297,7 @@ Each worker cycle follows this exact sequence.
 
 ### Phase 3: TDD Red — write failing tests first
 8. Pick the highest-priority `"failing"` feature whose dependencies are all `"passing"`
-9. Write unit tests that cover the feature's `verification_steps` — tests MUST fail (no implementation yet)
+9. Write unit tests that cover the Feature Design Test Inventory (§7) — tests MUST fail (no implementation yet)
    - Follow test scenario rules (see [test-scenario-rules.md](test-scenario-rules.md)):
      - Include happy path, error handling, boundary, and security scenarios
      - Ensure negative test ratio >= 40%
@@ -373,7 +376,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | Skipping Chrome DevTools functional tests for UI | UI may render but not function correctly for users | Every UI feature (ui=true) needs [devtools] verification steps; run DevTools Gate before planning |
 | Not updating RELEASE_NOTES.md | Release notes drift from actual state; costly catch-up later | Update after every git commit |
 | Skipping examples for user-facing features | Users can't understand how to use new features; reduces project value | Add runnable example for every user-facing feature |
-| Editing verification_steps | Lowers the bar to match broken code | Steps are immutable once set |
+| Removing srs_trace entries | Breaks ATS category traceability | srs_trace maps features to SRS requirements — keep intact |
 | Skipping coverage check | Tests may miss entire code paths | Run coverage after every TDD Green |
 | Skipping mutation testing | Tests may pass without catching real bugs | Run mutation after every TDD Refactor |
 | Gaming coverage with assert-free tests | High coverage but useless tests | Mutation testing catches this; strengthen assertions |
@@ -493,7 +496,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
 python scripts/check_devtools.py feature-list.json --feature <id>
 ```
 
-**`[devtools]` verification step format**: UI features must have at least one `verification_steps` entry starting with `[devtools]`, using the **EXPECT/REJECT format**:
+**`[devtools]` verification step format**: UI features may optionally include `verification_steps` entries starting with `[devtools]`, using the **EXPECT/REJECT format** (ST test cases derive UI scenarios from SRS acceptance criteria via `srs_trace`):
 - `[devtools] <page-path> | EXPECT: <positive criteria> | REJECT: <negative criteria>`
 - **EXPECT**: Elements, text, or states that MUST be present
 - **REJECT**: Conditions that MUST NOT be present (forces error-seeking behavior)

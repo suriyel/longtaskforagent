@@ -36,16 +36,16 @@ digraph tdd {
 
 ## Step 1: TDD Red — Write Failing Tests
 
-Write tests for ALL verification_steps in the feature spec. Tests MUST fail (feature not yet implemented).
+Write tests for ALL rows in the Feature Design Test Inventory (§7). Tests MUST fail (feature not yet implemented).
 
 ### Specification Input
 
 Tests are driven by three primary sources:
-- **`verification_steps`** from the feature spec (primary — each step becomes one or more tests)
-- **SRS requirement section** (`{srs_section}`) — full FR-xxx with Given/When/Then acceptance criteria, boundary conditions, and error paths
-- **Feature detailed design** (`docs/features/YYYY-MM-DD-<feature-name>.md`) — Test Inventory table (§7), Interface Contract (§3), Algorithm pseudocode and boundary matrix (§5)
+- **Feature Design Test Inventory** (`docs/features/YYYY-MM-DD-<feature-name>.md` §7) — the primary test source; each row maps to one or more test cases
+- **SRS requirement section** (`{srs_section}`) — full FR-xxx with Given/When/Then acceptance criteria, boundary conditions, and error paths (located via the feature's `srs_trace` field)
+- **Feature detailed design** (`docs/features/YYYY-MM-DD-<feature-name>.md`) — Interface Contract (§3), Algorithm pseudocode and boundary matrix (§5)
 
-The Test Inventory table from feature detailed design is the **starting set** for TDD Red. Each row maps to one or more test cases. TDD rules (Rule 1–6) extend and refine this set — they do not duplicate it. ST test case documents are generated *after* TDD as acceptance verification (Worker Step 9).
+The Test Inventory table from feature detailed design is the **primary source** for TDD Red. Each row maps to one or more test cases. TDD rules (Rule 1–6) extend and refine this set. SRS acceptance criteria (from the feature's `srs_trace` requirements) provide supplementary context. ST test case documents are generated *after* TDD as acceptance verification (Worker Step 9).
 
 ### Test Scenario Rules (hard requirements)
 
@@ -131,7 +131,7 @@ def test_user_persisted_to_db():
 Reference: `testing-anti-patterns.md` Anti-Pattern #1 (mock only external services, not internal logic) and Anti-Pattern #3 (mock at system boundaries, not internal layers).
 
 **Mandatory test writing order in TDD Red:**
-1. Analyze verification_steps + {srs_section} + {design_section} to identify external dependencies
+1. Analyze Feature Design Test Inventory + {srs_section} (via `srs_trace`) + {design_section} to identify external dependencies
 2. **Write Real Tests first** (see Rule 5a) — verify external dependency connectivity
 3. Then write regular UT tests (happy path / error / boundary / security)
 4. Run all tests → confirm all FAIL

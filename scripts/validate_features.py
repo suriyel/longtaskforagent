@@ -8,28 +8,29 @@ Checks:
 - No duplicate IDs
 - Status values are valid
 - Dependencies reference existing feature IDs
-- Verification steps are non-empty
+- Verification steps are non-empty (if present — field is optional)
+- srs_trace is a valid array of requirement IDs (if present)
 - tech_stack.language is a supported value (if present)
 - quality_gates values are numbers between 0 and 100 (if present)
 - ui field is boolean (if present)
 - ui_entry field is string (if present)
-- UI features (ui=true) have at least one [devtools]-prefixed verification step
 
 Usage:
     python validate_features.py <path/to/feature-list.json>
 """
 
 import json
+import re
 import sys
 
 
-REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status", "verification_steps"}
+REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status"}
+SRS_TRACE_PATTERN = re.compile(r"^(?:FR|NFR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
 QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min", "mutation_score_min"}
 VALID_CONFIG_TYPES = {"env", "file"}
-DEVTOOLS_STEP_PREFIX = "[devtools]"
 REQUIRED_CONFIG_FIELDS = {"name", "type", "description", "required_by"}
 
 
@@ -306,34 +307,18 @@ def validate(path: str) -> tuple[list[str], list[str]]:
             if not isinstance(st_case_count, int) or st_case_count < 0:
                 errors.append(f"{prefix} (id={fid}): 'st_case_count' must be a non-negative integer, got {st_case_count!r}")
 
-        # Check ui features have at least one [devtools] verification step
-        if ui is True:
-            steps = feat.get("verification_steps")
-            if isinstance(steps, list) and len(steps) > 0:
-                devtools_steps = [
-                    s for s in steps
-                    if isinstance(s, str) and s.strip().lower().startswith(DEVTOOLS_STEP_PREFIX)
-                ]
-                if not devtools_steps:
-                    errors.append(
-                        f"{prefix} (id={fid}): UI feature (ui=true) must have at least one "
-                        f"verification_step starting with '{DEVTOOLS_STEP_PREFIX}'"
-                    )
-                else:
-                    # Check EXPECT/REJECT format in [devtools] steps (warnings, not errors)
-                    for step in devtools_steps:
-                        if "EXPECT:" not in step:
-                            warnings.append(
-                                f"{prefix} (id={fid}): [devtools] step missing EXPECT clause: "
-                                f"'{step[:60]}...'" if len(step) > 60 else
-                                f"{prefix} (id={fid}): [devtools] step missing EXPECT clause: '{step}'"
-                            )
-                        if "REJECT:" not in step:
-                            warnings.append(
-                                f"{prefix} (id={fid}): [devtools] step missing REJECT clause: "
-                                f"'{step[:60]}...'" if len(step) > 60 else
-                                f"{prefix} (id={fid}): [devtools] step missing REJECT clause: '{step}'"
-                            )
+        # Check srs_trace field (optional, array of requirement IDs)
+        srs_trace = feat.get("srs_trace")
+        if srs_trace is not None:
+            if not isinstance(srs_trace, list):
+                errors.append(f"{prefix} (id={fid}): 'srs_trace' must be an array")
+            else:
+                for ti, trace_id in enumerate(srs_trace):
+                    if not isinstance(trace_id, str) or not SRS_TRACE_PATTERN.match(trace_id):
+                        errors.append(
+                            f"{prefix} (id={fid}): srs_trace[{ti}] must match "
+                            f"FR-xxx/NFR-xxx/IFR-xxx format, got {trace_id!r}"
+                        )
 
         # Check dependencies
         deps = feat.get("dependencies", [])

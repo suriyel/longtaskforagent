@@ -99,10 +99,10 @@ You MUST complete each step in order:
 
 Read all input artifacts for the target feature:
 
-- **Feature object** from `feature-list.json` — ID, title, description, verification_steps, ui flag, dependencies, priority
+- **Feature object** from `feature-list.json` — ID, title, description, srs_trace, ui flag, dependencies, priority
 - **SRS section** — full FR-xxx from `docs/plans/*-srs.md` via Document Lookup Protocol (read the entire subsection, NOT grep)
 - **Design section** — full §4.N from `docs/plans/*-design.md` via Document Lookup Protocol
-- **ATS constraints** (if `docs/plans/*-ats.md` exists) — read the ATS mapping table rows for the requirement(s) that map to this feature; extract required categories and minimum case counts. These constraints are **binding** for Step 3 (Derive Test Cases).
+- **ATS constraints** (if `docs/plans/*-ats.md` exists) — read the ATS mapping table rows for the requirement(s) that map to this feature; extract required categories. These category constraints are **binding** for Step 3 (Derive Test Cases).
 - **Plan document** — from Step 5 (`docs/features/YYYY-MM-DD-<feature-name>.md`)
 - **UCD sections** (only if `"ui": true`) — relevant component prompts and page prompts from `docs/plans/*-ucd.md`
 - **Root context** — `constraints[]`, `assumptions[]` from `feature-list.json` root
@@ -133,7 +133,7 @@ If the target feature has `"ui": true`, read `skills/long-task-feature-st/prompt
 
 ### 3. Derive Test Cases
 
-For each `verification_step` in the feature, generate **one or more** test cases.
+For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) mapped to this feature, generate **one or more** test cases. The Feature Design Test Inventory (§7) and boundary matrix (§5c) provide additional test case sources.
 
 **Category assignment rules:**
 
@@ -156,15 +156,14 @@ For each `verification_step` in the feature, generate **one or more** test cases
 **ATS enforcement (if ATS document exists):**
 - Read the ATS mapping table rows loaded in Step 1
 - For each ATS-required category for this feature's requirement(s): generate at least one test case of that category
-- Total test cases per requirement MUST meet or exceed the ATS minimum case count
 - If ATS requires SEC but the feature does not handle user input, note the discrepancy in the test case document and generate at least one boundary-security case
-- **ATS minimum counts are hard gates** — validate via `python scripts/check_ats_coverage.py` in Step 6
+- **ATS category constraints are hard gates** — validate via `python scripts/check_ats_coverage.py` in Step 6
 
 **Minimum coverage:**
 - Every feature MUST have at least one FUNC and one BNDRY test case
-- Every `verification_step` MUST map to at least one test case
+- Every `srs_trace` requirement MUST be covered by at least one test case
 - UI features MUST have at least one UI test case
-- If ATS exists: all ATS-required categories and minimum counts are met
+- If ATS exists: all ATS-required categories are met
 
 **Case ID format:**
 ```
@@ -185,7 +184,7 @@ Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
 - Mark as `Mock` only if the test case's primary execution path uses a mock or stub service
 - Feature-ST test cases executed against a running service (Step 7 starts services before execution) are **always `Real`** — they connect to real services
 
-**Black-box constraint:** Expected results must be derivable solely from the SRS (verification_steps, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, raise it as a specification gap.
+**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, raise it as a specification gap.
 
 ### 4. UI Test Case Requirements (only if `"ui": true`)
 
@@ -235,18 +234,18 @@ Output file: `docs/test-cases/feature-{id}-{slug}.md`
 1. **Header** — Feature ID, related requirements, date, standard
 2. **Summary table** — count by category
 3. **Test case blocks** — one per case, all required sections
-4. **Traceability matrix** — Case ID ↔ Requirement ↔ verification_step ↔ Automated test ↔ Result
+4. **Traceability matrix** — Case ID ↔ Requirement (srs_trace) ↔ Feature Design Test Inventory row ↔ Automated test ↔ Result
 
 The traceability matrix `结果` column starts as `PENDING`. Execute each test case in Step 7 below and update to `PASS`/`FAIL` during this step.
 
-### 5b. Verification Step Enumeration Gate (mandatory before validation)
+### 5b. SRS Trace Coverage Gate (mandatory before validation)
 
-**a) Verification step completeness:**
-1. List ALL verification_steps from the feature object (by 0-based index)
-2. For each verification_step: confirm at least one ST case maps to it
-   in the traceability matrix "verification_step" column
-3. If ANY verification_step has zero ST case mapping:
-   - Derive additional test case(s) for the uncovered step
+**a) SRS requirement completeness:**
+1. List ALL `srs_trace` requirement IDs from the feature object
+2. For each requirement ID: confirm at least one ST case maps to it
+   in the traceability matrix "Requirement" column
+3. If ANY `srs_trace` requirement has zero ST case mapping:
+   - Derive additional test case(s) for the uncovered requirement
    - Add to the document and traceability matrix
    - Re-number case IDs if necessary
 
@@ -336,7 +335,7 @@ Always start from a known-clean state. Do not assume services are already runnin
 - **Black-box only**: Expected results must be derivable from SRS and the observable interface alone — no reading implementation code
 - **Complete after Quality Gates**: All test cases must be written, validated, and executed after TDD and quality gates pass
 - **Immutable after generation**: Test case documents are written and executed in this step and not modified after generation. Changes require the `long-task-increment` skill
-- **Traceability mandatory**: Every test case traces to a requirement; every verification_step traces to a test case
+- **Traceability mandatory**: Every test case traces to a requirement; every `srs_trace` requirement traces to a test case
 - **UI consolidation**: For UI features, this skill consolidates functional, UCD compliance, and accessibility testing into unified test cases
 - **Template flexibility**: Users can override the default ISO/IEC/IEEE 29119 template with custom templates and style examples
 - **UI tests are mandatory**: For features with `"ui": true`, UI category test cases are NON-SKIPPABLE — they MUST use Chrome DevTools MCP for browser-based verification. There is no alternative or workaround.
