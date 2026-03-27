@@ -42,13 +42,17 @@ graph TB
 [Replace the example above with the actual logical architecture of the project. Show layers, packages, modules, and their dependency directions.]
 
 ### 3.3 Component Diagram
-[Show major runtime components and their interactions]
+
+[Show major runtime components and their interactions.
+ Every edge MUST include: (1) protocol, (2) schema name referencing a §6.2 Contract ID.]
 
 ```mermaid
 graph LR
-    A[Component A] -->|protocol| B[Component B]
-    B -->|protocol| C[Component C]
+    A[Component A] -->|"REST: ResourceDTO (IAPI-001)"| B[Component B]
+    B -->|"event: ResourceCreatedEvent (IAPI-002)"| C[Component C]
 ```
+
+[Replace the example above with actual components and interactions. An edge without a Contract ID label is a design defect — add a §6.2 row or justify as a framework-level dependency with no runtime data exchange.]
 
 ### 3.4 Tech Stack Decisions
 [Justify against SRS constraints and NFRs]
@@ -111,6 +115,23 @@ flowchart TD
 #### 4.N.5 Design Notes
 [Key design decisions, edge cases, error handling strategy for this feature]
 
+#### 4.N.6 Integration Surface
+
+**Provides** (other features depend on this):
+
+| Consumer Feature(s) | Contract ID | Endpoint / Method | Response Schema |
+|---------------------|-------------|-------------------|----------------|
+| [#M Feature B] | [IAPI-001] | [`GET /api/resource/:id`] | [`ResourceDTO`] |
+
+**Requires** (this feature depends on):
+
+| Provider Feature | Contract ID | Endpoint / Method | Request Schema |
+|-----------------|-------------|-------------------|---------------|
+| [#K Feature C] | [IAPI-002] | [`POST /api/other`] | [`OtherRequest`] |
+
+[If this feature has no cross-feature dependencies, write:
+ "Self-contained — no external integration surface."]
+
 [Repeat section 4.N for each key feature or feature group]
 
 ## 5. Data Model
@@ -130,8 +151,42 @@ erDiagram
 ```
 
 ## 6. API / Interface Design
-[Endpoints, contracts, protocols]
+
+### 6.1 External Interfaces
+[Endpoints, contracts, protocols for external third-party systems]
 [Trace to SRS IFR-xxx requirements]
+
+### 6.2 Internal API Contracts
+
+[For each component-to-component interaction in §3.3, define the contract.
+ These are consumed by per-feature design SubAgents to ensure integration coherence.]
+
+| Contract ID | Provider Feature | Consumer Feature(s) | Endpoint / Method | Request Schema | Response Schema | Error Codes |
+|-------------|-----------------|---------------------|-------------------|---------------|----------------|-------------|
+| IAPI-001 | #N Feature A | #M Feature B, #K Feature C | `GET /api/resource/:id` | `{ id: UUID }` | `ResourceDTO { ... }` | 401, 404 |
+
+[Replace the example above with actual internal contracts from §3.3 edges.]
+
+**Schema Definitions** (referenced by table above):
+
+[Use the project's primary language syntax. Define each shared schema used in the table.]
+
+```
+// Example — replace with actual schemas
+interface ResourceDTO {
+  id: string;
+  name: string;
+  created_at: string; // ISO 8601
+}
+```
+
+**When to define an internal API contract:**
+1. Any component pair connected by an edge in §3.3 → must have a corresponding row
+2. If feature A's `dependencies[]` in feature-list.json includes feature B, and A calls B's methods/APIs at runtime → must have a corresponding row
+3. Two features sharing persistent state (same DB table/file/cache) → must define the shared schema
+4. **Not required**: Pure framework-level dependencies (e.g., feature B depends on feature A's project skeleton but has no runtime calls)
+
+**Granularity rule:** Define contracts to the level where a Consumer can code independently — i.e., the Consumer can write correct calling code and error handling by reading only this table.
 
 ## 7. UI/UX Approach
 [If applicable. Layout strategy, interaction patterns.]

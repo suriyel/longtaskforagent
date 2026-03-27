@@ -123,10 +123,16 @@ Context to carry forward (paths only — SubAgent reads contents itself):
 - `quality_gates` and `tech_stack` (compact JSON)
 - File paths + section line ranges: design doc (§4.N), SRS doc (FR-xxx), UCD doc (if ui:true)
 - ATS doc path: `docs/plans/*-ats.md` (if exists) — SubAgent uses ATS mapping to align Test Inventory categories
+- Design doc §6.2 path — SubAgent reads Internal API Contracts rows where this feature is Provider or Consumer
 - Constraints and assumptions from feature-list.json root
 - Output path: `docs/features/YYYY-MM-DD-<feature-name>.md`
 
 Output: `docs/features/YYYY-MM-DD-<feature-name>.md` (written by SubAgent) — feature detailed design document containing interface contracts, algorithm pseudocode, diagrams, test inventory, and TDD task decomposition.
+
+**Contract deviation handling**: If SubAgent returns `BLOCKED` with an issue containing "Contract deviation":
+1. Present the deviation details (Contract ID, original vs. proposed schema, reason) to user via `AskUserQuestion`
+2. If approved: update §6.2 in the design doc to reflect the new contract, then re-dispatch the feature-design SubAgent
+3. Propagate impact: identify Consumer features from the §6.2 Consumer column that may be affected; if any are already `"passing"`, warn user they may need re-verification
 
 ### 5-7. TDD Cycle (Red → Green → Refactor)
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-tdd` and follow it exactly.

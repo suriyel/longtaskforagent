@@ -22,6 +22,7 @@ Read ALL of these BEFORE writing any design content:
 5. **Constraints & assumptions** from feature-list.json root
 6. **Related NFRs** — NFR-xxx from SRS traceable to this feature
 7. **Existing code** — if dependency features are passing, read their public interfaces (imports, class/function signatures)
+8. **Internal API contracts** (if §6.2 exists) — from Design Section 6.2, read rows where this feature appears as Provider or Consumer. These define cross-feature schemas that this feature's Interface Contract (§3) must align with.
 
 ## Template
 
@@ -60,6 +61,22 @@ Rules:
 - Postconditions are specific and testable (not "returns correct result")
 - Every SRS acceptance criterion (from srs_trace requirements) must trace to at least one method's postcondition
 - Include internal methods only if they contain non-trivial logic
+- **§6.2 alignment rule**: For methods that produce or consume cross-feature data, the method signature (parameters, return type) MUST be compatible with the schema defined in Design Section 6.2. If the feature is a **Provider**, postconditions MUST guarantee the Response Schema. If a **Consumer**, preconditions MUST assume the Request Schema format. Any deviation requires explicit justification in Design Rationale and triggers the Contract Deviation Protocol below.
+
+### Contract Deviation Protocol
+
+If during feature design, a §6.2 contract is found to be incorrect, insufficient, or technically infeasible:
+
+1. **DO NOT silently deviate** — a mismatched contract will cause integration failures
+2. **Record the deviation** in the design document's Design Rationale section:
+   - Contract ID (e.g., IAPI-001)
+   - Original schema vs. proposed change
+   - Technical reason for the change
+   - Impact on Consumer features (list affected feature IDs)
+3. **Set Verdict to BLOCKED** with Issue: "Contract deviation requires design update"
+4. The orchestrator (long-task-work) will escalate to user via AskUserQuestion
+5. If approved: user updates §6.2 in the design doc; orchestrator re-dispatches SubAgent
+6. If rejected: SubAgent must conform to the original contract
 
 ### 4. Internal Sequence Diagram
 

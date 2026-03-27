@@ -48,6 +48,7 @@ You are a Feature Design execution SubAgent.
 4. Read SRS section: Read {srs_doc_path} lines {srs_start} to {srs_end}
 5. Read UCD sections: Read {ucd_doc_path} lines {ucd_start} to {ucd_end} (only if ui:true)
 5b. Read ATS mapping table: Read {ats_doc_path} (only if ATS doc exists) — locate the mapping rows for the feature's requirement ID(s) (from srs_trace); extract required categories
+5c. Read internal API contracts: Read {design_doc_path} Section 6.2 — locate rows where this feature appears as Provider or Consumer. These define the exact schemas this feature must produce or consume.
 6. Follow the execution rules to produce the detailed design document
 7. Write the document to: {output_path}
 8. Return your result using the Structured Return Contract in the execution rules

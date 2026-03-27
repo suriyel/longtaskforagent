@@ -38,6 +38,7 @@
 
 **Design rationale** (one line per non-obvious decision):
 - [e.g., why threshold defaults to 0.6, why parameter X is optional]
+- **Cross-feature contract alignment**: If this feature appears in Design §6.2 as Provider or Consumer, the corresponding methods' signatures must match the §6.2 schemas. Note the Contract ID (e.g., IAPI-001) for traceability.
 
 ## Internal Sequence Diagram
 

@@ -68,21 +68,21 @@ Count FR-xxx requirements. If ≤ 5, apply the **Tiny project auto-skip** rule (
 For each FR/NFR/IFR, generate one or more acceptance scenarios with:
 
 ```markdown
-| Req ID | 需求摘要 | 验收场景 | 必须类别 | 优先级 | 备注 |
-|--------|---------|---------|---------|--------|------|
-| FR-001 | 用户登录 | 正常登录/错误密码/账户锁定/会话过期 | FUNC,BNDRY,SEC | Critical | 处理用户输入→SEC必选 |
-| NFR-001 | 响应时间<200ms | P95延迟/并发负载/降级/冷启动 | PERF | High | 阈值: P95<200ms @100并发 |
-| FR-010 | 搜索结果页 | 搜索/空结果/分页/排序/筛选 | FUNC,BNDRY,UI | High | ui:true→UI必选 |
+| Req ID | Requirement Summary | Acceptance Scenarios | Required Categories | Priority | Notes |
+|--------|---------------------|----------------------|---------------------|----------|-------|
+| FR-001 | User login | Normal login/wrong password/account lockout/session expiry | FUNC,BNDRY,SEC | Critical | Handles user input→SEC required |
+| NFR-001 | Response time<200ms | P95 latency/concurrent load/degradation/cold start | PERF | High | Threshold: P95<200ms @100 concurrent |
+| FR-010 | Search results page | Search/empty results/pagination/sorting/filtering | FUNC,BNDRY,UI | High | ui:true→UI required |
 ```
 
 **Category assignment rules:**
 
-| 条件 | 必须类别 |
-|------|---------|
-| 所有 FR | FUNC + BNDRY（至少） |
-| 处理用户输入/认证/授权/外部数据 | + SEC |
-| 对应 `ui: true` 的 feature | + UI |
-| 关联 NFR-xxx 且有性能指标 | + PERF |
+| Condition | Required Categories |
+|-----------|---------------------|
+| All FRs | FUNC + BNDRY (at minimum) |
+| Handles user input/authentication/authorization/external data | + SEC |
+| Corresponds to a `ui: true` feature | + UI |
+| Linked to NFR-xxx with performance metrics | + PERF |
 
 ### 4. Define Test Category Strategies
 
@@ -99,7 +99,7 @@ For each test category, specify the strategy:
 For each NFR-xxx with measurable thresholds:
 
 ```markdown
-| NFR ID | 测试方法 | 工具 | 通过标准 | 负载参数 | 关联 feature |
+| NFR ID | Test Method | Tool | Pass Criteria | Load Parameters | Related Feature |
 |--------|---------|------|---------|---------|-------------|
 | NFR-001 | Load test | k6/locust/ab | P95 < 200ms | 100 concurrent, 60s ramp | Feature 15, 16 |
 | NFR-002 | Memory profiling | tracemalloc/heapdump | RSS < 512MB | 10K records | Feature 8 |
@@ -110,20 +110,27 @@ For each NFR-xxx with measurable thresholds:
 Identify critical data flow paths that span multiple features:
 
 ```markdown
-| 场景 ID | 场景描述 | 涉及 Features | 数据流路径 | 验证要点 | ST 阶段覆盖 |
-|---------|---------|--------------|-----------|---------|------------|
-| INT-001 | 用户注册→登录→首次操作 | F1, F2, F5 | POST /register → POST /login → GET /dashboard | 会话传递、数据一致性 | System ST |
+| Scenario ID | Description | Features Involved | Data Flow Path | Verification Points | ST Phase Coverage |
+|-------------|-------------|-------------------|----------------|---------------------|-------------------|
+| INT-001 | User register → login → first action | F1, F2, F5 | POST /register → POST /login → GET /dashboard | Session propagation, data consistency | System ST |
 ```
+
+**§6.2-driven integration scenario derivation:**
+For each row in Design §6.2 Internal API Contracts:
+1. Create at least one integration scenario covering the happy-path data flow (Provider produces → Consumer receives → Consumer processes correctly)
+2. Create at least one error scenario covering Provider error codes (e.g., Provider returns 404 → Consumer handles gracefully)
+3. If the contract involves shared persistent state (same DB table), create a consistency scenario (concurrent access, stale reads)
+4. Reference the Contract ID (IAPI-xxx) in the scenario's "Data Flow Path" column
 
 ### 7. Risk-Driven Test Priority
 
 Assess risk per requirement and assign test depth:
 
 ```markdown
-| 风险区域 | 风险级别 | 影响范围 | 测试深度 | 依据 |
-|---------|---------|---------|---------|------|
-| 用户认证 | High | 全系统 | 深度 (SEC+FUNC+BNDRY) | 安全边界 |
-| 数据导入 | Medium | Feature 3-5 | 标准 (FUNC+BNDRY) | 数据完整性 |
+| Risk Area | Risk Level | Impact Scope | Test Depth | Rationale |
+|-----------|------------|--------------|------------|-----------|
+| User authentication | High | System-wide | Deep (SEC+FUNC+BNDRY) | Security boundary |
+| Data import | Medium | Feature 3-5 | Standard (FUNC+BNDRY) | Data integrity |
 ```
 
 ### 8. Section-by-Section User Approval

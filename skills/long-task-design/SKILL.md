@@ -86,12 +86,14 @@ For non-trivial projects, break the design into sections and get approval per se
    - Each feature chapter MUST include at least:
      - **Class diagram** (Mermaid `classDiagram`) — classes/modules, attributes, methods, relationships
      - **One behavioral diagram**: sequence diagram (Mermaid `sequenceDiagram`) or flow diagram (Mermaid `flowchart`)
+     - **Integration Surface** (§4.N.6) — declaring Provides/Requires tables with §6.2 Contract IDs; write "Self-contained" if no cross-feature dependencies
    - For complex features, include ALL four views: class diagram, sequence diagram, flow diagram, and design notes
    - All diagrams MUST use **Mermaid** format — no ASCII art, no image references
 3. **Data model** — schemas, relationships, storage strategy
    - Must use Mermaid ER diagrams (`erDiagram`) where applicable
-4. **API / interface design** — endpoints, contracts, protocols
-   - Must align with SRS Interface Requirements (IFR-xxx)
+4. **API / interface design**
+   - **External interfaces** (§6.1) — endpoints, contracts, protocols (trace to SRS IFR-xxx)
+   - **Internal API contracts** (§6.2) — feature-to-feature boundaries; every §3.3 component diagram edge must have a corresponding §6.2 row with Contract ID, request/response schemas, and error codes
 5. **UI/UX approach** (if applicable) — layout strategy, interaction patterns
    - Must address SRS User Personas
    - If UCD document exists: must reference UCD style tokens (colors, typography, spacing) and component catalog
@@ -131,6 +133,16 @@ Read the template found in Step 2 (user-specified or default `docs/templates/des
 4. For uncovered template sections: mark "[Not applicable]"
 5. For approved content without matching template section: append as "Additional Notes"
 
+## Step 5b: Design Integration Coherence Check
+
+Before transitioning to ATS, mechanically verify cross-feature integration coherence:
+
+1. **Contract completeness**: For each edge in §3.3 component diagram, verify a corresponding row exists in §6.2 Internal API Contracts. Flag missing rows.
+2. **Schema consistency**: For each §6.2 row, verify that Provider feature's §4.N class diagram includes the Response Schema type, and Consumer feature's §4.N references the Request Schema. Flag mismatches.
+3. **Dependency completeness**: For each feature that appears in a §6.2 "Consumer" column, verify it lists the Provider feature ID in §11.3 dependency chain. Flag missing dependency edges.
+
+Present any flagged issues to the user. Resolve before proceeding to ATS.
+
 ## Step 6: Transition to ATS
 
 Once the design document is saved and committed:
@@ -148,6 +160,30 @@ Once the design document is saved and committed:
 | Small | 5-20 | 2-3 approach options + combined section approval; logical view + key feature diagrams + dependency table + milestone plan |
 | Medium | 20-50 | Full multi-section approval; all architecture views + per-feature diagrams + full dependency analysis + detailed dev plan |
 | Large | 50-200+ | Full multi-section approval; comprehensive diagrams for every feature group + dependency compatibility matrix + phased dev plan with risk register |
+
+## Section 4 Depth Strategy
+
+For projects with many features, §4.N sections are written at different depths to manage context window constraints:
+
+| Project Size | §4.N Content per Feature |
+|---|---|
+| Small (< 20) | Full: overview + class diagram + behavioral diagram + design notes + integration surface |
+| Medium (20-50) | Full for P0/P1 features; Thin for P2/P3 features |
+| Large (50+) | Thin for ALL features: overview + key types + integration surface only |
+
+**Thin §4.N format:**
+
+```markdown
+### 4.N Feature: <Name> (FR-xxx)
+#### 4.N.1 Overview
+[1-2 sentences]
+#### 4.N.2 Key Types
+[List the main classes/types this feature introduces, with one-line purpose each]
+#### 4.N.6 Integration Surface
+[Provides/Requires tables referencing §6.2]
+```
+
+This is safe because the feature-design SubAgent (Worker Step 4) produces the full class/sequence/flow/algorithm design with access to §6.2 contracts. The thin §4.N serves as an **integration specification**, not a complete design.
 
 ## Red Flags
 
@@ -186,6 +222,7 @@ All architectural and design views MUST use **Mermaid** syntax. This ensures:
 - [ ] Sequence diagrams show the main success path and at least one error path
 - [ ] Flow diagrams include decision nodes for all branching logic
 - [ ] No placeholder diagrams — every diagram reflects actual approved design content
+- [ ] Every edge in §3.3 component diagram includes Contract ID referencing §6.2
 
 ## Third-Party Dependency Rules
 

@@ -59,7 +59,13 @@ Compare new requirements against the existing feature set:
 1. For each **new** requirement → identify which existing features (if any) it depends on
 2. For each **modified** requirement → identify which existing features have `srs_trace` referencing the original requirement ID; these features will need re-verification
 3. For each **deprecated** requirement → identify which features implement it; these will be marked deprecated
-4. Check for dependency chain impacts — if a modified feature is depended upon by others, those may need re-verification too
+4. **Transitive impact cascade** — For each directly affected feature, walk its reverse dependency graph to find all transitive dependents:
+   - Build reverse-dependency map: for each feature F, collect all features that list F.id in their `dependencies[]`
+   - For each directly affected feature, BFS the reverse-dependency graph (depth limit: 2 levels)
+   - Classify impact:
+     - **Hard impact** (reset to failing): feature directly implements the modified requirement OR its §6.2 contract changed
+     - **Soft impact** (flag for re-verification): feature is a transitive dependent; may or may not need changes depending on whether the contract it consumes actually changed
+   - Include both hard and soft impacts in the impact matrix for user approval
 
 **Output**: Impact matrix presented to user for approval:
 
@@ -79,13 +85,16 @@ Update the existing design document **in place** for affected sections:
 
 1. Read `docs/plans/*-design.md`
 2. For **new** requirements:
-   - Add Key Feature Design subsection (section 4.N+1) with class diagram, sequence diagram, flow diagram
+   - Add Key Feature Design subsection (section 4.N+1) with class diagram, sequence diagram, flow diagram, and **Integration Surface** (§4.N.6) with Provides/Requires referencing §6.2
+   - Add corresponding rows to §6.2 Internal API Contracts for any new cross-feature boundaries
+   - Update §3.3 Component Diagram edges with Contract ID labels for new interactions
    - Update Dependency Chain (section 11.3) if new features have dependencies
    - Update Task Decomposition (section 11.2) with new priorities
    - Add any new third-party dependencies to the dependency table
 3. For **modified** requirements:
    - Update the corresponding Key Feature Design section (4.N) in place
    - Update sequence/flow diagrams as needed
+   - Update §6.2 contracts and §4.N.6 Integration Surface if the modification changes cross-feature interfaces
 4. For **deprecated** requirements:
    - Add `[DEPRECATED - Wave N]` marker to the corresponding design section
    - Do NOT delete the section (preserve history context)
@@ -120,7 +129,8 @@ Update the existing ATS document **in place** for affected requirements:
    - Add `[DEPRECATED - Wave N]` marker to the corresponding mapping table row
    - Do NOT delete the row (preserve traceability)
    - Update coverage statistics (exclude deprecated rows from totals)
-5. Update the Risk-Driven Test Priority section if risk profile changed
+5. For **new** §6.2 contracts: add integration scenarios per the §6.2-driven derivation rule (at least one happy-path + one error scenario per contract row). For **modified** §6.2 contracts: update corresponding integration scenarios.
+6. Update the Risk-Driven Test Priority section if risk profile changed
 6. Get user approval for ATS changes
 7. Git commit:
    ```
