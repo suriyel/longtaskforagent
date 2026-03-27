@@ -249,6 +249,9 @@ using-long-task (router)
 ### Eight-Phase Workflow
 
 0a. **Requirements** (`long-task-requirements`):
+   - Two-tier adaptive elicitation: **Lite track** (3–5 rounds, clear-scope projects) and **Expert track** (10–20 rounds, complex domains)
+   - Tier auto-selected via 5 complexity signals (scope, actors, integrations, domain, description style); escalation from Lite → Expert if complexity surfaces
+   - Expert track adds: 5-Whys root cause / JTBD / Pain Map (problem framing), scenario walkthroughs, hypothesis-correction tables, hidden requirements discovery, alignment validation with JTBD gate
    - Structured elicitation aligned with ISO/IEC/IEEE 29148
    - Challenge each requirement against 8 quality attributes
    - Apply EARS templates, assign unique IDs, write Given/When/Then acceptance criteria
@@ -502,7 +505,13 @@ long-task-agent/
 │   │   └── references/
 │   │       ├── architecture.md        # Detailed architecture patterns
 │   │       └── roadmap.md             # Future enhancements
-│   ├── long-task-requirements/SKILL.md # Phase 0a: Requirements & SRS (ISO 29148)
+│   ├── long-task-requirements/               # Phase 0a: Requirements & SRS (ISO 29148)
+│   │   ├── SKILL.md                          # Orchestration (Lite/Expert tier detection + shared quality pipeline)
+│   │   └── references/
+│   │       ├── problem-framing.md            # Expert: 5-Whys + JTBD + Pain Map execution protocol
+│   │       ├── scenario-walkthrough.md       # Expert: workflow walkthrough + gap extraction
+│   │       ├── hypothesis-correction.md      # Expert: 8-dimension behavior hypothesis table
+│   │       └── alignment-validation.md       # Expert: root cause traceability + JTBD gate + pre-mortem
 │   ├── long-task-ucd/SKILL.md         # Phase 0b: UCD style guide (text-to-image prompts)
 │   ├── long-task-hotfix/               # Hotfix: user-reported bug triage, root-cause, enqueue → Worker
 │   │   └── SKILL.md

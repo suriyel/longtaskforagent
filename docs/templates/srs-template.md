@@ -15,6 +15,27 @@
 [If requirements were deferred during granularity analysis, reference the deferred backlog:
 "Deferred requirements tracked in [deferred backlog](YYYY-MM-DD-<topic>-deferred.md)"]
 
+### 1.3 Problem Statement
+
+**Root Cause (5-Whys)**:
+```
+Symptom: [user-stated problem in their words]
+Why 1: [first cause]
+Why 2: [cause of Why 1]
+Why 3: [deepest supported cause]
+Root Cause: [systemic cause requirements must address]
+```
+
+**Jobs-to-be-Done**: When [situation], I want to [motivation], so I can [outcome].
+
+**Pain Map**:
+| Pain Point | Current Workaround | Frequency | Severity | Score |
+|---|---|---|---|---|
+
+**Alignment Validation**: [PASS / PARTIAL / FAIL — filled by alignment validation step]
+
+[Not applicable — Lite track or fully-specified increment]
+
 ## 2. Glossary & Definitions
 | Term | Definition | Do NOT confuse with |
 |------|-----------|---------------------|
@@ -113,9 +134,9 @@ flowchart TD
 [Consolidated table or list linking each FR/NFR to its pass/fail criteria]
 
 ## 10. Traceability Matrix
-| Requirement ID | Source (stakeholder need) | Verification Method |
-|---------------|-------------------------|-------------------|
-| FR-001 | User story: "As a user, I want to..." | Automated test |
+| Requirement ID | Source (stakeholder need) | Pain Point Addressed | Verification Method |
+|---------------|-------------------------|---------------------|-------------------|
+| FR-001 | User story: "As a user, I want to..." | [Pain Map row label or "None — new capability"] | Automated test |
 [Every requirement must appear in this matrix]
 
 ## 11. Open Questions

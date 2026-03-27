@@ -130,6 +130,27 @@ Verify that functional requirements are appropriately granular for downstream fe
 
 **Verdict rule**: ALL G1-G3 must be YES to PASS this group. An FR can pass G3 if it has 4+ criteria that are all variants of the SAME behavior (e.g., input validation with multiple invalid formats).
 
+### Group P: Problem Alignment Checks (P1-P4)
+
+Apply only if Section 1.3 (Problem Statement) is present in the SRS. This section is produced by Expert track projects that ran the problem framing and alignment validation steps.
+
+| # | Check | YES/NO | Evidence |
+|---|-------|--------|----------|
+| P1 | Every Pain Map row in Section 1.3 is addressed by ≥1 FR in Section 4 OR explicitly listed in Section 1.2 Out-of-Scope with a reason — no pain point is unacknowledged | | |
+| P2 | The JTBD statement in Section 1.3 is achievable by completing all Must-priority FRs in Section 4 — the stated "so I can [outcome]" is fully covered | | |
+| P3 | No FR in Section 4 has no traceable origin: no Pain Map row, no JTBD link, no scenario walkthrough step, no Hidden Requirements (E5) source — no untraced gold-plating | | |
+| P4 | Section 1.3 Alignment Validation field is populated (PASS or PARTIAL with summary) — FAIL is not acceptable at this stage | | |
+
+**Verdict rule**: ALL P1-P4 must be YES to PASS this group.
+
+**Skip rule**: If Section 1.3 is absent or marked "[Not applicable]" (Lite track projects), mark this entire group as **PASS-SKIPPED** with reason "Lite track — no Section 1.3". Do NOT fail for missing Section 1.3.
+
+**Resolution-Type guidance:**
+- P1 unaddressed pain point: USER-INPUT (business decision — exclude or build?)
+- P2 JTBD not achievable: USER-INPUT (fundamental scope decision)
+- P3 orphan FR: LLM-FIXABLE (add Source = "inferred from [walkthrough step / context]" or flag in Open Questions)
+- P4 placeholder alignment validation: LLM-FIXABLE (run backward validation from Section 1.3 data)
+
 ### Group Verdicts
 
 | Group | Checks | PASS/FAIL | Failing Checks |
@@ -140,6 +161,7 @@ Verify that functional requirements are appropriately granular for downstream fe
 | S: Structural Compliance | S1-S4 | | |
 | D: Diagram Presence & Validity | D1-D4 | | |
 | G: Granularity | G1-G3 | | |
+| P: Problem Alignment | P1-P4 | | |
 
 ### Clarification Questions (USER-INPUT items only)
 
