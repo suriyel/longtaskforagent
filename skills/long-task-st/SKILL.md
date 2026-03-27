@@ -212,7 +212,7 @@ For each user persona in SRS Stakeholders:
 
 For each scenario: set up initial state, execute step-by-step, verify intermediate states AND final outcome, clean up.
 
-**UI E2E Testing** (only if `"ui": true` features exist): Execute via Chrome DevTools MCP. Each test step should be specific and verifiable.
+**UI E2E Testing** (only if `"ui": true` features exist): Use Chrome DevTools MCP tools — `navigate_page`, `take_snapshot`, `click`/`fill`/`press_key`, `take_screenshot`, `list_console_messages`, `list_network_requests`.
 
 Write E2E tests in `tests/e2e/` or `tests/st/`. Run and record results.
 
@@ -229,7 +229,7 @@ Per-feature NFR checks were handled in feature-level ST. This step focuses on **
 
 Skip if SRS does not specify platform/browser/runtime targets.
 
-- **Cross-browser** (UI only): run E2E scenarios in each target browser; verify visual consistency; check browser-specific errors
+- **Cross-browser** (UI only): run E2E scenarios in each target browser; verify visual consistency via screenshots; check browser-specific console errors
 - **Cross-platform**: build/install/run full test suite on each target OS; verify platform-specific behavior (file paths, line endings, permissions)
 - **Runtime versions**: run full test suite for each target runtime version; verify no version-specific API issues
 

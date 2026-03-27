@@ -115,9 +115,32 @@ ctest --test-dir build -R integration -V
 
 ### UI E2E (Chrome DevTools MCP)
 
-For projects with `"ui": true` features, use Chrome DevTools MCP as the default execution vehicle.
-Each test step in the test case document should be specific enough to be translated into a browser
-automation call. Steps typically follow: navigate → verify initial state → interaction → verify state change → check for errors.
+For projects with `"ui": true` features, use Chrome DevTools MCP tools directly:
+
+```
+1. navigate_page → url: <ui_entry from feature>
+2. take_snapshot → capture initial state
+3. click/fill/press_key → simulate user interaction
+4. take_snapshot → verify state change
+5. list_console_messages → check for errors
+6. list_network_requests → verify API calls
+7. take_screenshot → visual evidence
+```
+
+**Multi-step workflow pattern:**
+```
+Scenario: User completes checkout flow
+  navigate_page → /products
+  click → "Add to Cart" button
+  navigate_page → /cart
+  take_snapshot → verify cart has item
+  click → "Checkout" button
+  fill_form → payment details
+  click → "Pay" button
+  wait_for → "Order confirmed"
+  take_snapshot → verify confirmation page
+  list_console_messages → zero errors
+```
 
 ### CLI E2E
 
@@ -230,8 +253,18 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 
 ### Cross-Browser (UI Projects)
 
-Run UI E2E scenarios in each target browser using available browser automation tools.
-Verify visual consistency and check for browser-specific errors.
+Use Chrome DevTools MCP with different user agents:
+
+```
+# Emulate different browsers
+emulate → userAgent: "Mozilla/5.0 ... Firefox/120.0"
+emulate → viewport: { width: 1920, height: 1080 }
+navigate_page → target URL
+take_screenshot → evidence
+
+# Mobile emulation
+emulate → viewport: { width: 375, height: 812, isMobile: true, hasTouch: true }
+```
 
 ### Cross-Platform (CLI/Library)
 
