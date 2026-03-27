@@ -3,3 +3,7 @@
 # Enterprise MCP tool binding renders (project-local, generated from .md.template)
 .long-task-bindings/
 __pycache__/
+
+# Temporary development files
+scripts/.long-task-plugin-root
+scripts/init_project.py
