@@ -37,7 +37,7 @@ python scripts/check_st_readiness.py feature-list.json
     ```
   - Extract PID and port from the first 30 lines
   - Run "Verify Services Running" health checks from `env-guide.md` — must respond before proceeding
-  - If start fails: check the log, diagnose root cause; try corrected commands (port conflict, env vars, missing deps); once a working command is confirmed **update `env-guide.md`** (Services table + Start command); if the fix needs >2 steps, extract to `scripts/svc-<slug>-start.sh` and reference from env-guide.md; then report to user via `AskUserQuestion`
+  - If start fails: check the log, diagnose root cause; try corrected commands (port conflict, env vars, missing deps); once a working command is confirmed **update `env-guide.md`** (Services table + Start command); if the fix needs >2 steps, extract to `scripts/svc-<slug>-start.sh` and reference from env-guide.md
   - **Record info**: PIDs and ports in `task-progress.md` — required for Step 11 cleanup
 - Read `feature-list.json` — note `tech_stack`, `quality_gates`, `constraints[]`, `assumptions[]`
 - Read SRS — extract all FR-xxx, NFR-xxx, IFR-xxx, CON-xxx requirements; read Stakeholders, User Personas, and Glossary sections
@@ -145,7 +145,7 @@ For each user persona in SRS Stakeholders:
 
 For each scenario: set up initial state, execute step-by-step, verify intermediate states AND final outcome, clean up.
 
-**UI E2E Testing** (only if `"ui": true` features exist): Use {{ cap_ui_platform }} tools — `{{ cap_ui_navigate }}`, `{{ cap_ui_snapshot }}`, `{{ cap_ui_click }}`/`{{ cap_ui_fill }}`/`{{ cap_ui_key }}`, `{{ cap_ui_screenshot }}`, `{{ cap_ui_console }}`, `{{ cap_ui_network }}`.
+**UI E2E Testing** (only if `"ui": true` features exist): Use {{ cap_ui_platform }} for browser-based E2E verification.
 
 Write E2E tests in `tests/e2e/` or `tests/st/`. Run and record results.
 
@@ -227,7 +227,7 @@ Generate `docs/plans/YYYY-MM-DD-st-report.md` with these sections:
 
 ### 12. Verdict
 
-Present the ST report summary and Go/No-Go recommendation to the user via `AskUserQuestion`:
+Determine the Go/No-Go verdict based on exit criteria. Record in the ST report:
 - **Go**: All exit criteria met, no open Critical/Major defects, RTM 100% covered
 - **Conditional-Go**: Minor/Cosmetic defects deferred, all critical paths verified
 - **No-Go**: Open Critical/Major defects, NFR thresholds not met, or RTM gaps

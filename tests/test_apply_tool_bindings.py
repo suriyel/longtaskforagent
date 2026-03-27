@@ -267,7 +267,7 @@ class TestFindTemplates:
     def test_templates_found(self):
         root = find_plugin_root()
         templates = find_templates(root)
-        assert len(templates) >= 6
+        assert len(templates) >= 5
 
     def test_template_output_paths_are_md_files(self):
         root = find_plugin_root()
@@ -328,20 +328,4 @@ class TestRenderActualTemplates:
         assert "your_ci_server__coverage" in result
         assert "your_ci_server__mutation" in result
 
-    def test_e2e_prompt_default_uses_chrome_devtools(self):
-        """Default e2e prompt should use Chrome DevTools tool names."""
-        ctx = build_context(None)
-        root = find_plugin_root()
-        e2e_tmpl = root / "skills" / "long-task-feature-st" / "prompts" / "e2e-scenario-prompt.md.template"
-        result = render_template(e2e_tmpl, ctx)
-        assert "navigate_page" in result
-        assert "Chrome DevTools MCP" in result
-
-    def test_e2e_prompt_enterprise_uses_enterprise_tools(self):
-        """Enterprise e2e prompt should use enterprise browser tool names."""
-        bindings = self._enterprise_bindings()
-        ctx = build_context(bindings)
-        root = find_plugin_root()
-        e2e_tmpl = root / "skills" / "long-task-feature-st" / "prompts" / "e2e-scenario-prompt.md.template"
-        result = render_template(e2e_tmpl, ctx)
-        assert "your_browser_server__navigate" in result
+    # e2e-scenario-prompt.md.template was removed (MCP mapping logic simplified)

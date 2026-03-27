@@ -125,12 +125,6 @@ Read all input artifacts for the target feature:
 - Only example → infer structure from example, use example's style
 - Neither → use the built-in default template (ISO/IEC/IEEE 29119-3)
 
-### 2b. Load UI Execution Protocol (for `"ui": true` features)
-
-If the target feature has `"ui": true`, read `skills/long-task-feature-st/prompts/e2e-scenario-prompt.md`. This provides mandatory rules for generating Chrome DevTools MCP-executable E2E test scenarios. Apply these rules during Step 3 for all UI category test cases.
-
-**Why**: Without this prompt, UI test cases tend to be simple page-load checks. The prompt ensures each test step maps to a concrete MCP tool call (`navigate_page`, `click`, `fill`, `take_snapshot`, `evaluate_script`, `list_console_messages`) and follows the three-layer detection model. Chrome DevTools MCP is the **primary** testing vehicle for UI features in this skill.
-
 ### 3. Derive Test Cases
 
 For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) mapped to this feature, generate **one or more** test cases. The Feature Design Test Inventory (§7) and boundary matrix (§5c) provide additional test case sources.
@@ -141,17 +135,14 @@ For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) ma
 |----------|--------|------------------|
 | `functional` | FUNC | Always — happy path + error path for every feature |
 | `boundary` | BNDRY | Always — edge cases, limits, empty/max/zero values |
-| `ui` | UI | Only when `"ui": true` — Chrome DevTools MCP interaction + visual verification |
+| `ui` | UI | Only when `"ui": true` — browser-based interaction + visual verification |
 | `security` | SEC | When feature handles user input, auth, or external data |
 | `performance` | PERF | Only when traceable to NFR-xxx with performance metrics |
 
 **UI test case enrichment (mandatory for `"ui": true` features):**
-- Every UI category test case MUST have ≥ 5 steps in the test step table
-- Every step MUST specify the Chrome DevTools MCP tool that executes it (`navigate_page`, `click`, `fill`, `take_snapshot`, `evaluate_script`, etc.)
-- Every test case MUST include all three detection layers (Layer 1: `evaluate_script`, Layer 2: EXPECT/REJECT, Layer 3: `list_console_messages`)
+- UI category test cases should cover navigation, interaction, and visual verification using Chrome DevTools MCP tools
 - Test cases that verify data MUST include backend integration steps (real API data, not mocked)
 - Test cases MUST test at least one negative path via UI (e.g., submit invalid form → verify error message)
-- See `skills/long-task-feature-st/prompts/e2e-scenario-prompt.md` for detailed expansion rules and examples
 
 **ATS enforcement (if ATS document exists):**
 - Read the ATS mapping table rows loaded in Step 1
@@ -184,7 +175,7 @@ Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
 - Mark as `Mock` only if the test case's primary execution path uses a mock or stub service
 - Feature-ST test cases executed against a running service (Step 7 starts services before execution) are **always `Real`** — they connect to real services
 
-**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, raise it as a specification gap.
+**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, document it as a specification gap in the test case document and proceed with best interpretation from SRS.
 
 ### 4. UI Test Case Requirements (only if `"ui": true`)
 
@@ -192,36 +183,14 @@ For UI features, test cases consolidate previously separate concerns:
 
 **a) Functional UI testing** — navigation, interaction, state changes:
 - Navigation path from `ui_entry` or specific route
-- Interaction sequence: `click`, `fill`, `press_key` steps
-- EXPECT/REJECT clauses (mandatory for every UI test step)
+- Interaction sequence using Chrome DevTools MCP tools
+- Expected results for each interaction step
 
 **b) UCD compliance** — style token verification:
 - Reference which UCD color palette tokens apply to verified elements
 - Reference which typography scale values apply
 - Reference which spacing tokens apply
 - This replaces the separate U1-U4 review check for individual elements
-
-**c) Accessibility** — WCAG 2.1 AA:
-- Keyboard navigability for interactive elements
-- Color contrast verification against WCAG minimum ratios
-- ARIA attributes and semantic HTML verification
-- Screen reader compatibility notes
-
-**d) Console error gate:**
-- Every UI test case MUST include a post-step check: `list_console_messages(types=["error"])` must return 0
-- Exception: if test explicitly expects console errors, note with `[expect-console-error: <pattern>]`
-
-**e) Three-layer detection:**
-- Layer 1: Automated error detection script via `evaluate_script()` — reference `skills/long-task-tdd/references/ui-error-detection.md`
-- Layer 2: EXPECT/REJECT format in test steps
-- Layer 3: Console error gate
-
-**f) MCP tool call mapping:**
-- Each test step's "操作" column must be specific enough to map to a single Chrome DevTools MCP tool call
-- BAD: "检查登录页面" — which tool? what to check?
-- GOOD: "`navigate_page(url='/login')` → `wait_for(['Sign In'])` → `take_snapshot()` → 验证 EXPECT: 邮箱输入框, 密码输入框, 登录按钮"
-- The test step table becomes a **script** that can be mechanically translated into Chrome DevTools MCP calls
-- See `skills/long-task-feature-st/prompts/e2e-scenario-prompt.md` for the full MCP tool → test step mapping table
 
 ### 5. Write Test Case Document
 
@@ -279,11 +248,11 @@ Since implementation code already exists (TDD and Quality Gates are complete), e
 - **UI test cases CANNOT be skipped for any reason** — UI verification is mandatory
 - No test case may be skipped
 - Do not merge or simplify the test case execution process
-- **UI test cases MUST use Chrome DevTools MCP for verification**
+- **UI test cases require browser-based verification**
 
 1. **Start services** per Service Management above — follow env-guide.md start protocol with output capture; record PID and port in `task-progress.md`
 2. For **non-UI test cases**: verify by running relevant test commands or manual checks against the running system
-3. For **UI test cases**: execute via Chrome DevTools MCP following the step tables — see `skills/long-task-feature-st/prompts/e2e-scenario-prompt.md` for MCP tool mapping
+3. For **UI test cases**: execute via Chrome DevTools MCP
 4. Update the traceability matrix `结果` column to `PASS` or `FAIL` for each case
 4b. Update the **Real Test Case Execution Summary** table in the test case document:
    - Count all `Real` cases from the traceability matrix and their PASS/FAIL status
@@ -321,8 +290,8 @@ Always start from a known-clean state. Do not assume services are already runnin
   - Integration bugs (frontend-backend communication)
 - **No bypass allowed** for any reason:
   - "Simple feature" — still needs test cases
-  - "UI tests are complex" — **UI test cases CANNOT be skipped; use Chrome DevTools MCP**
-  - "Browser testing is too complex" — **UI test cases MUST use Chrome DevTools MCP for verification**
+  - "UI tests are complex" — **UI test cases CANNOT be skipped**
+  - "Browser testing is too complex" — **UI test cases require browser-based verification**
   - "This is a frontend bug, not my code" — **ALL bugs must be fixed**
   - "This is a backend bug, let someone else fix it" — **ALL bugs must be fixed**
   - "Environment temporarily unavailable" — BLOCKED, not skipped
@@ -336,9 +305,9 @@ Always start from a known-clean state. Do not assume services are already runnin
 - **Complete after Quality Gates**: All test cases must be written, validated, and executed after TDD and quality gates pass
 - **Immutable after generation**: Test case documents are written and executed in this step and not modified after generation. Changes require the `long-task-increment` skill
 - **Traceability mandatory**: Every test case traces to a requirement; every `srs_trace` requirement traces to a test case
-- **UI consolidation**: For UI features, this skill consolidates functional, UCD compliance, and accessibility testing into unified test cases
+- **UI consolidation**: For UI features, this skill consolidates functional and UCD compliance testing into unified test cases
 - **Template flexibility**: Users can override the default ISO/IEC/IEEE 29119 template with custom templates and style examples
-- **UI tests are mandatory**: For features with `"ui": true`, UI category test cases are NON-SKIPPABLE — they MUST use Chrome DevTools MCP for browser-based verification. There is no alternative or workaround.
+- **UI tests are mandatory**: For features with `"ui": true`, UI category test cases are NON-SKIPPABLE and require browser-based verification.
 - **ALL bugs must be fixed**: Any bug discovered during ST testing — whether frontend, backend, or integration — MUST be fixed before the feature can be marked as passing. There is no "not my code" exemption.
 
 ---

@@ -1,6 +1,6 @@
 ---
 name: long-task-feature-st
-description: "Use after quality gates pass in a long-task project — independently manages test environment lifecycle (start/cleanup), executes black-box acceptance testing per feature via Chrome DevTools MCP, generates ISO/IEC/IEEE 29119 compliant test case documents"
+description: "Use after quality gates pass in a long-task project — independently manages test environment lifecycle (start/cleanup), executes black-box acceptance testing per feature, generates ISO/IEC/IEEE 29119 compliant test case documents"
 ---
 
 # Feature-ST — SubAgent Dispatch
@@ -35,8 +35,7 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-feature-st/references/feature-st-execution.md
 2. Follow the checklist exactly (Steps 1-7): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Cleanup
-3. For UI features (ui: true), also read: {skills_root}/long-task-feature-st/prompts/e2e-scenario-prompt.md
-4. Return your result using the Structured Return Contract at the end of the execution rules
+3. Return your result using the Structured Return Contract at the end of the execution rules
 
 ## Input Parameters
 - Feature ID: {feature_id}
@@ -60,7 +59,7 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 ## Key Constraints
 - Do NOT mark the feature as "passing" in feature-list.json — only report results
 - You MUST manage service lifecycle: start before tests, cleanup after all tests
-- UI test cases MUST use Chrome DevTools MCP — no skip, no alternative
+- UI test cases require browser-based verification — no skip
 - If environment cannot start after 3 attempts, set Verdict to BLOCKED
 - ALL test cases must be executed one by one — no skipping
 ```
@@ -89,16 +88,13 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
 
 - **`### Verdict: FAIL`**
   1. Read the Issues table — identify which test cases failed (case IDs, actual vs expected)
-  2. Escalate to user via `AskUserQuestion`:
-     - Include failed case IDs, step details, actual vs expected from the Issues table
-     - Options: "Fix code and re-execute" / "Modify test case via long-task-increment skill" / "Terminate cycle"
-  3. If user chooses fix: apply fix, then re-dispatch SubAgent for re-execution
+  2. Record failure in `task-progress.md`. Fix code and re-dispatch SubAgent for re-execution.
+  3. If fix fails after 2 attempts, set Verdict to BLOCKED
   4. **No bypass allowed** — a FAIL here blocks the feature from proceeding to Persist
 
 - **`### Verdict: BLOCKED`**
-  1. Read the Issues table — identify the blocker (service won't start, MCP unavailable, etc.)
-  2. Escalate to user via `AskUserQuestion` with blocker details
-  3. If blocker resolved, re-dispatch SubAgent
+  1. Read the Issues table — identify the blocker (service won't start, environment unavailable, etc.)
+  2. Record blocker in `task-progress.md`. If blocker is resolvable, attempt fix and re-dispatch SubAgent.
 
 ## Integration
 

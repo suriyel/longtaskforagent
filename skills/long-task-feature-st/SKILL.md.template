@@ -64,7 +64,7 @@ Manage services explicitly using `env-guide.md`. No hooks handle this automatica
 4. **If start fails**: check the log file, diagnose root cause
    - Try corrected commands (port conflict, missing env vars, env not activated, missing dependencies)
    - Once a working command is found: **update `env-guide.md`** — fix the Services table row and Start command; if the fix requires >2 shell commands, extract to `scripts/svc-<slug>-start.sh` / `scripts/svc-<slug>-start.ps1` and update env-guide.md to call the script
-   - Report to user via `AskUserQuestion`: include original error, fix applied, note that env-guide.md was updated — do NOT proceed until service is healthy
+   - Set Verdict to BLOCKED if service cannot be started after 3 attempts
 
 ### Cleanup (after all test cases complete) — MANDATORY
 
@@ -129,12 +129,6 @@ Read all input artifacts for the target feature:
 - Only example → infer structure from example, use example's style
 - Neither → use the built-in default template (ISO/IEC/IEEE 29119-3)
 
-### 2b. Load UI Execution Protocol (for `"ui": true` features)
-
-If the target feature has `"ui": true`, read `prompts/e2e-scenario-prompt.md`. This provides mandatory rules for generating {{ cap_ui_platform }}-executable E2E test scenarios. Apply these rules during Step 3 for all UI category test cases.
-
-**Why**: Without this prompt, UI test cases tend to be simple page-load checks. The prompt ensures each test step maps to a concrete MCP tool call (`{{ cap_ui_navigate }}`, `{{ cap_ui_click }}`, `{{ cap_ui_fill }}`, `{{ cap_ui_snapshot }}`, `{{ cap_ui_eval }}`, `{{ cap_ui_console }}`) and follows the three-layer detection model. {{ cap_ui_platform }} is the **primary** testing vehicle for UI features in this skill.
-
 ### 3. Derive Test Cases
 
 For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) mapped to this feature, generate **one or more** test cases. The Feature Design Test Inventory (§7) and boundary matrix (§5c) provide additional test case sources.
@@ -145,17 +139,14 @@ For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) ma
 |----------|--------|------------------|
 | `functional` | FUNC | Always — happy path + error path for every feature |
 | `boundary` | BNDRY | Always — edge cases, limits, empty/max/zero values |
-| `ui` | UI | Only when `"ui": true` — {{ cap_ui_platform }} interaction + visual verification |
+| `ui` | UI | Only when `"ui": true` — browser-based interaction + visual verification |
 | `security` | SEC | When feature handles user input, auth, or external data |
 | `performance` | PERF | Only when traceable to NFR-xxx with performance metrics |
 
 **UI test case enrichment (mandatory for `"ui": true` features):**
-- Every UI category test case MUST have ≥ 5 steps in the test step table
-- Every step MUST specify the {{ cap_ui_platform }} tool that executes it (`{{ cap_ui_navigate }}`, `{{ cap_ui_click }}`, `{{ cap_ui_fill }}`, `{{ cap_ui_snapshot }}`, `{{ cap_ui_eval }}`, etc.)
-- Every test case MUST include all three detection layers (Layer 1: `{{ cap_ui_eval }}`, Layer 2: EXPECT/REJECT, Layer 3: `{{ cap_ui_console }}`)
+- UI category test cases should cover navigation, interaction, and visual verification using {{ cap_ui_platform }} tools
 - Test cases that verify data MUST include backend integration steps (real API data, not mocked)
 - Test cases MUST test at least one negative path via UI (e.g., submit invalid form → verify error message)
-- See `prompts/e2e-scenario-prompt.md` for detailed expansion rules and examples
 
 **Minimum coverage:**
 - Every feature MUST have at least one FUNC and one BNDRY test case
@@ -181,7 +172,7 @@ Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
 - Mark as `Mock` only if the test case's primary execution path uses a mock or stub service
 - Feature-ST test cases executed against a running service (Step 7 starts services before execution) are **always `Real`** — they connect to real services
 
-**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, raise it as a specification gap via `AskUserQuestion`.
+**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, document it as a specification gap in the test case document and proceed with best interpretation from SRS.
 
 ### 4. UI Test Case Requirements (only if `"ui": true`)
 
@@ -189,30 +180,14 @@ For UI features, test cases consolidate previously separate concerns:
 
 **a) Functional UI testing** — navigation, interaction, state changes:
 - Navigation path from `ui_entry` or specific route
-- Interaction sequence: `{{ cap_ui_click }}`, `{{ cap_ui_fill }}`, `{{ cap_ui_key }}` steps
-- EXPECT/REJECT clauses (mandatory for every UI test step)
+- Interaction sequence using {{ cap_ui_platform }} tools
+- Expected results for each interaction step
 
 **b) UCD compliance** — style token verification:
 - Reference which UCD color palette tokens apply to verified elements
 - Reference which typography scale values apply
 - Reference which spacing tokens apply
 - This replaces the separate U1-U4 review check for individual elements
-
-**c) Console error gate:**
-- Every UI test case MUST include a post-step check: `{{ cap_ui_console }}(types=["error"])` must return 0
-- Exception: if test explicitly expects console errors, note with `[expect-console-error: <pattern>]`
-
-**d) Three-layer detection:**
-- Layer 1: Automated error detection script via `{{ cap_ui_eval }}()` — reference `skills/long-task-tdd/references/ui-error-detection.md`
-- Layer 2: EXPECT/REJECT format in test steps
-- Layer 3: Console error gate
-
-**e) MCP tool call mapping:**
-- Each test step's "操作" column must be specific enough to map to a single {{ cap_ui_platform }} tool call
-- BAD: "检查登录页面" — which tool? what to check?
-- GOOD: "`{{ cap_ui_navigate }}(url='/login')` → `{{ cap_ui_wait }}(['Sign In'])` → `{{ cap_ui_snapshot }}()` → 验证 EXPECT: 邮箱输入框, 密码输入框, 登录按钮"
-- The test step table becomes a **script** that can be mechanically translated into {{ cap_ui_platform }} calls
-- See `prompts/e2e-scenario-prompt.md` for the full MCP tool → test step mapping table
 
 ### 5. Write Test Case Document
 
@@ -249,11 +224,11 @@ Since implementation code already exists (TDD and Quality Gates are complete), e
 - **UI test cases CANNOT be skipped for any reason** — UI verification is mandatory
 - No test case may be skipped
 - Do not merge or simplify the test case execution process
-- **UI test cases MUST use {{ cap_ui_platform }} for verification**
+- **UI test cases require browser-based verification**
 
 1. **Start services** per Service Management above — follow env-guide.md start protocol with output capture; record PID and port in `task-progress.md`
 2. For **non-UI test cases**: verify by running relevant test commands or manual checks against the running system
-3. For **UI test cases**: execute via {{ cap_ui_platform }} following the step tables — see `prompts/e2e-scenario-prompt.md` for MCP tool mapping
+3. For **UI test cases**: execute via {{ cap_ui_platform }}
 4. Update the traceability matrix `结果` column to `PASS` or `FAIL` for each case
 4b. Update the **Real Test Case Execution Summary** table in the test case document:
    - Count all `Real` cases from the traceability matrix and their PASS/FAIL status
@@ -262,8 +237,8 @@ Since implementation code already exists (TDD and Quality Gates are complete), e
 5. **Stop services** per Service Management cleanup above
 
 **If any test case FAILS:**
-- Report to user via `AskUserQuestion` with: failed case ID, step details, actual vs expected
-- Options: fix code and re-execute / modify test case via the `long-task-increment` skill / terminate cycle
+- Record failure details in `task-progress.md` (case ID, step details, actual vs expected)
+- Fix code and re-execute. If fix fails after 2 attempts, set Verdict to BLOCKED.
 - A failure here blocks the feature from proceeding to Persist
 
 **If all test cases PASS:**
@@ -283,7 +258,7 @@ def test_valid_order_creation():
 Always start from a known-clean state. Do not assume services are already running.
 
 - Start services per Service Management above; verify health endpoint before running any test cases
-- If service fails to start after diagnosis: **BLOCKED** — report to user via `AskUserQuestion` with service details and options (fix/start manually/terminate)
+- If service fails to start after diagnosis: **BLOCKED** — set Verdict to BLOCKED with service details
 - After start: verify app is responding before running any test cases
 
 ### Failure Is Not Bypassable
@@ -293,14 +268,11 @@ Always start from a known-clean state. Do not assume services are already runnin
   - Frontend bugs (UI rendering, interaction, state)
   - Backend bugs (API errors, data persistence, logic)
   - Integration bugs (frontend-backend communication)
-- Must report to user via `AskUserQuestion`:
-  - Failed case ID(s), failed step number, actual vs expected
-  - Bug category (frontend/backend/integration)
-  - Options: fix code and re-execute / modify test case via the `long-task-increment` skill / terminate
+- Record failure details in `task-progress.md`. Fix code and re-execute.
 - **No bypass allowed** for any reason:
   - "Simple feature" — still needs test cases
-  - "UI tests are complex" — **UI test cases CANNOT be skipped; use {{ cap_ui_platform }}**
-  - "Browser testing is too complex" — **UI test cases MUST use {{ cap_ui_platform }} for verification**
+  - "UI tests are complex" — **UI test cases CANNOT be skipped**
+  - "Browser testing is too complex" — **UI test cases require browser-based verification**
   - "This is a frontend bug, not my code" — **ALL bugs must be fixed**
   - "This is a backend bug, let someone else fix it" — **ALL bugs must be fixed**
   - "Environment temporarily unavailable" — BLOCKED, not skipped
@@ -316,7 +288,7 @@ Always start from a known-clean state. Do not assume services are already runnin
 - **Traceability mandatory**: Every test case traces to a requirement; every `srs_trace` requirement traces to a test case
 - **UI consolidation**: For UI features, this skill consolidates functional and UCD compliance testing into unified test cases
 - **Template flexibility**: Users can override the default ISO/IEC/IEEE 29119 template with custom templates and style examples
-- **UI tests are mandatory**: For features with `"ui": true`, UI category test cases are NON-SKIPPABLE — they MUST use {{ cap_ui_platform }} for browser-based verification. There is no alternative or workaround.
+- **UI tests are mandatory**: For features with `"ui": true`, UI category test cases are NON-SKIPPABLE and require browser-based verification.
 - **ALL bugs must be fixed**: Any bug discovered during ST testing — whether frontend, backend, or integration — MUST be fixed before the feature can be marked as passing. There is no "not my code" exemption.
 
 ## Integration

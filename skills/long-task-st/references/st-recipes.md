@@ -16,13 +16,13 @@ Per-language/framework recipes for each ST test category. Select recipes based o
 - `supertest` against running Express/Fastify — preferred over `msw` for internal APIs
 
 **External third-party service testing strategy (priority order):**
-1. **Prefer real tests** — ask user (via `AskUserQuestion`) for test credentials / sandbox environment (e.g., Stripe test key, GitHub personal token)
-2. **User confirms unavailable** — only when user explicitly confirms they cannot provide credentials, use contract tests (mocks)
-3. **Record decision** — note in ST plan Classification table: `External (user confirmed no credentials)` as mock authorization
+1. **Prefer real tests** — use test credentials from `required_configs` or environment (e.g., Stripe test key, GitHub personal token)
+2. **If unavailable** — use contract tests (mocks) and record the reason
+3. **Record decision** — note in ST plan Classification table: `External (credentials unavailable)` as mock authorization
 
 **Mocks are allowed ONLY when:**
-- External third-party service (e.g., Stripe API, GitHub API) AND user confirmed via `AskUserQuestion` that test credentials are unavailable
-- Must record user confirmation in ST plan as mock authorization basis
+- External third-party service (e.g., Stripe API, GitHub API) AND test credentials are not available in `required_configs` or environment
+- Must record reason in ST plan as mock authorization basis
 
 ### Python
 ```bash
@@ -42,7 +42,7 @@ pytest tests/integration/ --cov=src --cov-report=term-missing
 - Use `pytest` fixtures for shared state setup/teardown
 - Use `sqlite:///:memory:` or `testcontainers` for database integration [Real]
 - Use `httpx` against running server for internal API integration [Real]
-- Use `unittest.mock.patch` or `requests-mock` for external service boundaries only [Contract] — requires user confirmation that real credentials are unavailable
+- Use `unittest.mock.patch` or `requests-mock` for external service boundaries only [Contract] — requires documented reason when credentials unavailable
 
 ### JavaScript / TypeScript
 ```bash
@@ -62,7 +62,7 @@ npx jest tests/integration/ --verbose
 - Use `beforeAll`/`afterAll` for shared state
 - Use `testcontainers` for database integration [Real]
 - Use `supertest` against running Express/Fastify app for internal API integration [Real]
-- Use `msw` (Mock Service Worker) for external service boundaries only [Contract] — requires user confirmation that real credentials are unavailable
+- Use `msw` (Mock Service Worker) for external service boundaries only [Contract] — requires documented reason when credentials unavailable
 
 ### Java
 ```bash
@@ -97,7 +97,7 @@ ctest --test-dir build -R integration -V
 **Patterns:**
 - Use `gtest` fixtures for shared state
 - Test IPC, shared memory, file I/O between modules [Real]
-- Use mock libraries (`gmock`, `fff`) for external boundaries only [Contract] — requires user confirmation that real credentials are unavailable
+- Use mock libraries (`gmock`, `fff`) for external boundaries only [Contract] — requires documented reason when credentials unavailable
 
 ---
 
@@ -115,32 +115,7 @@ ctest --test-dir build -R integration -V
 
 ### UI E2E (Chrome DevTools MCP)
 
-For projects with `"ui": true` features, use Chrome DevTools MCP tools directly:
-
-```
-1. navigate_page → url: <ui_entry from feature>
-2. take_snapshot → capture initial state
-3. click/fill/press_key → simulate user interaction
-4. take_snapshot → verify state change
-5. list_console_messages → check for errors
-6. list_network_requests → verify API calls
-7. take_screenshot → visual evidence
-```
-
-**Multi-step workflow pattern:**
-```
-Scenario: User completes checkout flow
-  navigate_page → /products
-  click → "Add to Cart" button
-  navigate_page → /cart
-  take_snapshot → verify cart has item
-  click → "Checkout" button
-  fill_form → payment details
-  click → "Pay" button
-  wait_for → "Order confirmed"
-  take_snapshot → verify confirmation page
-  list_console_messages → zero errors
-```
+For projects with `"ui": true` features, use Chrome DevTools MCP tools for browser-based E2E verification. Refer to the Chrome DevTools MCP documentation for available tools and usage patterns.
 
 ### CLI E2E
 
@@ -253,18 +228,7 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 
 ### Cross-Browser (UI Projects)
 
-Use Chrome DevTools MCP with different user agents:
-
-```
-# Emulate different browsers
-emulate → userAgent: "Mozilla/5.0 ... Firefox/120.0"
-emulate → viewport: { width: 1920, height: 1080 }
-navigate_page → target URL
-take_screenshot → evidence
-
-# Mobile emulation
-emulate → viewport: { width: 375, height: 812, isMobile: true, hasTouch: true }
-```
+Use Chrome DevTools MCP device emulation for cross-browser and mobile testing.
 
 ### Cross-Platform (CLI/Library)
 

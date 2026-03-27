@@ -37,7 +37,7 @@ python scripts/check_st_readiness.py feature-list.json
     ```
   - Extract PID and port from the first 30 lines
   - Run "Verify Services Running" health checks from `env-guide.md` — must respond before proceeding
-  - If start fails: check the log, diagnose root cause; try corrected commands (port conflict, env vars, missing deps); once a working command is confirmed **update `env-guide.md`** (Services table + Start command); if the fix needs >2 steps, extract to `scripts/svc-<slug>-start.sh` and reference from env-guide.md; then report to user via `AskUserQuestion`
+  - If start fails: check the log, diagnose root cause; try corrected commands (port conflict, env vars, missing deps); once a working command is confirmed **update `env-guide.md`** (Services table + Start command); if the fix needs >2 steps, extract to `scripts/svc-<slug>-start.sh` and reference from env-guide.md
   - **Record info**: PIDs and ports in `task-progress.md` — required for Step 11 cleanup
 - Read `feature-list.json` — note `tech_stack`, `quality_gates`, `constraints[]`, `assumptions[]`
 - Read SRS — extract all FR-xxx, NFR-xxx, IFR-xxx, CON-xxx requirements; read Stakeholders, User Personas, and Glossary sections
@@ -133,7 +133,7 @@ Test cross-feature interactions. Read `references/st-recipes.md` for language-sp
 <HARD-GATE>
 Every internal cross-feature boundary MUST have at least one real integration test (real DB, real HTTP, real file system). Contract tests (mocks) do NOT satisfy this gate.
 
-For external third-party boundaries: first ask the user (via `AskUserQuestion`) to provide test credentials or sandbox environment. Only if the user confirms they cannot provide credentials may contract-only tests be used — record the user's confirmation in the ST plan as mock authorization.
+For external third-party boundaries: if test credentials are available in `required_configs` or environment, write real integration tests. Otherwise, use contract tests and record the reason in the Mock Authorization column.
 </HARD-GATE>
 
 For each pair of features sharing data, state, or API boundaries:
@@ -155,10 +155,9 @@ For each pair of features sharing data, state, or API boundaries:
 - If real service cannot start: boundary is **BLOCKED** (not skipped) — diagnose via env-guide.md
 
 **External boundary protocol:**
-1. Use `AskUserQuestion` to ask user for test credentials/sandbox environment
-2. If user provides → write real integration tests (preferred)
-3. If user confirms cannot provide → use contract tests; record in Mock Authorization column
-4. Never assume mock is acceptable without asking user first
+1. Check `required_configs` and environment for test credentials/sandbox environment
+2. If available → write real integration tests (preferred)
+3. If unavailable → use contract tests; record reason in Mock Authorization column
 
 Write integration tests in `tests/integration/` or `tests/st/`. Tag each test:
 ```python
@@ -212,7 +211,7 @@ For each user persona in SRS Stakeholders:
 
 For each scenario: set up initial state, execute step-by-step, verify intermediate states AND final outcome, clean up.
 
-**UI E2E Testing** (only if `"ui": true` features exist): Use Chrome DevTools MCP tools — `navigate_page`, `take_snapshot`, `click`/`fill`/`press_key`, `take_screenshot`, `list_console_messages`, `list_network_requests`.
+**UI E2E Testing** (only if `"ui": true` features exist): Use Chrome DevTools MCP for browser-based E2E verification.
 
 Write E2E tests in `tests/e2e/` or `tests/st/`. Run and record results.
 
@@ -321,7 +320,7 @@ If exit 1 (no records) OR `retro_authorized` is absent/false → skip to Verdict
 
 ### 12. Verdict
 
-Present the ST report summary and Go/No-Go recommendation to the user via `AskUserQuestion`:
+Determine the Go/No-Go verdict based on exit criteria. Record in the ST report:
 - **Go**: All exit criteria met, no open Critical/Major defects, RTM 100% covered
 - **Conditional-Go**: Minor/Cosmetic defects deferred, all critical paths verified
 - **No-Go**: Open Critical/Major defects, NFR thresholds not met, or RTM gaps
@@ -357,7 +356,7 @@ If No-Go → skip (loop back to Worker for fixes; Finalize runs after eventual G
 - **ST report before verdict** — document first, then decide; never skip the report
 - **No new features during ST** — ST tests the integrated system as-is
 - **ATS categories are binding** — if ATS exists, `check_ats_coverage.py --strict` must exit 0; every required category must have test coverage
-- **Real integration tests required per boundary** — internal boundaries need ≥1 real test; external boundaries need user confirmation before mock is allowed
+- **Real integration tests required per boundary** — internal boundaries need ≥1 real test; external boundaries should use real credentials when available; contract tests with documented reason when unavailable
 - **Full-pipeline smoke test mandatory** — at least one real end-to-end data path must be verified before E2E scenarios
 - **Defect escape analysis required** — every defect must be classified by "Escaped From" source to identify systemic testing gaps
 
