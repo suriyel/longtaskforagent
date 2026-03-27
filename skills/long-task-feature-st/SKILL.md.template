@@ -189,6 +189,22 @@ For UI features, test cases consolidate previously separate concerns:
 - Reference which spacing tokens apply
 - This replaces the separate U1-U4 review check for individual elements
 
+**c) Backend integration verification** (when feature depends on backend APIs):
+- Test cases MUST verify real data from backend — not hardcoded or mocked data
+- Include at least one data mutation + persistence scenario: create/update/delete via UI → verify backend persisted → refresh page → verify UI reflects the change
+- Include at least one error state scenario: what the UI shows when backend returns error (500/503/timeout) — verify user-friendly error message
+- Include at least one empty state scenario: what the UI shows when backend returns empty data — verify the empty state is visually correct per UCD
+
+**d) Cross-page workflow** (when feature spans multiple pages):
+- Test the complete workflow across page transitions (page A → action → page B → verify → page C → verify)
+- Do NOT test pages in isolation — the E2E value comes from the transitions
+- Each page transition should verify the new page loaded without errors
+
+**e) State mutation verification** (when feature creates/updates/deletes data):
+- Perform mutation via UI → navigate away from current page → navigate back → verify the mutation persisted
+- This confirms backend persistence, not just frontend state
+- Verify related views also reflect the change (e.g., create order → order list shows new order → dashboard counter incremented)
+
 ### 5. Write Test Case Document
 
 Output file: `docs/test-cases/feature-{id}-{slug}.md`
