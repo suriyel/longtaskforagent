@@ -61,7 +61,8 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 - You MUST manage service lifecycle: start before tests, cleanup after all tests
 - UI test cases require browser-based verification — no skip
 - If environment cannot start after 3 attempts, set Verdict to BLOCKED
-- ALL test cases must be executed one by one — no skipping
+- ALL automated test cases must be executed one by one — no skipping
+- Manual test cases (已自动化: No) must NOT be executed by SubAgent — mark as PENDING-MANUAL in the traceability matrix and include full case details in the Manual Test Cases section of the return contract
 ```
 
 ## Step 3: Dispatch SubAgent
@@ -86,15 +87,76 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
   3. If `environment_cleaned` is false, run cleanup per `env-guide.md` yourself
   4. Proceed to next step (Inline Check + Persist)
 
-- **`### Verdict: FAIL`**
-  1. Read the Issues table — identify which test cases failed (case IDs, actual vs expected)
-  2. Record failure in `task-progress.md`. Fix code and re-dispatch SubAgent for re-execution.
-  3. If fix fails after 2 attempts, set Verdict to BLOCKED
-  4. **No bypass allowed** — a FAIL here blocks the feature from proceeding to Persist
+- **`### Verdict: FAIL`** or **`### Verdict: BLOCKED`**
+  1. Read the Issues table — identify failure details
+  2. **Main Agent classifies each issue** into one of two categories:
+     - **Human manual testing** (escalate immediately via `AskUserQuestion`): missing `required_configs[]` secrets or credentials the AI cannot provide, UI verification requiring physical device or visual judgment beyond Chrome DevTools MCP capability, external human action required (third-party approval, manual account setup, hardware interaction)
+     - **AI self-fix** (everything else): code bugs causing test failures, environment startup issues, port conflicts, dependency errors, external service errors, test execution failures due to implementation issues
+  3. For AI self-fix issues: record in `task-progress.md`, fix code or environment, re-dispatch SubAgent. **No retry limit** — AI must keep fixing until resolved.
+  4. For human manual testing issues: escalate via `AskUserQuestion` with issue details. Feature stays BLOCKED until human responds.
+  5. **No bypass allowed** — every failure must be resolved (by AI or human) before proceeding to Persist.
 
-- **`### Verdict: BLOCKED`**
-  1. Read the Issues table — identify the blocker (service won't start, environment unavailable, etc.)
-  2. Record blocker in `task-progress.md`. If blocker is resolvable, attempt fix and re-dispatch SubAgent.
+### Step 4b: Manual Test Review Gate
+
+After parsing the SubAgent's verdict, check for a `### Manual Test Cases` section in the return.
+
+If **no manual test cases**: skip directly to Step 4 outcome handling (PASS/FAIL/BLOCKED above).
+
+If **manual test cases exist**:
+
+1. For each manual test case row, call `AskUserQuestion` with this format:
+
+   ```
+   Manual Test Required: {Case ID}
+
+   Test Objective: {Test Objective from table}
+   Reason for manual testing: {Manual Reason from table}
+
+   Preconditions:
+   {Preconditions from table}
+
+   Test Steps:
+   {Test Steps Summary from table}
+
+   Verification Points:
+   {Verification Points from table}
+
+   ---
+   Please perform this test and respond with:
+   Line 1: PASS or FAIL
+   Line 2: What you observed
+   Line 3: Evidence (screenshot path, log excerpt, or "none")
+
+   Example response:
+   PASS
+   Login page renders correctly with all expected form fields
+   /tmp/screenshots/login-page.png
+
+   To skip this test temporarily, respond: SKIP {reason}
+   ```
+
+2. Parse the human response:
+   - First line: extract `PASS`, `FAIL`, or `SKIP`
+   - If first line cannot be parsed: re-prompt ONCE with:
+     `Could not parse your response. Please respond with PASS, FAIL, or SKIP on the first line.`
+   - If still unparseable after re-prompt: record as `BLOCKED` with raw response as evidence
+
+3. Record result:
+   - `PASS` → update traceability matrix `结果` to `MANUAL-PASS`, record observation
+   - `FAIL` → update traceability matrix `结果` to `MANUAL-FAIL`, record observation
+   - `SKIP {reason}` → update traceability matrix `结果` to `BLOCKED`, record reason
+     (preserves the "no bypass" principle — BLOCKED is tracked, not silently skipped)
+
+4. After all manual cases are collected:
+   - Update the test case document (`docs/test-cases/feature-{id}-{slug}.md`):
+     - Set each manual case's traceability matrix `结果` to the collected result
+     - Update the **Manual Test Case Summary** section counts
+   - Re-evaluate the feature-level verdict:
+     - If SubAgent verdict was PASS AND all manual cases are `MANUAL-PASS` → final verdict **PASS**
+     - If any manual case is `MANUAL-FAIL` → final verdict **FAIL** (same as automated failure)
+     - If any manual case is `BLOCKED` → final verdict **BLOCKED**
+
+5. Proceed with the final verdict to Step 4 outcome handling (existing PASS/FAIL/BLOCKED logic above).
 
 ## Integration
 

@@ -173,8 +173,8 @@ Context to carry forward (paths only — SubAgent reads file contents itself):
 Output: `docs/test-cases/feature-{id}-{slug}.md` (written by SubAgent)
 
 **Hard Gate:**
-- Any execution failure (environment or test case) must be reported to user via `AskUserQuestion`
 - **No bypass allowed** — cannot skip ST for any reason
+- Main Agent classifies failures per feature-st SKILL.md: AI self-fix issues (code bugs, env issues) are resolved autonomously with no retry limit; only issues requiring human manual testing (missing credentials, physical device, visual judgment) escalate via `AskUserQuestion`
 
 ### 10. Inline Compliance Check (no SubAgent)
 
@@ -296,7 +296,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "I'll update release notes at the end" | Update after every commit. |
 | "Mutation score is probably OK" | Run mutation tests and read the report. |
 | "The UI looks correct to me" | Run automated detection + EXPECT/REJECT. |
-| "ST test case failed but the code is fine" | Report to user. No bypass. Fix code or use the `long-task-increment` skill to modify test case. |
+| "ST test case failed but the code is fine" | No bypass. AI must fix code and re-dispatch — no retry limit. If test spec is wrong, use `long-task-increment` to modify. Only escalate if issue genuinely requires human manual testing. |
 | "Port is busy, let me kill manually" | Use env-guide.md "Stop All Services" (port fallback) to kill it, then restart via env-guide.md Start — update env-guide.md if the command needed correction. |
 | "Environment is down, skip ST cases" | BLOCKED, not skipped. Fix environment or ask user. |
 | "This deprecated feature still needs work" | Skip it. Deprecated features are excluded. |
