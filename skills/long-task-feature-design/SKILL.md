@@ -66,7 +66,9 @@ You are a Feature Design execution SubAgent.
 - Write the complete design document to {output_path}
 - Every section (§2-§6) must be COMPLETE or have "N/A — [reason]"
 - Test Inventory negative ratio must be >= 40%
-- Test Inventory main categories (FUNC/BNDRY/SEC/UI/PERF) must cover all ATS-required categories for this feature's requirement(s)
+- Test Inventory main categories (FUNC/BNDRY/SEC/UI/PERF/INTG) must cover all ATS-required categories for this feature's requirement(s)
+- Features with external dependencies must have ≥1 INTG row per dependency type; pure-computation features: "INTG: N/A"
+- Features with `"ui": true` MUST have a complete Visual Rendering Contract (§Visual Rendering Contract): all visual elements listed, rendering technology specified, positive rendering assertions defined. "N/A" is only valid for `"ui": false`. For each positive rendering assertion, at least one `UI/render` Test Inventory row must exist. Missing rows → FAIL.
 - Do NOT start TDD — only produce the design document
 ```
 
@@ -88,9 +90,15 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
 
 - **`### Verdict: PASS`**
   1. Verify the design document file exists at `output_path`
-  2. Extract Next Step Inputs: `feature_design_doc`, `test_inventory_count`, `tdd_task_count`
-  3. Record in `task-progress.md`: "Feature Design: PASS ({N} test scenarios, {M} TDD tasks)"
-  4. Proceed to TDD (Steps 5-7)
+  2. **Visual Rendering Contract spot-check (ui:true only):** The main Agent (not the SubAgent) reads the `## Visual Rendering Contract` section from the produced document and verifies:
+     - At least one visual element is listed with a concrete DOM/Canvas selector (not generic like "the page" or "the UI")
+     - Rendering technology is specified (Canvas 2D / WebGL / DOM / SVG / CSS)
+     - At least one positive rendering assertion references a specific visual outcome (not just "element is visible")
+     - The number of `UI/render` rows in the Test Inventory matches or exceeds the number of Visual Rendering Contract elements
+     - **If any check fails**: re-dispatch SubAgent with feedback: "Visual Rendering Contract is incomplete — [specific gap]. A blank page that passes Layer 1 error detection is NOT acceptable. Every visual element the user should see must be listed with a testable selector and assertion."
+  3. Extract Next Step Inputs: `feature_design_doc`, `test_inventory_count`, `tdd_task_count`
+  4. Record in `task-progress.md`: "Feature Design: PASS ({N} test scenarios, {M} TDD tasks)"
+  5. Proceed to TDD (Steps 5-7)
 
 - **`### Verdict: FAIL`**
   1. Read the Issues table — identify which sections are incomplete

@@ -40,6 +40,27 @@
 - [e.g., why threshold defaults to 0.6, why parameter X is optional]
 - **Cross-feature contract alignment**: If this feature appears in Design §6.2 as Provider or Consumer, the corresponding methods' signatures must match the §6.2 schemas. Note the Contract ID (e.g., IAPI-001) for traceability.
 
+## Visual Rendering Contract (ui: true only)
+
+> N/A — [reason, e.g., "backend-only feature, no visual output"]
+
+| Visual Element | DOM/Canvas Selector | Rendered When | Visual State Variants | Minimum Dimensions | Data Source |
+|----------------|---------------------|---------------|----------------------|-------------------|-------------|
+| [e.g., snake body segments] | `canvas#game-board` or `div.snake-segment` | [on game tick / on page load] | [alive=green, dead=red, paused=grey] | [20x20px per cell] | [GameState.segments[]] |
+
+**Rendering technology**: [Canvas 2D / WebGL / DOM elements / SVG / CSS animation]
+**Entry point function**: [e.g., `GameRenderer.draw()` called from `gameLoop()`]
+**Render trigger**: [e.g., requestAnimationFrame loop / event-driven / reactive state]
+
+**Positive rendering assertions** (after trigger, these MUST be visually present):
+- [ ] [Element 1 is drawn/visible with dimensions > 0]
+- [ ] [Element 2 shows data from state]
+- [ ] [Container is not empty / canvas has non-transparent pixels]
+
+**Interactive depth assertions** (rendered elements MUST respond to their designed interactions — rendering without interaction is a "display-only" defect):
+- [ ] [Element 1 responds to [key press / click / drag] → visual output changes]
+- [ ] [Element 2 updates on [state change / user input] → displayed data refreshes]
+
 ## Internal Sequence Diagram
 
 [Mermaid `sequenceDiagram` showing method-to-method calls WITHIN this feature's implementation. Cover main success path + at least one error path per Raises entry.]
@@ -99,6 +120,14 @@ END
 | B  | FUNC/error | §Interface Contract Raises | [trigger condition] | [exception type + msg] | [missing branch] |
 | C  | BNDRY/edge | §Algorithm boundary table | [edge value] | [exact behavior] | [off-by-one or missing guard] |
 | D  | FUNC/state | §State Diagram transition | [pre-state + event] | [post-state] | [missing guard condition] |
+| E  | INTG/db    | §Interface Contract + required_configs | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
+| F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
+| G  | UI/render  | §Visual Rendering Contract | [page loaded, game started] | [canvas has non-transparent pixels / DOM element visible with dimensions > 0] | [render function never called / canvas blank / DOM element not appended] |
+
+Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF, INTG` and subtag is a free-form label.
+
+If the feature has no external dependencies (pure computation, no IO, no DB, no network), add an explicit note:
+> INTG: N/A — pure function, no external I/O
 
 ## Tasks
 
@@ -141,4 +170,6 @@ END
 - [ ] Boundary table covers all algorithm parameters
 - [ ] Error handling table covers all Raises entries
 - [ ] Test Inventory negative ratio >= 40%
+- [ ] Visual Rendering Contract complete for ui:true features (all visual elements listed, positive rendering assertions defined)
+- [ ] Each Visual Rendering Contract element has ≥1 UI/render Test Inventory row
 - [ ] Every skipped section has explicit "N/A — [reason]"

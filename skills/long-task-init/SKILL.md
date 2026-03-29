@@ -176,7 +176,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - Each FR-xxx → one or more features with `id`, `category`, `title`, `description`, `priority`, `status` (always `"failing"`), `srs_trace`, `dependencies`
    - Each feature MUST include `srs_trace`: an array of SRS requirement IDs (e.g. `["FR-001", "FR-002"]`) that this feature implements
    - `verification_steps` is OPTIONAL — if provided, should trace to SRS acceptance criteria (Given/When/Then)
-   - For UI features: set `"ui": true`, optionally `"ui_entry": "/path"`; include `[devtools]`-prefixed verification steps if verification_steps are provided
+   - For UI features: set `"ui": true`, `"ui_entry": "/path"` (mandatory — specify the URL where this feature's UI is accessed); include at least one `[devtools]`-prefixed verification step asserting **positive visual presence** of the feature's primary rendered output (not just error absence). Example: `"[devtools] /game | EXPECT: canvas#game-board with rendered game elements (snake segments, food item, score display), game board grid visible | REJECT: blank canvas, empty game container, 'undefined' in score"`
    - **If verification_steps are provided** — quality rules (drives downstream ST case and TDD quality):
      - Each step MUST be a behavioral scenario with Given/When/Then structure, not a simple assertion
      - BAD: `"Login page displays correctly"` → no action, no assertion

@@ -161,14 +161,16 @@ For `"ui": true` features, UI category test cases **MUST** be generated and **CA
 | `fill(uid, value)` | Input text or select options |
 | `press_key(key)` | Keyboard interactions |
 | `evaluate_script(error_detector)` | Layer 1: JavaScript error detection |
+| `evaluate_script(positive_render_checker, selectors, canvasIds)` | Layer 1b: Positive rendering verification — asserts expected visual elements are present (not just error-free) |
 | `list_console_messages(["error"])` | Layer 3: Console error verification |
 | `take_screenshot()` | Visual verification capture |
 
 ### Required Elements for UI Test Cases
 
 1. **Navigation path**: The URL or route to navigate to (from `ui_entry` or specific route)
-2. **Three-Layer Detection** (all three layers are mandatory):
+2. **Four-Layer Detection** (all layers are mandatory for ui:true):
    - **Layer 1**: `evaluate_script(error_detector)` — automated JavaScript error detection after page load and after each interaction
+   - **Layer 1b**: `evaluate_script(positive_render_checker, selectors, canvasIds)` — positive rendering verification: asserts expected visual elements are present and visible (not just error-free). Selectors and canvasIds come from the Feature Design Visual Rendering Contract. `missingCount > 0` is a hard FAIL.
    - **Layer 2**: EXPECT/REJECT clauses in `take_snapshot()` — explicit element/state verification
    - **Layer 3**: `list_console_messages(["error"])` — console error gate at end of test case
 3. **Console error gate**: Post-step check — `list_console_messages(types=["error"])` must return 0

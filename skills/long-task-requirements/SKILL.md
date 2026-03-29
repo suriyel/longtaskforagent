@@ -254,6 +254,7 @@ Apply the EARS template to each functional requirement:
 
 For each requirement, also write:
 - **Acceptance criteria** — at least one concrete Given/When/Then scenario
+- **Visual output** (if ui-facing) — one sentence describing what the user sees change (rendering intent, not rendering specification). E.g., "The snake's position on the game board updates visually after each tick." Write "N/A — backend-only" for FRs with no user-visible output. This field gives downstream phases (Feature Design, TDD) explicit visual language to derive rendering contracts from.
 - **Priority** — Must / Should / Could / Won't (MoSCoW)
 - **Source** — which stakeholder need or user story this traces to
 

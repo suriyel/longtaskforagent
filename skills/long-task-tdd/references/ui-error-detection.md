@@ -242,6 +242,131 @@ The `[expect-console-error: <pattern>]` suffix allows specific error patterns. O
    - Any errors > 0 → FAIL
 ```
 
+## Layer 1b: Positive Rendering Verification Script
+
+Layer 1 (error detection) catches **broken** rendering. Layer 1b catches **missing** rendering — visual elements that should exist but don't. A blank canvas with zero errors passes Layer 1 but MUST FAIL Layer 1b.
+
+### Script
+
+Execute via `evaluate_script()` with parameters from the Feature Design Visual Rendering Contract:
+
+```javascript
+async (selectors, canvasIds) => {
+  const results = { missing: [], present: [], canvasEmpty: [], missingCount: 0 };
+
+  // --- Retry wrapper for async rendering (requestAnimationFrame) ---
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 500;
+
+  async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    results.missing = [];
+    results.present = [];
+    results.canvasEmpty = [];
+
+    // 1. Check DOM elements exist and are visible
+    for (const sel of (selectors || [])) {
+      const el = document.querySelector(sel);
+      if (!el) {
+        results.missing.push({ type: 'DOM_MISSING', selector: sel });
+        continue;
+      }
+      const rect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden'
+          || style.opacity === '0' || rect.width === 0 || rect.height === 0) {
+        results.missing.push({ type: 'DOM_INVISIBLE', selector: sel,
+          width: rect.width, height: rect.height, display: style.display });
+      } else {
+        results.present.push({ selector: sel, width: rect.width, height: rect.height });
+      }
+    }
+
+    // 2. Check canvas elements have drawn content
+    for (const id of (canvasIds || [])) {
+      const canvas = document.getElementById(id);
+      if (!canvas || !canvas.getContext) {
+        results.canvasEmpty.push({ type: 'CANVAS_MISSING', id });
+        continue;
+      }
+
+      let hasContent = false;
+
+      // Auto-detect context type.
+      // IMPORTANT: This script must run AFTER the application has rendered at least
+      // one frame (i.e., after the rendering trigger fires). Calling getContext('2d')
+      // on a canvas that hasn't yet acquired a context would lock it to 2D permanently.
+      // The retry mechanism (MAX_RETRIES with RETRY_DELAY_MS) handles this by waiting
+      // for the application to initialize before checking.
+      const ctx2d = canvas.getContext('2d');
+      if (ctx2d) {
+        // Canvas 2D path
+        const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
+        hasContent = imageData.data.some((v, i) => i % 4 === 3 && v > 0); // any non-transparent pixel
+      } else {
+        // WebGL path (context already acquired as WebGL)
+        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        if (gl) {
+          const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+          gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          hasContent = pixels.some((v, i) => i % 4 === 3 && v > 0); // any non-transparent pixel
+        }
+      }
+
+      if (!hasContent) {
+        results.canvasEmpty.push({ type: 'CANVAS_BLANK', id,
+          width: canvas.width, height: canvas.height });
+      } else {
+        results.present.push({ canvasId: id, width: canvas.width, height: canvas.height });
+      }
+    }
+
+    results.missingCount = results.missing.length + results.canvasEmpty.length;
+
+    // If all elements found, no need to retry
+    if (results.missingCount === 0) break;
+
+    // Wait before retry (except on last attempt)
+    if (attempt < MAX_RETRIES) await sleep(RETRY_DELAY_MS);
+  }
+
+  return results;
+}
+```
+
+### Arguments
+
+| Parameter | Source | Description |
+|-----------|--------|-------------|
+| `selectors` | Visual Rendering Contract "DOM/Canvas Selector" column (DOM elements) | Array of CSS selectors, e.g. `["div.snake-segment", "#score-display", "button#start"]` |
+| `canvasIds` | Visual Rendering Contract "DOM/Canvas Selector" column (canvas elements) | Array of canvas element IDs, e.g. `["game-board", "minimap"]` |
+
+### Verdict
+
+- `missingCount === 0` → **PASS** — all expected visual elements are rendered
+- `missingCount > 0` (after 3 retries) → **HARD FAIL** — expected visual content is not rendered
+
+### Integration with Three-Layer Detection
+
+```
+1. navigate_page(url)
+2. wait_for(expected_text)                      ← wait for page load
+3. evaluate_script(error_detector)              ← Layer 1 — errors in existing UI
+4. evaluate_script(positive_render_checker,     ← Layer 1b — expected UI is present
+     [selectors], [canvasIds])
+5. take_snapshot()                              ← Layer 2 — EXPECT/REJECT
+6. [interactions: click, fill, etc.]
+7. evaluate_script(error_detector)              ← Layer 1 again after interactions
+8. evaluate_script(positive_render_checker, ...) ← Layer 1b again after state changes
+9. list_console_messages(["error"])             ← Layer 3
+10. Verify EXPECT/REJECT criteria              ← Layer 2
+```
+
+Layer 1 answers: "Is anything broken?" Layer 1b answers: "Is everything there?" Both must pass.
+
 ## Relationship to Other Documents
 
 | Document | Relationship |

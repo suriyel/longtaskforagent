@@ -78,6 +78,26 @@ If during feature design, a §6.2 contract is found to be incorrect, insufficien
 5. If approved: user updates §6.2 in the design doc; orchestrator re-dispatches SubAgent
 6. If rejected: SubAgent must conform to the original contract
 
+### 3b. Visual Rendering Contract (mandatory for `"ui": true`)
+
+For features with `"ui": true`, specify ALL visual elements the user must see. This contract is the source of truth for TDD Rule 7 (positive rendering tests) and Feature-ST (rendering verification).
+
+**Source data**: Read the SRS requirement's `Visual output` field (what the user sees change) + the UCD component/page prompts (how it should look) + the system design §4.N UI/UX approach.
+
+**How to fill each column**:
+- **Visual Element**: name each distinct visual thing the user sees (e.g., "snake body segments", "game board grid", "score counter", "food item"). NOT abstract concepts like "the UI" or "the page".
+- **DOM/Canvas Selector**: a concrete CSS selector (`canvas#game-board`, `div.snake-segment`, `#score-display`) or canvas element ID. Must be specific enough for `document.querySelector()` to find it.
+- **Rendered When**: the trigger that causes this element to appear (page load, game start, state change, user action)
+- **Visual State Variants**: different visual appearances based on state (alive=green, dead=red; selected=blue border, unselected=grey)
+- **Minimum Dimensions**: expected size (20x20px per cell, full viewport width, etc.)
+- **Data Source**: what data drives the rendering (GameState.segments[], API response, form input)
+
+**Positive rendering assertions**: for each element, write a testable statement of what MUST be visually present after the trigger. Not "element is visible" but "canvas has non-transparent pixels in the game board region" or "div.snake-segment count equals GameState.segments.length".
+
+**Interactive depth assertions**: for each interactive element, write what interaction it responds to and what visual change results. A rendered element that doesn't respond to its designed interaction is a "display-only" defect.
+
+> **Skip rule**: Write "N/A — backend-only feature" ONLY if `"ui": false`. If `"ui": true`, this section is mandatory and cannot be skipped — even for features that seem "mostly backend" but have `"ui": true"`.
+
 ### 4. Internal Sequence Diagram
 
 Show method-to-method calls WITHIN this feature's implementation. Unlike the system design's sequence diagram (system-wide flow), this shows the feature's own classes/functions collaborating.
@@ -146,8 +166,10 @@ Build this table as the FINAL design step — it synthesizes all sections above 
 | B  | FUNC/error | §3 Raises row | [trigger] | [exception type + msg] | [missing branch] |
 | C  | BNDRY/edge | §5c boundary table | [edge value] | [behavior] | [off-by-one] |
 | D  | FUNC/state | §6 transition | [pre-state + event] | [post-state] | [missing guard] |
+| E  | INTG/db    | §3 method + required_configs | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
+| F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
 
-Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF` and subtag is a free-form label.
+Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF, INTG` and subtag is a free-form label.
 
 Rules:
 - Minimum 1 row per SRS acceptance criterion (from srs_trace requirements)
@@ -156,6 +178,15 @@ Rules:
 - "Kills Which Bug?" names a specific wrong implementation this test catches
 
 **ATS category alignment** (if ATS doc was provided): Every main category listed in the ATS mapping table for this feature's requirement(s) MUST appear as at least one row's Category prefix in this Test Inventory. For example, if ATS requires SEC for FR-005, at least one Test Inventory row must have Category = `SEC/*`. Missing ATS categories → add rows before proceeding to §8.
+
+**Visual Rendering Coverage** (mandatory for `"ui": true`): For each positive rendering assertion in §3b (Visual Rendering Contract), add at least one `UI/render` Test Inventory row. "Traces To" = §3b Visual Rendering Contract, specific element row. "Kills Which Bug?" = the rendering failure this test catches (e.g., "render function never called", "canvas blank", "DOM element not appended"). If the Visual Rendering Contract lists N visual elements, there must be at least N `UI/render` rows.
+
+**Integration test rows (INTG category):**
+- For features with external dependencies (DB, HTTP services, file system, third-party SDK): add ≥1 `INTG/*` row per dependency type
+- Derive from: Interface Contract (§3) methods that interact with external systems + `required_configs[]` entries with connection-string keys
+- "Traces To" = §3 method + the specific external dependency
+- "Kills Which Bug?" = connection/integration failure the unit mock would miss
+- If feature is pure computation with no external deps: write "INTG: N/A — pure function, no external I/O" (mirrors TDD Rule 5 exemption)
 
 **Relationship with TDD**: This table is the PRIMARY INPUT for TDD Red (long-task-tdd Step 1). TDD Red uses this table as its starting point and may add tests per its own Rule 1-5 (category coverage, assertion quality, real test requirements). The Test Inventory provides the design-driven scenarios; TDD adds implementation-driven scenarios discovered during coding.
 
@@ -223,6 +254,8 @@ After the design is complete, decompose into TDD tasks.
 - [ ] Boundary table covers all algorithm parameters
 - [ ] Error handling table covers all Raises entries
 - [ ] Test Inventory negative ratio >= 40%
+- [ ] Visual Rendering Contract complete for ui:true features (all visual elements listed, positive rendering assertions defined, interactive depth assertions defined)
+- [ ] Each Visual Rendering Contract element has ≥1 UI/render Test Inventory row
 - [ ] Every skipped section has explicit "N/A — [reason]"
 - [ ] All functions/methods named in §4.N have at least one Test Inventory row
 
@@ -262,8 +295,9 @@ When the design document is complete, return your result in EXACTLY this format:
 | Sections Complete | N/8 | 8/8 (or N/A justified) | PASS/FAIL |
 | Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
-| Verification Checklist | N/8 | 8/8 | PASS/FAIL |
+| Verification Checklist | N/10 | 10/10 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
+| Visual Rendering Assertions | N | ≥ Visual Rendering Contract element count (ui:true) | PASS/FAIL/N/A |
 ### Issues (only if FAIL)
 | # | Severity | Description |
 |---|----------|-------------|

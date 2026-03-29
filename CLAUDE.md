@@ -353,6 +353,7 @@ using-long-task (router)
 - **Systematic debugging**: Never guess-and-fix; always trace root cause first
 - **One feature per session**: End session after completing one feature; multi-feature automation is handled by the external auto-loop script (`scripts/auto_loop.py`)
 - **UI features require Chrome DevTools MCP testing**: Mark with `"ui": true`
+- **UI features require positive rendering verification**: Feature Design must include a Visual Rendering Contract (selectors, render triggers, positive assertions + interactive depth assertions); TDD Rule 7 writes tests asserting visual elements are present AND interactive (not just error-free); Feature-ST uses Layer 1b script to verify rendering, then performs Exploratory Visual Assessment (Step 8) with 4 grading criteria (Rendering Completeness, Interactive Depth, Visual Coherence, Functional Accuracy). A blank canvas with zero errors is NOT a passing UI. "Display-only" elements that render but don't respond to interaction are Major defects.
 - **System testing before release**: When all features pass, run ST phase (regression, integration, E2E, NFR, exploratory); no release without Go verdict
 - **Hotfix before increment**: When both `bugfix-request.json` and `increment-request.json` exist, hotfix runs first; `increment-request.json` is preserved for next session
 - **Bug fixes via hotfix skill only**: Never manually add bugfix features to feature-list.json; use the `long-task-hotfix` skill so root cause is confirmed and the fix is fully traceable

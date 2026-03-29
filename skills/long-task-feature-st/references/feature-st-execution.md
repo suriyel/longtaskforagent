@@ -168,12 +168,26 @@ Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
 - Preconditions MUST list real, verifiable states
 - Verification points MUST be observable and automatable where possible
 
-**Acceptance-level focus:** Test cases confirm the implementation matches requirements from a user/system perspective — not duplicating unit test assertions. Focus on behavioral scenarios, integration paths, and end-to-end workflows.
+**Acceptance-level focus:** Test cases confirm the implementation matches requirements from a user/system perspective — not duplicating unit test assertions. Focus on behavioral scenarios and end-to-end workflows from the user/system perspective. Per-feature integration with external dependencies is verified during TDD (via INTG rows in Test Inventory). ST focuses on verifying the feature works correctly through the real running system interface.
 
 **Test type labeling (real/mock)** — for each derived test case, set the `Test Type` metadata field:
 - Mark as `Real` if the test case executes against a real running system (real DB, real HTTP service, real browser via Chrome DevTools MCP, real file system)
 - Mark as `Mock` only if the test case's primary execution path uses a mock or stub service
 - Feature-ST test cases executed against a running service (Step 7 starts services before execution) are **always `Real`** — they connect to real services
+
+**Automation feasibility labeling** — for each derived test case, set the `已自动化` metadata field:
+- `Yes` (default) — test can be executed programmatically (CLI, API, Chrome DevTools MCP)
+- `No` — test genuinely cannot be automated; requires physical device, human visual judgment, or external human action
+
+When `已自动化: No`, also set:
+- **手动测试原因 (Manual Test Reason)**: one of `physical-device`, `visual-judgment`, `external-action`, `other: {description}`
+
+**Decision authority:**
+- If ATS document exists and has `自动化可行性` column: inherit the ATS value as primary source
+- SubAgent may mark a case as `已自动化: No` during derivation if it determines the test requires physical/visual/external action, even if ATS did not flag it — but MUST document the reason
+- A case marked `Auto` in ATS SHOULD NOT be downgraded to `No` without explicit justification in the test case document
+
+**Conservative flagging**: Only mark as `已自动化: No` when automation is genuinely impossible, not merely difficult. Chrome DevTools MCP covers most UI testing; mock services cover most external dependencies. Reserve `No` for true gaps.
 
 **Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, document it as a specification gap in the test case document and proceed with best interpretation from SRS.
 
@@ -207,6 +221,24 @@ For UI features, test cases consolidate previously separate concerns:
 - Perform mutation via UI → navigate away from current page → navigate back → verify the mutation persisted
 - This confirms backend persistence, not just frontend state
 - Verify related views also reflect the change (e.g., create order → order list shows new order → dashboard counter incremented)
+
+**f) Positive rendering verification** (mandatory for all `"ui": true` features):
+
+Every UI category ST test case MUST include at least one step that verifies expected visual elements are **positively present**, not just error-free. This uses the Layer 1b positive rendering verification script from `references/ui-error-detection.md` (in long-task-tdd).
+
+For each visual element listed in the Feature Design Visual Rendering Contract (§Visual Rendering Contract of the feature design document):
+1. Navigate to the page or trigger the rendering condition specified in the contract
+2. Execute the Layer 1b positive rendering script with the element's selector/canvas ID
+3. Assert `missingCount === 0` — all expected elements are rendered and visible
+
+**Hard gate**: An ST test case that only runs the error detection script (Layer 1) without positive rendering verification (Layer 1b) is **incomplete** for UI features. A page with zero errors but no rendered game content, no rendered data, or no rendered visual elements is a FAIL.
+
+Test step example for Canvas game:
+
+| Step | 操作 | 预期结果 |
+| ---- | ---- | -------- |
+| 3 | evaluate_script(positive_render_checker, [], ['game-canvas']) | Layer 1b: missingCount = 0, canvas has non-transparent pixels |
+| 4 | evaluate_script(() => { const segments = document.querySelectorAll('.snake-segment'); return segments.length; }) | Snake segments rendered: count >= 1 |
 
 ### 5. Write Test Case Document
 
@@ -267,22 +299,30 @@ Since implementation code already exists (TDD and Quality Gates are complete), e
 - **UI test cases require browser-based verification**
 
 1. **Start services** per Service Management above — follow env-guide.md start protocol with output capture; record PID and port in `task-progress.md`
-2. For **non-UI test cases**: verify by running relevant test commands or manual checks against the running system
-3. For **UI test cases**: execute via Chrome DevTools MCP
-4. Update the traceability matrix `结果` column to `PASS` or `FAIL` for each case
+2. For **automated non-UI test cases** (`已自动化: Yes`): verify by running relevant test commands or programmatic checks against the running system
+2b. For **manual test cases** (`已自动化: No`): do NOT attempt to execute.
+   - Record `PENDING-MANUAL` in the traceability matrix `结果` column
+   - These cases will be presented to the human AFTER the SubAgent returns (via the dispatcher's Step 4b)
+   - Continue to the next test case
+3. For **UI test cases** (`已自动化: Yes`, `ui` category): execute via Chrome DevTools MCP
+4. Update the traceability matrix `结果` column:
+   - Automated cases: `PASS` or `FAIL`
+   - Manual cases: `PENDING-MANUAL` (human review happens post-SubAgent in the dispatcher)
 4b. Update the **Real Test Case Execution Summary** table in the test case document:
-   - Count all `Real` cases from the traceability matrix and their PASS/FAIL status
+   - Count all `Real` cases from the traceability matrix and their PASS/FAIL status (exclude `PENDING-MANUAL`)
    - Fill in the summary table (total / passed / failed / pending)
    - Any `Real` FAIL is a blocking failure — same consequence as any other test case failure
-5. **Stop services** per Service Management cleanup above
+4c. If manual test cases exist, update the **Manual Test Case Summary** table:
+   - Count all manual cases (all should be `PENDING-MANUAL` at this point)
+5. **Do NOT stop services yet** — if the feature is `"ui": true`, Step 8 (Exploratory Visual Assessment) requires the application to be running. Services are stopped AFTER Step 8.
 
-**If any test case FAILS:**
+**If any automated test case FAILS:**
 - Include failure details in the Issues table of the Structured Return Contract
 - A failure here blocks the feature from proceeding to Persist
 - Set Verdict to FAIL with specific case IDs and failure details
 
-**If all test cases PASS:**
-- Set Verdict to PASS
+**If all automated test cases PASS (manual cases may still be PENDING-MANUAL):**
+- Set Verdict to PASS (the dispatcher will re-evaluate after collecting manual results)
 
 Traceability between ST cases and automated tests is maintained in the ST case
 document's traceability matrix (not via code comments). See Step 5b.
@@ -313,6 +353,85 @@ Always start from a known-clean state. Do not assume services are already runnin
   - "Environment temporarily unavailable" — BLOCKED, not skipped
   - "Test case might be wrong" — set Verdict to FAIL, don't skip
 - All failures MUST be recorded in the Structured Return Contract Issues table
+
+## Step 8: Exploratory Visual Assessment (mandatory for `"ui": true`)
+
+After all scripted test cases are executed (Step 7), perform a **free-form visual assessment** of the running application. This step is inspired by the GAN-style generator-evaluator pattern: the scripted tests verify specification compliance, but the exploratory assessment catches issues that scripted tests miss — "display-only" features without interactive depth, visual incoherence, and rendering gaps invisible to mechanical checks.
+
+**Do NOT skip this step.** This is where you act as a skeptical QA evaluator, not a generator defending its own work.
+
+### 8a. Navigate and Screenshot
+
+1. Start from the feature's `ui_entry` URL
+2. Navigate through ALL pages/views related to this feature
+3. At each page: `take_screenshot()` → visually study the result
+4. Interact with every rendered element: click buttons, hover links, type into inputs, scroll containers, trigger animations
+5. Record what you observe — do NOT assume anything works until you verify it
+
+### 8b. Grade Against Visual Quality Criteria
+
+Score each criterion 1-5 using the anchors below. **Any criterion scoring ≤ 2 is a FAIL.**
+
+**Score anchors** (apply to ALL criteria):
+- **1**: Complete absence — nothing related to this criterion is present
+- **2**: Minimal/broken — some elements exist but core content is missing or non-functional (e.g., canvas exists but is blank; form renders but can't submit)
+- **3**: Partial — core content present with notable gaps (e.g., game board renders but some visual elements missing; data list shows items but pagination broken)
+- **4**: Complete with minor gaps — all expected elements rendered and interactive, minor polish issues (e.g., alignment slightly off; one state variant not styled)
+- **5**: Fully complete — all Visual Rendering Contract elements present, interactive, correctly styled, reflecting real data
+
+| Criterion | Weight | What to assess | Failure signals |
+|-----------|--------|----------------|-----------------|
+| **Rendering Completeness** | High | Are ALL visual elements from the Visual Rendering Contract actually rendered and visible? Is the core visual content present (game board, data visualization, interactive canvas), not just chrome (buttons, menus, headers)? | Blank canvas, empty containers, placeholder text, "display-only" UI with no actual content rendered |
+| **Interactive Depth** | High | Do rendered elements actually respond to user interaction? Can the user perform the feature's core action through the UI, not just see static elements? | Buttons that don't respond, canvas with no input handling, forms that don't submit, game board that doesn't update on key press |
+| **Visual Coherence** | Medium | Does the UI feel like a coherent whole? Are colors, typography, spacing, and layout consistent? Do elements align to a grid? | Misaligned elements, inconsistent spacing, clashing colors, mixed font sizes with no hierarchy |
+| **Functional Accuracy** | Medium | Does the rendered output reflect actual data/state? Does the score display match the game state? Does the list show real items? | Hardcoded placeholder data, counters showing 0 when data exists, stale state after interactions |
+
+**Anti-leniency rules (read these before grading):**
+- "Looks OK at first glance" is not a passing grade — **click every interactive element**
+- A page that renders a header and sidebar but has a blank main content area is a **FAIL on Rendering Completeness**, even if the header and sidebar look perfect
+- "The core logic works in unit tests" is irrelevant — you are grading what the **user sees and can interact with in the browser**
+- If you find yourself writing "this is acceptable because..." — STOP. That is leniency bias. Grade what you see, not what you wish were there.
+- A snake game where the canvas is blank but the score counter works is a **FAIL** — the canvas IS the feature
+- A form that renders all fields but doesn't submit is a **FAIL on Interactive Depth** — rendering without interaction is display-only
+
+### 8c. "Display-Only" Detection
+
+For each rendered element from the Visual Rendering Contract, verify it has **interactive depth** — not just visual presence:
+
+| Element Type | Presence Check (Layer 1b) | Interactive Depth Check (this step) |
+|-------------|--------------------------|-------------------------------------|
+| Canvas (game) | Has non-transparent pixels | Responds to keyboard/mouse input; game state updates; visual output changes |
+| Form | Input fields visible | Fields accept input; submit triggers action; validation fires |
+| Data display | Elements visible with content | Reflects real data; updates on state change; pagination/scroll works |
+| Navigation | Links/buttons visible | Click navigates to correct route; back button works |
+| Interactive widget | Widget rendered | Drag, resize, toggle, slider — the interaction it's designed for actually works |
+
+If any element passes Layer 1b (presence) but fails interactive depth → record as **"Display-Only Defect"** in the Issues table with severity **Major**.
+
+### 8d. Record Assessment
+
+Add to the Structured Return Contract:
+
+```markdown
+### Visual Assessment (ui:true only)
+| Criterion | Score (1-5) | Evidence |
+|-----------|-------------|----------|
+| Rendering Completeness | N | [what was/wasn't rendered] |
+| Interactive Depth | N | [what responded/didn't respond to interaction] |
+| Visual Coherence | N | [alignment, spacing, color consistency observations] |
+| Functional Accuracy | N | [data correctness observations] |
+
+Display-Only Defects: [count]
+[list each: element, what it renders, what interaction it lacks]
+```
+
+**Verdict impact:** Any criterion ≤ 2 OR any Display-Only Defect → overall Verdict is **FAIL**.
+
+### 8e. Service Cleanup (after Visual Assessment)
+
+**Stop services** per Service Management cleanup above. For non-UI features, this was done in Step 7.5. For UI features, it is deferred to here because Step 8 requires a running application.
+
+---
 
 ## Critical Rules
 
@@ -350,13 +469,28 @@ When all test cases are executed (or if blocked), return your result in EXACTLY 
 | SEC Cases | N | ≥1 (if applicable) | PASS/FAIL |
 | PERF Cases | N | ≥0 | PASS/FAIL |
 | Execution Pass Rate | N/M | M/M | PASS/FAIL |
+| Manual Cases | N | N/A | INFO |
+| Visual Assessment Min Score | N | ≥3 (if ui:true) | PASS/FAIL/N/A |
+| Display-Only Defects | N | 0 (if ui:true) | PASS/FAIL/N/A |
+### Visual Assessment (only if ui:true)
+| Criterion | Score (1-5) | Evidence |
+|-----------|-------------|----------|
+| Rendering Completeness | N | [observations] |
+| Interactive Depth | N | [observations] |
+| Visual Coherence | N | [observations] |
+| Functional Accuracy | N | [observations] |
 ### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |
 |---|----------|-------------|
 | 1 | Critical/Major/Minor | [failed case ID, step details, actual vs expected] |
+### Manual Test Cases (only if any 已自动化: No cases exist)
+| Case ID | Test Objective | Manual Reason | Preconditions | Test Steps Summary | Verification Points |
+|---------|---------------|---------------|---------------|-------------------|---------------------|
+| ST-FUNC-005-003 | {objective} | visual-judgment | {preconditions} | {summarized steps} | {verification points} |
 ### Next Step Inputs
 - st_case_path: docs/test-cases/feature-{id}-{slug}.md
 - st_case_count: [total number of test cases]
+- manual_case_count: [number of manual test cases, 0 if none]
 - environment_cleaned: true/false
 ```
 

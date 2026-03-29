@@ -34,7 +34,7 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-feature-st/references/feature-st-execution.md
-2. Follow the checklist exactly (Steps 1-7): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Cleanup
+2. Follow the checklist exactly (Steps 1-8): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Visual Assessment (ui:true) → Cleanup
 3. Return your result using the Structured Return Contract at the end of the execution rules
 
 ## Input Parameters
@@ -63,6 +63,7 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 - If environment cannot start after 3 attempts, set Verdict to BLOCKED
 - ALL automated test cases must be executed one by one — no skipping
 - Manual test cases (已自动化: No) must NOT be executed by SubAgent — mark as PENDING-MANUAL in the traceability matrix and include full case details in the Manual Test Cases section of the return contract
+- For `"ui": true` features: after scripted tests, you MUST perform the Exploratory Visual Assessment (Step 8). Navigate the live application yourself via Chrome DevTools MCP, screenshot every page, click every interactive element, and grade against the 4 visual quality criteria. You are an independent QA evaluator, not the developer — be skeptical. A blank canvas with working buttons is a FAIL. "Display-only" elements that render but don't respond to interaction are Major defects.
 ```
 
 ## Step 3: Dispatch SubAgent
@@ -83,9 +84,10 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
 
 - **`### Verdict: PASS`**
   1. Extract Next Step Inputs: `st_case_path`, `st_case_count`, `environment_cleaned`
-  2. Record in `task-progress.md`: "Feature-ST: PASS ({N} cases, all passed)"
-  3. If `environment_cleaned` is false, run cleanup per `env-guide.md` yourself
-  4. Proceed to next step (Inline Check + Persist)
+  2. If feature is `"ui": true`: extract Visual Assessment scores. If any score ≤ 2 or Display-Only Defects > 0, treat as FAIL (SubAgent should have already done this, but double-check).
+  3. Record in `task-progress.md`: "Feature-ST: PASS ({N} cases, all passed)" — for ui:true, append visual assessment min score
+  4. If `environment_cleaned` is false, run cleanup per `env-guide.md` yourself
+  5. Proceed to next step (Inline Check + Persist)
 
 - **`### Verdict: FAIL`** or **`### Verdict: BLOCKED`**
   1. Read the Issues table — identify failure details

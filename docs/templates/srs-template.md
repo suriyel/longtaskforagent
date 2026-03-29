@@ -71,6 +71,7 @@ graph LR
 ### FR-001: <Title>
 **Priority**: Must
 **EARS**: When <trigger>, the system shall <action>.
+**Visual output** (if ui-facing): [One sentence: what the user sees change. e.g., "The snake's position on the game board updates visually after each tick." Write "N/A — backend-only" if this FR has no user-visible output.]
 **Acceptance Criteria**:
 - Given <context>, when <action>, then <expected result>
 - Given <error context>, when <action>, then <error handling>

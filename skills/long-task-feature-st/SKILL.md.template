@@ -205,6 +205,17 @@ For UI features, test cases consolidate previously separate concerns:
 - This confirms backend persistence, not just frontend state
 - Verify related views also reflect the change (e.g., create order → order list shows new order → dashboard counter incremented)
 
+**f) Positive rendering verification** (mandatory for all `"ui": true` features):
+
+Every UI category ST test case MUST include at least one step that verifies expected visual elements are **positively present**, not just error-free. Use the Layer 1b positive rendering verification script.
+
+For each visual element listed in the Feature Design Visual Rendering Contract:
+1. Navigate to the page or trigger the rendering condition specified in the contract
+2. Execute the Layer 1b positive rendering script with the element's selector/canvas ID
+3. Assert `missingCount === 0` — all expected elements are rendered and visible
+
+**Hard gate**: A page with zero errors but no rendered game content, data, or visual elements is a FAIL.
+
 ### 5. Write Test Case Document
 
 Output file: `docs/test-cases/feature-{id}-{slug}.md`
@@ -250,7 +261,7 @@ Since implementation code already exists (TDD and Quality Gates are complete), e
    - Count all `Real` cases from the traceability matrix and their PASS/FAIL status
    - Fill in the summary table (total / passed / failed / pending)
    - Any `Real` FAIL is a blocking failure — same consequence as any other test case failure
-5. **Stop services** per Service Management cleanup above
+5. **Do NOT stop services yet** — if the feature is `"ui": true`, Step 8 (Exploratory Visual Assessment) requires the application to be running. Services are stopped AFTER Step 8.
 
 **If any test case FAILS:**
 - Record failure details in `task-progress.md` (case ID, step details, actual vs expected)
@@ -294,6 +305,19 @@ Always start from a known-clean state. Do not assume services are already runnin
   - "Environment temporarily unavailable" — BLOCKED, not skipped
   - "Test case might be wrong" — use the `long-task-increment` skill to modify, don't skip
 - All failures MUST be recorded in `task-progress.md`
+
+### 8. Exploratory Visual Assessment (mandatory for `"ui": true`)
+
+After all scripted test cases pass (Step 7), perform a free-form visual assessment of the running application before stopping services. Navigate through ALL pages/views related to this feature via {{ cap_ui_platform }}, screenshot each page, interact with every rendered element, and grade against these criteria (score 1-5, any ≤ 2 is FAIL):
+
+| Criterion | Weight | What to assess |
+|-----------|--------|----------------|
+| **Rendering Completeness** | High | Are ALL visual elements from the Visual Rendering Contract actually rendered? Is core visual content present, not just chrome? |
+| **Interactive Depth** | High | Do rendered elements respond to interaction? Can the user perform the feature's core action? |
+| **Visual Coherence** | Medium | Consistent colors, typography, spacing, layout? |
+| **Functional Accuracy** | Medium | Does rendered output reflect actual data/state? |
+
+After grading, **stop services** per Service Management cleanup.
 
 ## Critical Rules
 

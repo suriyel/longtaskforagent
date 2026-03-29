@@ -187,6 +187,41 @@ Reference: `testing-anti-patterns.md` Anti-Pattern #15 (all-mock real test / moc
 
 See `references/ui-error-detection.md` for the full detection script and integration sequence.
 
+**Rule 7: Positive Rendering Verification** (when `"ui": true`)
+
+Rule 6 detects UI **errors** (broken rendering). Rule 7 verifies UI **presence** (elements that must exist but don't).
+
+For each `UI/render` row in the Feature Design Test Inventory (§7), write a test that:
+
+1. **Triggers** the rendering condition (page load, game start, state change)
+2. **Asserts positive presence** via `evaluate_script()`:
+   - **Canvas 2D**: verify canvas has non-transparent pixels in expected region via `getImageData()`, OR verify render function was called with expected arguments
+   - **WebGL**: use `readPixels()` on the WebGL context (not `getImageData()` which is Canvas 2D only)
+   - **DOM-based**: `querySelector(selector)` returns non-null, `getBoundingClientRect()` returns width > 0 and height > 0, `getComputedStyle(el).display !== 'none'`
+   - **SVG-based**: SVG element exists in DOM with non-zero bounding box
+3. **Asserts content correctness** (not just existence):
+   - Element count matches expected state (e.g., snake has N segments)
+   - Element content reflects data source (e.g., score display matches game state)
+   - Visual state variant matches logical state (e.g., alive snake is green)
+4. **Asserts interactive depth** (not just display):
+   - If the element is designed for user interaction (game canvas, form, button, widget), write at least one test that triggers the interaction and verifies the rendered output changes
+   - Canvas game: simulate key press → verify canvas pixels changed (game state advanced)
+   - Form: fill input → verify input value displayed; submit → verify response rendered
+   - Widget: click/drag → verify visual state updated
+   - A rendered element that does not respond to its designed interaction is a **"display-only" defect** — the rendering pipeline exists but the input→render wiring is broken
+
+A page that passes all Rule 6 checks (no errors) but has no rendered game content MUST FAIL Rule 7. A blank canvas with zero errors is NOT a passing UI. A canvas that renders a game board but ignores keyboard input is a display-only defect.
+
+**Minimum**: one positive rendering test per `UI/render` Test Inventory row.
+
+See `references/ui-error-detection.md` § Layer 1b for the reusable positive rendering verification script.
+
+**Contract-implementation drift protocol**: If during TDD Green the implementation uses different selectors, canvas IDs, or component structures than the Visual Rendering Contract specifies:
+1. Update the Visual Rendering Contract in the feature design document to match actual implementation
+2. Re-verify that all positive rendering assertions still have corresponding UI/render Test Inventory rows
+3. Commit the updated contract alongside the implementation code
+4. Reason: selector mismatches cause confusing test failures (wrong selector, not missing rendering). Keep the contract as living documentation that matches reality.
+
 ### After Writing Tests
 
 Run the test suite. **All tests must FAIL.** If any test passes → it tests nothing useful, rewrite it.
