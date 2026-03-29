@@ -220,6 +220,11 @@ Record in `task-progress.md`:
 - Git commit (include implementation, tests, **test case document**)
   > **For `category: "bugfix"` features**: use commit prefix `"fix:"` instead of `"feat:"`.
   > Format: `fix: <feature title without the "Fix: " prefix> (#<fixed_feature_id>)`
+- Capture the commit SHA immediately after the commit:
+  ```bash
+  git rev-parse --short HEAD
+  ```
+  Store this value as `{commit_sha}` — it is used in the next two steps.
 - Update `RELEASE_NOTES.md` (Keep a Changelog format)
   > **For `category: "bugfix"` features**: add entry under `### Fixed` (not `### Added`):
   > `- [<bug_severity>] <title without "Fix: "> (fixes #<fixed_feature_id>) — <root_cause one-line>`
@@ -233,15 +238,16 @@ Record in `task-progress.md`:
     - Quality Gates: N% line, N% branch, N% mutation
     - Feature-ST: N cases, all PASS
     - Inline Check: PASS
-    - Git: <sha> feat: title
+    - Git: {commit_sha} feat: title
     #### Risks                        ← include only if any risks were reported
     - ⚠ [Mutant] file:line — reason
     - ⚠ [Coverage] metric N% — thin margin / uncovered boundary
     - ⚠ [Dependency] lib==ver — known patch / breaking change pending
     ```
+  - **`{commit_sha}` must be the actual captured value** — never a placeholder. This ensures `task-progress.md` and `feature-list.json` carry the same verified SHA.
   - **Collecting risks**: after Step 8 (Quality) and Step 9 (Feature-ST) complete, extract every row from their `### Risks` tables; merge into a single list; append as `#### Risks` bullets only if the list is non-empty
 - Mark feature `"status": "passing"` in `feature-list.json`
-- Set `"st_case_path"` and `"st_case_count"` on the feature object in `feature-list.json`
+- Set `"st_case_path"`, `"st_case_count"`, and `"git_sha": "{commit_sha}"` on the feature object in `feature-list.json`
 - Validate:
   ```bash
   python scripts/validate_features.py feature-list.json

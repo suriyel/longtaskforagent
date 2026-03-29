@@ -307,6 +307,14 @@ def validate(path: str) -> tuple[list[str], list[str]]:
             if not isinstance(st_case_count, int) or st_case_count < 0:
                 errors.append(f"{prefix} (id={fid}): 'st_case_count' must be a non-negative integer, got {st_case_count!r}")
 
+        # Check git_sha field type (optional — set by Worker Step 11 after feature commit)
+        git_sha = feat.get("git_sha")
+        if git_sha is not None:
+            if not isinstance(git_sha, str) or not re.match(r"^[0-9a-f]{7,40}$", git_sha):
+                errors.append(
+                    f"{prefix} (id={fid}): 'git_sha' must be a hex string of 7–40 characters, got {git_sha!r}"
+                )
+
         # Check srs_trace field (optional, array of requirement IDs)
         srs_trace = feat.get("srs_trace")
         if srs_trace is not None:

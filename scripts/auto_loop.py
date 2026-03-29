@@ -149,8 +149,39 @@ def check_git_dirty(project_dir: str) -> str | None:
     return None
 
 
+def get_git_head(project_dir: str) -> str | None:
+    """Return current HEAD SHA (short), or None on error."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=project_dir,
+            timeout=10,
+        )
+        return result.stdout.strip() or None
+    except Exception:
+        return None
+
+
+def get_git_commits_since(project_dir: str, since_sha: str) -> str:
+    """Return oneline git log from since_sha..HEAD, or empty string."""
+    try:
+        result = subprocess.run(
+            ["git", "log", "--oneline", f"{since_sha}..HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=project_dir,
+            timeout=10,
+        )
+        return result.stdout.strip()
+    except Exception:
+        return ""
+
+
 def write_log(log_dir: str, iteration: int, result_text: str,
-              result_json: dict | None, feature_list_path: str) -> str:
+              result_json: dict | None, feature_list_path: str,
+              git_commits: str | None = None) -> str:
     """Write session log file. Returns log file path."""
     os.makedirs(log_dir, exist_ok=True)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
@@ -186,6 +217,10 @@ def write_log(log_dir: str, iteration: int, result_text: str,
         except Exception:
             pass
 
+        # Git commits made during this iteration
+        if git_commits:
+            lf.write(f"\n## Git Commits\n\n```\n{git_commits}\n```\n")
+
     return log_file
 
 
@@ -207,6 +242,8 @@ def run_iteration_claude(iteration: int, project_dir: str, prompt: str,
 
     header = f"\n{'='*60}\n  Iteration {iteration}\n{'='*60}\n"
     print(header, flush=True)
+
+    head_before = get_git_head(project_dir)
 
     try:
         proc = subprocess.Popen(
@@ -238,9 +275,13 @@ def run_iteration_claude(iteration: int, project_dir: str, prompt: str,
         if stderr.strip():
             print(stderr, file=sys.stderr, flush=True)
 
+        # Capture git commits made during this iteration
+        git_commits = get_git_commits_since(project_dir, head_before) if head_before else None
+
         # Write log
         log_file = write_log(log_dir, iteration, result_text,
-                             result_json, os.path.join(project_dir, "feature-list.json"))
+                             result_json, os.path.join(project_dir, "feature-list.json"),
+                             git_commits=git_commits)
 
         return proc.returncode, result_text, result_json, log_file
 
@@ -272,6 +313,8 @@ def run_iteration_opencode(iteration: int, project_dir: str, prompt: str,
     header = f"\n{'='*60}\n  Iteration {iteration}\n{'='*60}\n"
     print(header, flush=True)
 
+    head_before = get_git_head(project_dir)
+
     captured = []
     try:
         proc = subprocess.Popen(
@@ -293,8 +336,10 @@ def run_iteration_opencode(iteration: int, project_dir: str, prompt: str,
         _active_proc = None
 
         result_text = "".join(captured)
+        git_commits = get_git_commits_since(project_dir, head_before) if head_before else None
         log_file = write_log(log_dir, iteration, result_text,
-                             None, os.path.join(project_dir, "feature-list.json"))
+                             None, os.path.join(project_dir, "feature-list.json"),
+                             git_commits=git_commits)
 
         return proc.returncode, result_text, None, log_file
 

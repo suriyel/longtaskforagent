@@ -469,7 +469,8 @@ Each feature in `features` array:
   "deprecated_reason": null,
   "supersedes": null,
   "st_case_path": "docs/test-cases/feature-1-user-login.md (optional)",
-  "st_case_count": 8
+  "st_case_count": 8,
+  "git_sha": "abc1234 (optional — short commit SHA set by Worker Step 11 after feature commit)"
 }
 ```
 
@@ -482,6 +483,9 @@ ST test case fields (all optional, backward-compatible):
 - `st_case_example_path` (root): Example file path (defines style, language, detail level)
 - `st_case_path` (feature): Path to generated ST test case document
 - `st_case_count` (feature): Number of ST test cases generated for this feature
+
+Git traceability fields (all optional, backward-compatible):
+- `git_sha` (feature): Short commit SHA that completed this feature — set by Worker Step 11 via `git rev-parse --short HEAD`; same value written to `task-progress.md` `Git:` line; validated by `validate_features.py` as a 7–40 char hex string
 
 Bugfix-specific fields (all optional, only on `category: "bugfix"` features):
 - `bug_severity` (feature): Severity of the bug — `"Critical"`, `"Major"`, `"Minor"`, or `"Cosmetic"`
