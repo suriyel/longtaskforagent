@@ -13,6 +13,8 @@ Checks:
 - tech_stack.language is a supported value (if present)
 - quality_gates values are numbers between 0 and 100 (if present)
 - ui field is boolean (if present)
+- git_sha field is a valid hex string 7–40 chars (if present)
+- report_path file exists on disk (if present); warns if missing for passing features
 - ui_entry field is string (if present)
 
 Usage:
@@ -20,6 +22,7 @@ Usage:
 """
 
 import json
+import os
 import re
 import sys
 
@@ -313,6 +316,25 @@ def validate(path: str) -> tuple[list[str], list[str]]:
             if not isinstance(git_sha, str) or not re.match(r"^[0-9a-f]{7,40}$", git_sha):
                 errors.append(
                     f"{prefix} (id={fid}): 'git_sha' must be a hex string of 7–40 characters, got {git_sha!r}"
+                )
+
+        # Check report_path field (optional — set by Worker Step 11a after report generation)
+        report_path = feat.get("report_path")
+        if report_path is not None:
+            if not isinstance(report_path, str):
+                errors.append(
+                    f"{prefix} (id={fid}): 'report_path' must be a string, got {report_path!r}"
+                )
+            elif not os.path.isfile(report_path):
+                errors.append(
+                    f"{prefix} (id={fid}): report_path '{report_path}' is set but file does not exist"
+                )
+        else:
+            # report_path absent on a passing feature = warning (not error, for backward compat with old projects)
+            if feat.get("status") == "passing":
+                warnings.append(
+                    f"Feature #{fid} (passing): no report_path — "
+                    f"run Step 11a to generate docs/report/feature-{fid}-*.md"
                 )
 
         # Check srs_trace field (optional, array of requirement IDs)

@@ -262,13 +262,15 @@ Record in `task-progress.md`:
   ```bash
   python scripts/validate_features.py feature-list.json
   ```
-- Generate feature report (Step 11a) before final commit
+- **MUST execute Step 11a (Generate Feature Report) before the final commit — no bypass allowed.**
+  Do NOT run the final git commit until `docs/report/feature-{id}-{slug}-report.md` exists on disk.
 
-### 11a. Generate Feature Report
+### 11a. Generate Feature Report — MANDATORY (no bypass)
 
+**This step is non-negotiable. Every feature. No exceptions.**
 Generate a per-feature development report at `docs/report/feature-{id}-{slug}-report.md`.
 
-**Data sources** (all available from Steps 4-10, do NOT re-read docs):
+**Data sources** (use in-context data where available; read feature design doc §4 if SRS AC text is needed for Section B — one targeted read is acceptable):
 - Feature object from `feature-list.json` (id, title, category, priority, wave, srs_trace, dependencies, ui)
 - Feature design doc: `docs/features/YYYY-MM-DD-<feature-name>.md` (§3 Interface Contract, §4 SRS Requirement, §7 Test Inventory)
 - Quality Gates metrics from Step 8 SubAgent result (line %, branch %, mutation %)
@@ -287,8 +289,8 @@ Generate a per-feature development report at `docs/report/feature-{id}-{slug}-re
 
 **A. Basic Info** — Feature metadata, completion date, git SHA.
 
-**B. Requirements Consistency Briefing (需求一致性简报)** — For each `srs_trace` requirement ID:
-- Copy EARS statement + Given/When/Then ACs from feature design doc §4
+**B. Requirements Consistency Briefing (需求一致性简报)** — Read §4 (SRS Requirement) from the feature design doc (`docs/features/YYYY-MM-DD-<feature-name>.md`). For each `srs_trace` requirement ID:
+- Copy EARS statement + Given/When/Then ACs from §4
 - Map each AC to: implementing Interface Contract methods + verifying Test Inventory rows
 - Verdict per AC: **Covered** / **Partial** / **Gap**
 - Overall consistency score: N/N ACs fully covered
@@ -352,6 +354,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause, never guess-and-fix
 - **Update RELEASE_NOTES.md after every git commit**
 - **Always commit + update progress before ending session** — bridges context gap
+- **Always generate feature report before final commit** — Write `docs/report/feature-{id}-{slug}-report.md` in Step 11a; set `report_path` in feature-list.json; include the report file in the progress commit. Every feature, no exceptions.
 - **Never leave broken code** — revert incomplete work
 
 ## Red Flags
@@ -374,6 +377,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "This deprecated feature still needs work" | Skip it. Deprecated features are excluded. |
 | "Backend isn't ready but I'll mock it for now" | Dependency check exists for a reason. Develop backend features first. |
 | "I'll skip the dependency check this once" | Never skip. Reorder features so deps are satisfied. |
+| "The report can wait / I'll generate it later" | Step 11a is mandatory. Generate the report now — before the final git commit. |
 | "The SRS is ambiguous but I'll just assume..." | SubAgent should flag CLARIFY. Assumptions on critical paths (Interface Contract, Test Inventory expected results, cross-feature contracts) cause late-stage rework. Only low-impact ambiguities may be assumed. |
 
 ## On Error
