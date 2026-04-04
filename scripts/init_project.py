@@ -41,9 +41,9 @@ CLAUDE_MD_MARKER = "<!-- long-task-agent -->"
 _LONG_TASK_REFERENCE_BODY = (
     "\n\n<!-- long-task-agent -->\n"
     "## Long-Task Agent\n\n"
-    "This project uses a multi-session agent workflow with 12 skills loaded on-demand.\n"
+    "This project uses a multi-session agent workflow with 13 skills loaded on-demand.\n"
     "The `using-long-task` skill is injected at session start and routes to the correct phase.\n"
-    "Flow: Requirements (SRS) → UCD (UI projects) → Design → Init → Worker cycles → System Testing.\n"
+    "Flow: Requirements (SRS) → UCD (UI projects) → Design → ATS → Init → Worker cycles → System Testing → Finalize.\n"
     "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/UCD in place → new features appended → Worker cycles → ST.\n\n"
     "Key files: `docs/plans/*-srs.md` (SRS), `docs/plans/*-ucd.md` (UCD style guide), "
     "`docs/plans/*-design.md` (design), "
@@ -199,17 +199,17 @@ _Format: [Keep a Changelog](https://keepachangelog.com/) — Updated after every
 def create_examples_readme(project_name: str) -> str:
     return f"""# {project_name} — Examples
 
-Runnable examples demonstrating completed features. Each example corresponds to a feature in `feature-list.json`.
+Usage examples for external developers and AI Code Agents. Generated after System Testing by the `long-task-finalize` skill.
 
-## Index
+## Prerequisites
 
-| # | Feature | File | How to run |
-|---|---------|------|------------|
-| — | *(examples will be added as features are completed)* | — | — |
+*(Prerequisites will be listed when examples are generated.)*
 
----
+## Examples
 
-_Add a new row to this table each time you create an example for a completed feature._
+| # | Scenario | File | How to run |
+|---|----------|------|------------|
+| — | *(examples will be generated after System Testing)* | — | — |
 """
 
 

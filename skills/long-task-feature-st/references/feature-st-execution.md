@@ -110,6 +110,39 @@ Read all input artifacts for the target feature:
 - **Interface contracts** — API endpoints, CLI commands, UI entry points that form the observable surface of this feature
 - **Test results summary** — from TDD and Quality Gates (coverage %, mutation score)
 
+### 1b. Specification Gap Scan
+
+After loading all context and BEFORE deriving test cases, scan for specification gaps that would prevent writing correct expected results for black-box test cases.
+
+**Step 1: Load Clarification Addendum**
+Check if the Feature Design document (`docs/features/YYYY-MM-DD-<feature-name>.md`) contains a `## Clarification Addendum` section. If present, load all resolved ambiguities as authoritative constraints — these are user-approved resolutions from the Feature Design phase. Do NOT re-flag items that appear in this addendum.
+
+**Step 2: Scan for gaps using this taxonomy:**
+
+| Code | What to check |
+|------|---------------|
+| `SRS-MISSING` | For each srs_trace AC: can the expected result be derived solely from SRS + observable interface? If not, and not resolved in Clarification Addendum → flag |
+| `ATS-MISMATCH` | For each ATS-required category: does the feature's observable interface have a testable surface for this category? If not, and not resolved in Clarification Addendum → flag |
+| `DESIGN-VAGUE` | For each Feature Design Test Inventory (§7) row: is the "Expected" column specific enough to write a concrete assertion? If not → flag |
+
+**For each detected gap, produce a structured record:**
+```
+- Category: [code from taxonomy]
+- Source: [document path + section reference]
+- Description: [what is missing or vague]
+- Impact on Test Cases: [which test cases cannot be correctly specified]
+- Suggested interpretation: [SubAgent's best guess based on context, if one exists; "none" if no reasonable interpretation]
+- Question for user: [specific, actionable question that would resolve the gap]
+```
+
+**Decision gate:**
+- **Zero gaps** → proceed to Step 2 (Load Template) normally. No friction added.
+- **All gaps resolved by Clarification Addendum** from Feature Design → proceed with those resolutions. Document in test case document header: "Specification resolutions applied from Feature Design Clarification Addendum."
+- **New gaps exist but all have reasonable suggested interpretations** → proceed with assumptions. Document each in the test case document header with notation: "Assumed: [interpretation] (not user-approved)."
+- **New gaps with HIGH impact on expected results AND no reasonable interpretation** → set Verdict to `CLARIFY`. Include the full Specification Gaps table in the Structured Return Contract. Do NOT proceed to Step 2.
+
+> **On re-dispatch with Specification Gap Addendum**: If the SubAgent prompt includes a `## Specification Gap Addendum (user-approved resolutions)` section, treat those resolutions as authoritative. Do NOT re-flag them. Derive test case expected results from these resolutions.
+
 ### 2. Load Template
 
 1. Check `feature-list.json` root for `st_case_template_path`:
@@ -453,7 +486,7 @@ When all test cases are executed (or if blocked), return your result in EXACTLY 
 
 ```markdown
 ## SubAgent Result: Feature-ST
-### Verdict: PASS | FAIL | BLOCKED
+### Verdict: PASS | FAIL | BLOCKED | CLARIFY
 ### Summary
 [1-3 sentences — how many test cases derived, how many executed, key outcomes, environment status]
 ### Artifacts
@@ -487,6 +520,10 @@ When all test cases are executed (or if blocked), return your result in EXACTLY 
 | Case ID | Test Objective | Manual Reason | Preconditions | Test Steps Summary | Verification Points |
 |---------|---------------|---------------|---------------|-------------------|---------------------|
 | ST-FUNC-005-003 | {objective} | visual-judgment | {preconditions} | {summarized steps} | {verification points} |
+### Specification Gaps (only if CLARIFY)
+| # | Category | Source | Description | Impact on Test Cases | Suggested Interpretation | Question |
+|---|----------|--------|-------------|---------------------|--------------------------|----------|
+| 1 | [code] | [doc § section] | [what is missing/vague] | [which test cases affected] | [best guess or "none"] | [specific question for user] |
 ### Next Step Inputs
 - st_case_path: docs/test-cases/feature-{id}-{slug}.md
 - st_case_count: [total number of test cases]

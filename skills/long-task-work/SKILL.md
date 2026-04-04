@@ -134,6 +134,16 @@ Output: `docs/features/YYYY-MM-DD-<feature-name>.md` (written by SubAgent) — f
 2. If approved: update §6.2 in the design doc to reflect the new contract, then re-dispatch the feature-design SubAgent
 3. Propagate impact: identify Consumer features from the §6.2 Consumer column that may be affected; if any are already `"passing"`, warn user they may need re-verification
 
+**Ambiguity clarification handling**: If Feature Design SubAgent returns `CLARIFY`:
+- The feature-design skill's CLARIFY handler manages the full clarification loop internally (AskUserQuestion → collect answers → approval gate → re-dispatch with Clarification Addendum)
+- Worker does NOT need separate handling — the feature-design skill resolves CLARIFY and returns either PASS (resolved) or BLOCKED (unresolvable after 2 rounds)
+- If clarification reveals SRS deficiency (user says "SRS needs updating"):
+  1. Record gap in `task-progress.md`: "SRS gap identified during Feature Design for #{id} — user directed to long-task-increment"
+  2. Suggest to user: "Consider placing an `increment-request.json` to update the SRS before continuing with this feature"
+  3. If user approves: skip this feature, proceed to next eligible feature (or end session if none)
+  4. If user says "proceed with current interpretation": continue with the resolved clarifications
+- **Same pattern applies to Feature-ST** (Step 9): the feature-st skill's CLARIFY handler manages its own loop (max 1 round); Worker sees PASS or BLOCKED.
+
 ### 5-7. TDD Cycle (Red → Green → Refactor)
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-tdd` and follow it exactly.
 
@@ -364,6 +374,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "This deprecated feature still needs work" | Skip it. Deprecated features are excluded. |
 | "Backend isn't ready but I'll mock it for now" | Dependency check exists for a reason. Develop backend features first. |
 | "I'll skip the dependency check this once" | Never skip. Reorder features so deps are satisfied. |
+| "The SRS is ambiguous but I'll just assume..." | SubAgent should flag CLARIFY. Assumptions on critical paths (Interface Contract, Test Inventory expected results, cross-feature contracts) cause late-stage rework. Only low-impact ambiguities may be assumed. |
 
 ## On Error
 

@@ -98,6 +98,45 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
   4. For human manual testing issues: escalate via `AskUserQuestion` with issue details. Feature stays BLOCKED until human responds.
   5. **No bypass allowed** — every failure must be resolved (by AI or human) before proceeding to Persist.
 
+- **`### Verdict: CLARIFY`**
+  1. Read the Specification Gaps table — extract all categorized questions
+  2. **Cross-check**: read the Feature Design document's `## Clarification Addendum` section (at `plan_doc_path`). Filter out any gaps that were already resolved there — do NOT re-ask.
+  3. For genuinely new gaps: present to user via `AskUserQuestion`:
+     ```
+     Feature-ST Specification Gap: Feature #{feature_id} ({title})
+
+     While deriving acceptance test cases, {N} specification gap(s) were found
+     that prevent writing correct expected results. For each, a suggested interpretation
+     is provided — you may accept it, provide a different answer, or say "skip".
+
+     Gap 1 [{category}]: {description}
+       Source: {source}
+       Impact on test cases: {impact_on_test_cases}
+       Suggested: {suggested_interpretation}
+       → Your answer (or "accept" / "skip"):
+
+     Gap 2 [{category}]: ...
+     ```
+  4. Parse user responses and present approval summary:
+     ```
+     Specification Gap Summary for Feature #{feature_id}:
+     1. [{category}] {description} → Resolution: {answer}
+
+     Proceed with these resolutions? (yes / revise #N)
+     ```
+  5. If approved: construct a **Specification Gap Addendum** and re-dispatch SubAgent with original prompt PLUS:
+     ```
+     ## Specification Gap Addendum (user-approved resolutions)
+     | # | Category | Original Gap | Resolution | Authority |
+     |---|----------|-------------|------------|-----------|
+     | 1 | {category} | {description} | {resolution} | user-approved / assumed |
+
+     Apply these resolutions as authoritative. Derive test case expected results
+     from these resolutions. Do NOT re-flag them as gaps.
+     ```
+  6. Record in `task-progress.md`: "Feature-ST: CLARIFY ({N} gaps resolved) → re-dispatching"
+  7. **Max 1 clarification round** for Feature-ST (design-level ambiguities should have been caught in Feature Design; ST gaps are typically minor). If SubAgent returns `CLARIFY` again after receiving the addendum, set to BLOCKED and escalate: "Persistent specification gaps in Feature-ST. Consider using `long-task-increment` to update source documents."
+
 ### Step 4b: Manual Test Review Gate
 
 After parsing the SubAgent's verdict, check for a `### Manual Test Cases` section in the return.

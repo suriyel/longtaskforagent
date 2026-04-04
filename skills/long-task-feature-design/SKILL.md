@@ -98,7 +98,57 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
      - **If any check fails**: re-dispatch SubAgent with feedback: "Visual Rendering Contract is incomplete — [specific gap]. A blank page that passes Layer 1 error detection is NOT acceptable. Every visual element the user should see must be listed with a testable selector and assertion."
   3. Extract Next Step Inputs: `feature_design_doc`, `test_inventory_count`, `tdd_task_count`
   4. Record in `task-progress.md`: "Feature Design: PASS ({N} test scenarios, {M} TDD tasks)"
-  5. Proceed to TDD (Steps 5-7)
+  5. If `assumption_count > 0`: append to `task-progress.md`: "({K} assumptions documented in Clarification Addendum)"
+  6. Proceed to TDD (Steps 5-7)
+
+- **`### Verdict: CLARIFY`**
+  1. Read the Ambiguities table — extract all categorized questions
+  2. Present to user via `AskUserQuestion` in a structured format:
+     ```
+     Feature Design Clarification Required: Feature #{id} ({title})
+
+     While analyzing requirements and design documents, {N} ambiguity(ies) were found
+     that affect the design. For each, a suggested interpretation is provided —
+     you may accept it, provide a different answer, or say "skip" to use the suggestion as an assumption.
+
+     Ambiguity 1 [{category}]: {description}
+       Source: {source}
+       Impact: {impact}
+       Suggested: {suggested_interpretation}
+       → Your answer (or "accept" to use suggested, or "skip" to assume):
+
+     Ambiguity 2 [{category}]: ...
+     ```
+  3. Parse user responses — for each ambiguity, record:
+     - "accept" or specific answer → Resolution with Authority = "user-approved"
+     - "skip" → Resolution = suggested interpretation with Authority = "assumed"
+  4. **Approval gate**: After all answers collected, present a summary via `AskUserQuestion`:
+     ```
+     Clarification Summary for Feature #{id}:
+     1. [{category}] {description} → Resolution: {answer} (Authority: {authority})
+     2. ...
+
+     Proceed with these resolutions? (yes / revise #N)
+     ```
+     - If approved: proceed to step 5
+     - If user wants revision: re-ask specific items, then re-present summary
+  5. Construct a **Clarification Addendum** and re-dispatch the SubAgent with the original prompt PLUS:
+     ```
+     ## Clarification Addendum (user-approved resolutions)
+     | # | Category | Original Ambiguity | Resolution | Authority |
+     |---|----------|--------------------|------------|-----------|
+     | 1 | {category} | {description} | {resolution} | user-approved / assumed |
+
+     Apply these resolutions as authoritative constraints. Do NOT re-flag these
+     as ambiguities. Incorporate them into the design as if they were in the
+     original SRS/Design documents.
+     ```
+  6. Record in `task-progress.md`: "Feature Design: CLARIFY ({N} ambiguities resolved) → re-dispatching"
+  7. **Max 2 clarification rounds**: If SubAgent returns `CLARIFY` a second time after receiving clarifications, escalate remaining ambiguities to user:
+     "Persistent specification gaps found after 2 clarification rounds. Consider using `long-task-increment` to update the SRS/Design documents."
+     - If user says "SRS needs updating": record gap in `task-progress.md`, suggest `long-task-increment`, skip to next eligible feature
+     - If user provides final answers: incorporate and re-dispatch one last time
+     - If still unresolvable: set to BLOCKED
 
 - **`### Verdict: FAIL`**
   1. Read the Issues table — identify which sections are incomplete

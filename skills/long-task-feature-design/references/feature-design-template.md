@@ -173,3 +173,16 @@ If the feature has no external dependencies (pure computation, no IO, no DB, no 
 - [ ] Visual Rendering Contract complete for ui:true features (all visual elements listed, positive rendering assertions defined)
 - [ ] Each Visual Rendering Contract element has ≥1 UI/render Test Inventory row
 - [ ] Every skipped section has explicit "N/A — [reason]"
+
+## Clarification Addendum
+
+> No clarifications required — all specifications were unambiguous.
+
+| # | Category | Original Ambiguity | Resolution | Authority |
+|---|----------|--------------------|------------|-----------|
+| — | — | — | — | user-approved / assumed |
+
+<!-- This section is populated by the SubAgent when:
+     1. Low-impact ambiguities are assumed (Authority = "assumed")
+     2. User-approved resolutions are provided via re-dispatch (Authority = "user-approved")
+     Feature-ST reads this section to avoid re-asking resolved questions. -->

@@ -36,6 +36,49 @@ You MUST complete each step in order:
 
 Read all input artifacts listed in Inputs above.
 
+### 1b. Ambiguity Scan
+
+After reading all inputs and BEFORE writing any design content, scan for specification ambiguities that could affect design correctness. This scan uses the following taxonomy:
+
+| Code | What to check |
+|------|---------------|
+| `SRS-VAGUE` | Acceptance criterion contains vague language ("fast", "user-friendly", "appropriate", "should handle") without measurable thresholds or concrete behaviors |
+| `SRS-DESIGN-CONFLICT` | SRS requirement and Design §4.N contradict on interface type, data format, behavior, or error handling |
+| `SRS-MISSING` | Acceptance criterion has no Given/When/Then or the expected result is not specified |
+| `ATS-MISMATCH` | ATS requires a test category (e.g., SEC) but the feature's observable behavior has no surface for that category |
+| `UCD-VAGUE` | Visual requirement is not concrete enough to derive DOM selectors or testable assertions (ui:true only) |
+| `DEP-AMBIGUOUS` | Cross-feature interface is unclear — missing or incomplete §6.2 entry for a dependency |
+| `NFR-GAP` | Referenced NFR has no measurable threshold (e.g., "should scale" without numbers) |
+
+**Scan procedure:**
+
+1. For each SRS acceptance criterion (from srs_trace requirements): check if it contains measurable, specific, testable conditions. Flag vague language without numeric thresholds or concrete behaviors → `SRS-VAGUE`
+2. For each SRS requirement mapped to this feature: cross-reference against Design §4.N. Flag contradictions in interface type, data format, behavior, or error handling → `SRS-DESIGN-CONFLICT`
+3. For each SRS acceptance criterion: verify Given/When/Then exists with explicit expected results → `SRS-MISSING`
+4. For each ATS-required category (if ATS doc provided): check if the feature's observable behavior has a testable surface for that category → `ATS-MISMATCH`
+5. For UCD sections (if ui:true): check if visual requirements specify concrete colors, typography, spacing, or selectors → `UCD-VAGUE`
+6. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
+7. For referenced NFRs: verify measurable thresholds exist → `NFR-GAP`
+
+**For each detected ambiguity, produce a structured record:**
+```
+- Category: [code from taxonomy]
+- Source: [document path + section/line reference]
+- Description: [what is ambiguous]
+- Impact: [which design sections cannot be completed without resolution — e.g., "§3 Interface Contract postcondition", "§7 Test Inventory expected result"]
+- Suggested interpretation: [SubAgent's best guess based on context, if one exists; "none" if no reasonable interpretation]
+- Question for user: [specific, actionable question that would resolve the ambiguity]
+```
+
+**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria. Skip `UCD-VAGUE`, `ATS-MISMATCH`, and `NFR-GAP` (bugfix features focus on root cause, not full specification coverage).
+
+**Decision gate:**
+- **Zero ambiguities detected** → proceed to Step 2 normally. No friction added.
+- **All ambiguities have a reasonable suggested interpretation AND impact is LIMITED to non-critical sections** (does NOT affect Interface Contract signatures, Test Inventory expected results, or cross-feature §6.2 contracts) → proceed with assumptions. Document each assumption in the design document's `## Clarification Addendum` section with Authority = "assumed". Set Verdict to `PASS`. Include assumption count in `### Next Step Inputs`.
+- **Any ambiguity has HIGH impact** (affects Interface Contract signatures, Test Inventory expected results, or cross-feature contracts) **OR has no reasonable suggested interpretation** → set Verdict to `CLARIFY`. Include the full Ambiguities table in the Structured Return Contract. Do NOT proceed to Step 2 — the orchestrator will collect user answers and re-dispatch.
+
+> **On re-dispatch with Clarification Addendum**: If the SubAgent prompt includes a `## Clarification Addendum (user-approved resolutions)` section, treat those resolutions as authoritative constraints. Do NOT re-flag them as ambiguities. Incorporate them into the design as if they were in the original SRS/Design documents.
+
 ### 2. Component Data-Flow Diagram
 
 Show THIS feature's internal components and how data flows between them at runtime. This is NOT a copy of the system design class diagram — it is a **runtime data-flow view** showing what data enters, how it transforms, and what exits.
@@ -284,7 +327,7 @@ When the design document is complete, return your result in EXACTLY this format:
 
 ```markdown
 ## SubAgent Result: Feature Design
-### Verdict: PASS | FAIL | BLOCKED
+### Verdict: PASS | FAIL | BLOCKED | CLARIFY
 ### Summary
 [1-3 sentences — what was designed, key architectural decisions, document completeness]
 ### Artifacts
@@ -298,13 +341,23 @@ When the design document is complete, return your result in EXACTLY this format:
 | Verification Checklist | N/10 | 10/10 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
 | Visual Rendering Assertions | N | ≥ Visual Rendering Contract element count (ui:true) | PASS/FAIL/N/A |
-### Issues (only if FAIL)
+### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |
 |---|----------|-------------|
+### Ambiguities (only if CLARIFY)
+| # | Category | Source | Description | Impact | Suggested Interpretation | Question |
+|---|----------|--------|-------------|--------|--------------------------|----------|
+| 1 | [code] | [doc § section] | [what is ambiguous] | [affected design sections] | [best guess or "none"] | [specific question for user] |
+### Assumptions Made (only if PASS with assumptions)
+| # | Category | Source | Assumption | Rationale |
+|---|----------|--------|------------|-----------|
+| 1 | [code] | [doc § section] | [what was assumed] | [why this is reasonable] |
 ### Next Step Inputs
 - feature_design_doc: [path to the design document]
 - test_inventory_count: [number of test inventory rows]
 - tdd_task_count: [number of TDD tasks]
+- ambiguity_count: [number of unresolved ambiguities, 0 if PASS]
+- assumption_count: [number of assumptions made, 0 if none]
 ```
 
 **IMPORTANT**: Write the design document to disk at the specified output path. The orchestrator expects the file to exist after this SubAgent completes.
