@@ -391,6 +391,7 @@ using-long-task (router)
 | `docs/plans/*-st-report.md` | ST | System testing report with Go/No-Go verdict |
 | `docs/features/YYYY-MM-DD-<feature-name>.md` | Worker | Per-feature detailed design (interface contracts, test inventory, TDD tasks) |
 | `docs/test-cases/feature-*.md` | Worker | Per-feature ST test case documents (ISO/IEC/IEEE 29119) |
+| `docs/report/feature-*-report.md` | Worker | Per-feature development report (requirements consistency, real tests, quality metrics, risks with mitigations) |
 | `docs/templates/srs-template.md` | — | Default SRS template (user-customizable) |
 | `docs/templates/design-template.md` | — | Default design document template (user-customizable) |
 | `docs/templates/ats-template.md` | — | Default ATS document template (user-customizable) |
@@ -470,7 +471,8 @@ Each feature in `features` array:
   "supersedes": null,
   "st_case_path": "docs/test-cases/feature-1-user-login.md (optional)",
   "st_case_count": 8,
-  "git_sha": "abc1234 (optional — short commit SHA set by Worker Step 11 after feature commit)"
+  "git_sha": "abc1234 (optional — short commit SHA set by Worker Step 11 after feature commit)",
+  "report_path": "docs/report/feature-1-user-login-report.md (optional — set by Worker Step 11a)"
 }
 ```
 
@@ -483,6 +485,9 @@ ST test case fields (all optional, backward-compatible):
 - `st_case_example_path` (root): Example file path (defines style, language, detail level)
 - `st_case_path` (feature): Path to generated ST test case document
 - `st_case_count` (feature): Number of ST test cases generated for this feature
+
+Report fields (all optional, backward-compatible):
+- `report_path` (feature): Path to generated development report — set by Worker Step 11a after report generation
 
 Git traceability fields (all optional, backward-compatible):
 - `git_sha` (feature): Short commit SHA that completed this feature — set by Worker Step 11 via `git rev-parse --short HEAD`; same value written to `task-progress.md` `Git:` line; validated by `validate_features.py` as a 7–40 char hex string
@@ -575,7 +580,8 @@ long-task-agent/
 │       ├── ats-template.md            # Default ATS document template (user-customizable)
 │       ├── ats-review-template.md     # Default ATS review spec template (user-customizable, 7 dimensions)
 │       ├── st-case-template.md        # Default ST test case template (ISO/IEC/IEEE 29119-3)
-│       └── deferred-backlog-template.md # Default deferred requirements backlog template
+│       ├── deferred-backlog-template.md # Default deferred requirements backlog template
+│       └── feature-report-template.md # Default per-feature development report template
 ├── hooks/
 │   ├── hooks.json                     # Plugin-level hook config (SessionStart)
 │   ├── session-start                  # Inject using-long-task + phase detection (bash)
@@ -644,5 +650,5 @@ The `using-long-task` skill is injected at session start and routes to the corre
 Flow: Requirements (SRS) → UCD (UI projects) → Design → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS/UCD in place → new features appended → Worker cycles → ST.
 
-Key files: `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-ucd.md` (UCD style guide), `docs/plans/*-design.md` (design), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `increment-request.json` (increment signal).
+Key files: `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-ucd.md` (UCD style guide), `docs/plans/*-design.md` (design), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `docs/report/feature-*-report.md` (per-feature development reports), `increment-request.json` (increment signal).
 <!-- /long-task-agent -->

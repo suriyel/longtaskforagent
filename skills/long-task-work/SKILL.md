@@ -252,7 +252,63 @@ Record in `task-progress.md`:
   ```bash
   python scripts/validate_features.py feature-list.json
   ```
-- Git commit again (progress files)
+- Generate feature report (Step 11a) before final commit
+
+### 11a. Generate Feature Report
+
+Generate a per-feature development report at `docs/report/feature-{id}-{slug}-report.md`.
+
+**Data sources** (all available from Steps 4-10, do NOT re-read docs):
+- Feature object from `feature-list.json` (id, title, category, priority, wave, srs_trace, dependencies, ui)
+- Feature design doc: `docs/features/YYYY-MM-DD-<feature-name>.md` (§3 Interface Contract, §4 SRS Requirement, §7 Test Inventory)
+- Quality Gates metrics from Step 8 SubAgent result (line %, branch %, mutation %)
+- Feature-ST SubAgent result (verdict, metrics table, real test counts, issues, visual assessment)
+- Inline Check results from Step 10 (P2, T2, D3, U1)
+- Risks collected during Step 11 (merged from Quality + Feature-ST)
+- Commit SHA from Step 11
+
+**Steps:**
+1. `mkdir -p docs/report`
+2. Populate template (see `docs/templates/feature-report-template.md`) with session data
+3. Write to `docs/report/feature-{id}-{slug}-report.md`
+4. Set `"report_path"` on the feature object in `feature-list.json`
+
+**Report sections** (see template for full structure):
+
+**A. Basic Info** — Feature metadata, completion date, git SHA.
+
+**B. Requirements Consistency Briefing (需求一致性简报)** — For each `srs_trace` requirement ID:
+- Copy EARS statement + Given/When/Then ACs from feature design doc §4
+- Map each AC to: implementing Interface Contract methods + verifying Test Inventory rows
+- Verdict per AC: **Covered** / **Partial** / **Gap**
+- Overall consistency score: N/N ACs fully covered
+
+**C. Quality Gates** — Line coverage, branch coverage, mutation score vs thresholds.
+
+**D. Real Test Execution Summary (真实测试内容)** — From Feature-ST return:
+- Real vs Mock test case counts and pass rates
+- Per-case breakdown: Case ID, Category, Test Type (Real/Mock), Result, Key Assertion
+- If `check_real_tests.py` was run: marker count, mock warnings, skip patterns
+
+**E. Risk Assessment with Mitigations (风险与解决办法)** — For each risk:
+- Original risk description + Severity (Critical/Major/Minor)
+- Concrete mitigation recommendation (not just restating the risk)
+- Status: Resolved / Accepted / Deferred
+- If no risks: "No risks identified — all quality gates passed with comfortable margins."
+
+**F. Inline Compliance Check** — P2, T2, D3, U1 status.
+
+**G. Feature-ST Summary** — Total cases, pass rate, category breakdown, visual assessment (ui:true).
+
+**H. Files Changed** — `git diff --name-only` of the feature commit.
+
+**I. Dependencies** — Dependency feature IDs with current status.
+
+- Git commit again (progress files + report):
+  ```bash
+  git add feature-list.json task-progress.md RELEASE_NOTES.md docs/report/feature-{id}-{slug}-report.md
+  git commit -m "chore: update progress — feature #{id} passing"
+  ```
 
 ### 11.5 Session Reflection (Conditional)
 

@@ -348,6 +348,11 @@ def main():
     os.makedirs(test_cases_dir, exist_ok=True)
     print(f"Created: {test_cases_dir}")
 
+    # docs/report dir
+    report_dir = os.path.join(out_dir, "docs", "report")
+    os.makedirs(report_dir, exist_ok=True)
+    print(f"Created: {report_dir}")
+
     # docs/templates dir — copy ST case template
     templates_dir = os.path.join(out_dir, "docs", "templates")
     os.makedirs(templates_dir, exist_ok=True)
@@ -367,7 +372,7 @@ def main():
     print(f"Created: {examples_readme}")
 
     print(f"\nProject '{args.project_name}' initialized at {out_dir}")
-    print("Created: feature-list.json, CLAUDE.md, AGENTS.md, task-progress.md, RELEASE_NOTES.md, examples/, scripts/ (with helper scripts), docs/plans/, docs/test-cases/, docs/templates/")
+    print("Created: feature-list.json, CLAUDE.md, AGENTS.md, task-progress.md, RELEASE_NOTES.md, examples/, scripts/ (with helper scripts), docs/plans/, docs/test-cases/, docs/report/, docs/templates/")
     print("TODO (LLM generates during Initializer phase):")
     print("  - long-task-guide.md         (tailored Worker guide from SKILL.md + references + design doc)")
     print("  - init.sh / init.ps1         (environment bootstrap from design doc tech stack)")
