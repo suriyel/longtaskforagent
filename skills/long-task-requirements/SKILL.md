@@ -100,14 +100,26 @@ On escalation: all Lite artifacts gathered so far become Expert input. Do NOT re
    - Identify domain keywords (e.g., "authentication", "payment", "API gateway", "data pipeline")
    - Infer relevant `--focus` dimensions (e.g., auth → `api,architecture`; data pipeline → `dataflow,deps`)
    - Infer `--path` if the user mentions a specific module or directory
-2. Dispatch `long-task-explore` in **quick mode** (locator SubAgent only, <= 150 lines):
+2. Determine exploration depth from context (do NOT hardcode):
+
+   | Signal | Depth adjustment |
+   |--------|-----------------|
+   | Complexity tier = Lite | Prefer quick (locator only, fast) |
+   | Complexity tier = Expert | Prefer standard (full analysis) |
+   | User description mentions a single module/area | Keep current or lower (narrow scope = less depth needed) |
+   | User description spans multiple subsystems | Bump up one level (broad scope = more context needed) |
+   | If `--path` narrows to a small subtree | Keep current or lower |
+
+   When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide (<1K→quick, 1K-10K→standard, >10K→deep).
+
+3. Dispatch `long-task-explore` with context-driven parameters:
    ```
    Agent(
      subagent_type="general-purpose",
      description="Targeted codebase exploration for requirements context",
      prompt="""
      Invoke the long-task:long-task-explore skill with these parameters:
-     - Depth: quick
+     - Depth: {determined_depth or omit for auto-detect}
      - Focus: {inferred_dimensions}
      - Path: {inferred_path or "."}
      - User question: "{user_description_summary}"
@@ -115,10 +127,10 @@ On escalation: all Lite artifacts gathered so far become Expert input. Do NOT re
      """
    )
    ```
-3. If explore returns useful findings → incorporate into your mental model for L1/E1 questioning:
+4. If explore returns useful findings → incorporate into your mental model for L1/E1 questioning:
    - Reference discovered modules, APIs, data models in your questions (e.g., "I found `src/auth/` with JWT-based authentication — do you want to extend this or replace it?")
    - Use discovered architecture patterns to ask more informed questions about integration points
-4. If explore returns BLOCKED or no actionable findings → skip silently, proceed to L1/E1
+5. If explore returns BLOCKED or no actionable findings → skip silently, proceed to L1/E1
 
 **This step is non-blocking** — failure or lack of useful results never prevents proceeding to elicitation.
 
