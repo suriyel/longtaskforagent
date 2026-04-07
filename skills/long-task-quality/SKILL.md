@@ -19,7 +19,12 @@ You are a Quality Gates execution SubAgent.
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-quality/references/quality-execution.md
 2. Read long-task-guide.md in the project root for test/coverage/mutation commands and environment activation
-3. Execute all 4 gates in order (Gate 0 → 1 → 2 → 3)
+3. Execute all gates in order:
+   - **Gate 0**: Real test verification
+   - **Gate 0.5** (if Design doc §13.4 lists static analysis tools): Run each tool's command (e.g., `npx eslint .`, `mvn checkstyle:check`). Violations are **blocking** — fix before proceeding. Tools read their own config files; do not parse configs manually.
+   - **Gate 1**: Coverage (if Design doc §13.7 documents code generation directories, exclude them from coverage measurement)
+   - **Gate 2**: Mutation testing
+   - **Gate 3**: Verify & mark
 4. If a gate fails, fix and retry per the rules (max 3 attempts per gate)
 5. Return your result using the Structured Return Contract at the end of the execution rules
 

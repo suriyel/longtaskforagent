@@ -51,7 +51,11 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 1. Read the user-provided requirement doc / idea description thoroughly
 2. Explore existing code / repos the project will build on or integrate with
 3. Identify initial constraints: tech stack, platform, integrations, regulations
-4. Check for an SRS template:
+4. Read `docs/rules/` (if exists and populated) — codebase conventions extracted by Phase 0-pre scanner:
+   - `coding-constraints.md` — 2/3方件 library constraints, prohibited APIs, internal library mandates
+   - `build-and-compilation.md` — build system and CI/CD constraints
+   - These constraints may affect requirement feasibility and should be considered during elicitation (e.g., "this feature requires HTTP calls — project mandates using internal HTTP library, not standard fetch"; "project CI requires all code to pass checkstyle — affects acceptance criteria")
+5. Check for an SRS template:
    - If the user specified a template path → read and validate it
    - Else → read `docs/templates/srs-template.md` (the default template shipped with this skill)
    - **Validation**: template must be a `.md` file containing at least one `## ` heading

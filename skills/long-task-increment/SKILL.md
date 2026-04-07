@@ -98,8 +98,9 @@ Update the existing design document **in place** for affected sections:
 4. For **deprecated** requirements:
    - Add `[DEPRECATED - Wave N]` marker to the corresponding design section
    - Do NOT delete the section (preserve history context)
-5. Get user approval section-by-section
-6. Git commit the design update with descriptive message:
+5. **§13 Codebase Conventions** (if exists): carry forward as-is unless new constraints surface. If the increment introduces new internal libraries, prohibits additional APIs, or adds static analysis tools, update the corresponding §13 subsections. If codebase conventions have materially changed since the original scan, consider re-scanning (delete `docs/rules/` and re-run in a new session).
+6. Get user approval section-by-section
+7. Git commit the design update with descriptive message:
    ```
    docs: update design for wave N — <brief scope>
 

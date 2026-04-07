@@ -150,6 +150,19 @@ See `references/st-recipes.md` section "Full Mutation Regression" for per-tool c
 
 **Record:** mutation score vs threshold, surviving mutant count, tool output summary.
 
+### 3c. Static Analysis Verification (if Design §13.4 exists)
+
+**Skip if Design document has no §13 section or §13.4 is empty.**
+
+Run all static analysis tools listed in Design §13.4 on the full codebase:
+
+1. Read Design doc §13.4 Static Analysis Tools table
+2. For each tool: execute its Run Command (e.g., `npx eslint .`, `mvn checkstyle:check`, `mypy src/`)
+3. Violations are **blocking** — treat as regression defects (Major severity)
+4. Fix violations or document accepted exceptions before proceeding
+
+**Record:** tools run, pass/fail per tool, violation count.
+
 ### 4. Integration Testing
 
 Test cross-feature interactions. Read `references/st-recipes.md` for language-specific patterns and real-vs-contract test classification.

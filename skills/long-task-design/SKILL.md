@@ -120,6 +120,28 @@ Present each section. Wait for user feedback. Incorporate changes before moving 
 
 **For simple projects** (< 5 features): Combine all sections into a single approval step, but still include the required diagrams and dependency versions.
 
+## Step 4b: Merge Codebase Conventions into Design
+
+**Skip this step if `docs/rules/` does not exist or contains only a greenfield stub.**
+
+If `docs/rules/` is populated with convention scan results (from Phase 0-pre codebase scanner):
+
+1. **Read all `docs/rules/*.md` files** — `coding-style.md`, `coding-constraints.md`, `build-and-compilation.md`, `commit-conventions.md`
+2. **Populate §13 of the design document** (Codebase Conventions & Constraints) using the design template's §13 structure:
+   - §13.1: Extract "Mandatory Internal Libraries" table from `coding-constraints.md`
+   - §13.2: Extract "Prohibited APIs / Libraries" table from `coding-constraints.md`
+   - §13.3: Extract "Approved 3rd-Party Libraries" table from `coding-constraints.md`
+   - §13.4: Extract "Static Analysis Tools" table from `coding-constraints.md` (tool name + config path + run command only — do not read config contents)
+   - §13.5: Extract key naming and formatting rules from `coding-style.md` (summary table)
+   - §13.6: Extract error handling pattern from `coding-constraints.md`
+   - §13.7: Extract build system and CI/CD summary from `build-and-compilation.md`
+   - §13.8: Extract commit format and branch naming from `commit-conventions.md`
+3. **Cross-verify** — check for conflicts between scanned conventions and design decisions:
+   - §8 (Third-Party Dependencies): new dependencies must not conflict with §13.2 prohibited list
+   - §6.2 (Internal API Contracts): libraries used must comply with §13.1 internal library mandates
+   - If conflicts exist: mark with "⚠ Design Override: [reason]" and present to user for confirmation
+4. **Present §13 to user** for review (same approval flow as other sections)
+
 ## Step 5: Write Design Document
 
 Save the approved design to `docs/plans/YYYY-MM-DD-<topic>-design.md`.
@@ -254,6 +276,6 @@ The Init phase uses this plan to populate `feature-list.json` with correct prior
 ## Integration
 
 **Called by:** using-long-task (when SRS + UCD exist, no design doc, no feature-list.json) or long-task-ucd (Step 8)
-**Requires:** Approved SRS at `docs/plans/*-srs.md`; optionally approved UCD at `docs/plans/*-ucd.md` (for UI projects)
+**Requires:** Approved SRS at `docs/plans/*-srs.md`; optionally approved UCD at `docs/plans/*-ucd.md` (for UI projects); optionally `docs/rules/*.md` (codebase conventions from Phase 0-pre scan)
 **Chains to:** long-task-ats (after design approval)
-**Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md`
+**Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md` (includes §13 Codebase Conventions if `docs/rules/` exists)

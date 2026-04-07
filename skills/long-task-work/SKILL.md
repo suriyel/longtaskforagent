@@ -28,6 +28,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
   Record determination (yes/no + which services) in `task-progress.md` under the current feature heading. This determination drives Bootstrap Step 2 and Config Gate Step 3.
 - Read design doc **Section 1** (`docs/plans/*-design.md`) — project overview and architecture snapshot for global context
+- Read design doc **§13** (Codebase Conventions & Constraints, if exists) — note 2/3方件 library constraints (§13.1), prohibited APIs (§13.2), static analysis tools (§13.4), naming conventions (§13.5), error handling pattern (§13.6), commit conventions (§13.8). These are binding for all new code.
 - Run `git log --oneline -10` — recent commit context
 - Pick next `"status": "failing"` feature by priority, then by array position in `features[]` (first eligible wins) — **skip features with `"deprecated": true`**
 - **Dependency satisfaction check**: After selecting a candidate feature, verify that ALL feature IDs in its `dependencies[]` have `"status": "passing"` in `feature-list.json`. If any dependency is still `"failing"`:
@@ -218,6 +219,12 @@ Grep CSS/style files for hardcoded color hex values not in UCD palette tokens.
 Confirm `validate_st_cases.py` already passed in Feature-ST (Step 9).
 No re-validation needed — Feature-ST Step 5b + Step 6 already cover T1.
 
+**f) Codebase convention spot-check (advisory, non-blocking — skip if Design §13 absent):**
+Spot-check 2-3 new/modified files against Design doc §13:
+- §13.1: new imports don't use prohibited standard/3rd-party APIs when internal library alternative exists
+- §13.5: naming conventions match documented patterns (variable/function/class names)
+If deviations found: log as advisory note in `task-progress.md`. **Not a blocking gate** — Design doc / framework conventions override scanner observations.
+
 If all checks pass → proceed to Persist.
 If any check fails → fix inline, re-verify. No SubAgent dispatch.
 
@@ -228,6 +235,7 @@ Record in `task-progress.md`:
 
 ### 11. Persist
 - Git commit (include implementation, tests, **test case document**)
+  > **Commit format**: If Design §13.8 documents commit conventions, follow that format. Otherwise use defaults below.
   > **For `category: "bugfix"` features**: use commit prefix `"fix:"` instead of `"feat:"`.
   > Format: `fix: <feature title without the "Fix: " prefix> (#<fixed_feature_id>)`
 - Capture the commit SHA immediately after the commit:

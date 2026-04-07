@@ -30,9 +30,12 @@ digraph phase_detection {
     "ATS doc (*-ats.md) in docs/plans/?" [shape=diamond];
     "UCD doc (*-ucd.md) in docs/plans/?" [shape=diamond];
     "SRS doc (*-srs.md) in docs/plans/?" [shape=diamond];
+    "docs/rules/ populated?" [shape=diamond];
+    "Source files > 3 AND commits >= 5?" [shape=diamond];
     "Invoke long-task:long-task-hotfix" [shape=box style=filled fillcolor=orange];
     "Invoke long-task:long-task-increment" [shape=box style=filled fillcolor=plum];
     "Invoke long-task:long-task-requirements" [shape=box style=filled fillcolor=lightyellow];
+    "Run codebase-scanner then long-task:long-task-requirements" [shape=box style=filled fillcolor=wheat];
     "Invoke long-task:long-task-ucd" [shape=box style=filled fillcolor=lightorange];
     "Invoke long-task:long-task-design" [shape=box style=filled fillcolor=lightblue];
     "Invoke long-task:long-task-ats" [shape=box style=filled fillcolor=lightskyblue];
@@ -56,7 +59,11 @@ digraph phase_detection {
     "UCD doc (*-ucd.md) in docs/plans/?" -> "Invoke long-task:long-task-design" [label="yes"];
     "UCD doc (*-ucd.md) in docs/plans/?" -> "SRS doc (*-srs.md) in docs/plans/?" [label="no"];
     "SRS doc (*-srs.md) in docs/plans/?" -> "Invoke long-task:long-task-ucd" [label="yes"];
-    "SRS doc (*-srs.md) in docs/plans/?" -> "Invoke long-task:long-task-requirements" [label="no"];
+    "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated?" [label="no"];
+    "docs/rules/ populated?" -> "Invoke long-task:long-task-requirements" [label="yes"];
+    "docs/rules/ populated?" -> "Source files > 3 AND commits >= 5?" [label="no"];
+    "Source files > 3 AND commits >= 5?" -> "Run codebase-scanner then long-task:long-task-requirements" [label="yes (brownfield)"];
+    "Source files > 3 AND commits >= 5?" -> "Invoke long-task:long-task-requirements" [label="no (greenfield)"];
 }
 ```
 
@@ -71,7 +78,11 @@ digraph phase_detection {
 4. Check `docs/plans/*-design.md` → if any match → `long-task-ats` (Design done, proceed to ATS)
 5. Check `docs/plans/*-ucd.md` → if any match → `long-task-design` (UCD done, proceed to design)
 6. Check `docs/plans/*-srs.md` → if any match → `long-task-ucd` (SRS done, UCD next; if no UI features the UCD skill auto-skips to design)
-7. Otherwise → `long-task-requirements`
+7. Otherwise → check codebase conventions:
+   a. Check `docs/rules/` — if exists AND contains ≥1 `.md` file (beyond a greenfield stub) → `long-task-requirements` (rules already scanned)
+   b. Check for existing source files (brownfield heuristic): count source files (`*.py`, `*.js`, `*.ts`, `*.java`, `*.c`, `*.cpp`, `*.go`, `*.rs`, etc.) excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`; and check `git rev-list --count HEAD`
+      - If source files > 3 AND git commits ≥ 5 → **run codebase-scanner** (see Phase 0-pre below) → then `long-task-requirements`
+      - Else (greenfield) → create `docs/rules/README.md` stub ("Greenfield — no conventions to extract") → `long-task-requirements`
 
 ## Skill Catalog
 
@@ -80,6 +91,7 @@ digraph phase_detection {
 |-------|-------|------|
 | `long-task:long-task-hotfix` | Hotfix | bugfix-request.json exists (HIGHEST priority) |
 | `long-task:long-task-increment` | Phase 1.5 | increment-request.json exists |
+| `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS, no rules docs, existing source files > 3 — scan codebase before requirements |
 | `long-task:long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json |
 | `long-task:long-task-ucd` | Phase 0b | SRS exists, no UCD doc, no design doc, no feature-list.json |
 | `long-task:long-task-design` | Phase 0c | SRS + UCD exist (or no UI features), no design doc, no feature-list.json |
@@ -120,6 +132,7 @@ digraph phase_detection {
 | `bugfix-request.json` | Signal file — triggers hotfix session (deleted after processing) |
 | `increment-request.json` | Signal file — triggers incremental requirements (deleted after processing) |
 | `docs/retrospectives/*.md` | Skill improvement records (collected during Worker sessions, uploaded after ST) |
+| `docs/rules/*.md` | Codebase conventions — coding style, 2/3方件 constraints, build patterns, commit conventions (brownfield only) |
 
 ## Red Flags
 
@@ -146,9 +159,40 @@ These thoughts mean STOP — you're rationalizing:
 | "The requirement change is small, no need for impact analysis" | Increment skill catches hidden dependencies. |
 | "I'll just fix this quick bug directly" | Invoke `long-task-hotfix` — bug gets tracked in feature-list.json as category=bugfix and fixed via the full Worker pipeline. |
 | "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
+| "I already know the project's conventions" | Run codebase-scanner. Implicit knowledge doesn't persist across sessions. 2/3方件 constraints are easy to miss. |
+| "This brownfield project is small, no need to scan" | Auto-skip handles greenfield (≤3 files). Let the scanner decide. |
 
 ## Skill Priority
 
 1. **Phase skill first** — determines the entire session workflow
 2. **Discipline skills second** — invoked by Worker in strict order (tdd → quality → st-case → review)
 3. **On error** — follow systematic-debugging approach in `skills/long-task-work/references/systematic-debugging.md` before any fix
+
+## Phase 0-pre: Codebase Convention Scan (Brownfield Only)
+
+When detection rule 7b triggers (brownfield project, no existing `docs/rules/`), execute these steps **before** invoking `long-task-requirements`:
+
+1. **Create output directory**: `mkdir -p docs/rules/`
+
+2. **Detect language & framework**: analyze file extensions and dependency manifests (`package.json`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `go.mod`, `*.csproj`). Determine scan depth:
+   | LOC Range | Depth |
+   |-----------|-------|
+   | < 1,000 | Lightweight (top 20 files) |
+   | 1,000–10,000 | Standard (top 50 files) |
+   | > 10,000 | Deep (top 100 + all configs) |
+
+3. **Dispatch `codebase-scanner` SubAgent** — read `agents/codebase-scanner.md` for the full agent definition. Construct a prompt including:
+   - Working directory path
+   - Detected primary language(s) and framework(s)
+   - Scan depth level
+   - Pre-filtered source file list
+
+4. **Validate results**: verify ≥1 output file exists in `docs/rules/`. If SubAgent returns BLOCKED, write minimal stubs (non-blocking — scan is best-effort).
+
+5. **User review** via `AskUserQuestion`:
+   - Present concise summary of key findings (especially 2/3方件 constraints and prohibited APIs)
+   - Ask user to confirm or edit `docs/rules/` files before continuing
+
+6. **Git commit**: `docs: add codebase convention rules`
+
+7. **Invoke `long-task:long-task-requirements`**
