@@ -42,9 +42,9 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 13. **SRS Compliance Review** — dispatch srs-reviewer subagent; gate: all checks PASS before proceeding
 14. **Present & approve SRS** — Lite: single combined step; Expert: section-by-section
 15. **Save SRS & backlog** — `docs/plans/YYYY-MM-DD-<topic>-srs.md` + deferred backlog (if any) and commit
-16. **Transition to UCD** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ucd`
+16. **Transition to Design** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-design`
 
-**The terminal state is invoking long-task-ucd.** Do NOT invoke any other skill.
+**The terminal state is invoking long-task-design.** Do NOT invoke any other skill.
 
 ## Step 1: Explore Context
 
@@ -258,7 +258,6 @@ Apply the EARS template to each functional requirement:
 
 For each requirement, also write:
 - **Acceptance criteria** — at least one concrete Given/When/Then scenario
-- **Visual output** (if ui-facing) — one sentence describing what the user sees change (rendering intent, not rendering specification). E.g., "The snake's position on the game board updates visually after each tick." Write "N/A — backend-only" for FRs with no user-visible output. This field gives downstream phases (Feature Design, TDD) explicit visual language to derive rendering contracts from.
 - **Priority** — Must / Should / Could / Won't (MoSCoW)
 - **Source** — which stakeholder need or user story this traces to
 
@@ -411,10 +410,10 @@ Read the template found in Step 1:
 
 If a deferred backlog was generated in Step 11, save alongside: `docs/plans/YYYY-MM-DD-<topic>-deferred.md`. Commit both.
 
-### Step 16: Transition to UCD
+### Step 16: Transition to Design
 
 1. Summarize key inputs for the next phase
-2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ucd`
+2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-design`
 
 ---
 
@@ -450,6 +449,6 @@ If a deferred backlog was generated in Step 11, save alongside: `docs/plans/YYYY
 ## Integration
 
 **Called by:** using-long-task (when no SRS doc, no design doc, and no feature-list.json)
-**Chains to:** long-task-ucd (after SRS approval; auto-skips to design if no UI features)
+**Chains to:** long-task-design (after SRS approval)
 **References:** `references/problem-framing.md`, `references/scenario-walkthrough.md`, `references/hypothesis-correction.md`, `references/alignment-validation.md`
 **Produces:** `docs/plans/YYYY-MM-DD-<topic>-srs.md`, optionally `docs/plans/YYYY-MM-DD-<topic>-deferred.md`

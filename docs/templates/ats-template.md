@@ -14,7 +14,6 @@
 
 **SRS 参考**: {srs_path}
 **设计文档参考**: {design_path}
-**UCD 参考**: {ucd_path or "N/A"}
 **日期**: {YYYY-MM-DD}
 **状态**: Draft / Approved
 **模板版本**: 1.0
@@ -33,7 +32,6 @@
 
 - 每个 FR 至少覆盖 FUNC + BNDRY 类别
 - 处理用户输入/认证的 FR 必须覆盖 SEC 类别
-- ui:true 的 feature 必须覆盖 UI 类别
 - NFR 必须有明确的测试工具和通过标准
 - 跨 feature 集成路径必须在 ST 阶段验证
 
@@ -80,7 +78,6 @@
 | BNDRY | N |
 | SEC | N |
 | PERF | N |
-| UI | N |
 | **合计** | **N** |
 ```
 
@@ -106,10 +103,6 @@
 - 测试工具: {k6/locust/ab/JMeter等}
 - 负载模型: {并发数, 持续时间, 渐进策略}
 
-### 3.5 UI 测试 (UI)
-- 工具: Chrome DevTools MCP
-- 交互链: navigate → interact → verify → three-layer detection
-- 三层检测模型: Layer 1 (evaluate_script), Layer 2 (EXPECT/REJECT), Layer 3 (list_console_messages)
 ```
 
 ## Section 4: NFR Test Method Matrix
@@ -173,7 +166,6 @@
 | `boundary` | BNDRY | Edge cases, limits, empty/max/zero values | Always — every FR |
 | `security` | SEC | Injection, authorization, data validation | FR handles user input, auth, or external data |
 | `performance` | PERF | Response time, throughput, resource usage | NFR-xxx with performance metrics |
-| `ui` | UI | Chrome DevTools MCP interaction + visual verification | Feature has `"ui": true` |
 
 ## Minimum Case Count Heuristics (Reference)
 

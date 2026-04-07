@@ -36,8 +36,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
   - Pick the next eligible `"failing"` feature (by priority + dependency order) whose dependencies are all satisfied
   - If NO features have all dependencies satisfied → warn user via `AskUserQuestion`: "All remaining features have unsatisfied dependencies. Circular or over-constrained dependency graph detected." → let user choose which feature to force-start (override dependency check)
   - Record skipped features and reason in `task-progress.md`
-- If target feature has `"ui": true` and UCD document exists (`docs/plans/*-ucd.md`), read the UCD style guide — reference style tokens, component prompts, and page prompts to ensure frontend implementation matches the approved visual style
-
 **Document Lookup Protocol (used by Steps 5, 10, and 11):**
 
 When you need the design section or SRS requirement for a feature, do NOT grep for the feature title. Instead:
@@ -53,11 +51,6 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
    - Read the **entire FR-xxx subsection** including EARS statement, priority, acceptance criteria, and Given/When/Then scenarios
    - Store this as `{srs_section}` for use in Plan
 
-3. **UCD document** (`docs/plans/*-ucd.md`, only for `"ui": true` features):
-   - Read the UCD's table of contents or section headers
-   - Find sections referencing the target feature's UI components or pages
-   - Read the **full relevant sections** including style tokens, component prompts, and page prompts
-
 **Why this matters:** Grep returns isolated matching lines without surrounding context. Design sections contain class diagrams, sequence diagrams, flow diagrams, and design rationale that span dozens of lines — all of which are needed for correct implementation and inline compliance checking.
 
 ### 2. Bootstrap
@@ -67,7 +60,7 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
 - **Confirm test commands available**: Activate environment per `long-task-guide.md` and verify the test/coverage/mutation commands are correct for the tech stack; use these directly throughout the cycle (no wrapper scripts)
 - **Service readiness** (conditional — based on Orient service dependency determination):
   - **No service dependencies**: Skip service startup. Feature-ST (Step 10) manages services for acceptance testing.
-  - **Has service dependencies**: Real tests (TDD Rule 5a) need running infrastructure. Ensure availability:
+  - **Has service dependencies**: Integration tests need running infrastructure. Ensure availability:
     1. Read `env-guide.md` → locate "Verify Services Running" health checks
     2. Run health checks. If all pass → record PID/port in `task-progress.md`; proceed
     3. If health checks fail → start via `env-guide.md` "Start All Services" with output capture:
@@ -109,9 +102,6 @@ python scripts/check_configs.py feature-list.json --feature <id>
 **Config Gate is non-negotiable for features with external dependencies.** If configs are missing:
 - MUST use `AskUserQuestion` to request values from the user
 - MUST NOT proceed to TDD without all configs resolved
-- MUST NOT claim "pure-function exemption" for features that have `required_configs[]` entries with connection-string keys (URL, HOST, PORT, DSN, URI, CONNECTION, ENDPOINT)
-- Quality Gates (Gate 0) will mechanically enforce this via `check_real_tests.py --require-for-deps`
-
 ### 4. Feature Detailed Design
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-design` and follow it exactly.
 
@@ -122,7 +112,7 @@ The Feature Design skill dispatches a SubAgent to produce the detailed design do
 Context to carry forward (paths only — SubAgent reads contents itself):
 - Feature object (compact JSON)
 - `quality_gates` and `tech_stack` (compact JSON)
-- File paths + section line ranges: design doc (§4.N), SRS doc (FR-xxx), UCD doc (if ui:true)
+- File paths + section line ranges: design doc (§4.N), SRS doc (FR-xxx)
 - ATS doc path: `docs/plans/*-ats.md` (if exists) — SubAgent uses ATS mapping to align Test Inventory categories
 - Design doc §6.2 path — SubAgent reads Internal API Contracts rows where this feature is Provider or Consumer
 - Constraints and assumptions from feature-list.json root
@@ -159,7 +149,7 @@ Context to carry forward:
 ### 8. Quality Gates
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-quality` and follow it exactly.
 
-The Quality skill dispatches a SubAgent to execute all 4 gates (Real Test → Coverage → Mutation → Verify). The main Agent does NOT read coverage reports, mutation output, or test runner output — the SubAgent handles everything in its own fresh context and returns a structured summary.
+The Quality skill dispatches a SubAgent to execute all 3 gates (Coverage → Mutation → Verify). The main Agent does NOT read coverage reports, mutation output, or test runner output — the SubAgent handles everything in its own fresh context and returns a structured summary.
 
 Context to carry forward (minimal — SubAgent reads files itself):
 - Feature ID from feature-list.json
@@ -172,12 +162,12 @@ Context to carry forward (minimal — SubAgent reads files itself):
 ### 9. ST Acceptance Test Cases
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-st` and follow it exactly.
 
-Execute black-box acceptance testing for the feature **after** TDD and quality gates pass. The skill dispatches a SubAgent that reads SRS/Design/UCD/ATS documents in its own fresh context, generates ISO/IEC/IEEE 29119 compliant test case documents, executes test cases, and manages service lifecycle. The main Agent does NOT read document sections, test case content, or execution output — only the structured summary.
+Execute black-box acceptance testing for the feature **after** TDD and quality gates pass. The skill dispatches a SubAgent that reads SRS/Design/ATS documents in its own fresh context, generates ISO/IEC/IEEE 29119 compliant test case documents, executes test cases, and manages service lifecycle. The main Agent does NOT read document sections, test case content, or execution output — only the structured summary.
 
 Context to carry forward (paths only — SubAgent reads file contents itself):
 - Feature ID and feature object (compact JSON)
 - `quality_gates` and `tech_stack` (compact JSON)
-- File paths: design doc, SRS doc, UCD doc (if ui:true), ATS doc (if exists), plan doc (from Step 4), env-guide.md
+- File paths: design doc, SRS doc, ATS doc (if exists), plan doc (from Step 4), env-guide.md
 - Working directory path
 - `st_case_template_path` and `st_case_example_path` from feature-list.json root (if set)
 
@@ -212,10 +202,7 @@ document traceability matrix reference.
 If §3 or §5 specifies third-party library versions, spot-check that
 `requirements.txt` / `package.json` / `pom.xml` matches. Flag mismatches.
 
-**d) UCD spot check (U1 equivalent, ui:true only):**
-Grep CSS/style files for hardcoded color hex values not in UCD palette tokens.
-
-**e) ST document integrity:**
+**d) ST document integrity:**
 Confirm `validate_st_cases.py` already passed in Feature-ST (Step 9).
 No re-validation needed — Feature-ST Step 5b + Step 6 already cover T1.
 
@@ -230,7 +217,7 @@ If any check fails → fix inline, re-verify. No SubAgent dispatch.
 
 Record in `task-progress.md`:
 ```
-- Inline Check: PASS (P2: N/N methods verified, T2: N/N tests found, D3: OK)
+- Inline Check: PASS (P2: N/N methods verified, T2: N/N tests found, D3: OK, D4: OK)
 ```
 
 ### 11. Persist
@@ -279,11 +266,11 @@ Record in `task-progress.md`:
 Generate a per-feature development report at `docs/report/feature-{id}-{slug}-report.md`.
 
 **Data sources** (use in-context data where available; read feature design doc §4 if SRS AC text is needed for Section B — one targeted read is acceptable):
-- Feature object from `feature-list.json` (id, title, category, priority, wave, srs_trace, dependencies, ui)
+- Feature object from `feature-list.json` (id, title, category, priority, wave, srs_trace, dependencies)
 - Feature design doc: `docs/features/YYYY-MM-DD-<feature-name>.md` (§3 Interface Contract, §4 SRS Requirement, §7 Test Inventory)
 - Quality Gates metrics from Step 8 SubAgent result (line %, branch %, mutation %)
-- Feature-ST SubAgent result (verdict, metrics table, real test counts, issues, visual assessment)
-- Inline Check results from Step 10 (P2, T2, D3, U1)
+- Feature-ST SubAgent result (verdict, metrics table, issues)
+- Inline Check results from Step 10 (P2, T2, D3)
 - Risks collected during Step 11 (merged from Quality + Feature-ST)
 - Commit SHA from Step 11
 
@@ -305,10 +292,9 @@ Generate a per-feature development report at `docs/report/feature-{id}-{slug}-re
 
 **C. Quality Gates** — Line coverage, branch coverage, mutation score vs thresholds.
 
-**D. Real Test Execution Summary (真实测试内容)** — From Feature-ST return:
-- Real vs Mock test case counts and pass rates
-- Per-case breakdown: Case ID, Category, Test Type (Real/Mock), Result, Key Assertion
-- If `check_real_tests.py` was run: marker count, mock warnings, skip patterns
+**D. Test Execution Summary** — From Feature-ST return:
+- Test case counts and pass rates
+- Per-case breakdown: Case ID, Category, Result, Key Assertion
 
 **E. Risk Assessment with Mitigations (风险与解决办法)** — For each risk:
 - Original risk description + Severity (Critical/Major/Minor)
@@ -318,7 +304,7 @@ Generate a per-feature development report at `docs/report/feature-{id}-{slug}-re
 
 **F. Inline Compliance Check** — P2, T2, D3, U1 status.
 
-**G. Feature-ST Summary** — Total cases, pass rate, category breakdown, visual assessment (ui:true).
+**G. Feature-ST Summary** — Total cases, pass rate, category breakdown.
 
 **H. Files Changed** — `git diff --name-only` of the feature commit.
 
@@ -329,16 +315,6 @@ Generate a per-feature development report at `docs/report/feature-{id}-{slug}-re
   git add feature-list.json task-progress.md RELEASE_NOTES.md docs/report/feature-{id}-{slug}-report.md
   git commit -m "chore: update progress — feature #{id} passing"
   ```
-
-### 11.5 Session Reflection (Conditional)
-
-If `retro_authorized` is `true` in `feature-list.json`:
-1. Read `skills/long-task-retrospective/prompts/reflection-prompt.md`
-2. Fill template variables: feature ID/title, phase, this session's `task-progress.md` entry, any `AskUserQuestion` exchanges where user corrected skill output
-3. Dispatch Reflection SubAgent via `Agent(run_in_background=true)` — do NOT wait for completion
-4. Proceed to End Session immediately
-
-If `retro_authorized` is absent or `false` → skip entirely (no output, no dispatch).
 
 ### 12. End Session
 - Stop any services you started directly during this cycle (services started during ST acceptance testing in Step 10 are stopped by `long-task-feature-st`)
@@ -378,7 +354,6 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
 | "I'll update release notes at the end" | Update after every commit. |
 | "Mutation score is probably OK" | Run mutation tests and read the report. |
-| "The UI looks correct to me" | Run automated detection + EXPECT/REJECT. |
 | "ST test case failed but the code is fine" | No bypass. AI must fix code and re-dispatch — no retry limit. If test spec is wrong, use `long-task-increment` to modify. Only escalate if issue genuinely requires human manual testing. |
 | "Port is busy, let me kill manually" | Use env-guide.md "Stop All Services" (port fallback) to kill it, then restart via env-guide.md Start — update env-guide.md if the command needed correction. |
 | "Environment is down, skip ST cases" | BLOCKED, not skipped. Fix environment or ask user. |

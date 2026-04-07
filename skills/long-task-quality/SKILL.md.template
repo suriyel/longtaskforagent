@@ -5,7 +5,7 @@ description: "Use after TDD cycle in a long-task project - enforces coverage gat
 
 # Quality Gates & Verification
 
-Four sequential gates that MUST pass before a feature can be marked "passing". No shortcuts, no exceptions.
+Three sequential gates that MUST pass before a feature can be marked "passing". No shortcuts, no exceptions.
 
 **Announce at start:** "I'm using the long-task-quality skill to run quality gates."
 
@@ -38,54 +38,6 @@ Read thresholds from `feature-list.json` quality_gates.
 4. **Re-run** once
 5. **If still fails** → escalate to user via `AskUserQuestion` with the error message and what was tried
 6. **NEVER skip** — testing is a hard gate; no bypass allowed
-
-## Gate 0: Real Test Verification
-
-Gate 0 runs BEFORE coverage. Coverage numbers are meaningless when the test suite is all-mock.
-
-### Step 1: Run verification script
-
-```bash
-python scripts/check_real_tests.py feature-list.json --feature {current_feature_id}
-```
-
-Read script output:
-- **FAIL** (no real tests) → GATE 0 FAIL, return to TDD Red to write real tests
-- **WARN** (mock warnings found) → proceed to Step 2
-- **PASS** (real tests found, no mock warnings) → proceed to Step 3
-
-### Step 2: LLM sampling review (WARN only)
-
-For each mock warning flagged by the script:
-1. Read the corresponding real test function body
-2. Determine: is the mock targeting the **primary dependency** this real test claims to verify?
-   - Yes → real test is invalid; rewrite, re-run script
-   - No (mock is on an unrelated auxiliary service) → mark as legitimate, proceed
-
-### Step 3: Run real tests
-
-Execute real tests in isolation using the run command declared in `long-task-guide.md` Real Test Convention section:
-- All real tests MUST PASS
-- Any FAIL → GATE 0 FAIL, fix and re-run
-
-### Evidence required
-```
-Gate 0 Result:
-- Script output: [paste check_real_tests.py output]
-- Mock warning review: [for each warning — primary dep / auxiliary service]
-- Real test execution: passed N / failed N
-- Gate 0: PASS/FAIL
-```
-
-### On Gate 0 FAIL
-```
-GATE 0 FAIL — [reason]
-Required action:
-1. [Fix missing real tests / rewrite mock-using real tests / set up test infrastructure]
-2. Re-run TDD Red verification (real tests must FAIL first, then PASS after Green)
-3. Return to Gate 0
-Do NOT skip Gate 0 and proceed to coverage.
-```
 
 ## Gate 1: Coverage
 
@@ -222,12 +174,11 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 
 | Event | What to verify |
 |-------|---------------|
-| After TDD Green + Refactor | `check_real_tests.py` output PASS, all real tests passing |
 | After TDD Green | Full test suite output |
 | After Coverage Gate | Coverage report (line% + branch%) |
 | After TDD Refactor | Full test suite (still passing) |
 | After Mutation Gate | Mutation report (score%) |
-| Before marking "passing" | ALL of the above + verification_steps |
+| Before marking "passing" | ALL of the above + SRS acceptance criteria (via srs_trace) |
 | Before git commit | Full test suite (no broken code committed) |
 
 ## Anti-Patterns
@@ -239,8 +190,6 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 | Read only the summary line of test output | Read complete output |
 | Run mutation on uncovered code | Pass coverage gate FIRST; mutation on uncovered code is wasteful |
 | Skip re-verification at session start | Always smoke-test passing features |
-| Skip Gate 0 because "coverage will catch mock issues" | Coverage is blind to mock vs. real. Gate 0 runs first, always. |
-| Script reports WARN but proceed without reviewing | Must review each mock warning to determine if it targets the primary dependency. |
 
 ## Integration
 

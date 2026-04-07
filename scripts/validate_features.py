@@ -12,10 +12,8 @@ Checks:
 - srs_trace is a valid array of requirement IDs (if present)
 - tech_stack.language is a supported value (if present)
 - quality_gates values are numbers between 0 and 100 (if present)
-- ui field is boolean (if present)
 - git_sha field is a valid hex string 7–40 chars (if present)
 - report_path file exists on disk (if present); warns if missing for passing features
-- ui_entry field is string (if present)
 
 Usage:
     python validate_features.py <path/to/feature-list.json>
@@ -155,21 +153,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
     if ats_example is not None and not isinstance(ats_example, str):
         errors.append(f"ats_example_path must be a string, got {type(ats_example).__name__}")
 
-    # Validate real_test config if present (root-level)
-    real_test = data.get("real_test")
-    if real_test is not None:
-        if not isinstance(real_test, dict):
-            errors.append("real_test must be an object")
-        else:
-            for field in ["marker_pattern", "test_dir"]:
-                val = real_test.get(field)
-                if val is None or not isinstance(val, str) or not val.strip():
-                    errors.append(f"real_test.{field} must be a non-empty string")
-            mock_patterns = real_test.get("mock_patterns")
-            if mock_patterns is not None:
-                if not isinstance(mock_patterns, list) or not all(isinstance(p, str) for p in mock_patterns):
-                    errors.append("real_test.mock_patterns must be an array of strings")
-
     # Validate required_configs if present
     required_configs = data.get("required_configs")
     if required_configs is not None:
@@ -259,16 +242,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
         if steps is not None:
             if not isinstance(steps, list) or len(steps) == 0:
                 errors.append(f"{prefix} (id={fid}): verification_steps must be a non-empty array")
-
-        # Check ui field type
-        ui = feat.get("ui")
-        if ui is not None and not isinstance(ui, bool):
-            errors.append(f"{prefix} (id={fid}): 'ui' must be a boolean, got {type(ui).__name__}")
-
-        # Check ui_entry field type
-        ui_entry = feat.get("ui_entry")
-        if ui_entry is not None and not isinstance(ui_entry, str):
-            errors.append(f"{prefix} (id={fid}): 'ui_entry' must be a string, got {type(ui_entry).__name__}")
 
         # Check wave field type
         wave = feat.get("wave")
@@ -372,16 +345,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
         if isinstance(sup, int) and sup not in all_ids:
             errors.append(f"Feature id={fid}: supersedes id={sup} does not exist")
 
-        # Warn if UI feature depends on features that are still failing
-        if feat.get("ui") is True and not feat.get("deprecated", False):
-            for dep in feat.get("dependencies", []):
-                dep_feat = id_to_feature.get(dep)
-                if dep_feat and dep_feat.get("status") == "failing" and not dep_feat.get("deprecated", False):
-                    warnings.append(
-                        f"Feature id={fid}: UI feature depends on feature id={dep} "
-                        f"which is still 'failing' — E2E testing may be incomplete"
-                    )
-
         # Warn if verification_steps look like simple assertions
         vsteps = feat.get("verification_steps", [])
         if isinstance(vsteps, list) and not feat.get("deprecated", False):
@@ -473,10 +436,6 @@ def main():
             lang = ts.get("language", "N/A")
             if lang != "TODO":
                 summary += f" | Language: {lang}"
-
-        # Show real test config status
-        rt = data.get("real_test")
-        summary += f" | Real test config: {'yes' if rt else 'no'}"
 
         if warnings:
             summary += f" | {len(warnings)} warning(s)"

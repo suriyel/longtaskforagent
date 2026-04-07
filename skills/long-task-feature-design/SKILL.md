@@ -5,7 +5,7 @@ description: "Use before TDD in a long-task project — produce feature-level de
 
 # Feature-Level Detailed Design — SubAgent Dispatch
 
-Delegate feature detailed design production to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads design/SRS/UCD document sections or writes the design document directly.
+Delegate feature detailed design production to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads design/SRS document sections or writes the design document directly.
 
 **Announce at start:** "I'm using the long-task-feature-design skill to produce a detailed design via SubAgent."
 
@@ -28,8 +28,6 @@ Collect these from the current session state. Do NOT read document contents your
 - `design_start` / `design_end` — line range of the §4.N subsection (from Orient Document Lookup)
 - `srs_doc_path` — path to SRS doc (`docs/plans/*-srs.md`)
 - `srs_start` / `srs_end` — line range of the FR-xxx subsection (from Orient Document Lookup)
-- `ucd_doc_path` — path to UCD doc (only if `"ui": true`; omit otherwise)
-- `ucd_start` / `ucd_end` — line range of relevant UCD sections (if applicable)
 - `ats_doc_path` — path to ATS doc (`docs/plans/*-ats.md`), if it exists; omit otherwise
 - `constraints` — constraints[] from feature-list.json root
 - `assumptions` — assumptions[] from feature-list.json root
@@ -46,8 +44,7 @@ You are a Feature Design execution SubAgent.
 2. Read the template: Read {skills_root}/long-task-feature-design/references/feature-design-template.md
 3. Read design section: Read {design_doc_path} lines {design_start} to {design_end}
 4. Read SRS section: Read {srs_doc_path} lines {srs_start} to {srs_end}
-5. Read UCD sections: Read {ucd_doc_path} lines {ucd_start} to {ucd_end} (only if ui:true)
-5b. Read ATS mapping table: Read {ats_doc_path} (only if ATS doc exists) — locate the mapping rows for the feature's requirement ID(s) (from srs_trace); extract required categories
+5. Read ATS mapping table: Read {ats_doc_path} (only if ATS doc exists) — locate the mapping rows for the feature's requirement ID(s) (from srs_trace); extract required categories
 5c. Read internal API contracts: Read {design_doc_path} Section 6.2 — locate rows where this feature appears as Provider or Consumer. These define the exact schemas this feature must produce or consume.
 6. Follow the execution rules to produce the detailed design document
 7. Write the document to: {output_path}
@@ -66,9 +63,8 @@ You are a Feature Design execution SubAgent.
 - Write the complete design document to {output_path}
 - Every section (§2-§6) must be COMPLETE or have "N/A — [reason]"
 - Test Inventory negative ratio must be >= 40%
-- Test Inventory main categories (FUNC/BNDRY/SEC/UI/PERF/INTG) must cover all ATS-required categories for this feature's requirement(s)
+- Test Inventory main categories (FUNC/BNDRY/SEC/PERF/INTG) must cover all ATS-required categories for this feature's requirement(s)
 - Features with external dependencies must have ≥1 INTG row per dependency type; pure-computation features: "INTG: N/A"
-- Features with `"ui": true` MUST have a complete Visual Rendering Contract (§Visual Rendering Contract): all visual elements listed, rendering technology specified, positive rendering assertions defined. "N/A" is only valid for `"ui": false`. For each positive rendering assertion, at least one `UI/render` Test Inventory row must exist. Missing rows → FAIL.
 - **Codebase constraints** (if Design doc §13 exists): Read {design_doc_path} §13 for codebase conventions. Interface Contract method names must follow §13.5 naming conventions. Error handling must follow §13.6 pattern. Dependencies must use §13.1 internal libraries where applicable. Do not reference prohibited APIs from §13.2.
 - Do NOT start TDD — only produce the design document
 ```
@@ -91,13 +87,7 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
 
 - **`### Verdict: PASS`**
   1. Verify the design document file exists at `output_path`
-  2. **Visual Rendering Contract spot-check (ui:true only):** The main Agent (not the SubAgent) reads the `## Visual Rendering Contract` section from the produced document and verifies:
-     - At least one visual element is listed with a concrete DOM/Canvas selector (not generic like "the page" or "the UI")
-     - Rendering technology is specified (Canvas 2D / WebGL / DOM / SVG / CSS)
-     - At least one positive rendering assertion references a specific visual outcome (not just "element is visible")
-     - The number of `UI/render` rows in the Test Inventory matches or exceeds the number of Visual Rendering Contract elements
-     - **If any check fails**: re-dispatch SubAgent with feedback: "Visual Rendering Contract is incomplete — [specific gap]. A blank page that passes Layer 1 error detection is NOT acceptable. Every visual element the user should see must be listed with a testable selector and assertion."
-  3. Extract Next Step Inputs: `feature_design_doc`, `test_inventory_count`, `tdd_task_count`
+  2. Extract Next Step Inputs: `feature_design_doc`, `test_inventory_count`, `tdd_task_count`
   4. Record in `task-progress.md`: "Feature Design: PASS ({N} test scenarios, {M} TDD tasks)"
   5. If `assumption_count > 0`: append to `task-progress.md`: "({K} assumptions documented in Clarification Addendum)"
   6. Proceed to TDD (Steps 5-7)

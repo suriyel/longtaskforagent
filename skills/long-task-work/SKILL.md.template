@@ -29,8 +29,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
   - Pick the next eligible `"failing"` feature (by priority + dependency order) whose dependencies are all satisfied
   - If NO features have all dependencies satisfied → warn user via `AskUserQuestion`: "All remaining features have unsatisfied dependencies. Circular or over-constrained dependency graph detected." → let user choose which feature to force-start (override dependency check)
   - Record skipped features and reason in `task-progress.md`
-- If target feature has `"ui": true` and UCD document exists (`docs/plans/*-ucd.md`), read the UCD style guide — reference style tokens, component prompts, and page prompts to ensure frontend implementation matches the approved visual style
-
 **Document Lookup Protocol (used by Steps 5, 10, and 11):**
 
 When you need the design section or SRS requirement for a feature, do NOT grep for the feature title. Instead:
@@ -45,11 +43,6 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
    - Read the SRS **Section 4 (Functional Requirements)** heading area to find the `### FR-xxx` subsection matching the target feature
    - Read the **entire FR-xxx subsection** including EARS statement, priority, acceptance criteria, and Given/When/Then scenarios
    - Store this as `{srs_section}` for use in Plan
-
-3. **UCD document** (`docs/plans/*-ucd.md`, only for `"ui": true` features):
-   - Read the UCD's table of contents or section headers
-   - Find sections referencing the target feature's UI components or pages
-   - Read the **full relevant sections** including style tokens, component prompts, and page prompts
 
 **Why this matters:** Grep returns isolated matching lines without surrounding context. Design sections contain class diagrams, sequence diagrams, flow diagrams, and design rationale that span dozens of lines — all of which are needed for correct implementation and inline compliance checking.
 
@@ -101,7 +94,6 @@ Context to carry forward:
 - Current feature object from feature-list.json
 - Full `{design_section}` from Document Lookup Protocol (the entire §4.N subsection — do NOT grep)
 - Full `{srs_section}` from Document Lookup Protocol (the entire FR-xxx subsection)
-- UCD sections (if `"ui": true`) — component/page prompts from `docs/plans/*-ucd.md`
 - `quality_gates` and `tech_stack` from feature-list.json
 - Existing passing features' public interfaces (for dependency awareness)
 
@@ -138,7 +130,6 @@ Context to carry forward:
 - Current feature object from feature-list.json
 - Full `{srs_section}` and `{design_section}` from Document Lookup Protocol
 - Plan file path from Step 5
-- UCD sections (if `"ui": true`)
 - `quality_gates` and `tech_stack` from feature-list.json
 - **Implementation code** — files created/modified during TDD (from git diff or plan document file list)
 - **Test results summary** — from TDD and Quality Gates (coverage %, mutation score)
@@ -174,10 +165,7 @@ document traceability matrix reference.
 If §3 or §5 specifies third-party library versions, spot-check that
 `requirements.txt` / `package.json` / `pom.xml` matches. Flag mismatches.
 
-**d) UCD spot check (U1 equivalent, ui:true only):**
-Grep CSS/style files for hardcoded color hex values not in UCD palette tokens.
-
-**e) ST document integrity:**
+**d) ST document integrity:**
 Confirm `validate_st_cases.py` already passed in Feature-ST (Step 9).
 No re-validation needed — Feature-ST Step 5b + Step 6 already cover T1.
 
@@ -239,7 +227,6 @@ Record in `task-progress.md`:
 | "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
 | "I'll update release notes at the end" | Update after every commit. |
 | "Mutation score is probably OK" | Run mutation tests and read the report. |
-| "The UI looks correct to me" | Run automated detection + EXPECT/REJECT. |
 | "ST test case failed but the code is fine" | Report to user. No bypass. Fix code or use the `long-task-increment` skill to modify test case. |
 | "Port is busy, let me kill manually" | Use env-guide.md "Stop All Services" (port fallback) to kill it, then restart via env-guide.md Start — update env-guide.md if the command needed correction. |
 | "Environment is down, skip ST cases" | BLOCKED, not skipped. Fix environment or ask user. |

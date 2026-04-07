@@ -134,107 +134,15 @@ Reference: `testing-anti-patterns.md` Anti-Pattern #1 (mock only external servic
 
 **Mandatory test writing order in TDD Red:**
 1. Analyze Feature Design Test Inventory + {srs_section} (via `srs_trace`) + {design_section} to identify external dependencies
-2. **Write Real Tests first** (see Rule 5a) — verify external dependency connectivity
+2. Write integration tests first — verify external dependency connectivity
 3. Then write regular UT tests (happy path / error / boundary / security)
 4. Run all tests → confirm all FAIL
-
-**Rule 5a: Real Test Standalone Section (mandatory)**
-
-Every feature with external dependencies MUST have identifiable real tests in its test file(s). The specific marking mechanism is determined by the project language and test framework (documented in `long-task-guide.md` Real Test Convention section), but MUST satisfy these invariants:
-
-| Invariant | Description |
-|-----------|-------------|
-| **Discoverable** | Real tests MUST be findable by `feature-list.json` `real_test.marker_pattern` via `check_real_tests.py` |
-| **Isolatable** | Real tests MUST be runnable independently from regular UTs (via marker filter, folder separation, or naming convention) |
-| **No mock on primary dep** | Real test body MUST NOT mock the primary external dependency it verifies; `real_test.mock_patterns` defines detectable mock keywords |
-| **High-value assertions** | MUST NOT merely verify "no exception"; MUST assert actual return values, state changes, data persistence |
-| **No silent skip** | Real test MUST fail (not skip or return early) when its dependency is unavailable; use `assert env_var, "..."` not `if not env_var: return` |
-| **Test infrastructure** | Use project test environment (.env.test, test DB, localhost test server) — never production resources |
-
-**Minimum ≥1 real test per external dependency type:**
-
-| Dependency type | Real test verifies |
-|-----------------|-------------------|
-| Config / secrets | Can read values from real config file / env vars |
-| Database / store | Can connect to real test DB, perform read/write |
-| File system | Can read/write real files (beyond trivial tmp_path) |
-| HTTP / network | Can send request to real test server and get response |
-| Third-party SDK | Can call sandbox / test environment API |
-
-**Pure-function exemption**: If the feature has no external dependencies (pure computation, no I/O), declare explicitly in a test file comment, confirmed by {design_section} during Gate 0.
-
-**Verification**: `python scripts/check_real_tests.py feature-list.json` — mechanical scan + grep, not LLM self-check.
-
-Reference: `testing-anti-patterns.md` Anti-Pattern #15 (all-mock real test / mock label laundering) and Anti-Pattern #16 (silent skip / environment guard bypass).
-
-**Rule 6: UI-Specific Test Rules** (when `"ui": true`)
-
-- **UI Pre-condition (verify before first [devtools] step):**
-  Before any Chrome DevTools MCP testing, verify the application is reachable:
-  1. Start the dev server if not running — read `env-guide.md` and use the start command for the service with output capture:
-     ```bash
-     [start command from env-guide.md] > /tmp/svc-<slug>-start.log 2>&1 &
-     sleep 3
-     head -30 /tmp/svc-<slug>-start.log   # extract PID and port
-     ```
-     Record PID in `task-progress.md`. If PID is already recorded from this session, run the health check first — skip restart if already running.
-  2. Use `navigate_page` to the feature's `ui_entry` URL (or default localhost URL)
-  3. If connection refused or page error (ERR_CONNECTION_REFUSED, etc.) → the app is not running. DO NOT proceed with UI tests. Diagnose and fix the startup issue. Never skip UI verification.
-- Every `[devtools]` step must use EXPECT/REJECT format:
-  ```
-  [devtools] <page-path> | EXPECT: <positive criteria> | REJECT: <negative criteria>
-  ```
-- Execute automated error detection script via `evaluate_script()`
-- `list_console_messages(types=["error"])` must return 0 errors (unless `[expect-console-error: <pattern>]`)
-
-See `references/ui-error-detection.md` for the full detection script and integration sequence.
-
-**Rule 7: Positive Rendering Verification** (when `"ui": true`)
-
-Rule 6 detects UI **errors** (broken rendering). Rule 7 verifies UI **presence** (elements that must exist but don't).
-
-For each `UI/render` row in the Feature Design Test Inventory (§7), write a test that:
-
-1. **Triggers** the rendering condition (page load, game start, state change)
-2. **Asserts positive presence** via `evaluate_script()`:
-   - **Canvas 2D**: verify canvas has non-transparent pixels in expected region via `getImageData()`, OR verify render function was called with expected arguments
-   - **WebGL**: use `readPixels()` on the WebGL context (not `getImageData()` which is Canvas 2D only)
-   - **DOM-based**: `querySelector(selector)` returns non-null, `getBoundingClientRect()` returns width > 0 and height > 0, `getComputedStyle(el).display !== 'none'`
-   - **SVG-based**: SVG element exists in DOM with non-zero bounding box
-3. **Asserts content correctness** (not just existence):
-   - Element count matches expected state (e.g., snake has N segments)
-   - Element content reflects data source (e.g., score display matches game state)
-   - Visual state variant matches logical state (e.g., alive snake is green)
-4. **Asserts interactive depth** (not just display):
-   - If the element is designed for user interaction (game canvas, form, button, widget), write at least one test that triggers the interaction and verifies the rendered output changes
-   - Canvas game: simulate key press → verify canvas pixels changed (game state advanced)
-   - Form: fill input → verify input value displayed; submit → verify response rendered
-   - Widget: click/drag → verify visual state updated
-   - A rendered element that does not respond to its designed interaction is a **"display-only" defect** — the rendering pipeline exists but the input→render wiring is broken
-
-A page that passes all Rule 6 checks (no errors) but has no rendered game content MUST FAIL Rule 7. A blank canvas with zero errors is NOT a passing UI. A canvas that renders a game board but ignores keyboard input is a display-only defect.
-
-**Minimum**: one positive rendering test per `UI/render` Test Inventory row.
-
-See `references/ui-error-detection.md` § Layer 1b for the reusable positive rendering verification script.
-
-**Contract-implementation drift protocol**: If during TDD Green the implementation uses different selectors, canvas IDs, or component structures than the Visual Rendering Contract specifies:
-1. Update the Visual Rendering Contract in the feature design document to match actual implementation
-2. Re-verify that all positive rendering assertions still have corresponding UI/render Test Inventory rows
-3. Commit the updated contract alongside the implementation code
-4. Reason: selector mismatches cause confusing test failures (wrong selector, not missing rendering). Keep the contract as living documentation that matches reality.
 
 ### After Writing Tests
 
 Run the test suite. **All tests must FAIL.** If any test passes → it tests nothing useful, rewrite it.
 
 **Running tests**: Activate environment per `long-task-guide.md` → run test command directly. If tool is missing or environment not activated: diagnose root cause, run `init.sh` if needed, escalate to user if still failing. **Never skip.**
-
-**Real Test Verification (before proceeding to Green):**
-Run `python scripts/check_real_tests.py feature-list.json --feature {id}` and confirm:
-1. Real test count > 0 (or pure-function exemption declared)
-2. No mock warnings (or LLM reviewed and confirmed warnings are not on primary dependency)
-If script reports FAIL → STOP, write real tests before proceeding.
 
 ## Step 2: TDD Green — Minimal Implementation
 
@@ -285,7 +193,7 @@ Clean up while keeping tests green:
 4. **Gaming coverage** — Assert-free tests exercise code without verifying correctness. Coverage ≠ quality.
 5. **Low-value assertions** — `assertNotNull` / `isinstance` / `len>0` without checking actual values. Max 20% of total.
 
-Full catalog of 15 anti-patterns: Read `skills/long-task-tdd/testing-anti-patterns.md`.
+Full catalog: Read `skills/long-task-tdd/testing-anti-patterns.md`.
 
 ## Integration
 

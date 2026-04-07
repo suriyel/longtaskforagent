@@ -5,8 +5,7 @@ Check Jinja2 availability for enterprise MCP template rendering.
 Jinja2 is required when tool-bindings.json exists — it powers the SKILL.md
 template engine that resolves enterprise MCP tool names.
 
-Analogous to check_devtools.py — detects availability and guides setup,
-does NOT install any packages.
+Detects availability and guides setup, does NOT install any packages.
 
 Usage:
     python check_jinja2.py

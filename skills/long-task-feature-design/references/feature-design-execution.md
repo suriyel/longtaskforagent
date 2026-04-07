@@ -15,11 +15,10 @@ This skill answers "WHAT each method does internally, WHAT can go wrong, and HOW
 
 Read ALL of these BEFORE writing any design content:
 
-1. **Feature object** from feature-list.json — ID, title, description, srs_trace, ui flag, dependencies, priority (verification_steps if present)
+1. **Feature object** from feature-list.json — ID, title, description, srs_trace, dependencies, priority (verification_steps if present)
 2. **System design section** — full §4.N from the design document (read the entire subsection, NOT grep)
 3. **SRS requirement** — full FR-xxx from the SRS document
-4. **UCD sections** (if `"ui": true`) — component/page prompts from the UCD document
-5. **Constraints & assumptions** from feature-list.json root
+4. **Constraints & assumptions** from feature-list.json root
 6. **Related NFRs** — NFR-xxx from SRS traceable to this feature
 7. **Existing code** — if dependency features are passing, read their public interfaces (imports, class/function signatures)
 8. **Internal API contracts** (if §6.2 exists) — from Design Section 6.2, read rows where this feature appears as Provider or Consumer. These define cross-feature schemas that this feature's Interface Contract (§3) must align with.
@@ -46,7 +45,6 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 | `SRS-DESIGN-CONFLICT` | SRS requirement and Design §4.N contradict on interface type, data format, behavior, or error handling |
 | `SRS-MISSING` | Acceptance criterion has no Given/When/Then or the expected result is not specified |
 | `ATS-MISMATCH` | ATS requires a test category (e.g., SEC) but the feature's observable behavior has no surface for that category |
-| `UCD-VAGUE` | Visual requirement is not concrete enough to derive DOM selectors or testable assertions (ui:true only) |
 | `DEP-AMBIGUOUS` | Cross-feature interface is unclear — missing or incomplete §6.2 entry for a dependency |
 | `NFR-GAP` | Referenced NFR has no measurable threshold (e.g., "should scale" without numbers) |
 
@@ -56,8 +54,7 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 2. For each SRS requirement mapped to this feature: cross-reference against Design §4.N. Flag contradictions in interface type, data format, behavior, or error handling → `SRS-DESIGN-CONFLICT`
 3. For each SRS acceptance criterion: verify Given/When/Then exists with explicit expected results → `SRS-MISSING`
 4. For each ATS-required category (if ATS doc provided): check if the feature's observable behavior has a testable surface for that category → `ATS-MISMATCH`
-5. For UCD sections (if ui:true): check if visual requirements specify concrete colors, typography, spacing, or selectors → `UCD-VAGUE`
-6. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
+5. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
 7. For referenced NFRs: verify measurable thresholds exist → `NFR-GAP`
 
 **For each detected ambiguity, produce a structured record:**
@@ -70,7 +67,7 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 - Question for user: [specific, actionable question that would resolve the ambiguity]
 ```
 
-**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria. Skip `UCD-VAGUE`, `ATS-MISMATCH`, and `NFR-GAP` (bugfix features focus on root cause, not full specification coverage).
+**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria. Skip `ATS-MISMATCH` and `NFR-GAP` (bugfix features focus on root cause, not full specification coverage).
 
 **Decision gate:**
 - **Zero ambiguities detected** → proceed to Step 2 normally. No friction added.
@@ -120,26 +117,6 @@ If during feature design, a §6.2 contract is found to be incorrect, insufficien
 4. The orchestrator (long-task-work) will escalate to user via AskUserQuestion
 5. If approved: user updates §6.2 in the design doc; orchestrator re-dispatches SubAgent
 6. If rejected: SubAgent must conform to the original contract
-
-### 3b. Visual Rendering Contract (mandatory for `"ui": true`)
-
-For features with `"ui": true`, specify ALL visual elements the user must see. This contract is the source of truth for TDD Rule 7 (positive rendering tests) and Feature-ST (rendering verification).
-
-**Source data**: Read the SRS requirement's `Visual output` field (what the user sees change) + the UCD component/page prompts (how it should look) + the system design §4.N UI/UX approach.
-
-**How to fill each column**:
-- **Visual Element**: name each distinct visual thing the user sees (e.g., "snake body segments", "game board grid", "score counter", "food item"). NOT abstract concepts like "the UI" or "the page".
-- **DOM/Canvas Selector**: a concrete CSS selector (`canvas#game-board`, `div.snake-segment`, `#score-display`) or canvas element ID. Must be specific enough for `document.querySelector()` to find it.
-- **Rendered When**: the trigger that causes this element to appear (page load, game start, state change, user action)
-- **Visual State Variants**: different visual appearances based on state (alive=green, dead=red; selected=blue border, unselected=grey)
-- **Minimum Dimensions**: expected size (20x20px per cell, full viewport width, etc.)
-- **Data Source**: what data drives the rendering (GameState.segments[], API response, form input)
-
-**Positive rendering assertions**: for each element, write a testable statement of what MUST be visually present after the trigger. Not "element is visible" but "canvas has non-transparent pixels in the game board region" or "div.snake-segment count equals GameState.segments.length".
-
-**Interactive depth assertions**: for each interactive element, write what interaction it responds to and what visual change results. A rendered element that doesn't respond to its designed interaction is a "display-only" defect.
-
-> **Skip rule**: Write "N/A — backend-only feature" ONLY if `"ui": false`. If `"ui": true`, this section is mandatory and cannot be skipped — even for features that seem "mostly backend" but have `"ui": true"`.
 
 ### 4. Internal Sequence Diagram
 
@@ -222,8 +199,6 @@ Rules:
 
 **ATS category alignment** (if ATS doc was provided): Every main category listed in the ATS mapping table for this feature's requirement(s) MUST appear as at least one row's Category prefix in this Test Inventory. For example, if ATS requires SEC for FR-005, at least one Test Inventory row must have Category = `SEC/*`. Missing ATS categories → add rows before proceeding to §8.
 
-**Visual Rendering Coverage** (mandatory for `"ui": true`): For each positive rendering assertion in §3b (Visual Rendering Contract), add at least one `UI/render` Test Inventory row. "Traces To" = §3b Visual Rendering Contract, specific element row. "Kills Which Bug?" = the rendering failure this test catches (e.g., "render function never called", "canvas blank", "DOM element not appended"). If the Visual Rendering Contract lists N visual elements, there must be at least N `UI/render` rows.
-
 **Integration test rows (INTG category):**
 - For features with external dependencies (DB, HTTP services, file system, third-party SDK): add ≥1 `INTG/*` row per dependency type
 - Derive from: Interface Contract (§3) methods that interact with external systems + `required_configs[]` entries with connection-string keys
@@ -297,8 +272,6 @@ After the design is complete, decompose into TDD tasks.
 - [ ] Boundary table covers all algorithm parameters
 - [ ] Error handling table covers all Raises entries
 - [ ] Test Inventory negative ratio >= 40%
-- [ ] Visual Rendering Contract complete for ui:true features (all visual elements listed, positive rendering assertions defined, interactive depth assertions defined)
-- [ ] Each Visual Rendering Contract element has ≥1 UI/render Test Inventory row
 - [ ] Every skipped section has explicit "N/A — [reason]"
 - [ ] All functions/methods named in §4.N have at least one Test Inventory row
 
@@ -338,9 +311,8 @@ When the design document is complete, return your result in EXACTLY this format:
 | Sections Complete | N/8 | 8/8 (or N/A justified) | PASS/FAIL |
 | Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
-| Verification Checklist | N/10 | 10/10 | PASS/FAIL |
+| Verification Checklist | N/8 | 8/8 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
-| Visual Rendering Assertions | N | ≥ Visual Rendering Contract element count (ui:true) | PASS/FAIL/N/A |
 ### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |
 |---|----------|-------------|

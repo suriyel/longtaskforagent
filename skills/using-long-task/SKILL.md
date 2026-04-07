@@ -28,7 +28,6 @@ digraph phase_detection {
     "All active features passing?" [shape=diamond];
     "Design doc (*-design.md) in docs/plans/?" [shape=diamond];
     "ATS doc (*-ats.md) in docs/plans/?" [shape=diamond];
-    "UCD doc (*-ucd.md) in docs/plans/?" [shape=diamond];
     "SRS doc (*-srs.md) in docs/plans/?" [shape=diamond];
     "docs/rules/ populated?" [shape=diamond];
     "Source files > 3 AND commits >= 5?" [shape=diamond];
@@ -36,7 +35,6 @@ digraph phase_detection {
     "Invoke long-task:long-task-increment" [shape=box style=filled fillcolor=plum];
     "Invoke long-task:long-task-requirements" [shape=box style=filled fillcolor=lightyellow];
     "Run codebase-scanner then long-task:long-task-requirements" [shape=box style=filled fillcolor=wheat];
-    "Invoke long-task:long-task-ucd" [shape=box style=filled fillcolor=lightorange];
     "Invoke long-task:long-task-design" [shape=box style=filled fillcolor=lightblue];
     "Invoke long-task:long-task-ats" [shape=box style=filled fillcolor=lightskyblue];
     "Invoke long-task:long-task-init" [shape=box style=filled fillcolor=lightyellow];
@@ -55,10 +53,8 @@ digraph phase_detection {
     "ATS doc (*-ats.md) in docs/plans/?" -> "Invoke long-task:long-task-init" [label="yes"];
     "ATS doc (*-ats.md) in docs/plans/?" -> "Design doc (*-design.md) in docs/plans/?" [label="no"];
     "Design doc (*-design.md) in docs/plans/?" -> "Invoke long-task:long-task-ats" [label="yes"];
-    "Design doc (*-design.md) in docs/plans/?" -> "UCD doc (*-ucd.md) in docs/plans/?" [label="no"];
-    "UCD doc (*-ucd.md) in docs/plans/?" -> "Invoke long-task:long-task-design" [label="yes"];
-    "UCD doc (*-ucd.md) in docs/plans/?" -> "SRS doc (*-srs.md) in docs/plans/?" [label="no"];
-    "SRS doc (*-srs.md) in docs/plans/?" -> "Invoke long-task:long-task-ucd" [label="yes"];
+    "Design doc (*-design.md) in docs/plans/?" -> "SRS doc (*-srs.md) in docs/plans/?" [label="no"];
+    "SRS doc (*-srs.md) in docs/plans/?" -> "Invoke long-task:long-task-design" [label="yes"];
     "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated?" [label="no"];
     "docs/rules/ populated?" -> "Invoke long-task:long-task-requirements" [label="yes"];
     "docs/rules/ populated?" -> "Source files > 3 AND commits >= 5?" [label="no"];
@@ -76,8 +72,7 @@ digraph phase_detection {
    - Otherwise (some active features failing) → `long-task-work`
 3. Check `docs/plans/*-ats.md` → if any match → `long-task-init` (ATS done, proceed to init)
 4. Check `docs/plans/*-design.md` → if any match → `long-task-ats` (Design done, proceed to ATS)
-5. Check `docs/plans/*-ucd.md` → if any match → `long-task-design` (UCD done, proceed to design)
-6. Check `docs/plans/*-srs.md` → if any match → `long-task-ucd` (SRS done, UCD next; if no UI features the UCD skill auto-skips to design)
+5. Check `docs/plans/*-srs.md` → if any match → `long-task-design` (SRS done, proceed to design)
 7. Otherwise → check codebase conventions:
    a. Check `docs/rules/` — if exists AND contains ≥1 `.md` file (beyond a greenfield stub) → `long-task-requirements` (rules already scanned)
    b. Check for existing source files (brownfield heuristic): count source files (`*.py`, `*.js`, `*.ts`, `*.java`, `*.c`, `*.cpp`, `*.go`, `*.rs`, etc.) excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`; and check `git rev-list --count HEAD`
@@ -93,8 +88,7 @@ digraph phase_detection {
 | `long-task:long-task-increment` | Phase 1.5 | increment-request.json exists |
 | `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS, no rules docs, existing source files > 3 — scan codebase before requirements |
 | `long-task:long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json |
-| `long-task:long-task-ucd` | Phase 0b | SRS exists, no UCD doc, no design doc, no feature-list.json |
-| `long-task:long-task-design` | Phase 0c | SRS + UCD exist (or no UI features), no design doc, no feature-list.json |
+| `long-task:long-task-design` | Phase 0b | SRS exists, no design doc, no feature-list.json |
 | `long-task:long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
 | `long-task:long-task-init` | Phase 1 | ATS doc exists (or auto-skipped for tiny projects), no feature-list.json |
 | `long-task:long-task-work` | Phase 2 | feature-list.json exists, some active features failing |
@@ -104,7 +98,7 @@ digraph phase_detection {
 | Skill | Purpose |
 |-------|---------|
 | `long-task:long-task-feature-design` | Feature Detailed Design — interface contracts, algorithm pseudocode, state diagrams, boundary matrices, test inventory (bridges system design → TDD) |
-| `long-task:long-task-feature-st` | Black-Box Feature Acceptance Testing — self-managed start/cleanup lifecycle, Chrome DevTools MCP execution, ISO/IEC/IEEE 29119 test case documentation (per-feature, after Quality Gates) |
+| `long-task:long-task-feature-st` | Black-Box Feature Acceptance Testing — self-managed start/cleanup lifecycle, ISO/IEC/IEEE 29119 test case documentation (per-feature, after Quality Gates) |
 | `long-task:long-task-tdd` | TDD Red-Green-Refactor |
 | `long-task:long-task-quality` | Coverage Gate + Mutation Gate |
 
@@ -112,7 +106,6 @@ digraph phase_detection {
 | Skill | Purpose |
 |-------|---------|
 | `long-task:long-task-finalize` | Post-ST Documentation — scenario-based usage examples generation + RELEASE_NOTES/task-progress finalization (after ST Go verdict) |
-| `long-task:long-task-retrospective` | Skill Self-Evolution — consolidate retrospective records and upload to REST API (after ST Go verdict, if authorized) |
 
 ## Key Files (shared contract)
 
@@ -120,7 +113,6 @@ digraph phase_detection {
 |------|------|
 | `docs/plans/*-srs.md` | Approved SRS — the WHAT |
 | `docs/plans/*-deferred.md` | Deferred requirements backlog — next-round pickup via increment |
-| `docs/plans/*-ucd.md` | Approved UCD style guide — the LOOK (UI projects only) |
 | `docs/plans/*-design.md` | Approved design — the HOW |
 | `docs/plans/*-ats.md` | Approved ATS — the TEST STRATEGY (requirement→scenario mapping) |
 | `feature-list.json` | Task inventory — the central shared state |
@@ -131,7 +123,6 @@ digraph phase_detection {
 | `docs/plans/*-st-report.md` | System testing report — Go/No-Go verdict |
 | `bugfix-request.json` | Signal file — triggers hotfix session (deleted after processing) |
 | `increment-request.json` | Signal file — triggers incremental requirements (deleted after processing) |
-| `docs/retrospectives/*.md` | Skill improvement records (collected during Worker sessions, uploaded after ST) |
 | `docs/rules/*.md` | Codebase conventions — coding style, 2/3方件 constraints, build patterns, commit conventions (brownfield only) |
 
 ## Red Flags
@@ -151,8 +142,6 @@ These thoughts mean STOP — you're rationalizing:
 | "Test categories can be decided during feature-st" | Ad-hoc assignment leads to SEC/PERF gaps. Run ATS first. |
 | "ATS is overkill for this project" | Check Scaling Guide — tiny projects auto-skip ATS. |
 | "The SRS already implies the design" | SRS = WHAT, design = HOW. Both are needed. |
-| "UI styles can be decided during coding" | Ad-hoc styling causes inconsistency. Run UCD first. |
-| "This UI is too simple for a style guide" | Even simple UIs need tokens. UCD can be lightweight. |
 | "All features pass, we can ship" | Feature tests ≠ system tests. Run ST phase first. |
 | "System testing is overkill" | Integration bugs, NFR failures, and workflow gaps hide until ST. |
 | "I'll just add features to the JSON directly" | Invoke the `long-task-increment` skill for tracked, audited changes. |

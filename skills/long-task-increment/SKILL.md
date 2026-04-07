@@ -5,7 +5,7 @@ description: "Use when increment-request.json exists - collect incremental requi
 
 # Incremental Requirements Development
 
-Add new requirements, modify existing ones, or deprecate features in a live project. All changes are written back into the existing SRS/Design/UCD documents (tracked via git history), and new features are appended to `feature-list.json` with wave metadata.
+Add new requirements, modify existing ones, or deprecate features in a live project. All changes are written back into the existing SRS/Design documents (tracked via git history), and new features are appended to `feature-list.json` with wave metadata.
 
 **Announce at start:** "I'm using the long-task-increment skill. Let me orient on the current project state before collecting new requirements."
 
@@ -25,7 +25,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
 - Read approved SRS (`docs/plans/*-srs.md`) — current requirements baseline
 - Read approved design (`docs/plans/*-design.md`) — current architecture
 - If exists: read ATS document (`docs/plans/*-ats.md`) — current test strategy baseline
-- If UI project: read UCD style guide (`docs/plans/*-ucd.md`)
 - If exists: read deferred backlog (`docs/plans/*-deferred.md`) — pre-elicited requirements available for pickup (skip re-elicitation for items with complete EARS + acceptance criteria)
 - Read `task-progress.md` — session history
 - Run `git log --oneline -10` — recent context
@@ -118,7 +117,7 @@ Update the existing ATS document **in place** for affected requirements:
 1. Read `docs/plans/*-ats.md`
 2. For **new** requirements:
    - Add mapping table rows with requirement ID, scenarios, required categories
-   - Apply category assignment rules (FUNC+BNDRY for all FRs; +SEC for input/auth; +UI for ui:true; +PERF for NFRs with metrics)
+   - Apply category assignment rules (FUNC+BNDRY for all FRs; +SEC for input/auth; +PERF for NFRs with metrics)
    - Update the coverage statistics table (Section 2.4)
    - If new NFRs: add rows to the NFR Test Method Matrix (Section 4)
    - If new cross-feature interactions: add rows to Integration Scenarios (Section 5)
@@ -143,30 +142,11 @@ Update the existing ATS document **in place** for affected requirements:
    ```
 8. **ATS re-review check**: if ATS changes affect >3 mapping table rows OR introduce a new test category not previously present, ask the user whether a re-review is needed before proceeding. If yes, describe the changes and rationale for the user to approve.
 
-### 5. UCD Revision (UI projects only)
-
-**Skip this step** if the project has no UI features AND none of the new requirements involve UI.
-
-1. Read `docs/plans/*-ucd.md`
-2. For new UI requirements:
-   - Add component prompts for new UI components
-   - Add page prompts for new pages
-   - Update style tokens if the design language needs extension
-3. For modified UI requirements:
-   - Update corresponding component/page prompts in place
-4. For deprecated UI requirements:
-   - Add `[DEPRECATED - Wave N]` marker to the corresponding prompts
-5. Get user approval
-6. Git commit:
-   ```
-   docs: update UCD style guide for wave N — <brief scope>
-   ```
-
-### 6. SRS Update & Feature Decomposition
+### 5. SRS Update & Feature Decomposition
 
 Update the SRS and decompose into features:
 
-**6a. Update SRS in place:**
+**5a. Update SRS in place:**
 
 1. Read `docs/plans/*-srs.md`
 2. For **new** requirements:
@@ -188,7 +168,7 @@ Update the SRS and decompose into features:
    Deprecated: FR-012
    ```
 
-**6b. Decompose into features:**
+**5b. Decompose into features:**
 
 1. **New features**: Append to `feature-list.json` `features[]`:
    - `id`: max existing ID + 1 (continue incrementing)
@@ -197,7 +177,6 @@ Update the SRS and decompose into features:
    - `srs_trace`: array of new SRS requirement IDs (e.g. `["FR-021"]`)
    - `verification_steps`: optional — from new acceptance criteria (Given/When/Then)
    - `dependencies`: reference existing feature IDs as needed
-   - `ui`, `ui_entry`: set appropriately
 
 2. **Modified features**: For each affected existing feature:
    - Set `status` back to `"failing"` (will require re-implementation/re-verification)
@@ -231,7 +210,7 @@ Update the SRS and decompose into features:
    python scripts/validate_features.py feature-list.json
    ```
 
-### 7. Update Auxiliary Files
+### 6. Update Auxiliary Files
 
 Update supporting files as needed:
 
@@ -240,7 +219,7 @@ Update supporting files as needed:
 - **`.env.example`**: If new `required_configs` of type `env` → append template lines (this is the canonical env-var reference template regardless of the project's actual config format)
 - **`scripts/check_configs.py`**: If new `required_configs` are added → regenerate or update the project-specific checker to include the new configs
 
-### 8. Finalize
+### 7. Finalize
 
 1. Delete `increment-request.json` (signal file consumed)
 2. Final validation:
@@ -265,7 +244,7 @@ Update supporting files as needed:
      - **Phase**: Increment
      - **Scope**: <from increment-request.json>
      - **Changes**: Added N features, modified M features, deprecated K features
-     - **Documents updated**: SRS, Design, [UCD]
+     - **Documents updated**: SRS, Design
      ```
 5. Update `RELEASE_NOTES.md` under `[Unreleased]` section
 6. Git commit progress files:
@@ -279,7 +258,7 @@ The router will now detect failing features in `feature-list.json` and route to 
 
 - **Impact analysis before any changes** — never modify features without understanding blast radius
 - **User approval at every stage** — impact matrix, design revisions, SRS updates all require explicit approval
-- **In-place document updates** — do NOT create separate increment files; update existing SRS/Design/UCD directly; git history provides the audit trail
+- **In-place document updates** — do NOT create separate increment files; update existing SRS/Design directly; git history provides the audit trail
 - **ID continuity** — new feature IDs always increment from max existing; never reuse deprecated IDs
 - **Wave tracking** — every new/modified feature gets the current wave number
 - **Deprecated features are immutable** — once deprecated, never un-deprecate; create a new feature instead
@@ -298,6 +277,6 @@ The router will now detect failing features in `feature-list.json` and route to 
 ## Integration
 
 **Called by:** using-long-task (when increment-request.json exists)
-**Reads:** SRS, Design, ATS, UCD, feature-list.json, increment-request.json
-**Writes:** SRS (in place), Design (in place), ATS (in place), UCD (in place), feature-list.json (append/modify)
+**Reads:** SRS, Design, ATS, feature-list.json, increment-request.json
+**Writes:** SRS (in place), Design (in place), ATS (in place), feature-list.json (append/modify)
 **Chains to:** long-task-work (after increment complete, via router detecting failing features)

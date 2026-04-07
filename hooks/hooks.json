@@ -10,12 +10,6 @@
             "timeout": 10000,
             "async": false
           },
-          {
-            "type": "command",
-            "command": "bash '${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd' chrome-mcp-setup",
-            "timeout": 10000,
-            "async": false
-          }
         ]
       }
     ]

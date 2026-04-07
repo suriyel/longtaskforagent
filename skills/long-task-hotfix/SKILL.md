@@ -101,7 +101,6 @@ Add a new feature entry to `feature-list.json`. Determine the next available `id
   "status": "failing",
   "srs_trace": ["<FR-xxx from linked feature, or new FR-xxx if unlinked>"],
   "dependencies": [<fixed_feature_id>],
-  "ui": <copy from linked feature's ui field, or false if feature_id is null>,
   "deprecated": false,
   "deprecated_reason": null,
   "supersedes": null,

@@ -10,7 +10,6 @@ Dispatched as a SubAgent during the Finalize phase (`long-task-finalize` Step 2)
 - `feature-list.json` path
 - SRS document path (`docs/plans/*-srs.md`)
 - Design document path (`docs/plans/*-design.md`)
-- UCD style guide path (`docs/plans/*-ucd.md`) — only for UI projects
 - `tech_stack` from `feature-list.json`
 - Working directory (project root)
 
@@ -31,8 +30,7 @@ Dispatched as a SubAgent during the Finalize phase (`long-task-finalize` Step 2)
 1. Read `feature-list.json` — extract all features where `status: "passing"` and `deprecated` is not `true`
 2. Read SRS document — understand requirement descriptions, user personas, acceptance criteria
 3. Read Design document — understand architecture, public API surface, module boundaries
-4. Read UCD document (if UI features exist) — understand UI flows
-5. Scan implementation code — identify public entry points, exported functions, API endpoints, CLI commands
+4. Scan implementation code — identify public entry points, exported functions, API endpoints, CLI commands
 
 ### Step 2: Plan Scenarios
 
@@ -64,7 +62,6 @@ For each planned scenario:
 | **API usage** | `.py` / `.sh` / `.js` script | Initialize client, call endpoints with sample data, print responses |
 | **Library usage** | `.py` / `.js` / `.ts` code | Import modules, demonstrate key functions with sample data |
 | **CLI usage** | `.sh` / `.ps1` script | Run commands with expected output in comments |
-| **UI workflow** | `.md` walkthrough | Step-by-step instructions with action descriptions |
 | **Integration** | `.py` / `.js` script | End-to-end workflow spanning multiple subsystems |
 
 3. **Each example must include**:

@@ -11,7 +11,6 @@
 | SRS Trace | {srs_trace} |
 | Completed | {completion_date} |
 | Git SHA | {commit_sha} |
-| UI Feature | {ui} |
 
 ---
 
@@ -74,16 +73,6 @@
 | ST-FUNC-{id}-001 | FUNC | Real | PASS / FAIL | {one-line assertion summary} |
 | ST-BNDRY-{id}-002 | BNDRY | Real | PASS / FAIL | {one-line assertion summary} |
 
-<!-- If check_real_tests.py was run (features with required_configs[]): -->
-
-### Real Test Compliance (check_real_tests.py)
-
-| Check | Count |
-|-------|-------|
-| Real test markers found | {N} |
-| Mock warnings | {N} |
-| Skip pattern warnings | {N} |
-
 ---
 
 ## E. Risk Assessment with Mitigations (风险与解决办法)
@@ -111,7 +100,6 @@
 | P2 — Interface Contract | {N}/{N} methods verified | PASS / FAIL |
 | T2 — Test Inventory | {N}/{N} test functions found | PASS / FAIL |
 | D3 — Dependency Versions | requirements.txt / package.json | OK / {mismatch details} |
-| U1 — UCD Token Spot Check | CSS/style files (ui:true only) | OK / N/A |
 
 ---
 
@@ -125,21 +113,9 @@
 | Execution Pass Rate | {N}/{N} |
 | FUNC Cases | {N} |
 | BNDRY Cases | {N} |
-| UI Cases | {N} (ui:true) / N/A |
 | SEC Cases | {N} |
 | PERF Cases | {N} |
 | Manual Cases | {N} |
-
-<!-- If ui:true, include Visual Assessment scores from Feature-ST: -->
-
-### Visual Assessment (ui:true only)
-
-| Criterion | Score (1-5) | Evidence |
-|-----------|-------------|----------|
-| Rendering Completeness | {N} | {observations} |
-| Interactive Depth | {N} | {observations} |
-| Visual Coherence | {N} | {observations} |
-| Functional Accuracy | {N} | {observations} |
 
 ---
 

@@ -730,123 +730,6 @@ def test_constraints_and_assumptions_shown_in_summary():
 
 # --- UI field validation tests ---
 
-def test_ui_feature_with_devtools_step_valid():
-    """UI feature with [devtools] verification step should pass."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "frontend", "title": "Login Page",
-                "description": "Login form", "priority": "high", "status": "failing",
-                "verification_steps": [
-                    "[devtools] navigate to /login, verify form fields, fill credentials, submit",
-                    "Unit test: login logic"
-                ],
-                "dependencies": [],
-                "ui": True,
-                "ui_entry": "/login"
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 for valid UI feature: {stdout}"
-
-
-def test_ui_feature_without_devtools_step_ok():
-    """UI feature without [devtools] verification step should pass (no longer enforced)."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "frontend", "title": "Login Page",
-                "description": "Login form", "priority": "high", "status": "failing",
-                "verification_steps": ["Run unit tests", "Check API response"],
-                "dependencies": [],
-                "ui": True
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 for UI feature without [devtools] step: {stdout}"
-
-
-def test_non_ui_feature_no_devtools_step_ok():
-    """Non-UI feature without [devtools] step should pass (no requirement)."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "API endpoint",
-                "description": "Backend", "priority": "high", "status": "failing",
-                "verification_steps": ["Run unit tests"],
-                "dependencies": [],
-                "ui": False
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 for non-UI feature: {stdout}"
-
-
-def test_ui_field_not_boolean_fails():
-    """ui field that is not boolean should fail."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "frontend", "title": "Page",
-                "description": "A", "priority": "high", "status": "failing",
-                "verification_steps": ["Step 1"],
-                "dependencies": [],
-                "ui": "yes"
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero for non-boolean ui field: {stdout}"
-
-
-def test_ui_entry_not_string_fails():
-    """ui_entry field that is not a string should fail."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "frontend", "title": "Page",
-                "description": "A", "priority": "high", "status": "failing",
-                "verification_steps": ["[devtools] check page"],
-                "dependencies": [],
-                "ui": True,
-                "ui_entry": 123
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero for non-string ui_entry: {stdout}"
-
-
-def test_feature_without_ui_field_is_valid():
-    """Feature without ui field should pass (backward compat)."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "verification_steps": ["Step 1"], "dependencies": []
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 when ui field absent: {stdout}"
-
-
 # --- srs_trace validation tests ---
 
 def test_valid_srs_trace():
@@ -1172,93 +1055,6 @@ def test_deprecated_excluded_from_summary_counts():
     assert "1 deprecated" in stdout
 
 
-# --- UI dependency satisfaction warning tests ---
-
-def test_ui_feature_with_failing_dep_warning():
-    """UI feature depending on a failing feature should produce a warning."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "backend", "title": "User API",
-                "description": "REST API", "priority": "high", "status": "failing",
-                "verification_steps": ["Given valid user data, when POST /api/users, then 201"],
-                "dependencies": []
-            },
-            {
-                "id": 2, "category": "frontend", "title": "User Profile Page",
-                "description": "UI page", "priority": "high", "status": "failing",
-                "verification_steps": [
-                    "[devtools] /profile | EXPECT: user data from API | REJECT: empty state"
-                ],
-                "dependencies": [1],
-                "ui": True,
-                "ui_entry": "/profile"
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 (warning, not error): {stdout}"
-    assert "E2E testing may be incomplete" in stdout, f"Expected dependency warning: {stdout}"
-
-
-def test_ui_feature_with_passing_dep_no_warning():
-    """UI feature depending on a passing feature should NOT produce the dep warning."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "backend", "title": "User API",
-                "description": "REST API", "priority": "high", "status": "passing",
-                "verification_steps": ["Given valid user data, when POST /api/users, then 201"],
-                "dependencies": []
-            },
-            {
-                "id": 2, "category": "frontend", "title": "User Profile Page",
-                "description": "UI page", "priority": "high", "status": "failing",
-                "verification_steps": [
-                    "[devtools] /profile | EXPECT: user data from API | REJECT: empty state"
-                ],
-                "dependencies": [1],
-                "ui": True,
-                "ui_entry": "/profile"
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0: {stdout}"
-    assert "E2E testing may be incomplete" not in stdout, f"Unexpected dep warning: {stdout}"
-
-
-def test_deprecated_ui_feature_no_dep_warning():
-    """Deprecated UI feature should NOT produce dependency warning."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "backend", "title": "User API",
-                "description": "REST API", "priority": "high", "status": "failing",
-                "verification_steps": ["Step 1"],
-                "dependencies": []
-            },
-            {
-                "id": 2, "category": "frontend", "title": "Old Page",
-                "description": "UI page", "priority": "high", "status": "failing",
-                "verification_steps": ["[devtools] /old | EXPECT: something | REJECT: nothing"],
-                "dependencies": [1],
-                "ui": True,
-                "deprecated": True,
-                "deprecated_reason": "Replaced"
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert "E2E testing may be incomplete" not in stdout, f"Deprecated feature should not warn: {stdout}"
-
-
 # --- Simple verification_steps warning tests ---
 
 def test_simple_verification_step_warning():
@@ -1419,12 +1215,6 @@ if __name__ == "__main__":
         test_empty_assumptions_is_valid,
         test_no_assumptions_key_is_valid,
         test_constraints_and_assumptions_shown_in_summary,
-        test_ui_feature_with_devtools_step_valid,
-        test_ui_feature_without_devtools_step_ok,
-        test_non_ui_feature_no_devtools_step_ok,
-        test_ui_field_not_boolean_fails,
-        test_ui_entry_not_string_fails,
-        test_feature_without_ui_field_is_valid,
         test_valid_srs_trace,
         test_srs_trace_invalid_format,
         test_srs_trace_not_array,
@@ -1441,9 +1231,6 @@ if __name__ == "__main__":
         test_supersedes_not_integer_fails,
         test_no_wave_fields_backward_compat,
         test_deprecated_excluded_from_summary_counts,
-        test_ui_feature_with_failing_dep_warning,
-        test_ui_feature_with_passing_dep_no_warning,
-        test_deprecated_ui_feature_no_dep_warning,
         test_simple_verification_step_warning,
         test_rich_verification_step_no_warning,
         test_short_step_with_chaining_no_warning,

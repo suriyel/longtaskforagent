@@ -75,7 +75,7 @@ After launching Claude Code, simply tell it what you want to build:
 The system will automatically enter the **Requirements phase**, helping you refine requirements through structured questioning and ultimately generate a standardized SRS document. The subsequent workflow is fully automated:
 
 ```
-Requirements → UCD (if UI) → Design → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing
+Requirements → Design → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing
 ```
 
 [View sample project](https://github.com/suriyel/githubtrends)
@@ -98,10 +98,10 @@ Most AI coding assistants lose context after one conversation. Long-Task Agent s
 | AI forgets everything after `/clear` | Persistent artifacts (`feature-list.json`, `task-progress.md`, git history) bridge sessions automatically |
 | AI generates code without understanding requirements | ISO/IEC/IEEE 29148-aligned requirements elicitation produces an approved SRS before any code is written |
 | AI skips testing or writes shallow tests | Strict TDD (Red→Green→Refactor) with coverage gates (≥90% line, ≥80% branch) and mutation testing (≥80% score) |
-| AI produces inconsistent UI | UCD style guide with token-based design system ensures visual consistency across all features |
+| AI produces inconsistent UI | Style conventions in design document ensure visual consistency across all features |
 | AI generates thin acceptance tests | ATS (Acceptance Test Strategy) pre-plans test categories per requirement after design, with independent subagent review ensuring no coverage blind spots |
 | AI drifts from the approved design | Design interface coverage gate + inline compliance check after every feature |
-| No way to add features to an existing project safely | Increment skill performs impact analysis, updates SRS/Design/UCD in place, tracks changes with waves |
+| No way to add features to an existing project safely | Increment skill performs impact analysis, updates SRS/Design in place, tracks changes with waves |
 | "Works on my machine" syndrome | System Testing phase (IEEE 829) with regression, integration, E2E, and NFR verification |
 
 ![Problem vs Solution](images/2.png)
@@ -110,7 +110,7 @@ Most AI coding assistants lose context after one conversation. Long-Task Agent s
 
 ### 1. Requirements-Driven, Not Code-First
 
-Every project starts with structured requirements elicitation — not coding. The SRS captures the *what*, the UCD captures the *look*, and the design document captures the *how*. No code is written until all three are approved.
+Every project starts with structured requirements elicitation — not coding. The SRS captures the *what* and the design document captures the *how*. No code is written until both are approved.
 
 ### 2. Persistent State Bridges Sessions
 
@@ -123,7 +123,6 @@ Ten+ persistent artifacts ensure zero knowledge loss between sessions:
 | `docs/plans/*-srs.md` | Approved Software Requirements Specification |
 | `docs/plans/*-design.md` | Approved technical design document |
 | `docs/plans/*-ats.md` | Approved Acceptance Test Strategy (requirement→scenario mapping, independent subagent review) |
-| `docs/plans/*-ucd.md` | Approved UCD style guide (UI projects) |
 | `long-task-guide.md` | Worker session guide with env activation + tool commands |
 | `docs/test-cases/feature-*.md` | Per-feature ST test case documents (ISO/IEC/IEEE 29119) |
 | `docs/plans/*-st-plan.md` | System testing plan with RTM |
@@ -138,8 +137,7 @@ Every feature passes through a gauntlet of automated quality gates — no except
 - **TDD Red→Green→Refactor** — tests are written before code, always
 - **Coverage Gate** — line ≥90%, branch ≥80%
 - **Mutation Gate** — mutation score ≥80% (catches tests that pass without actually testing anything)
-- **Inline Compliance Check** — mechanical verification of interface contracts, test inventory, dependency versions, and UCD tokens after every feature
-- **UCD Compliance** — UI features are verified against style tokens
+- **Inline Compliance Check** — mechanical verification of interface contracts, test inventory, dependency versions after every feature
 
 ### 4. One Feature Per Cycle
 
@@ -159,21 +157,14 @@ Each worker session focuses on exactly one feature. This prevents context exhaus
 - Anti-pattern detection: weasel words, compound requirements, design leakage
 - Produces an approved **SRS** (`docs/plans/*-srs.md`)
 
-### Phase 0b: UCD Style Guide
-
-- Defines visual direction, color tokens, typography, spacing
-- Generates text-to-image prompts for component mockups
-- Auto-skips for non-UI projects
-- Produces an approved **UCD** (`docs/plans/*-ucd.md`)
-
-### Phase 0c: Design
+### Phase 0b: Design
 
 - Proposes 2-3 approaches with trade-offs
 - Per-feature Mermaid diagrams (class, sequence, flow)
 - Third-party dependency versions with compatibility verification
 - Produces an approved **Design Document** (`docs/plans/*-design.md`)
 
-### Phase 0d: Acceptance Test Strategy (ATS)
+### Phase 0c: Acceptance Test Strategy (ATS)
 
 - Maps every FR/NFR/IFR to acceptance scenarios with required test categories (FUNC, BNDRY, SEC, PERF, UI)
 - NFR test method matrix (tools + thresholds + load parameters)
@@ -214,27 +205,27 @@ Orient → Bootstrap → Config Gate → DevTools Gate → Plan
 
 - Place an `increment-request.json` signal file → the skill auto-detects it
 - Impact analysis against existing features
-- Updates SRS, Design, ATS, UCD in place (git tracks history)
+- Updates SRS, Design, ATS in place (git tracks history)
 - Appends new features with wave metadata for traceability
   ![Worker Cycle](images/5.png)
 
-## 13-Skill Superpowers Architecture
+## 11-Skill Superpowers Architecture
 
 Long-Task Agent uses an **on-demand skill loading** pattern — only the bootstrap router is loaded at session start; phase skills are loaded as needed, keeping context lean.
 
 ```
 using-long-task (bootstrap router — always loaded)
    │
-   ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init
-   │                              (auto-skip if no UI)                   (auto-skip ≤5 FR)      │
-   │                                                                          ↓
-   ├─→ long-task-increment (if increment-request.json exists)          long-task-work
-   │                                                                     │  │  │  │
-   │                                                              ┌───────┘  │  └──────┴─────┐
-   │                                                              ↓          ↓                ↓
-   │                                                         long-task  long-task       long-task
-   │                                                           -tdd     -quality       -feature-st
-   │                                                              │           │
+   ├─→ long-task-requirements ──→ long-task-design ──→ long-task-ats ──→ long-task-init
+   │                                                  (auto-skip ≤5 FR)      │
+   │                                                                         ↓
+   ├─→ long-task-increment (if increment-request.json exists)         long-task-work
+   │                                                                    │  │  │  │
+   │                                                             ┌──────┘  │  └──────┴─────┐
+   │                                                             ↓         ↓                ↓
+   │                                                        long-task  long-task       long-task
+   │                                                          -tdd     -quality       -feature-st
+   │                                                             │          │
    │
    └─→ long-task-st (when all features pass)
 ```
@@ -243,7 +234,6 @@ using-long-task (bootstrap router — always loaded)
 |-------|------|
 | `using-long-task` | Bootstrap router — detects project state, invokes correct phase |
 | `long-task-requirements` | ISO 29148 requirements elicitation → SRS |
-| `long-task-ucd` | UCD style guide with design tokens |
 | `long-task-design` | Technical design with trade-off analysis |
 | `long-task-ats` | Acceptance Test Strategy — requirement→scenario mapping + independent subagent review |
 | `long-task-init` | Project scaffolding and feature decomposition |
@@ -324,15 +314,12 @@ The plugin includes a suite of validation scripts to prevent common failures:
 | `validate_features.py` | Validate `feature-list.json` schema and data integrity |
 | `validate_guide.py` | Validate `long-task-guide.md` structural integrity |
 | `check_configs.py` | Verify required environment configs before feature work |
-| `check_devtools.py` | Verify Chrome DevTools MCP availability for UI features |
 | `check_st_readiness.py` | Confirm all features passing before system testing |
 | `validate_increment_request.py` | Validate increment request signal file |
 | `validate_st_cases.py` | Validate ST test case documents (ISO/IEC/IEEE 29119) |
 | `get_tool_commands.py` | Map tech stack to CLI commands |
-| `check_real_tests.py` | Verify real test existence and mock detection |
 | `validate_ats.py` | Validate ATS document structure + SRS cross-validation |
 | `check_ats_coverage.py` | ATS↔feature-list↔ST case coverage checking |
-| `analyze-tokens.py` | Analyze UCD design tokens from generated images |
 
 ---
 
@@ -527,7 +514,7 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 | TDD discipline | Optional, often skipped | Mandatory Red→Green→Refactor for every feature |
 | Test quality verification | Line coverage only (if any) | Coverage + mutation testing with configurable thresholds |
 | Acceptance test planning | Ad-hoc, category-biased toward functional | ATS pre-plans test categories per requirement, with independent subagent review |
-| UI consistency | Per-developer taste | UCD style guide with token-based design system |
+| UI consistency | Per-developer taste | Style conventions in design document |
 | Post-implementation verification | None | Design interface coverage gate + inline compliance check |
 | System testing | Manual QA | IEEE 829-aligned with RTM, Go/No-Go verdict |
 | Adding features post-launch | Edit code directly | Impact analysis, tracked waves, document updates |
@@ -539,12 +526,11 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 
 ```
 long-task-agent/
-├── skills/                          # 13 skills (on-demand loaded)
+├── skills/                          # 11 skills (on-demand loaded)
 │   ├── using-long-task/             # Bootstrap router
 │   ├── long-task-requirements/      # Phase 0a: Requirements & SRS
-│   ├── long-task-ucd/               # Phase 0b: UCD style guide
-│   ├── long-task-design/            # Phase 0c: Design
-│   ├── long-task-ats/               # Phase 0d: Acceptance Test Strategy (with independent reviewer subagent)
+│   ├── long-task-design/            # Phase 0b: Design
+│   ├── long-task-ats/               # Phase 0c: Acceptance Test Strategy (with independent reviewer subagent)
 │   ├── long-task-init/              # Phase 1: Initialization
 │   ├── long-task-work/              # Phase 2: Worker orchestrator
 │   ├── long-task-tdd/               # TDD discipline

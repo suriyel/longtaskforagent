@@ -6,7 +6,7 @@ You are a Quality Gates execution SubAgent. Follow these rules exactly. When fin
 
 # Quality Gates & Verification
 
-Four sequential gates that MUST pass before a feature can be marked "passing". No shortcuts, no exceptions.
+Three sequential gates that MUST pass before a feature can be marked "passing". No shortcuts, no exceptions.
 
 ## The Iron Law
 
@@ -24,72 +24,6 @@ If you haven't run the verification command in this message, you cannot claim it
 4. **Re-run** once
 5. **If still fails** → set Verdict to BLOCKED with error details
 6. **NEVER skip** — testing is a hard gate; no bypass allowed
-
-## Gate 0: Real Test Verification
-
-Gate 0 runs BEFORE coverage. Coverage numbers are meaningless when the test suite is all-mock.
-
-### Step 1: Run verification script
-
-```bash
-python scripts/check_real_tests.py feature-list.json --feature {current_feature_id} --require-for-deps
-```
-
-The `--require-for-deps` flag cross-checks the feature's `required_configs[]` for connection-string keys (URL, HOST, PORT, etc.). If found, real tests are **mandatory** — pure-function exemption is blocked.
-
-Read script output:
-- **FAIL** (no real tests) → GATE 0 FAIL, return to TDD Red to write real tests
-- **FAIL** with "has external dependencies" → see Step 1b below
-- **WARN** (mock warnings found) → proceed to Step 2
-- **PASS** (real tests found, no mock warnings) → proceed to Step 3
-
-### Step 1b: Dependency-blocked FAIL handling
-
-If Gate 0 FAIL reason includes "has external dependencies but no real tests":
-1. This is NOT a code problem — it's an infrastructure/config problem
-2. Run: `python scripts/check_configs.py feature-list.json --feature {current_feature_id}`
-3. If configs are missing → set Verdict to **BLOCKED** with message: "Feature #{id} requires external dependencies ({config_names}) but configs are not provided. Use AskUserQuestion to request the user to provide the missing configs."
-4. If configs exist but services aren't running → read `env-guide.md`, start services, re-run Gate 0
-5. NEVER proceed without real tests for features with external dependencies
-6. NEVER claim pure-function exemption for features that have connection-string `required_configs[]`
-
-### Step 2: LLM sampling review (WARN only)
-
-For each mock warning flagged by the script:
-1. Read the corresponding real test function body
-2. Determine: is the mock targeting the **primary dependency** this real test claims to verify?
-   - Yes → real test is invalid; rewrite, re-run script
-   - No (mock is on an unrelated auxiliary service) → mark as legitimate, proceed
-
-### Step 3: Run real tests (with skip detection)
-
-Execute real tests in isolation using the run command declared in `long-task-guide.md` Real Test Convention section:
-- All real tests MUST PASS
-- Any FAIL → GATE 0 FAIL, fix and re-run
-- **Skip detection (mandatory)**: Read the full test runner output. If ANY real test is reported as `skipped`, `pending`, `disabled`, or `ignored` — treat it as a GATE 0 FAIL. Real tests must execute, not skip.
-  - Common skip indicators: pytest `s` marker or "skipped" count > 0; JUnit `@Disabled`; Jest/Vitest "skipped"/"pending" count > 0; gtest "DISABLED_" prefix
-  - If skip is caused by missing infrastructure → service/DB is not running. Read `env-guide.md`, start the service, re-run.
-  - If skip is caused by an environment guard (`if not env: return`) → rewrite the test to assert-fail instead (Anti-Pattern #16). Real tests must fail loudly, not silently pass.
-
-### Evidence required
-```
-Gate 0 Result:
-- Script output: [paste check_real_tests.py output]
-- Mock warning review: [for each warning — primary dep / auxiliary service]
-- Real test execution: passed N / failed N / skipped N
-- Skip verdict: 0 skipped (or: N skipped → FAIL, reason and fix applied)
-- Gate 0: PASS/FAIL
-```
-
-### On Gate 0 FAIL
-```
-GATE 0 FAIL — [reason]
-Required action:
-1. [Fix missing real tests / rewrite mock-using real tests / set up test infrastructure]
-2. Re-run TDD Red verification (real tests must FAIL first, then PASS after Green)
-3. Return to Gate 0
-Do NOT skip Gate 0 and proceed to coverage.
-```
 
 ## Gate 1: Coverage
 
@@ -210,7 +144,6 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 
 | Event | What to verify |
 |-------|---------------|
-| After TDD Green + Refactor | `check_real_tests.py` output PASS, all real tests passing |
 | After TDD Green | Full test suite output |
 | After Coverage Gate | Coverage report (line% + branch%) |
 | After TDD Refactor | Full test suite (still passing) |
@@ -227,8 +160,6 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 | Read only the summary line of test output | Read complete output |
 | Run mutation on uncovered code | Pass coverage gate FIRST; mutation on uncovered code is wasteful |
 | Skip re-verification at session start | Always smoke-test passing features |
-| Skip Gate 0 because "coverage will catch mock issues" | Coverage is blind to mock vs. real. Gate 0 runs first, always. |
-| Script reports WARN but proceed without reviewing | Must review each mock warning to determine if it targets the primary dependency. |
 
 ---
 
@@ -246,7 +177,6 @@ When all gates are complete (or if blocked), return your result in EXACTLY this 
 ### Metrics
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| Gate 0 (Real Test) | PASS/FAIL | PASS | PASS/FAIL |
 | Line Coverage | N% | ≥X% | PASS/FAIL |
 | Branch Coverage | N% | ≥X% | PASS/FAIL |
 | Mutation Score | N% | ≥X% | PASS/FAIL |

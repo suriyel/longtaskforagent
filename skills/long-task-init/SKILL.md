@@ -35,7 +35,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - `<language>` — one of `python|java|typescript|c|cpp` from the design doc tech stack
    - Use `--line-cov`, `--branch-cov`, `--mutation-score` to override thresholds (defaults: 90/80/80)
    - Creates: `feature-list.json`, `CLAUDE.md` (appended), `task-progress.md`, `RELEASE_NOTES.md`, `examples/`, `docs/plans/`
-   - Auto-copies helper scripts (`validate_features.py`, `check_configs.py`, `check_devtools.py`, `check_jinja2.py`, `check_real_tests.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_st_cases.py`, `validate_increment_request.py`, `validate_bugfix_request.py`, `check_st_readiness.py`, `check_ats_coverage.py`, `check_mcp_providers.py`) into project `scripts/`
+   - Auto-copies helper scripts (`validate_features.py`, `check_configs.py`, `check_jinja2.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_st_cases.py`, `validate_increment_request.py`, `validate_bugfix_request.py`, `check_st_readiness.py`, `check_ats_coverage.py`, `check_mcp_providers.py`) into project `scripts/`
 3b. **MCP Provider Setup** (SKIP if no enterprise MCP required):
    - Ask user: "Does this project use enterprise MCP servers for test/coverage/mutation/UI automation?"
    - If **YES**:
@@ -58,7 +58,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
         ```
         → Exit 1: present installation instructions to user (the script outputs exact `claude mcp add` commands); wait for user to install and restart session; re-run check to confirm exit 0
         → Exit 0: continue
-   - If **NO**: skip (skills use plugin defaults — Chrome DevTools MCP for UI, CLI tools for testing)
+   - If **NO**: skip (skills use plugin defaults — CLI tools for testing)
 
 3. **Verify `tech_stack` and `quality_gates`** in `feature-list.json`:
    - Confirm `language`, `test_framework`, `coverage_tool`, `mutation_tool` match the design doc
@@ -67,10 +67,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
      ```bash
      python scripts/get_tool_commands.py feature-list.json
      ```
-   - Verify `real_test` config in feature-list.json:
-     - `marker_pattern` matches the project's chosen real test identification method
-     - `mock_patterns` covers the project's mock framework keywords
-     - `test_dir` points to the correct test directory
 4. **Generate `long-task-guide.md`** — Create a project-tailored Worker session guide:
    - Read these files for reference:
      - `skills/long-task-work/SKILL.md` — Worker workflow
@@ -78,9 +74,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - `skills/long-task-quality/coverage-recipes.md` — coverage/mutation tool setup
      - `skills/using-long-task/references/architecture.md` — TDD workflow details
    - Include ONLY the project's language-specific coverage/mutation commands (get from `python scripts/get_tool_commands.py feature-list.json`)
-   - Include UI testing section ONLY if the project has UI features (`"ui": true`):
-     - If `tool-bindings.json` exists and `capability_bindings.ui_tools.tool_mapping` is present: use the enterprise tool names from `tool-bindings.json` throughout the guide (not Chrome DevTools MCP names)
-     - Otherwise: use Chrome DevTools MCP tool names (`navigate_page`, `click`, etc.)
    - **Must include all required sections**: Orient, Bootstrap, Config Gate, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules
    - **Must include `Environment Commands` section** with:
      - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate myenv`, `nvm use 20`)
@@ -90,7 +83,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - These replace the now-removed test.sh/mutate.sh wrappers — Claude runs these directly
    - **Must include `Service Commands` section** (only if project has server processes): reference `env-guide.md` as the authoritative source for start/stop/restart commands; list health check URLs; include reminder about the Restart Protocol
    - **Must include `Config Management` section**: describe how to add/update a config value for this project (e.g., "append `KEY=value` to `.env`" for dotenv projects, "set `key=value` in `application.properties`" for Spring Boot projects, "export KEY=value" for system-env-only projects). This section is referenced by the Worker Config Gate when prompting users for missing values.
-   - **Must include `Real Test Convention` section**: identification method (marker/folder/naming, adapted to project language), run command to execute only real tests, example real test for this project's tech stack
    - Validate:
      ```bash
      python scripts/validate_guide.py long-task-guide.md --feature-list feature-list.json
@@ -176,18 +168,13 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - Each FR-xxx → one or more features with `id`, `category`, `title`, `description`, `priority`, `status` (always `"failing"`), `srs_trace`, `dependencies`
    - Each feature MUST include `srs_trace`: an array of SRS requirement IDs (e.g. `["FR-001", "FR-002"]`) that this feature implements
    - `verification_steps` is OPTIONAL — if provided, should trace to SRS acceptance criteria (Given/When/Then)
-   - For UI features: set `"ui": true`, `"ui_entry": "/path"` (mandatory — specify the URL where this feature's UI is accessed); include at least one `[devtools]`-prefixed verification step asserting **positive visual presence** of the feature's primary rendered output (not just error absence). Example: `"[devtools] /game | EXPECT: canvas#game-board with rendered game elements (snake segments, food item, score display), game board grid visible | REJECT: blank canvas, empty game container, 'undefined' in score"`
    - **If verification_steps are provided** — quality rules (drives downstream ST case and TDD quality):
      - Each step MUST be a behavioral scenario with Given/When/Then structure, not a simple assertion
      - BAD: `"Login page displays correctly"` → no action, no assertion
-     - GOOD: `"[devtools] Navigate /login → EXPECT: email input, password input, 'Sign In' button; fill valid creds → click Sign In → EXPECT: redirect to /dashboard, user name in header; REJECT: console errors, broken images"`
      - BAD: `"API returns 200 on valid input"` → this is an assertion, not a scenario
      - GOOD: `"Given a registered user, when POST /api/orders with valid payload, then response 201 with order ID; and GET /api/orders/{id} returns the created order with correct fields"`
-     - For `"ui": true` features: every `[devtools]` step MUST describe a multi-step interaction chain (navigate → interact → verify → interact → verify)
      - For features with backend dependencies: at least one step MUST verify real data flow across the dependency boundary
      - **Minimum complexity**: each feature SHOULD have ≥ 1 verification_step with 3+ chained actions
-   - **ATS category constraint** (if ATS document exists): for each feature, use srs_trace to look up ATS-required categories. If ANY srs_trace requirement has UI in its ATS categories, set `ui: true`.
-   - **Backend-frontend pairing rule**: Frontend features (`"ui": true`) MUST list their backend API dependency features in `dependencies[]`. Additionally, features MUST be ordered in the `features[]` array using **paired grouping**: after each backend feature, place its corresponding frontend feature(s) immediately next in the array. This ensures the Worker develops Backend A → Frontend A → Backend B → Frontend B, rather than all backends then all frontends.
    - Aim for 10-200+ features; each independently verifiable and completable in one session
    - **Priority ordering**: follow the design document's Task Decomposition table (section 11.2) — P0/P1/P2/P3 maps to high/high/medium/low
    - **Dependency chain**: follow the design document's Dependency Chain diagram (section 11.3) to populate each feature's `dependencies[]`
@@ -298,9 +285,7 @@ Each feature:
   "status": "failing|passing",
   "srs_trace": ["FR-001", "FR-002"],
   "verification_steps": ["step 1", "step 2"],
-  "dependencies": [],
-  "ui": false,
-  "ui_entry": "/optional-path"
+  "dependencies": []
 }
 ```
 
@@ -317,21 +302,6 @@ Each feature:
 | `env-guide.md` | Service lifecycle commands — start/stop/restart/verify with output capture; user-editable |
 | `long-task-guide.md` | Worker session guide with env activation + direct test commands (LLM-generated, validated) |
 | `.env.example` | Template for required env configs (safe to commit) |
-
-## Retrospective Authorization (Final Step)
-
-After all artifacts are scaffolded and feature-list.json is created:
-
-```bash
-python scripts/check_retro_auth.py feature-list.json
-```
-
-- **Exit 0** (endpoint configured and reachable): Use `AskUserQuestion` to ask user:
-  > "检测到 Skill 反馈 API 已配置（{endpoint}）。是否授权在本项目中搜集 Skill 改进建议并在项目结束后上报？搜集内容包括：用户反馈修正、技能缺陷分析。不包含项目代码或业务数据。"
-  > Options: "授权 (Recommended)" / "不授权"
-  - User authorizes → set `"retro_authorized": true` in `feature-list.json` root
-  - User declines → set `"retro_authorized": false` in `feature-list.json` root
-- **Exit 1 or 2** (unavailable or disabled): skip silently — do not ask user
 
 ## Integration
 

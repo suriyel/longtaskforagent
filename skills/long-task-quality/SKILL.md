@@ -19,7 +19,7 @@ You are a Quality Gates execution SubAgent.
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-quality/references/quality-execution.md
 2. Read long-task-guide.md in the project root for test/coverage/mutation commands and environment activation
-3. Execute all 4 gates in order (Gate 0 → 1 → 2 → 3)
+3. Execute all 3 gates in order (Gate 1 → 2 → 3)
    - **Note**: Static analysis tools (Design §13.4) are enforced during TDD Refactor, not here. If Design doc §13.7 documents code generation directories, exclude them from coverage measurement in Gate 1.
 4. If a gate fails, fix and retry per the rules (max 3 attempts per gate)
 5. Return your result using the Structured Return Contract at the end of the execution rules

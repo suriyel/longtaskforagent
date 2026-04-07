@@ -75,7 +75,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 系统将自动进入**需求阶段**，通过结构化提问帮助您完善需求，最终生成标准化的 SRS 文档。后续工作流程完全自动化：
 
 ```
-需求 → UCD (如有UI) → 设计 → ATS (验收测试策略) → 初始化 → 工作循环 → 系统测试
+需求 → 设计 → ATS (验收测试策略) → 初始化 → 工作循环 → 系统测试
 ```
 
 [点击查看样例项目](https://github.com/suriyel/githubtrends)
@@ -98,10 +98,10 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 | AI 在 `/clear` 后忘记所有内容 | 持久化产物（`feature-list.json`、`task-progress.md`、git 历史）自动桥接会话 |
 | AI 不理解需求就生成代码 | 符合 ISO/IEC/IEEE 29148 的需求收集在编写任何代码前产生经批准的 SRS |
 | AI 跳过测试或编写浅层测试 | 严格的 TDD（红→绿→重构）配合覆盖率门禁（≥90% 行覆盖，≥80% 分支覆盖）和变异测试（≥80% 得分） |
-| AI 产生不一致的 UI | 带令牌化设计系统的 UCD 风格指南确保所有功能的视觉一致性 |
+| AI 产生不一致的 UI | 设计文档中的风格约定确保所有功能的视觉一致性 |
 | AI 验收测试覆盖不全 | ATS（验收测试策略）在设计后前置规划每个需求的测试类别，独立 subagent 审核确保无覆盖盲区 |
 | AI 偏离批准的设计 | 设计接口覆盖门 + 每个功能后内联合规检查 |
-| 无法安全地向现有项目添加功能 | 增量技能执行影响分析，就地更新 SRS/设计/UCD，用波次跟踪变更 |
+| 无法安全地向现有项目添加功能 | 增量技能执行影响分析，就地更新 SRS/设计，用波次跟踪变更 |
 | "在我机器上能跑"综合症 | 系统测试阶段（IEEE 829）包含回归、集成、端到端和 NFR 验证 |
 
 ![Problem vs Solution](images/2.png)
@@ -110,7 +110,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 
 ### 1. 需求驱动，而非代码优先
 
-每个项目都从结构化的需求收集开始——而不是编码。SRS 捕获*做什么*，UCD 捕获*外观*，设计文档捕获*怎么做*。三者全部批准后才会编写代码。
+每个项目都从结构化的需求收集开始——而不是编码。SRS 捕获*做什么*，设计文档捕获*怎么做*。两者全部批准后才会编写代码。
 
 ### 2. 持久状态桥接会话
 
@@ -123,7 +123,6 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 | `docs/plans/*-srs.md` | 已批准的软件需求规格说明书 |
 | `docs/plans/*-design.md` | 已批准的技术设计文档 |
 | `docs/plans/*-ats.md` | 已批准的验收测试策略（需求→场景映射，独立 subagent 审核） |
-| `docs/plans/*-ucd.md` | 已批准的 UCD 风格指南（UI 项目） |
 | `long-task-guide.md` | 工作会话指南，含环境激活 + 工具命令 |
 | `docs/test-cases/feature-*.md` | 每功能的 ST 测试用例文档（ISO/IEC/IEEE 29119） |
 | `docs/plans/*-st-plan.md` | 带 RTM 的系统测试计划 |
@@ -138,8 +137,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 - **TDD 红→绿→重构** — 先写测试，总是如此
 - **覆盖率门禁** — 行覆盖 ≥90%，分支覆盖 ≥80%
 - **变异门禁** — 变异得分 ≥80%（捕获那些通过但实际没测试任何东西的测试）
-- **内联合规检查** — 每个功能后机械验证接口契约、测试清单、依赖版本和 UCD 令牌
-- **UCD 合规** — UI 功能要验证是否符合风格令牌
+- **内联合规检查** — 每个功能后机械验证接口契约、测试清单、依赖版本
 
 ### 4. 每个周期一个功能
 
@@ -159,21 +157,14 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 - 反模式检测：模糊词、复合需求、设计泄漏
 - 产出一份已批准的 **SRS**（`docs/plans/*-srs.md`）
 
-### 阶段 0b：UCD 风格指南
-
-- 定义视觉方向、颜色令牌、排版、间距
-- 为组件模型生成文本转图像提示词
-- 非UI项目自动跳过
-- 产出一份已批准的 **UCD**（`docs/plans/*-ucd.md`）
-
-### 阶段 0c：设计
+### 阶段 0b：设计
 
 - 提出带有权衡分析的 2-3 种方案
 - 每功能的 Mermaid 图（类图、序列图、流程图）
 - 第三方依赖版本及兼容性验证
 - 产出一份已批准的 **设计文档**（`docs/plans/*-design.md`）
 
-### 阶段 0d：验收测试策略（ATS）
+### 阶段 0c：验收测试策略（ATS）
 
 - 将每个 FR/NFR/IFR 映射到验收场景，标注必须的测试类别（FUNC、BNDRY、SEC、PERF、UI）
 - NFR 测试方法矩阵（工具 + 阈值 + 负载参数）
@@ -214,27 +205,27 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 
 - 放置 `increment-request.json` 信号文件 → 技能自动检测
 - 对现有功能的影响分析
-- 就地更新 SRS、设计、ATS、UCD（git 跟踪历史）
+- 就地更新 SRS、设计、ATS（git 跟踪历史）
 - 带波次元数据追加新功能以实现可追溯性
   ![Worker Cycle](images/5.png)
 
-## 13 技能超能力架构
+## 11 技能超能力架构
 
 Long-Task Agent 使用**按需技能加载**模式——只有引导路由器在会话开始时加载；阶段技能按需加载，保持上下文精简。
 
 ```
 using-long-task (引导路由器 — 始终加载)
    │
-   ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init
-   │                              (无UI时自动跳过)                   (≤5FR自动跳过)       │
-   │                                                                          ↓
-   ├─→ long-task-increment (如果 increment-request.json 存在)          long-task-work
-   │                                                                     │  │  │  │
-   │                                                              ┌───────┘  │  └──────┴─────┐
-   │                                                              ↓          ↓                ↓
-   │                                                         long-task  long-task       long-task
-   │                                                           -tdd     -quality       -feature-st
-   │                                                              │           │
+   ├─→ long-task-requirements ──→ long-task-design ──→ long-task-ats ──→ long-task-init
+   │                                                  (≤5FR自动跳过)       │
+   │                                                                       ↓
+   ├─→ long-task-increment (如果 increment-request.json 存在)       long-task-work
+   │                                                                  │  │  │  │
+   │                                                           ┌──────┘  │  └──────┴─────┐
+   │                                                           ↓         ↓                ↓
+   │                                                      long-task  long-task       long-task
+   │                                                        -tdd     -quality       -feature-st
+   │                                                           │          │
    │
    └─→ long-task-st (当所有功能通过时)
 ```
@@ -243,7 +234,6 @@ using-long-task (引导路由器 — 始终加载)
 |-------|------|
 | `using-long-task` | 引导路由器——检测项目状态，调用正确阶段 |
 | `long-task-requirements` | ISO 29148 需求收集 → SRS |
-| `long-task-ucd` | 带设计令牌的 UCD 风格指南 |
 | `long-task-design` | 带权衡分析的技术设计 |
 | `long-task-ats` | 验收测试策略 — 需求→场景映射 + 独立 subagent 审核 |
 | `long-task-init` | 项目脚手架和功能分解 |
@@ -324,15 +314,12 @@ python scripts/auto_loop.py feature-list.json --prompt "继续"
 | `validate_features.py` | 验证 `feature-list.json` 模式和数据完整性 |
 | `validate_guide.py` | 验证 `long-task-guide.md` 结构完整性 |
 | `check_configs.py` | 在功能工作前验证所需的环境配置 |
-| `check_devtools.py` | 验证 UI 功能的 Chrome DevTools MCP 可用性 |
 | `check_st_readiness.py` | 在系统测试前确认所有功能通过 |
 | `validate_increment_request.py` | 验证增量请求信号文件 |
 | `validate_st_cases.py` | 验证 ST 测试用例文档（ISO/IEC/IEEE 29119） |
 | `get_tool_commands.py` | 将技术栈映射到 CLI 命令 |
-| `check_real_tests.py` | 验证真实测试存在性和 mock 检测 |
 | `validate_ats.py` | 验证 ATS 文档结构完整性 + SRS 交叉验证 |
 | `check_ats_coverage.py` | ATS↔功能列表↔ST 用例覆盖率检查 |
-| `analyze-tokens.py` | 从生成的图像分析 UCD 设计令牌 |
 
 ---
 
@@ -521,7 +508,7 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 | TDD 纪律 | 可选，经常跳过 | 每个功能强制 红→绿→重构 |
 | 测试质量验证 | 仅行覆盖（如果有） | 覆盖率 + 变异测试，可配置阈值 |
 | 验收测试规划 | 临时性，类别偏向功能测试 | ATS 前置规划每个需求的测试类别，独立 subagent 审核 |
-| UI 一致性 | 每个开发者的口味 | 带令牌化设计系统的 UCD 风格指南 |
+| UI 一致性 | 每个开发者的口味 | 设计文档中的风格约定 |
 | 实现后验证 | 无 | 设计接口覆盖门 + 内联合规检查 |
 | 系统测试 | 手动 QA | 符合 IEEE 829，带 RTM、Go/No-Go 结论 |
 | 发布后添加功能 | 直接编辑代码 | 影响分析、跟踪波次、文档更新 |
@@ -533,12 +520,11 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 
 ```
 long-task-agent/
-├── skills/                          # 13 个技能（按需加载）
+├── skills/                          # 11 个技能（按需加载）
 │   ├── using-long-task/             # 引导路由器
 │   ├── long-task-requirements/      # 阶段 0a：需求和 SRS
-│   ├── long-task-ucd/               # 阶段 0b：UCD 风格指南
-│   ├── long-task-design/            # 阶段 0c：设计
-│   ├── long-task-ats/               # 阶段 0d：验收测试策略（含独立审核 subagent）
+│   ├── long-task-design/            # 阶段 0b：设计
+│   ├── long-task-ats/               # 阶段 0c：验收测试策略（含独立审核 subagent）
 │   ├── long-task-init/              # 阶段 1：初始化
 │   ├── long-task-work/              # 阶段 2：工作编排器
 │   ├── long-task-tdd/               # TDD 纪律

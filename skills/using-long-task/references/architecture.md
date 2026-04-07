@@ -304,10 +304,6 @@ Each worker cycle follows this exact sequence.
      - Ensure low-value assertion ratio <= 20%
      - Apply the "wrong implementation" challenge to each test
 10. If feature has UI: write Chrome DevTools MCP functional tests (snapshot, click, fill, screenshot assertions) — tests MUST fail
-    - Use EXPECT/REJECT format in `[devtools]` verification steps
-    - Include automated UI error detection script via `evaluate_script()`
-    - Include console error gate via `list_console_messages(types=["error"])`
-    - See [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md) for full specification
 
 ### Phase 4: TDD Green — implement to pass tests
 11. Write minimal code to make ALL tests pass (unit tests + functional tests)
@@ -373,7 +369,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | Attempting multiple features in parallel | Context exhaustion mid-implementation, cascading failures | One feature per cycle |
 | Declaring victory without testing | Features appear done but break in practice | Verify every feature through actual tests |
 | Writing code before tests (skipping TDD Red) | Tests end up testing implementation rather than behavior; missed edge cases | Always write failing tests first, then implement |
-| Skipping Chrome DevTools functional tests for UI | UI may render but not function correctly for users | Every UI feature (ui=true) needs [devtools] verification steps; run DevTools Gate before planning |
+| Skipping Chrome DevTools functional tests for UI | UI may render but not function correctly for users | Every UI feature (ui=true) needs [devtools] verification steps |
 | Not updating RELEASE_NOTES.md | Release notes drift from actual state; costly catch-up later | Update after every git commit |
 | Skipping examples for user-facing features | Users can't understand how to use new features; reduces project value | Add runnable example for every user-facing feature |
 | Removing srs_trace entries | Breaks ATS category traceability | srs_trace maps features to SRS requirements — keep intact |
@@ -390,7 +386,6 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | Guess-and-fix debugging | Random fixes waste time and may introduce new bugs | Follow systematic debugging — trace root cause. See [systematic-debugging.md](../../long-task-work/references/systematic-debugging.md) |
 | Claiming "it works" without evidence | Unverified claims lead to false confidence | Show actual test output before marking passing. See [verification-enforcement.md](verification-enforcement.md) |
 | Accepting low-value assertions | Tests with None/isinstance/import checks provide zero bug-finding ability | Enforce <= 20% low-value assertion ratio. See [testing-anti-patterns.md](../../long-task-tdd/testing-anti-patterns.md) #14 |
-| Missing REJECT clause in UI tests | LLM only confirms positive expectations, misses obvious UI errors | Require EXPECT/REJECT format for all [devtools] steps. See [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md) |
 
 ## Verification Strategy
 
@@ -408,12 +403,8 @@ Requirements → SRS approved → Design → design approved → Initializer →
 
 ### For UI / frontend features (Chrome DevTools MCP required):
 - Unit tests for component logic
-- **Functional tests via Chrome DevTools MCP** (three-layer error detection):
-  - **Layer 1**: Automated error detection script via `evaluate_script()` — HARD FAIL if errors found
-  - **Layer 2**: EXPECT/REJECT format in verification steps — forces error-seeking
-  - **Layer 3**: Console error gate via `list_console_messages(types=["error"])` — HARD FAIL if errors
-  - See [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md) for full specification
-- Test flow: navigate → wait → error detection → snapshot → EXPECT/REJECT → interact → error detection → snapshot → console check
+- **Functional tests via Chrome DevTools MCP**: navigate, snapshot, click, fill, screenshot assertions
+- Test flow: navigate → wait → snapshot → interact → snapshot → console check
 
 ### For ALL features (Coverage & Mutation mandatory):
 - **Coverage**: Run language-specific coverage tool, verify line/branch thresholds met
@@ -435,13 +426,6 @@ Requirements → SRS approved → Design → design approved → Initializer →
 │     user, block           │
 └──────────┬───────────────┘
            ↓
-┌─── DevTools Gate ────────┐
-│ 0d. If ui=true:           │
-│     check_devtools.py     │
-│ 0e. If not detected →     │
-│     prompt user, block    │
-└──────────┬───────────────┘
-           ↓
 ┌─── TDD Red ─────────────┐
 │ 1. Read feature spec     │
 │ 2. Write unit tests      │
@@ -450,8 +434,6 @@ Requirements → SRS approved → Design → design approved → Initializer →
 │     ≤20% low-value)      │
 │ 3. Write [devtools]      │
 │    tests (if ui=true)    │
-│    (EXPECT/REJECT +      │
-│     error detection)     │
 │ 4. Run tests → ALL FAIL  │
 └──────────┬───────────────┘
            ↓
@@ -486,40 +468,6 @@ Requirements → SRS approved → Design → design approved → Initializer →
 │ 16. Mark "passing"        │
 └───────────────────────────┘
 ```
-
-### Chrome DevTools MCP Functional Test Pattern
-
-**Applies to**: features with `"ui": true` in `feature-list.json`.
-
-**DevTools Gate**: Before planning a UI feature, run `check_devtools.py` to verify MCP availability:
-```
-python scripts/check_devtools.py feature-list.json --feature <id>
-```
-
-**`[devtools]` verification step format**: UI features may optionally include `verification_steps` entries starting with `[devtools]`, using the **EXPECT/REJECT format** (ST test cases derive UI scenarios from SRS acceptance criteria via `srs_trace`):
-- `[devtools] <page-path> | EXPECT: <positive criteria> | REJECT: <negative criteria>`
-- **EXPECT**: Elements, text, or states that MUST be present
-- **REJECT**: Conditions that MUST NOT be present (forces error-seeking behavior)
-- Both clauses are required — see [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md) for details
-- Example: `"[devtools] /login | EXPECT: email input, password input, submit button | REJECT: placeholder 'TODO', overlapping elements, console errors"`
-
-**Test sequence** for each `[devtools]` step:
-```
-1. Navigate to relevant page:      navigate_page(url)  (use ui_entry if set)
-2. Wait for page load:             wait_for(expected_text)
-3. Run automated error detection:  evaluate_script(ui_error_detector)  ← HARD FAIL if count > 0
-4. Capture initial state:          take_snapshot()
-5. Verify EXPECT criteria:         check uid/text presence in snapshot
-6. Verify REJECT criteria:         confirm REJECT conditions are NOT present
-7. Perform user action:            click(uid) / fill(uid, value)
-8. Wait for response:              wait_for(text)
-9. Run error detection again:      evaluate_script(ui_error_detector)  ← HARD FAIL if count > 0
-10. Capture result state:          take_snapshot() / take_screenshot()
-11. Assert expected outcome:       verify EXPECT elements, text, or visual state
-12. Check for console errors:      list_console_messages(types=["error"])  ← HARD FAIL if count > 0
-```
-
-See [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md) for the automated detection script and the three-layer detection model.
 
 ## Multi-Language Tool Quick Reference
 

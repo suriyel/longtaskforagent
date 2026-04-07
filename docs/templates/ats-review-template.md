@@ -33,13 +33,11 @@
 |-----------|-------------------|
 | All FR-xxx | FUNC + BNDRY (minimum) |
 | FR handles user input, authentication, or authorization | + SEC |
-| FR maps to a feature with `ui: true` | + UI |
 | NFR-xxx with performance metrics | PERF |
 
 **Checks:**
 - All FRs have at least FUNC + BNDRY
 - FRs handling user input/auth have SEC
-- FRs with ui:true features have UI
 - NFRs with performance metrics have PERF
 - No FR has only a single category assigned
 
@@ -74,7 +72,6 @@
 - Each scenario has specific inputs and expected outputs
 - Pass criteria are measurable and assertable (numbers, states, responses)
 - No weasel words: "reasonable", "appropriate", "correctly", "properly", "quickly", "合理", "正确", "适当"
-- UI scenarios specify concrete Chrome DevTools MCP tool calls
 
 **Defect severity:**
 - Non-measurable pass criterion for NFR → **Critical**

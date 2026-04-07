@@ -195,7 +195,7 @@ After installation, launch OpenCode in your project directory and describe what 
 The system automatically enters the **Requirements** phase and guides you through the full workflow:
 
 ```
-Requirements -> UCD (if UI) -> Design -> Init -> Worker cycles -> System Testing
+Requirements -> Design -> Init -> Worker cycles -> System Testing
 ```
 
 ### Finding Skills
@@ -221,8 +221,7 @@ Invoke each phase skill directly in OpenCode:
 | Phase | OpenCode Invocation |
 |-------|---------------------|
 | Requirements (Phase 0a) | `use skill long-task/long-task-requirements` |
-| UCD Style Guide (Phase 0b) | `use skill long-task/long-task-ucd` |
-| Design (Phase 0c) | `use skill long-task/long-task-design` |
+| Design (Phase 0b) | `use skill long-task/long-task-design` |
 | Init (Phase 1) | `use skill long-task/long-task-init` |
 | Worker (Phase 2) | `use skill long-task/long-task-work` |
 | System Testing (Phase 3) | `use skill long-task/long-task-st` |
@@ -316,8 +315,7 @@ Skills written for Claude Code are automatically adapted via the bootstrap injec
 |-------|-------|---------|
 | `using-long-task` | Bootstrap | Router (auto-injected, do not load manually) |
 | `long-task-requirements` | Phase 0a | Requirements elicitation & SRS |
-| `long-task-ucd` | Phase 0b | UCD style guide |
-| `long-task-design` | Phase 0c | Design document |
+| `long-task-design` | Phase 0b | Design document |
 | `long-task-init` | Phase 1 | Project initialization |
 | `long-task-work` | Phase 2 | Worker orchestrator |
 | `long-task-st` | Phase 3 | System testing |

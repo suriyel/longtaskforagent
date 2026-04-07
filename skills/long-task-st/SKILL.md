@@ -42,7 +42,6 @@ python scripts/check_st_readiness.py feature-list.json
 - Read `feature-list.json` — note `tech_stack`, `quality_gates`, `constraints[]`, `assumptions[]`
 - Read SRS — extract all FR-xxx, NFR-xxx, IFR-xxx, CON-xxx requirements; read Stakeholders, User Personas, and Glossary sections
 - Read Design doc — extract architecture, API design, testing strategy (§9), third-party dependencies (§8)
-- If UI features exist: read UCD doc (`docs/plans/*-ucd.md`)
 - Read `task-progress.md` — session history context
 
 ### 2. ST Plan
@@ -211,8 +210,6 @@ For each user persona in SRS Stakeholders:
 
 For each scenario: set up initial state, execute step-by-step, verify intermediate states AND final outcome, clean up.
 
-**UI E2E Testing** (only if `"ui": true` features exist): Use Chrome DevTools MCP for browser-based E2E verification.
-
 Write E2E tests in `tests/e2e/` or `tests/st/`. Run and record results.
 
 ### 6. System-Wide NFR Verification
@@ -306,18 +303,6 @@ Generate `docs/plans/YYYY-MM-DD-st-report.md` with these sections:
   - Run `env-guide.md` "Verify Services Stopped" commands — ports must not respond
   - **Record cleanup result**: Note cleanup status in `task-progress.md`
 
-### 12.5 Retrospective Report (Conditional)
-
-```bash
-python scripts/check_retrospective_readiness.py
-```
-
-If exit 0 (records found) AND `retro_authorized` is `true` in `feature-list.json`:
-- Invoke `long-task:long-task-retrospective`
-- Wait for completion before proceeding to Verdict
-
-If exit 1 (no records) OR `retro_authorized` is absent/false → skip to Verdict.
-
 ### 12. Verdict
 
 Determine the Go/No-Go verdict based on exit criteria. Record in the ST report:
@@ -363,7 +348,7 @@ If No-Go → skip (loop back to Worker for fixes; Finalize runs after eventual G
 ## Integration
 
 **Called by:** `using-long-task` (when feature-list.json exists AND all features passing), or `long-task-work` (Step 12 when no failing features remain)
-**Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `docs/plans/*-ucd.md` (if UI), `docs/test-cases/feature-*.md` (per-feature ST from `long-task-feature-st`), `task-progress.md`, project config file (if applicable)
+**Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `docs/test-cases/feature-*.md` (per-feature ST from `long-task-feature-st`), `task-progress.md`, project config file (if applicable)
 **May invoke:** `long-task:long-task-work` (if Critical/Major defects found → fix loop), `long-task:long-task-finalize` (after Go/Conditional-Go verdict)
 **Produces:** `docs/plans/YYYY-MM-DD-st-plan.md`, `docs/plans/YYYY-MM-DD-st-report.md`
 **Read on-demand (via Read tool, NOT Skill tool):** `references/st-recipes.md`

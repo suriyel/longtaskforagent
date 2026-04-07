@@ -113,10 +113,6 @@ ctest --test-dir build -R integration -V
 | JS/TS | `axios` + `vitest` | `npm install axios` |
 | Java | `RestAssured` | Maven: `io.rest-assured:rest-assured` |
 
-### UI E2E (Chrome DevTools MCP)
-
-For projects with `"ui": true` features, use Chrome DevTools MCP tools for browser-based E2E verification. Refer to the Chrome DevTools MCP documentation for available tools and usage patterns.
-
 ### CLI E2E
 
 | Language | Approach |

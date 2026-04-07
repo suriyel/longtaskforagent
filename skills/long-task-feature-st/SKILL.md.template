@@ -1,6 +1,6 @@
 ---
 name: long-task-feature-st
-description: "Use after quality gates pass in a long-task project — independently manages test environment lifecycle (start/cleanup), executes black-box acceptance testing per feature via {{ cap_ui_platform }}, generates ISO/IEC/IEEE 29119 compliant test case documents"
+description: "Use after quality gates pass in a long-task project — independently manages test environment lifecycle (start/cleanup), executes black-box acceptance testing per feature, generates ISO/IEC/IEEE 29119 compliant test case documents"
 ---
 
 # Feature-Level Black-Box Acceptance Testing
@@ -29,10 +29,9 @@ TDD (long-task-tdd) has already verified the implementation from the inside:
 unit tests exercise code paths; coverage and mutation gates verify completeness.
 
 This skill verifies from the **outside** — as a user or external system would:
-- Inputs go in through the real interface (HTTP endpoints, UI, CLI args)
-- Outputs observed through the real interface (HTTP responses, rendered UI, stdout)
+- Inputs go in through the real interface (HTTP endpoints, CLI args)
+- Outputs observed through the real interface (HTTP responses, stdout)
 - Internal implementation is NOT consulted during test design or execution
-- {{ cap_ui_platform }} is the primary execution environment for UI features
 
 **Rule:** If a test case requires reading source code to determine the expected result, it is not a black-box test — rewrite it using only the SRS specification.
 
@@ -104,11 +103,10 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
 Read all input artifacts for the target feature:
 
-- **Feature object** from `feature-list.json` — ID, title, description, srs_trace, ui flag, dependencies, priority
+- **Feature object** from `feature-list.json` — ID, title, description, srs_trace, dependencies, priority
 - **SRS section** — full FR-xxx from `docs/plans/*-srs.md` via Document Lookup Protocol (read the entire subsection, NOT grep)
 - **Design section** — full §4.N from `docs/plans/*-design.md` via Document Lookup Protocol
 - **Plan document** — from Step 5 (`docs/features/YYYY-MM-DD-<feature-name>.md`)
-- **UCD sections** (only if `"ui": true`) — relevant component prompts and page prompts from `docs/plans/*-ucd.md`
 - **Root context** — `constraints[]`, `assumptions[]` from `feature-list.json` root
 - **Related NFRs** — check SRS for NFR-xxx requirements that trace to this feature
 - **Interface contracts** — API endpoints, CLI commands, UI entry points that form the observable surface of this feature
@@ -139,25 +137,18 @@ For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) ma
 |----------|--------|------------------|
 | `functional` | FUNC | Always — happy path + error path for every feature |
 | `boundary` | BNDRY | Always — edge cases, limits, empty/max/zero values |
-| `ui` | UI | Only when `"ui": true` — browser-based interaction + visual verification |
 | `security` | SEC | When feature handles user input, auth, or external data |
 | `performance` | PERF | Only when traceable to NFR-xxx with performance metrics |
-
-**UI test case enrichment (mandatory for `"ui": true` features):**
-- UI category test cases should cover navigation, interaction, and visual verification using {{ cap_ui_platform }} tools
-- Test cases that verify data MUST include backend integration steps (real API data, not mocked)
-- Test cases MUST test at least one negative path via UI (e.g., submit invalid form → verify error message)
 
 **Minimum coverage:**
 - Every feature MUST have at least one FUNC and one BNDRY test case
 - Every `srs_trace` requirement MUST be covered by at least one test case
-- UI features MUST have at least one UI test case
 
 **Case ID format:**
 ```
 ST-{CATEGORY}-{FEATURE_ID(3 digits)}-{SEQ(3 digits)}
 ```
-Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
+Examples: `ST-FUNC-005-001`, `ST-SEC-012-001`, `ST-BNDRY-005-002`
 
 **Test case content rules:**
 - Test steps MUST be concrete and executable (no vague "verify it works")
@@ -168,55 +159,13 @@ Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
 **Acceptance-level focus:** Test cases confirm the implementation matches requirements from a user/system perspective — not duplicating unit test assertions. Focus on behavioral scenarios, integration paths, and end-to-end workflows.
 
 **Test type labeling (real/mock)** — for each derived test case, set the `Test Type` metadata field:
-- Mark as `Real` if the test case executes against a real running system (real DB, real HTTP service, real browser via {{ cap_ui_platform }}, real file system)
+- Mark as `Real` if the test case executes against a real running system (real DB, real HTTP service, real file system)
 - Mark as `Mock` only if the test case's primary execution path uses a mock or stub service
 - Feature-ST test cases executed against a running service (Step 7 starts services before execution) are **always `Real`** — they connect to real services
 
 **Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, document it as a specification gap in the test case document and proceed with best interpretation from SRS.
 
-### 4. UI Test Case Requirements (only if `"ui": true`)
-
-For UI features, test cases consolidate previously separate concerns:
-
-**a) Functional UI testing** — navigation, interaction, state changes:
-- Navigation path from `ui_entry` or specific route
-- Interaction sequence using {{ cap_ui_platform }} tools
-- Expected results for each interaction step
-
-**b) UCD compliance** — style token verification:
-- Reference which UCD color palette tokens apply to verified elements
-- Reference which typography scale values apply
-- Reference which spacing tokens apply
-- This replaces the separate U1-U4 review check for individual elements
-
-**c) Backend integration verification** (when feature depends on backend APIs):
-- Test cases MUST verify real data from backend — not hardcoded or mocked data
-- Include at least one data mutation + persistence scenario: create/update/delete via UI → verify backend persisted → refresh page → verify UI reflects the change
-- Include at least one error state scenario: what the UI shows when backend returns error (500/503/timeout) — verify user-friendly error message
-- Include at least one empty state scenario: what the UI shows when backend returns empty data — verify the empty state is visually correct per UCD
-
-**d) Cross-page workflow** (when feature spans multiple pages):
-- Test the complete workflow across page transitions (page A → action → page B → verify → page C → verify)
-- Do NOT test pages in isolation — the E2E value comes from the transitions
-- Each page transition should verify the new page loaded without errors
-
-**e) State mutation verification** (when feature creates/updates/deletes data):
-- Perform mutation via UI → navigate away from current page → navigate back → verify the mutation persisted
-- This confirms backend persistence, not just frontend state
-- Verify related views also reflect the change (e.g., create order → order list shows new order → dashboard counter incremented)
-
-**f) Positive rendering verification** (mandatory for all `"ui": true` features):
-
-Every UI category ST test case MUST include at least one step that verifies expected visual elements are **positively present**, not just error-free. Use the Layer 1b positive rendering verification script.
-
-For each visual element listed in the Feature Design Visual Rendering Contract:
-1. Navigate to the page or trigger the rendering condition specified in the contract
-2. Execute the Layer 1b positive rendering script with the element's selector/canvas ID
-3. Assert `missingCount === 0` — all expected elements are rendered and visible
-
-**Hard gate**: A page with zero errors but no rendered game content, data, or visual elements is a FAIL.
-
-### 5. Write Test Case Document
+### 4. Write Test Case Document
 
 Output file: `docs/test-cases/feature-{id}-{slug}.md`
 - `{id}` is the feature ID (as-is, not zero-padded in filename)
@@ -229,9 +178,9 @@ Output file: `docs/test-cases/feature-{id}-{slug}.md`
 3. **Test case blocks** — one per case, all required sections
 4. **Traceability matrix** — Case ID ↔ Requirement (srs_trace) ↔ Feature Design Test Inventory row ↔ Automated test ↔ Result
 
-The traceability matrix `结果` column starts as `PENDING`. Execute each test case in Step 7 below and update to `PASS`/`FAIL` during this step.
+The traceability matrix `结果` column starts as `PENDING`. Execute each test case in Step 6 below and update to `PASS`/`FAIL` during this step.
 
-### 6. Validate
+### 5. Validate
 
 Run the validation script:
 
@@ -239,29 +188,26 @@ Run the validation script:
 python scripts/validate_st_cases.py docs/test-cases/feature-{id}-{slug}.md --feature-list feature-list.json --feature {id}
 ```
 
-- **Exit 0**: proceed to Execute Test Cases (Step 7)
+- **Exit 0**: proceed to Execute Test Cases (Step 6)
 - **Exit 1**: fix errors and re-validate (do NOT proceed with errors)
 
-### 7. Execute Test Cases
+### 6. Execute Test Cases
 
 Since implementation code already exists (TDD and Quality Gates are complete), execute each test case to verify acceptance:
 
 **HARD REQUIREMENT: Must execute test cases one by one as defined in `docs/test-cases/feature-{id}-{slug}.md`**
 - Each test case must be executed individually and results recorded
-- **UI test cases CANNOT be skipped for any reason** — UI verification is mandatory
 - No test case may be skipped
 - Do not merge or simplify the test case execution process
-- **UI test cases require browser-based verification**
 
 1. **Start services** per Service Management above — follow env-guide.md start protocol with output capture; record PID and port in `task-progress.md`
-2. For **non-UI test cases**: verify by running relevant test commands or manual checks against the running system
-3. For **UI test cases**: execute via {{ cap_ui_platform }}
-4. Update the traceability matrix `结果` column to `PASS` or `FAIL` for each case
+2. For each test case: verify by running relevant test commands or programmatic checks against the running system
+3. Update the traceability matrix `结果` column to `PASS` or `FAIL` for each case
 4b. Update the **Real Test Case Execution Summary** table in the test case document:
    - Count all `Real` cases from the traceability matrix and their PASS/FAIL status
    - Fill in the summary table (total / passed / failed / pending)
    - Any `Real` FAIL is a blocking failure — same consequence as any other test case failure
-5. **Do NOT stop services yet** — if the feature is `"ui": true`, Step 8 (Exploratory Visual Assessment) requires the application to be running. Services are stopped AFTER Step 8.
+4. **Stop services** per Service Management cleanup above after all test cases are executed.
 
 **If any test case FAILS:**
 - Record failure details in `task-progress.md` (case ID, step details, actual vs expected)
@@ -292,32 +238,16 @@ Always start from a known-clean state. Do not assume services are already runnin
 
 - **Any test case execution failure** blocks the feature from being marked `"passing"`
 - **ALL bugs found in ST testing MUST be fixed** — regardless of whether they are:
-  - Frontend bugs (UI rendering, interaction, state)
   - Backend bugs (API errors, data persistence, logic)
-  - Integration bugs (frontend-backend communication)
+  - Integration bugs (communication between components)
 - Record failure details in `task-progress.md`. Fix code and re-execute.
 - **No bypass allowed** for any reason:
   - "Simple feature" — still needs test cases
-  - "UI tests are complex" — **UI test cases CANNOT be skipped**
-  - "Browser testing is too complex" — **UI test cases require browser-based verification**
   - "This is a frontend bug, not my code" — **ALL bugs must be fixed**
   - "This is a backend bug, let someone else fix it" — **ALL bugs must be fixed**
   - "Environment temporarily unavailable" — BLOCKED, not skipped
   - "Test case might be wrong" — use the `long-task-increment` skill to modify, don't skip
 - All failures MUST be recorded in `task-progress.md`
-
-### 8. Exploratory Visual Assessment (mandatory for `"ui": true`)
-
-After all scripted test cases pass (Step 7), perform a free-form visual assessment of the running application before stopping services. Navigate through ALL pages/views related to this feature via {{ cap_ui_platform }}, screenshot each page, interact with every rendered element, and grade against these criteria (score 1-5, any ≤ 2 is FAIL):
-
-| Criterion | Weight | What to assess |
-|-----------|--------|----------------|
-| **Rendering Completeness** | High | Are ALL visual elements from the Visual Rendering Contract actually rendered? Is core visual content present, not just chrome? |
-| **Interactive Depth** | High | Do rendered elements respond to interaction? Can the user perform the feature's core action? |
-| **Visual Coherence** | Medium | Consistent colors, typography, spacing, layout? |
-| **Functional Accuracy** | Medium | Does rendered output reflect actual data/state? |
-
-After grading, **stop services** per Service Management cleanup.
 
 ## Critical Rules
 
@@ -326,9 +256,7 @@ After grading, **stop services** per Service Management cleanup.
 - **Complete after Quality Gates**: All test cases must be written, validated, and executed after TDD and quality gates pass
 - **Immutable after generation**: Test case documents are written and executed in this step and not modified during Inline Check. Changes require the `long-task-increment` skill
 - **Traceability mandatory**: Every test case traces to a requirement; every `srs_trace` requirement traces to a test case
-- **UI consolidation**: For UI features, this skill consolidates functional and UCD compliance testing into unified test cases
 - **Template flexibility**: Users can override the default ISO/IEC/IEEE 29119 template with custom templates and style examples
-- **UI tests are mandatory**: For features with `"ui": true`, UI category test cases are NON-SKIPPABLE and require browser-based verification.
 - **ALL bugs must be fixed**: Any bug discovered during ST testing — whether frontend, backend, or integration — MUST be fixed before the feature can be marked as passing. There is no "not my code" exemption.
 
 ## Integration

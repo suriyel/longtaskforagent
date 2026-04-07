@@ -5,7 +5,7 @@ description: "Use when all features in feature-list.json are passing - run compr
 
 # System Testing — Cross-Feature & System-Wide Verification Before Release
 
-Run cross-feature and system-wide testing after all features are implemented and passing. Per-feature ST test cases (functional, boundary, UI, security) have already been executed during each Worker cycle via `long-task-feature-st`. This phase focuses on what per-feature testing **cannot** cover: cross-feature interactions, multi-feature E2E workflows, system-wide NFR verification, compatibility, and exploratory testing.
+Run cross-feature and system-wide testing after all features are implemented and passing. Per-feature ST test cases (functional, boundary, security) have already been executed during each Worker cycle via `long-task-feature-st`. This phase focuses on what per-feature testing **cannot** cover: cross-feature interactions, multi-feature E2E workflows, system-wide NFR verification, compatibility, and exploratory testing.
 
 **Announce at start:** "I'm using the long-task-st skill. All features are passing — time for cross-feature system testing."
 
@@ -42,7 +42,6 @@ python scripts/check_st_readiness.py feature-list.json
 - Read `feature-list.json` — note `tech_stack`, `quality_gates`, `constraints[]`, `assumptions[]`
 - Read SRS — extract all FR-xxx, NFR-xxx, IFR-xxx, CON-xxx requirements; read Stakeholders, User Personas, and Glossary sections
 - Read Design doc — extract architecture, API design, testing strategy (§9), third-party dependencies (§8)
-- If UI features exist: read UCD doc (`docs/plans/*-ucd.md`)
 - Read `task-progress.md` — session history context
 
 ### 2. ST Plan
@@ -145,8 +144,6 @@ For each user persona in SRS Stakeholders:
 
 For each scenario: set up initial state, execute step-by-step, verify intermediate states AND final outcome, clean up.
 
-**UI E2E Testing** (only if `"ui": true` features exist): Use {{ cap_ui_platform }} for browser-based E2E verification.
-
 Write E2E tests in `tests/e2e/` or `tests/st/`. Run and record results.
 
 ### 6. System-Wide NFR Verification
@@ -162,7 +159,6 @@ Per-feature NFR checks were handled in feature-level ST. This step focuses on **
 
 Skip if SRS does not specify platform/browser/runtime targets.
 
-- **Cross-browser** (UI only): run E2E scenarios in each target browser; verify visual consistency via screenshots; check browser-specific console errors
 - **Cross-platform**: build/install/run full test suite on each target OS; verify platform-specific behavior (file paths, line endings, permissions)
 - **Runtime versions**: run full test suite for each target runtime version; verify no version-specific API issues
 
@@ -266,7 +262,7 @@ If No-Go → skip (loop back to Worker for fixes; Finalize runs after eventual G
 ## Integration
 
 **Called by:** `using-long-task` (when feature-list.json exists AND all features passing), or `long-task-work` (Step 12 when no failing features remain)
-**Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `docs/plans/*-ucd.md` (if UI), `docs/test-cases/feature-*.md` (per-feature ST from `long-task-feature-st`), `task-progress.md`, project config file (if applicable)
+**Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `docs/test-cases/feature-*.md` (per-feature ST from `long-task-feature-st`), `task-progress.md`, project config file (if applicable)
 **May invoke:** `long-task:long-task-work` (if Critical/Major defects found → fix loop), `long-task:long-task-finalize` (after Go/Conditional-Go verdict)
 **Produces:** `docs/plans/YYYY-MM-DD-st-plan.md`, `docs/plans/YYYY-MM-DD-st-report.md`
 **Read on-demand (via Read tool, NOT Skill tool):** `references/st-recipes.md`

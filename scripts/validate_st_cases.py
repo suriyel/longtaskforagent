@@ -286,26 +286,19 @@ def validate(path: str, feature_list_path: str = None, feature_id: int = None, a
                 f"— Chrome DevTools MCP E2E scenarios should have >= 5 steps"
             )
 
-        # Warn: UI test case missing three-layer detection
+        # Warn: UI test case missing verification clauses
         if is_ui_case:
             all_content = case.get("raw", "")
-            has_layer1 = "evaluate_script" in all_content or "error_detector" in all_content or "Layer 1" in all_content or "错误检测" in all_content
-            has_layer2 = "EXPECT" in all_content and "REJECT" in all_content
-            has_layer3 = "list_console_messages" in all_content or "console" in all_content.lower() or "Layer 3" in all_content or "控制台" in all_content
-            if not has_layer1:
+            has_expect_reject = "EXPECT" in all_content and "REJECT" in all_content
+            has_console_check = "list_console_messages" in all_content or "console" in all_content.lower() or "控制台" in all_content
+            if not has_expect_reject:
                 warnings.append(
-                    f"[QUALITY] {cid}: UI test case missing Layer 1 detection "
-                    f"(evaluate_script / error_detector)"
+                    f"[QUALITY] {cid}: UI test case missing EXPECT/REJECT verification clauses"
                 )
-            if not has_layer2:
+            if not has_console_check:
                 warnings.append(
-                    f"[QUALITY] {cid}: UI test case missing Layer 2 detection "
-                    f"(EXPECT/REJECT clauses)"
-                )
-            if not has_layer3:
-                warnings.append(
-                    f"[QUALITY] {cid}: UI test case missing Layer 3 detection "
-                    f"(list_console_messages / console error gate)"
+                    f"[QUALITY] {cid}: UI test case missing console error gate "
+                    f"(list_console_messages / console check)"
                 )
 
         # Warn: vague expected results

@@ -495,13 +495,6 @@ def test_quality_warning_single_step_ui_case():
     assert "only 1 step" in stdout.lower(), f"Expected single-step warning: {stdout}"
 
 
-def test_quality_warning_missing_layer1():
-    """UI test case without evaluate_script/error_detector should warn about missing Layer 1."""
-    code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
-    assert code == 0
-    assert "Layer 1" in stdout, f"Expected Layer 1 warning: {stdout}"
-
-
 def test_quality_warning_missing_layer2():
     """UI test case without EXPECT/REJECT should warn about missing Layer 2."""
     code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
@@ -509,11 +502,11 @@ def test_quality_warning_missing_layer2():
     assert "Layer 2" in stdout or "EXPECT/REJECT" in stdout, f"Expected Layer 2 warning: {stdout}"
 
 
-def test_quality_warning_missing_layer3():
-    """UI test case without console error check should warn about missing Layer 3."""
+def test_quality_warning_missing_console_check():
+    """UI test case without console error check should warn about missing console gate."""
     code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
     assert code == 0
-    assert "Layer 3" in stdout, f"Expected Layer 3 warning: {stdout}"
+    assert "console" in stdout.lower(), f"Expected console error gate warning: {stdout}"
 
 
 def test_quality_warning_vague_expected_result():

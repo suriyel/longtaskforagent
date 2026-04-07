@@ -5,7 +5,7 @@ description: "Use after quality gates pass in a long-task project — independen
 
 # Feature-ST — SubAgent Dispatch
 
-Delegate black-box acceptance testing to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads SRS/Design/UCD sections, test case documents, or execution output directly.
+Delegate black-box acceptance testing to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads SRS/Design sections, test case documents, or execution output directly.
 
 **Announce at start:** "I'm using the long-task-feature-st skill to run acceptance testing via SubAgent."
 
@@ -17,7 +17,6 @@ Collect file paths from the current session state (do NOT read the file contents
 - `feature_json` — current feature object from feature-list.json (compact JSON)
 - `design_doc_path` — path to `docs/plans/*-design.md`
 - `srs_doc_path` — path to `docs/plans/*-srs.md`
-- `ucd_doc_path` — path to `docs/plans/*-ucd.md` (only if `"ui": true`; omit otherwise)
 - `ats_doc_path` — path to `docs/plans/*-ats.md` (if exists; omit otherwise)
 - `plan_doc_path` — path to `docs/features/YYYY-MM-DD-<feature-name>.md` (from Feature Design step)
 - `env_guide_path` — `env-guide.md` (if exists)
@@ -34,7 +33,7 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-feature-st/references/feature-st-execution.md
-2. Follow the checklist exactly (Steps 1-8): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Visual Assessment (ui:true) → Cleanup
+2. Follow the checklist exactly (Steps 1-7): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Cleanup
 3. Return your result using the Structured Return Contract at the end of the execution rules
 
 ## Input Parameters
@@ -47,7 +46,6 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 ## Document Paths (read these yourself using the Read tool)
 - Design doc: {design_doc_path}
 - SRS doc: {srs_doc_path}
-- UCD doc: {ucd_doc_path} (omit if not UI)
 - ATS doc: {ats_doc_path} (omit if not present)
 - Feature design plan: {plan_doc_path}
 - Environment guide: {env_guide_path}
@@ -59,11 +57,9 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 ## Key Constraints
 - Do NOT mark the feature as "passing" in feature-list.json — only report results
 - You MUST manage service lifecycle: start before tests, cleanup after all tests
-- UI test cases require browser-based verification — no skip
 - If environment cannot start after 3 attempts, set Verdict to BLOCKED
 - ALL automated test cases must be executed one by one — no skipping
 - Manual test cases (已自动化: No) must NOT be executed by SubAgent — mark as PENDING-MANUAL in the traceability matrix and include full case details in the Manual Test Cases section of the return contract
-- For `"ui": true` features: after scripted tests, you MUST perform the Exploratory Visual Assessment (Step 8). Navigate the live application yourself via Chrome DevTools MCP, screenshot every page, click every interactive element, and grade against the 4 visual quality criteria. You are an independent QA evaluator, not the developer — be skeptical. A blank canvas with working buttons is a FAIL. "Display-only" elements that render but don't respond to interaction are Major defects.
 ```
 
 ## Step 3: Dispatch SubAgent
@@ -84,15 +80,14 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
 
 - **`### Verdict: PASS`**
   1. Extract Next Step Inputs: `st_case_path`, `st_case_count`, `environment_cleaned`
-  2. If feature is `"ui": true`: extract Visual Assessment scores. If any score ≤ 2 or Display-Only Defects > 0, treat as FAIL (SubAgent should have already done this, but double-check).
-  3. Record in `task-progress.md`: "Feature-ST: PASS ({N} cases, all passed)" — for ui:true, append visual assessment min score
+  2. Record in `task-progress.md`: "Feature-ST: PASS ({N} cases, all passed)"
   4. If `environment_cleaned` is false, run cleanup per `env-guide.md` yourself
   5. Proceed to next step (Inline Check + Persist)
 
 - **`### Verdict: FAIL`** or **`### Verdict: BLOCKED`**
   1. Read the Issues table — identify failure details
   2. **Main Agent classifies each issue** into one of two categories:
-     - **Human manual testing** (escalate immediately via `AskUserQuestion`): missing `required_configs[]` secrets or credentials the AI cannot provide, UI verification requiring physical device or visual judgment beyond Chrome DevTools MCP capability, external human action required (third-party approval, manual account setup, hardware interaction)
+     - **Human manual testing** (escalate immediately via `AskUserQuestion`): missing `required_configs[]` secrets or credentials the AI cannot provide, external human action required (third-party approval, manual account setup, hardware interaction)
      - **AI self-fix** (everything else): code bugs causing test failures, environment startup issues, port conflicts, dependency errors, external service errors, test execution failures due to implementation issues
   3. For AI self-fix issues: record in `task-progress.md`, fix code or environment, re-dispatch SubAgent. **No retry limit** — AI must keep fixing until resolved.
   4. For human manual testing issues: escalate via `AskUserQuestion` with issue details. Feature stays BLOCKED until human responds.

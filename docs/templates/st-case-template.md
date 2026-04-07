@@ -28,7 +28,6 @@
 |------|--------|
 | functional | N |
 | boundary | N |
-| ui | N |
 | security | N |
 | performance | N |
 | **合计** | **N** |
@@ -81,7 +80,7 @@ ST-{CATEGORY}-{FEATURE_ID}-{SEQ}
 ### 元数据
 
 - **优先级**: High / Medium / Low
-- **类别**: functional / boundary / ui / security / performance
+- **类别**: functional / boundary / security / performance
 - **已自动化**: Yes / No
 - **测试引用**: {test_file::test_name 或 N/A}
 - **Test Type**: Real / Mock
@@ -125,7 +124,6 @@ ST-{CATEGORY}-{FEATURE_ID}-{SEQ}
 |----------|--------|-------------|-------------|
 | `functional` | FUNC | Happy-path and error-path verification | Always — every feature needs functional tests |
 | `boundary` | BNDRY | Edge cases, limits, empty/max/zero values | Always — test boundaries of inputs and states |
-| `ui` | UI | Chrome DevTools interaction + visual verification | Only when feature has `"ui": true` |
 | `security` | SEC | Injection, authorization, data validation | When feature handles user input, auth, or external data |
 | `performance` | PERF | Response time, throughput, resource usage | Only when traceable to NFR-xxx performance requirements |
 
@@ -135,61 +133,13 @@ ST-{CATEGORY}-{FEATURE_ID}-{SEQ}
 ST-{CATEGORY}-{FEATURE_ID}-{SEQ}
 ```
 
-- `{CATEGORY}`: One of FUNC, BNDRY, UI, SEC, PERF
+- `{CATEGORY}`: One of FUNC, BNDRY, SEC, PERF
 - `{FEATURE_ID}`: Feature ID from feature-list.json (zero-padded to 3 digits: 001, 002, ...)
 - `{SEQ}`: Sequential number within category for this feature (001, 002, ...)
 
 Examples:
 - `ST-FUNC-005-001` — First functional test case for feature #5
-- `ST-UI-005-002` — Second UI test case for feature #5
 - `ST-SEC-012-001` — First security test case for feature #12
-
-## UI Test Case Requirements (MANDATORY — Cannot Be Skipped)
-
-For `"ui": true` features, UI category test cases **MUST** be generated and **CANNOT be skipped**. These test cases verify browser-based UI behavior via Chrome DevTools MCP.
-
-### Chrome DevTools MCP Requirement
-
-**UI test cases MUST use Chrome DevTools MCP tools** for verification. The test steps should be written so they can be directly translated to MCP tool calls:
-
-| MCP Tool | Usage in Test Steps |
-|----------|---------------------|
-| `navigate_page(url)` | Navigation to target URL |
-| `wait_for(text)` | Wait for page load completion |
-| `take_snapshot()` | Capture page state for verification |
-| `click(uid)` | Click interactive elements |
-| `fill(uid, value)` | Input text or select options |
-| `press_key(key)` | Keyboard interactions |
-| `evaluate_script(error_detector)` | Layer 1: JavaScript error detection |
-| `evaluate_script(positive_render_checker, selectors, canvasIds)` | Layer 1b: Positive rendering verification — asserts expected visual elements are present (not just error-free) |
-| `list_console_messages(["error"])` | Layer 3: Console error verification |
-| `take_screenshot()` | Visual verification capture |
-
-### Required Elements for UI Test Cases
-
-1. **Navigation path**: The URL or route to navigate to (from `ui_entry` or specific route)
-2. **Four-Layer Detection** (all layers are mandatory for ui:true):
-   - **Layer 1**: `evaluate_script(error_detector)` — automated JavaScript error detection after page load and after each interaction
-   - **Layer 1b**: `evaluate_script(positive_render_checker, selectors, canvasIds)` — positive rendering verification: asserts expected visual elements are present and visible (not just error-free). Selectors and canvasIds come from the Feature Design Visual Rendering Contract. `missingCount > 0` is a hard FAIL.
-   - **Layer 2**: EXPECT/REJECT clauses in `take_snapshot()` — explicit element/state verification
-   - **Layer 3**: `list_console_messages(["error"])` — console error gate at end of test case
-3. **Console error gate**: Post-step check — `list_console_messages(types=["error"])` must return 0
-4. **UCD token reference**: Which style tokens (colors, typography, spacing) apply to verified elements
-5. **Minimum 5 steps**: Every UI test case MUST have at least 5 test steps
-
-### Example UI Test Step (with MCP mapping):
-
-```markdown
-| Step | 操作 | 预期结果 |
-| ---- | ---- | -------- |
-| 1 | navigate_page(url='/login') | 页面开始加载 |
-| 2 | wait_for(['Sign In']) → evaluate_script(error_detector) | 页面加载完成，Layer 1: count = 0 |
-| 3 | take_snapshot() | EXPECT: 邮箱输入框(type=email)、密码输入框(type=password)、登录按钮; REJECT: 任何无 label 的输入框 |
-| 4 | fill(uid, 'test@example.com') → fill(uid, 'password123') → click(uid) | EXPECT: 输入框显示内容，登录按钮可用 |
-| 5 | wait_for(['/dashboard']) → evaluate_script(error_detector) → list_console_messages(["error"]) | 跳转至 dashboard，Layer 1: count = 0，Layer 3: 控制台无 error |
-```
-
-> **IMPORTANT**: UI test cases CANNOT be skipped with "browser testing is too complex" or similar excuses. Chrome DevTools MCP provides the browser automation capability — use it. If Chrome DevTools MCP is not available, the feature is BLOCKED until it is resolved, not skipped.
 
 ## Execution Rules
 
@@ -201,10 +151,6 @@ For `"ui": true` features, UI category test cases **MUST** be generated and **CA
    - Integration bug (frontend-backend communication) → fix it
 4. **No bypass allowed**: Cannot skip ST execution for any reason:
    - "Simple feature" — still needs test cases
-   - **"UI tests are too complex" — UI test cases MUST use Chrome DevTools MCP, cannot be skipped**
-   - "Browser testing is too complex" — UI test cases CANNOT be skipped
-   - "This is a frontend bug" — **ALL bugs must be fixed**
-   - "This is a backend bug" — **ALL bugs must be fixed**
    - "Env temporarily unavailable" — BLOCKED, not skipped
    - "Case might be wrong" — use the `long-task-increment` skill to modify, don't skip
    All failures must be recorded in `task-progress.md`.
@@ -215,11 +161,8 @@ For `"ui": true` features, UI category test cases **MUST** be generated and **CA
 When generating test cases from a feature's SRS acceptance criteria (via `srs_trace`):
 
 1. Each `srs_trace` requirement must be covered by **at least one** test case
-2. Features with `"ui": true` produce `ui` category test cases
-3. Every feature gets at least one `functional` and one `boundary` test case
+2. Every feature gets at least one `functional` and one `boundary` test case
 4. If the feature handles user input → add `security` test cases
-5. If the feature has `"ui": true` → add `ui` test cases
-6. **If the feature has `"ui": true`, UI category test cases are MANDATORY and CANNOT be skipped** — these test cases must use Chrome DevTools MCP for browser-based verification
-7. If the feature traces to an NFR-xxx with performance metrics → add `performance` test cases
+5. If the feature traces to an NFR-xxx with performance metrics → add `performance` test cases
 8. Test case steps must be concrete and executable (no vague "verify it works")
 9. Expected results must be specific and assertable (no "should look correct")

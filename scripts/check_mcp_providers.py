@@ -6,8 +6,7 @@ Reads tool-bindings.json to determine which MCP servers are required,
 then checks if they are registered in the Claude Code / OpenCode config.
 Outputs installation guidance when servers are missing.
 
-Analogous to check_devtools.py — detects availability and guides setup,
-does NOT write any configuration files.
+Detects availability and guides setup, does NOT write any configuration files.
 
 Usage:
     python check_mcp_providers.py tool-bindings.json

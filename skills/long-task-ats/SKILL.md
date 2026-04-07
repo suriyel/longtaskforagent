@@ -5,7 +5,7 @@ description: "Use when design doc exists but no ATS doc and no feature-list.json
 
 # Acceptance Test Strategy (ATS) Generation
 
-Take the approved SRS, Design, and UCD (if applicable) as input. Produce a global Acceptance Test Strategy document that maps every requirement to acceptance scenarios with required test categories — constraining downstream feature-st (test case derivation via srs_trace).
+Take the approved SRS and Design as input. Produce a global Acceptance Test Strategy document that maps every requirement to acceptance scenarios with required test categories — constraining downstream feature-st (test case derivation via srs_trace).
 
 **Announce at start:** "I'm using the long-task-ats skill to generate the Acceptance Test Strategy."
 
@@ -16,7 +16,7 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, ru
 ## Why ATS Exists
 
 Without a global acceptance test strategy, per-feature ST test cases suffer from:
-- Category imbalance (heavy FUNC/BNDRY, near-zero SEC/PERF/UI)
+- Category imbalance (heavy FUNC/BNDRY, near-zero SEC/PERF)
 - NFR test methods decided ad-hoc during feature-st
 - Cross-feature integration scenarios discovered too late in ST phase
 - Risk-based test prioritization missing entirely
@@ -42,13 +42,12 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
 1. Read the approved SRS document from `docs/plans/*-srs.md`
 2. Read the approved design document from `docs/plans/*-design.md`
-3. Read the approved UCD style guide from `docs/plans/*-ucd.md` (if it exists — only for UI projects)
-4. Check for a custom ATS template:
+3. Check for a custom ATS template:
    - If user has specified a template path → read and validate it
    - Else → use default template at `docs/templates/ats-template.md`
-5. Check for a custom ATS example:
+4. Check for a custom ATS example:
    - If user has specified an example path → read the example file — adapt style, language, and detail level
-6. Check for a custom ATS review template:
+5. Check for a custom ATS review template:
    - If user has specified a review template path → read it for use in Step 8
    - Else → use default review template at `docs/templates/ats-review-template.md`
 
@@ -72,7 +71,7 @@ For each FR/NFR/IFR, generate one or more acceptance scenarios with:
 |--------|---------------------|----------------------|---------------------|----------|-------|
 | FR-001 | User login | Normal login/wrong password/account lockout/session expiry | FUNC,BNDRY,SEC | Critical | Handles user input→SEC required |
 | NFR-001 | Response time<200ms | P95 latency/concurrent load/degradation/cold start | PERF | High | Threshold: P95<200ms @100 concurrent |
-| FR-010 | Search results page | Search/empty results/pagination/sorting/filtering | FUNC,BNDRY,UI | High | ui:true→UI required |
+| FR-010 | Search results page | Search/empty results/pagination/sorting/filtering | FUNC,BNDRY | High | — |
 ```
 
 **Category assignment rules:**
@@ -81,7 +80,6 @@ For each FR/NFR/IFR, generate one or more acceptance scenarios with:
 |-----------|---------------------|
 | All FRs | FUNC + BNDRY (at minimum) |
 | Handles user input/authentication/authorization/external data | + SEC |
-| Corresponds to a `ui: true` feature | + UI |
 | Linked to NFR-xxx with performance metrics | + PERF |
 
 ### 4. Define Test Category Strategies
@@ -92,7 +90,6 @@ For each test category, specify the strategy:
 - **BNDRY**: Boundary value analysis + equivalence class partitioning requirements per FR
 - **SEC**: Input validation (SQL injection, XSS, path traversal), authentication bypass, authorization escalation, data leakage
 - **PERF**: NFR metric thresholds + load scenarios + tool specification + pass criteria
-- **UI**: Chrome DevTools MCP interaction chains — navigate → interact → verify → three-layer detection
 
 ### 5. NFR Test Method Matrix
 
@@ -163,7 +160,6 @@ Agent(
   - ATS document (draft): {ats_content}
   - SRS document: {srs_path} — read it
   - Design document: {design_path} — read it
-  - UCD document (if applicable): {ucd_path} — read it
 
   ## Task
   Execute all review dimensions defined in the review template.
@@ -175,7 +171,7 @@ Agent(
 ```
 
 **Isolation guarantees:**
-- Subagent reads ONLY ATS + SRS + Design + UCD + review template
+- Subagent reads ONLY ATS + SRS + Design + review template
 - Subagent does NOT read implementation code or test code
 - Subagent does NOT modify any files — returns structured report only
 - Main skill processes the report and decides on fixes
@@ -200,7 +196,7 @@ Parse the subagent's review report:
    docs: add acceptance test strategy (ATS)
 
    Maps N requirements to acceptance scenarios
-   Categories: FUNC, BNDRY, SEC, PERF, UI
+   Categories: FUNC, BNDRY, SEC, PERF
    Reviewed: [PASS / CONDITIONAL PASS with N gaps]
    ```
 
@@ -218,7 +214,7 @@ Once the ATS document is saved and committed:
 
 The **design doc** (Section 7, Testing Strategy) describes the *approach*:
 - What test types will be used (unit, integration, E2E)
-- What tools and frameworks (pytest, k6, Chrome DevTools MCP)
+- What tools and frameworks (pytest, k6)
 - What coverage targets (line 90%, branch 80%, mutation 80%)
 
 The **ATS document** describes the *detailed mapping*:
@@ -254,11 +250,11 @@ See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-cate
 ## Integration
 
 **Called by:** using-long-task (when design doc exists, no ATS doc, no feature-list.json) or long-task-design (Step 6)
-**Requires:** Approved SRS at `docs/plans/*-srs.md`; Approved Design at `docs/plans/*-design.md`; optionally approved UCD at `docs/plans/*-ucd.md`
+**Requires:** Approved SRS at `docs/plans/*-srs.md`; Approved Design at `docs/plans/*-design.md`
 **Chains to:** long-task-init (after ATS approval)
 **Produces:** `docs/plans/YYYY-MM-DD-<topic>-ats.md`
 **Downstream consumers:**
-- `long-task-init` — reads ATS to set `ui` flags based on category assignment
+- `long-task-init` — reads ATS for category constraints
 - `long-task-feature-st` — reads ATS to enforce category requirements (via srs_trace lookup)
 - `long-task-st` — uses ATS as baseline for RTM verification
 - `long-task-increment` — updates ATS in place when requirements change
