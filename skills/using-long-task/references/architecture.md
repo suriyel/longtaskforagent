@@ -181,7 +181,7 @@ Living document that tracks all user-visible changes. Updated after **every git 
 
 ### 5. `examples/` Directory
 
-Scenario-based usage examples for external developers and AI Code Agents. Generated in a single batch after System Testing Go verdict via the `long-task-finalize` Meta Skill and `example-generator` SubAgent.
+Scenario-based usage examples for external developers and AI Code Agents. Generated in a single batch after System Testing Go verdict (ST Step 13a) via the `example-generator` SubAgent.
 
 ```
 examples/

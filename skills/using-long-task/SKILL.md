@@ -128,7 +128,7 @@ These thoughts mean STOP — you're rationalizing:
 | "Let me just look at the code first" | Invoke phase skill first. It tells you HOW to orient. |
 | "I know which feature to work on" | Worker skill has Orient step. Follow it. |
 | "This feature is simple, skip TDD" | long-task-tdd is non-negotiable. |
-| "Tests pass, I can mark it done" | long-task-quality gates MUST pass first. |
+| "Tests pass, I can mark it done" | Quality gates (Worker Step 8) MUST pass first. |
 | "I remember the workflow" | Skills evolve. Load current version via Skill tool. |
 | "I need more context first" | Skill check comes BEFORE exploration. |
 | "I'll just do this one thing first" | Check BEFORE doing anything. |
@@ -141,7 +141,7 @@ These thoughts mean STOP — you're rationalizing:
 | "I'll just add features to the JSON directly" | Invoke the `long-task-increment` skill for tracked, audited changes. |
 | "The requirement change is small, no need for impact analysis" | Increment skill catches hidden dependencies. |
 | "I'll just fix this quick bug directly" | Invoke `long-task-hotfix` — bug gets tracked in feature-list.json as category=bugfix and fixed via the full Worker pipeline. |
-| "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
+| "I'll generate examples during Worker" | Examples are post-ST (ST Step 13). |
 | "I already know the project's conventions" | Run codebase-scanner. Implicit knowledge doesn't persist across sessions. 2/3方件 constraints are easy to miss. |
 | "This brownfield project is small, no need to scan" | Auto-skip handles greenfield (≤3 files). Let the scanner decide. |
 

@@ -238,7 +238,7 @@ using-long-task (bootstrap router — always loaded)
 | `long-task-init` | Project scaffolding and feature decomposition |
 | `long-task-work` | Worker orchestrator (one feature per cycle) |
 | `long-task-tdd` | TDD Red→Green→Refactor discipline |
-| `long-task-quality` | Coverage gate + mutation gate |
+| *(quality gates)* | Coverage gate + mutation gate (inline in Worker Step 8) |
 | `long-task-feature-st` | Per-feature black-box acceptance testing (ISO/IEC/IEEE 29119) |
 | `long-task-increment` | Post-launch feature additions with impact analysis |
 | `long-task-st` | IEEE 829 system testing with Go/No-Go verdict |
@@ -453,11 +453,11 @@ long-task-agent/
 │   ├── long-task-init/              # Phase 1: Initialization
 │   ├── long-task-work/              # Phase 2: Worker orchestrator
 │   ├── long-task-tdd/               # TDD discipline
-│   ├── long-task-quality/           # Coverage + mutation gates
+│   ├── long-task-quality/           # Coverage + mutation gates (reference files, not standalone skill)
 │   ├── long-task-feature-st/        # Per-feature black-box acceptance testing
 │   ├── long-task-increment/         # Incremental development
 │   ├── long-task-st/                # System testing
-│   └── long-task-finalize/          # Post-ST documentation & examples
+│   └── long-task-st/                # System testing (includes Finalize step)
 ├── scripts/                         # Validation & utility scripts
 ├── tests/                           # Test suite for all scripts
 ├── hooks/                           # SessionStart hook config

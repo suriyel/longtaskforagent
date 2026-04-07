@@ -201,4 +201,4 @@ Full catalog: Read `skills/long-task-tdd/testing-anti-patterns.md`.
 **Dispatches:** implementer subagent (`skills/long-task-tdd/prompts/implementer-prompt.md`)
 **Requires:** Feature detailed design exists (from Work Step 4, via `long-task:long-task-feature-design`)
 **Produces:** Passing tests + implementation code
-**Chains to:** long-task-quality (via Work Step 9)
+**Chains to:** Quality Gates SubAgent (via Work Step 8)

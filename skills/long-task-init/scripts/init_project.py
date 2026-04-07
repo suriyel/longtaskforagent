@@ -198,7 +198,7 @@ _Format: [Keep a Changelog](https://keepachangelog.com/) — Updated after every
 def create_examples_readme(project_name: str) -> str:
     return f"""# {project_name} — Examples
 
-Usage examples for external developers and AI Code Agents. Generated after System Testing by the `long-task-finalize` skill.
+Usage examples for external developers and AI Code Agents. Generated after System Testing (ST Step 13).
 
 ## Prerequisites
 

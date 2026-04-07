@@ -199,10 +199,9 @@ long-task-agent/
 │   ├── long-task-feature-design/SKILL.md + references/feature-design-template.md
 │   ├── long-task-work/SKILL.md + references/{systematic-debugging,subagent-development,worktree-isolation}.md
 │   ├── long-task-feature-st/SKILL.md + prompts/e2e-scenario-prompt.md
-│   ├── long-task-st/SKILL.md + references/st-recipes.md
+│   ├── long-task-st/SKILL.md + references/st-recipes.md (includes Finalize Step 13)
 │   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + prompts/implementer-prompt.md
-│   ├── long-task-quality/references/{quality-execution,coverage-recipes}.md
-│   ├── long-task-finalize/ (merged into long-task-st Step 13)
+│   ├── long-task-quality/{references/quality-execution.md,coverage-recipes.md}
 ├── agents/{codebase-scanner,ats-reviewer,example-generator}.md
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}

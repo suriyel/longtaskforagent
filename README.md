@@ -238,7 +238,7 @@ using-long-task (引导路由器 — 始终加载)
 | `long-task-init` | 项目脚手架和功能分解 |
 | `long-task-work` | 工作编排器（每周期一个功能） |
 | `long-task-tdd` | TDD 红→绿→重构纪律 |
-| `long-task-quality` | 覆盖率门禁 + 变异门禁 |
+| *(quality gates)* | 覆盖率门禁 + 变异门禁（内联于 Worker Step 8） |
 | `long-task-feature-st` | 每功能黑盒验收测试（ISO/IEC/IEEE 29119） |
 | `long-task-increment` | 带影响分析的发布后功能添加 |
 | `long-task-st` | 带 Go/No-Go 结论的 IEEE 829 系统测试 |
@@ -447,11 +447,11 @@ long-task-agent/
 │   ├── long-task-init/              # 阶段 1：初始化
 │   ├── long-task-work/              # 阶段 2：工作编排器
 │   ├── long-task-tdd/               # TDD 纪律
-│   ├── long-task-quality/           # 覆盖率 + 变异门禁
+│   ├── long-task-quality/           # 覆盖率 + 变异门禁（引用文件，非独立技能）
 │   ├── long-task-feature-st/        # 每功能黑盒验收测试
 │   ├── long-task-increment/         # 增量开发
 │   ├── long-task-st/                # 系统测试
-│   └── long-task-finalize/          # ST 后文档和示例生成
+│   └── long-task-st/                # 系统测试（含 Finalize 步骤）
 ├── scripts/                         # 验证和实用脚本
 ├── tests/                           # 所有脚本的测试套件
 ├── hooks/                           # SessionStart 钩子配置

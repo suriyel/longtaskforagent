@@ -454,7 +454,6 @@ if __name__ == "__main__":
         test_creates_claude_md,
         test_appends_to_existing_claude_md,
         test_idempotent_claude_md,
-        test_claude_md_contains_guide_reference,
         test_creates_agents_md,
         test_appends_to_existing_agents_md,
         test_idempotent_agents_md,
@@ -462,7 +461,6 @@ if __name__ == "__main__":
         test_stdout_mentions_llm_todo,
         test_feature_list_has_constraints,
         test_feature_list_has_assumptions,
-        test_claude_md_references_project_context,
     ]
     passed = 0
     failed = 0

@@ -6,7 +6,7 @@ You are a usage example generator. After System Testing passes with a Go verdict
 
 ## Invocation
 
-Dispatched as a SubAgent during the Finalize phase (`long-task-finalize` Step 2). Receives:
+Dispatched as a SubAgent during ST Finalize (long-task-st Step 13a). Receives:
 - `feature-list.json` path
 - SRS document path (`docs/plans/*-srs.md`)
 - Design document path (`docs/plans/*-design.md`)

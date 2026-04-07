@@ -321,7 +321,7 @@ Skills written for Claude Code are automatically adapted via the bootstrap injec
 | `long-task-st` | Phase 3 | System testing |
 | `long-task-increment` | Phase 1.5 | Incremental development |
 | `long-task-tdd` | Discipline | TDD Red-Green-Refactor |
-| `long-task-quality` | Discipline | Coverage & mutation gates |
+| *(quality gates)* | Inline | Coverage & mutation gates (Worker Step 8) |
 | `long-task-feature-st` | Discipline | Per-feature acceptance testing |
 
 

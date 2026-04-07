@@ -378,7 +378,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "Tests pass, mark it done" | Run Quality Gates SubAgent first. |
 | "Coverage looks close enough" | Thresholds are hard gates. Run the tool. |
 | "Let me just try this quick fix" | Systematic debugging first. |
-| "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
+| "I'll generate examples during Worker" | Examples are post-ST (ST Step 13). |
 | "I'll update release notes at the end" | Update after every commit. |
 | "Mutation score is probably OK" | Run mutation tests and read the report. |
 | "ST test case failed but the code is fine" | No bypass. AI must fix code and re-dispatch — no retry limit. If test spec is wrong, use `long-task-increment` to modify. Only escalate if issue genuinely requires human manual testing. |

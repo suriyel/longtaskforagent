@@ -42,9 +42,8 @@ const extractAndStripFrontmatter = (content) => {
  *   2. feature-list.json + all active passing → System Testing
  *   3. feature-list.json + some failing → Worker
  *   4. docs/plans/*-design.md → Initializer
- *   5. docs/plans/*-ucd.md → Design
- *   6. docs/plans/*-srs.md → UCD Style Guide
- *   7. (none) → Requirements
+ *   5. docs/plans/*-srs.md → Design
+ *   6. (none) → Requirements
  */
 const detectPhase = (projectDir) => {
   // 1. Increment request (highest priority)
@@ -72,7 +71,7 @@ const detectPhase = (projectDir) => {
     }
   }
 
-  // 4-6. Check docs/plans/ for design, UCD, SRS files
+  // 4-5. Check docs/plans/ for design, SRS files
   const plansDir = path.join(projectDir, 'docs', 'plans');
   try {
     if (fs.existsSync(plansDir)) {
@@ -80,11 +79,8 @@ const detectPhase = (projectDir) => {
       if (files.some(f => f.endsWith('-design.md'))) {
         return 'Design doc found. Phase: Initializer.';
       }
-      if (files.some(f => f.endsWith('-ucd.md'))) {
-        return 'UCD style guide found. Phase: Design.';
-      }
       if (files.some(f => f.endsWith('-srs.md'))) {
-        return 'SRS doc found. Phase: UCD Style Guide.';
+        return 'SRS doc found. Phase: Design.';
       }
     }
   } catch {
@@ -120,53 +116,6 @@ const copyInitScript = (directory) => {
       pluginRoot,
       'utf8'
     );
-  } catch {
-    // Non-fatal — never break the session
-  }
-};
-
-// ─── Chrome DevTools MCP auto-setup ──────────────────────────────────────────
-
-const CHROME_MCP_KEY = 'chrome-devtools';
-// OpenCode MCP format: type='local', command as array (not stdio/args style)
-const CHROME_MCP_ENTRY = {
-  type: 'local',
-  command: ['npx', '-y', 'chrome-devtools-mcp@latest', '--isolated=true', '--no-usage-statistics'],
-};
-
-/**
- * Upsert chrome-devtools MCP server into ~/.config/opencode/opencode.json.
- * Idempotent — skips write when the entry already matches exactly.
- * Non-fatal: errors are swallowed so a bad config never breaks a session.
- */
-const setupChromeMcp = () => {
-  try {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const configPath = path.join(homeDir, '.config', 'opencode', 'opencode.json');
-    const configDir = path.dirname(configPath);
-
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
-    }
-
-    let config = {};
-    if (fs.existsSync(configPath)) {
-      try {
-        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      } catch {
-        // Malformed JSON — overwrite with a clean config
-      }
-    }
-
-    config.mcp = config.mcp || {};
-
-    // Skip write when entry already matches
-    if (JSON.stringify(config.mcp[CHROME_MCP_KEY]) === JSON.stringify(CHROME_MCP_ENTRY)) {
-      return;
-    }
-
-    config.mcp[CHROME_MCP_KEY] = CHROME_MCP_ENTRY;
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
   } catch {
     // Non-fatal — never break the session
   }
@@ -214,7 +163,6 @@ ${toolMapping}
  * into every session's system prompt (same approach as superpowers plugin).
  */
 export const LongTaskPlugin = async ({ client, directory }) => {
-  setupChromeMcp();
   copyInitScript(directory);
   return {
     'experimental.chat.system.transform': async (_input, output) => {

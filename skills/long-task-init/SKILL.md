@@ -47,7 +47,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
 4. **Generate `long-task-guide.md`** — Create a project-tailored Worker session guide:
    - Read these files for reference:
      - `skills/long-task-work/SKILL.md` — Worker workflow
-     - `skills/long-task-quality/SKILL.md` — verification enforcement
+     - `skills/long-task-quality/references/quality-execution.md` — verification enforcement
      - `skills/long-task-quality/coverage-recipes.md` — coverage/mutation tool setup
      - `skills/using-long-task/references/architecture.md` — TDD workflow details
    - Include ONLY the project's language-specific coverage/mutation commands (get from `python scripts/get_tool_commands.py feature-list.json`)
