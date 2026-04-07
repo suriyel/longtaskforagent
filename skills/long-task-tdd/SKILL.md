@@ -255,7 +255,6 @@ For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-promp
 - **Codebase constraints** (if Design doc §13 exists):
   - §13.1: Use mandatory internal libraries — do NOT use replaced standard/3rd-party APIs
   - §13.2: Do not use prohibited APIs
-  - §13.4: If static analysis tools are listed, run them after implementation (`npx eslint .`, `mvn checkstyle:check`, etc.) — fix violations before proceeding to Refactor
   - §13.5: Follow documented naming conventions
   - §13.6: Follow documented error handling pattern
 
@@ -279,6 +278,7 @@ Clean up while keeping tests green:
 - Extract duplication, improve naming, simplify
 - Run tests after EVERY change (activate environment → run test command directly)
 - No new functionality in this step
+- **Static analysis gate** (if Design §13.4 lists tools): after refactoring is complete, run each tool's command (e.g., `npx eslint .`, `mvn checkstyle:check`, `mypy src/`). Fix all violations before exiting Refactor — violations are **blocking**. Tools read their own config; do not parse configs manually.
 
 ## Testing Anti-Patterns (Top 5)
 
