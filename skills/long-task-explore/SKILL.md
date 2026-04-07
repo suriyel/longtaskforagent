@@ -9,11 +9,14 @@ Explore an existing codebase to produce a structured understanding document. Dis
 
 **Announce at start:** "I'm using the long-task-explore skill to deeply explore this codebase."
 
-## Standalone Mode
+## Invocation Modes
 
-This skill operates independently of the long-task pipeline.
-- Do NOT check for feature-list.json, SRS, design docs, or any pipeline state
-- Do NOT chain to any other skill after completion
+This skill can be invoked **standalone** OR **from within pipeline phases** (requirements, increment).
+
+- **Standalone**: operates independently — no pipeline state required, no skill chaining
+- **Pipeline**: the calling skill provides focus direction and depth; exploration results feed back to the caller
+
+In both modes:
 - Do NOT modify any source code, tests, or configuration files
 - If `docs/rules/` exists (from codebase-scanner), reference it but do not depend on it
 

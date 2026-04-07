@@ -78,6 +78,43 @@ Compare new requirements against the existing feature set:
 
 **Hard gate**: User must approve the impact matrix before proceeding.
 
+### 3.5. Targeted Codebase Exploration (conditional — no user interaction)
+
+**Trigger conditions** (ALL must be true):
+1. Impact Matrix contains at least one **Hard Impact** feature (code changes required)
+2. Project has source code (not a pure documentation project)
+
+**Skip if**: only new features with no existing code dependencies, OR only deprecations with no code to understand.
+
+**Execution**:
+1. From the approved Impact Matrix, extract Hard Impact features' `srs_trace` IDs and `dependencies`
+2. Locate affected code areas:
+   - Use `git_sha` from affected features (if set) to find relevant files via `git show --stat`
+   - Use `report_path` from affected features to read prior implementation context
+   - Use feature titles/descriptions as search keywords
+3. Dispatch `long-task-explore` in **standard mode** with targeted focus:
+   ```
+   Agent(
+     subagent_type="general-purpose",
+     description="Targeted codebase exploration for increment impact",
+     prompt="""
+     Invoke the long-task:long-task-explore skill with these parameters:
+     - Depth: standard
+     - Focus: architecture,dataflow,deps
+     - Path: {inferred_path_from_affected_features or "."}
+     - User question: "Understand modules affected by: {increment_scope_summary}. 
+       Affected features: {hard_impact_feature_titles}."
+     Execute the skill and return the exploration results.
+     """
+   )
+   ```
+4. Use exploration output to inform Step 4 (Design Revision):
+   - Module dependency graph reveals which design sections need updating
+   - Data flow analysis shows integration points that may break
+   - Dependency analysis highlights coupling risks for the increment
+
+**This step is non-blocking** — if explore returns BLOCKED or no actionable findings, proceed to Step 4 normally.
+
 ### 4. Design Revision
 
 Update the existing design document **in place** for affected sections:

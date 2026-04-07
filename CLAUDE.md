@@ -123,6 +123,7 @@ long-task-explore (standalone — no pipeline dependency)
 - **Startup output in code**: Servers must print bound port, PID, and ready signal at startup.
 - **2/3方件 constraints binding**: Design §13.1 mandatory internal libraries and §13.2 prohibited APIs are binding for all new code.
 - **Codebase scan before requirements (brownfield)**: >3 source files + ≥5 commits → run codebase-scanner first.
+- **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
 
 ### Generated Persistent Artifacts

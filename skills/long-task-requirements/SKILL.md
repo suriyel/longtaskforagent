@@ -87,6 +87,41 @@ During Lite elicitation, if ANY of these emerge, switch seamlessly to Expert tra
 
 On escalation: all Lite artifacts gathered so far become Expert input. Do NOT restart or announce a disruptive switch — simply begin asking deeper questions (E1 problem framing, E3 walkthrough, etc.).
 
+## Step 1.6: Targeted Codebase Exploration (brownfield only — no user interaction)
+
+**Trigger conditions** (ALL must be true):
+1. `docs/rules/` exists AND contains ≥1 `.md` file beyond a greenfield stub (brownfield project)
+2. The user's description mentions concrete functionality, a domain area, or a specific module (not too abstract to target)
+
+**Skip if**: greenfield project, OR user description is too vague to derive a focus direction (e.g., "I want to build a platform" with no specifics).
+
+**Execution**:
+1. Extract a focus direction from the user's description:
+   - Identify domain keywords (e.g., "authentication", "payment", "API gateway", "data pipeline")
+   - Infer relevant `--focus` dimensions (e.g., auth → `api,architecture`; data pipeline → `dataflow,deps`)
+   - Infer `--path` if the user mentions a specific module or directory
+2. Dispatch `long-task-explore` in **quick mode** (locator SubAgent only, <= 150 lines):
+   ```
+   Agent(
+     subagent_type="general-purpose",
+     description="Targeted codebase exploration for requirements context",
+     prompt="""
+     Invoke the long-task:long-task-explore skill with these parameters:
+     - Depth: quick
+     - Focus: {inferred_dimensions}
+     - Path: {inferred_path or "."}
+     - User question: "{user_description_summary}"
+     Execute the skill and return the exploration results.
+     """
+   )
+   ```
+3. If explore returns useful findings → incorporate into your mental model for L1/E1 questioning:
+   - Reference discovered modules, APIs, data models in your questions (e.g., "I found `src/auth/` with JWT-based authentication — do you want to extend this or replace it?")
+   - Use discovered architecture patterns to ask more informed questions about integration points
+4. If explore returns BLOCKED or no actionable findings → skip silently, proceed to L1/E1
+
+**This step is non-blocking** — failure or lack of useful results never prevents proceeding to elicitation.
+
 ---
 
 ## Lite Track
