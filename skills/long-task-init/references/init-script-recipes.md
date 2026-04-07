@@ -48,34 +48,7 @@ echo "Environment ready."
 
 ### init.ps1 (PowerShell)
 
-```powershell
-$ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
-
-Write-Host "=== [Project Name] Environment Bootstrap ==="
-
-# --- Step 1: Runtime version ---
-# [detect/install runtime]
-
-# --- Step 2: Environment creation ---
-# [create isolated environment]
-
-# --- Step 3: Activate environment ---
-# [activate for current shell]
-
-# --- Step 4: Install dependencies ---
-# [install packages]
-
-# --- Step 5: Install dev tools ---
-# [install test/coverage/mutation tools]
-
-# --- Step 6: Verify ---
-Write-Host ""
-Write-Host "=== Environment Check ==="
-# [print tool versions]
-Write-Host ""
-Write-Host "Environment ready."
-```
+Same 6-step structure using `$ErrorActionPreference = "Stop"`, `Set-Location $PSScriptRoot`, and `Write-Host` for output.
 
 ---
 
@@ -558,36 +531,6 @@ echo "Environment ready."
 
 ---
 
-## Docker / Devcontainer Recipe
-
-**init.sh:**
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-cd "$(dirname "$0")"
-
-echo "=== Environment Bootstrap (docker) ==="
-
-if ! command -v docker &>/dev/null; then
-    echo "ERROR: Docker not found. Install from https://docs.docker.com/get-docker/"
-    exit 1
-fi
-
-if [ -f ".devcontainer/devcontainer.json" ]; then
-    echo "Devcontainer config found. Use 'devcontainer up' or open in VS Code."
-elif [ -f "docker-compose.yml" ] || [ -f "compose.yml" ]; then
-    docker compose up -d --build
-    echo "Services started."
-elif [ -f "Dockerfile" ]; then
-    docker build -t "$(basename "$PWD")" .
-    echo "Image built."
-fi
-
-echo "Environment ready."
-```
-
----
-
 ## Selection Guide
 
 Use the design doc's tech stack and constraints to pick the right recipe:
@@ -608,15 +551,4 @@ Use the design doc's tech stack and constraints to pick the right recipe:
 
 ## Combining Tools
 
-Projects may need multiple tools. The init script should chain them in order:
-
-```bash
-# Example: Python (conda) + Node (nvm) + Docker (services)
-# 1. Set up Python environment via conda
-# 2. Set up Node environment via nvm
-# 3. Start Docker services (databases, etc.)
-# 4. Run database migrations
-# 5. Verify all tools
-```
-
-Each step must be idempotent and include a version check at the end.
+Projects may need multiple tools. Chain in order: runtime envs → package install → services → migrations → verify. Each step must be idempotent.
