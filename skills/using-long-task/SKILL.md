@@ -101,11 +101,6 @@ digraph phase_detection {
 | `long-task:long-task-feature-st` | Black-Box Feature Acceptance Testing — self-managed start/cleanup lifecycle, ISO/IEC/IEEE 29119 test case documentation (per-feature, after Quality Gates) |
 | `long-task:long-task-tdd` | TDD Red-Green-Refactor | |
 
-### Meta Skills (invoked conditionally by phase skills — do NOT invoke directly)
-| Skill | Purpose |
-|-------|---------|
-| `long-task:long-task-finalize` | Post-ST Documentation — scenario-based usage examples generation + RELEASE_NOTES/task-progress finalization (after ST Go verdict) |
-
 ## Key Files (shared contract)
 
 | File | Role |

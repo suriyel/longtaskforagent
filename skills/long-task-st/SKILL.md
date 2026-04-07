@@ -312,11 +312,38 @@ Determine the Go/No-Go verdict based on exit criteria. Record in the ST report:
 
 ### 13. Finalize (on Go/Conditional-Go)
 
-If verdict is Go or Conditional-Go:
-- Invoke `long-task:long-task-finalize`
-- Wait for completion before ending session
-
 If No-Go → skip (loop back to Worker for fixes; Finalize runs after eventual Go).
+
+If verdict is Go or Conditional-Go, execute Steps 13a-13e inline:
+
+**13a. Generate Examples (SubAgent)**
+
+Dispatch the example-generator SubAgent:
+```
+You are an Example Generator SubAgent.
+
+## Your Task
+1. Read the agent definition: Read <skills_root>/../agents/example-generator.md
+2. Follow the process to generate scenario-based usage examples
+3. Return your result using the Structured Return Contract
+
+## Input Parameters
+- feature-list.json: <path>
+- SRS: <srs_path>
+- Design: <design_path>
+- tech_stack: <tech_stack_json>
+- Working directory: <project_root>
+```
+
+Dispatch via `Agent` tool. Parse return: PASS/PARTIAL/FAIL (examples are non-blocking).
+
+**13b. Update RELEASE_NOTES.md** — Add ST verdict, date, test summary, ST report path.
+
+**13c. Update task-progress.md** — Add ST session summary (categories, pass/fail, defects, mutation score, example results).
+
+**13d. Persist** — `git add examples/ RELEASE_NOTES.md task-progress.md && git commit -m "docs: finalize release"`, then run `python scripts/validate_features.py feature-list.json`.
+
+**13e. Summary** — Output: examples count, RELEASE_NOTES updated, task-progress updated.
 
 ## Scaling ST to Project Size
 
@@ -349,6 +376,6 @@ If No-Go → skip (loop back to Worker for fixes; Finalize runs after eventual G
 
 **Called by:** `using-long-task` (when feature-list.json exists AND all features passing), or `long-task-work` (Step 12 when no failing features remain)
 **Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `docs/test-cases/feature-*.md` (per-feature ST from `long-task-feature-st`), `task-progress.md`, project config file (if applicable)
-**May invoke:** `long-task:long-task-work` (if Critical/Major defects found → fix loop), `long-task:long-task-finalize` (after Go/Conditional-Go verdict)
+**May invoke:** `long-task:long-task-work` (if Critical/Major defects found → fix loop)
 **Produces:** `docs/plans/YYYY-MM-DD-st-plan.md`, `docs/plans/YYYY-MM-DD-st-report.md`
 **Read on-demand (via Read tool, NOT Skill tool):** `references/st-recipes.md`

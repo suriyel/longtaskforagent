@@ -55,12 +55,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-tdd` | TDD Red-Green-Refactor |
 | `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, ISO/IEC/IEEE 29119) |
 
-#### Meta Skills
-
-| Skill | Purpose |
-|-------|---------|
-| `long-task-finalize` | Post-ST: usage examples + RELEASE_NOTES/task-progress finalization |
-
 #### Skill Call Graph
 
 ```
@@ -79,7 +73,7 @@ using-long-task (router)
    │      └─→ long-task-feature-st (Step 9)
    └─→ long-task-st (ALL active features passing)
           ├─→ long-task-work (defects found → fix)
-          └─→ long-task-finalize (Go verdict)
+          └─→ Finalize (Go verdict — inline Step 13)
 ```
 
 ### Phase Workflow Summary
@@ -208,7 +202,7 @@ long-task-agent/
 │   ├── long-task-st/SKILL.md + references/st-recipes.md
 │   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + prompts/implementer-prompt.md
 │   ├── long-task-quality/references/{quality-execution,coverage-recipes}.md
-│   ├── long-task-finalize/SKILL.md
+│   ├── long-task-finalize/ (merged into long-task-st Step 13)
 ├── agents/{codebase-scanner,ats-reviewer,example-generator}.md
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
