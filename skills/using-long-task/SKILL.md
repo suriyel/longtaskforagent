@@ -94,6 +94,11 @@ digraph phase_detection {
 | `long-task:long-task-work` | Phase 2 | feature-list.json exists, some active features failing |
 | `long-task:long-task-st` | Phase 3 | feature-list.json exists, ALL active features passing |
 
+### Standalone Skills (invoke independently — no pipeline dependency)
+| Skill | Purpose | Trigger |
+|-------|---------|---------|
+| `long-task:long-task-explore` | Deep codebase exploration — architecture, data flow, domain model, API surface, dependencies, code health | On-demand via `/deep-explore [quick\|standard\|deep] [--focus area] [--path dir]` |
+
 ### Discipline Skills (invoked by long-task-work as sub-skills — do NOT invoke directly)
 | Skill | Purpose |
 |-------|---------|

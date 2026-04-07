@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 11 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) injected at session start via hook.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 12 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) injected at session start via hook. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -27,10 +27,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Run single test | `python -m pytest tests/test_<script_name>.py` |
 | Auto-loop (Claude Code) | `python scripts/auto_loop.py feature-list.json [--max-iterations 30] [--log-dir logs] [--cooldown 10]` |
 | Auto-loop (OpenCode) | `python scripts/auto_loop_opencode.py feature-list.json [--model anthropic/claude-sonnet-4-6]` |
+| Deep-explore codebase | Invoke `long-task:long-task-explore` or `/deep-explore [quick\|standard\|deep] [--focus area] [--path dir]` |
 
 ## Architecture
 
-### 11-Skill System
+### 12-Skill System
 
 #### Phase Skills
 
@@ -46,6 +47,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-init` | Phase 1 | ATS doc exists (or auto-skipped), no feature-list.json |
 | `long-task-work` | Phase 2 | feature-list.json exists, some active features failing |
 | `long-task-st` | Phase 3 | feature-list.json exists, ALL active features passing |
+
+#### Standalone Skills (no pipeline dependency)
+
+| Skill | Purpose | Trigger |
+|-------|---------|---------|
+| `long-task-explore` | Deep codebase exploration — architecture, data flow, domain model, API surface, dependencies, code health | On-demand via `/deep-explore` |
 
 #### Discipline Skills (sub-skills of long-task-work)
 
@@ -74,6 +81,11 @@ using-long-task (router)
    └─→ long-task-st (ALL active features passing)
           ├─→ long-task-work (defects found → fix)
           └─→ Finalize (Go verdict — inline Step 13)
+
+long-task-explore (standalone — no pipeline dependency)
+   ├─→ codebase-locator SubAgent (breadth-first scan)
+   ├─→ codebase-analyzer SubAgent (architecture, data flow, domain, API)
+   └─→ codebase-pattern-finder SubAgent (dependencies, coupling, health, debt)
 ```
 
 ### Phase Workflow Summary
@@ -138,6 +150,7 @@ using-long-task (router)
 | `docs/plans/*-st-report.md` | 3 | ST report with Go/No-Go verdict |
 | `examples/` | Finalize | Scenario-based usage examples |
 | `logs/session-*.md` | auto_loop | Session logs per iteration |
+| `docs/explore/codebase-research.md` | Standalone | Deep codebase exploration report (from `/deep-explore`) |
 
 ### Feature List Schema
 
@@ -202,8 +215,9 @@ long-task-agent/
 │   ├── long-task-st/SKILL.md + references/st-recipes.md (includes Finalize Step 13)
 │   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + prompts/implementer-prompt.md
 │   ├── long-task-quality/{references/quality-execution.md,coverage-recipes.md}
-├── agents/{codebase-scanner,ats-reviewer,example-generator}.md
-├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index}-template.md
+│   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
+├── agents/{codebase-scanner,ats-reviewer,example-generator,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
+├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
 ├── scripts/{get_tool_commands,validate_features,validate_guide,check_configs,
 │           check_st_readiness,validate_ats,check_ats_coverage,
@@ -222,15 +236,19 @@ long-task-agent/
 - [skills/long-task-work/references/subagent-development.md](skills/long-task-work/references/subagent-development.md) — Subagent-driven development
 - [skills/long-task-work/references/worktree-isolation.md](skills/long-task-work/references/worktree-isolation.md) — Worktree isolation
 - [skills/long-task-st/references/st-recipes.md](skills/long-task-st/references/st-recipes.md) — ST tool recipes per language
+- [skills/long-task-explore/SKILL.md](skills/long-task-explore/SKILL.md) — Standalone deep codebase exploration
+- [agents/codebase-locator.md](agents/codebase-locator.md) — Codebase structure locator (breadth-first)
+- [agents/codebase-analyzer.md](agents/codebase-analyzer.md) — Architecture/data flow/domain analyzer (depth-first)
+- [agents/codebase-pattern-finder.md](agents/codebase-pattern-finder.md) — Pattern/health/debt finder (metrics-driven)
 
 
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 11 skills loaded on-demand.
+This project uses a multi-session agent workflow with 12 skills loaded on-demand.
 The `using-long-task` skill is injected at session start and routes to the correct phase.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS in place → new features appended → Worker cycles → ST.
 
-Key files: `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `docs/report/feature-*-report.md` (per-feature development reports), `increment-request.json` (increment signal).
+Key files: `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `docs/report/feature-*-report.md` (per-feature development reports), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
 <!-- /long-task-agent -->
