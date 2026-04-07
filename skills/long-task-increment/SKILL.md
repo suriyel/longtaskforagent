@@ -92,14 +92,26 @@ Compare new requirements against the existing feature set:
    - Use `git_sha` from affected features (if set) to find relevant files via `git show --stat`
    - Use `report_path` from affected features to read prior implementation context
    - Use feature titles/descriptions as search keywords
-3. Dispatch `long-task-explore` in **standard mode** with targeted focus:
+3. Determine exploration depth from impact scope (do NOT hardcode):
+
+   | Signal | Depth adjustment |
+   |--------|-----------------|
+   | 1-2 Hard Impact features, localized to one module | Prefer quick (locator sufficient) |
+   | 3-5 Hard Impact features, or cross-module impact | Prefer standard (need dependency + flow analysis) |
+   | 6+ Hard Impact features, or transitive cascade depth ≥2 | Prefer deep (comprehensive analysis) |
+   | Affected features share a single `--path` subtree | Keep current or lower (narrow scope) |
+   | Affected features span unrelated directories | Bump up one level (broad scope) |
+
+   When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide.
+
+4. Dispatch `long-task-explore` with context-driven parameters:
    ```
    Agent(
      subagent_type="general-purpose",
      description="Targeted codebase exploration for increment impact",
      prompt="""
      Invoke the long-task:long-task-explore skill with these parameters:
-     - Depth: standard
+     - Depth: {determined_depth or omit for auto-detect}
      - Focus: architecture,dataflow,deps
      - Path: {inferred_path_from_affected_features or "."}
      - User question: "Understand modules affected by: {increment_scope_summary}. 
@@ -108,7 +120,7 @@ Compare new requirements against the existing feature set:
      """
    )
    ```
-4. Use exploration output to inform Step 4 (Design Revision):
+5. Use exploration output to inform Step 4 (Design Revision):
    - Module dependency graph reveals which design sections need updating
    - Data flow analysis shows integration points that may break
    - Dependency analysis highlights coupling risks for the increment
