@@ -43,15 +43,20 @@ _LONG_TASK_REFERENCE_BODY = (
     "## Long-Task Agent\n\n"
     "This project uses a multi-session agent workflow with 13 skills loaded on-demand.\n"
     "The `using-long-task` skill is injected at session start and routes to the correct phase.\n"
-    "Flow: Requirements (SRS) → UCD (UI projects) → Design → ATS → Init → Worker cycles → System Testing → Finalize.\n"
-    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/UCD in place → new features appended → Worker cycles → ST.\n\n"
-    "Key files: `docs/plans/*-srs.md` (SRS), `docs/plans/*-ucd.md` (UCD style guide), "
-    "`docs/plans/*-design.md` (design), "
+    "Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design (merges rules into §13) → ATS → Init → Worker cycles → System Testing → Finalize.\n"
+    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS/UCD in place → new features appended → Worker cycles → ST.\n\n"
+    "Key files: `docs/rules/*.md` (codebase conventions — brownfield only), "
+    "`docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), "
+    "`docs/plans/*-ucd.md` (UCD style guide), "
+    "`docs/plans/*-design.md` (design, includes §13 codebase constraints), "
+    "`docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), "
     "`feature-list.json` (task inventory), "
     "`task-progress.md` (session log), "
     "`RELEASE_NOTES.md` (changelog), "
+    "`docs/features/*.md` (per-feature detailed design), "
     "`docs/test-cases/feature-*.md` (per-feature ST test cases), "
     "`docs/plans/*-st-report.md` (ST report), "
+    "`docs/report/feature-*-report.md` (per-feature development reports), "
     "`increment-request.json` (increment signal).\n"
     "<!-- /long-task-agent -->\n"
 )
@@ -348,6 +353,11 @@ def main():
     os.makedirs(test_cases_dir, exist_ok=True)
     print(f"Created: {test_cases_dir}")
 
+    # docs/report dir
+    report_dir = os.path.join(out_dir, "docs", "report")
+    os.makedirs(report_dir, exist_ok=True)
+    print(f"Created: {report_dir}")
+
     # docs/templates dir — copy ST case template
     templates_dir = os.path.join(out_dir, "docs", "templates")
     os.makedirs(templates_dir, exist_ok=True)
@@ -367,7 +377,7 @@ def main():
     print(f"Created: {examples_readme}")
 
     print(f"\nProject '{args.project_name}' initialized at {out_dir}")
-    print("Created: feature-list.json, CLAUDE.md, AGENTS.md, task-progress.md, RELEASE_NOTES.md, examples/, scripts/ (with helper scripts), docs/plans/, docs/test-cases/, docs/templates/")
+    print("Created: feature-list.json, CLAUDE.md, AGENTS.md, task-progress.md, RELEASE_NOTES.md, examples/, scripts/ (with helper scripts), docs/plans/, docs/test-cases/, docs/report/, docs/templates/")
     print("TODO (LLM generates during Initializer phase):")
     print("  - long-task-guide.md         (tailored Worker guide from SKILL.md + references + design doc)")
     print("  - init.sh / init.ps1         (environment bootstrap from design doc tech stack)")

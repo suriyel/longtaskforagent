@@ -69,6 +69,7 @@ You are a Feature Design execution SubAgent.
 - Test Inventory main categories (FUNC/BNDRY/SEC/UI/PERF/INTG) must cover all ATS-required categories for this feature's requirement(s)
 - Features with external dependencies must have ≥1 INTG row per dependency type; pure-computation features: "INTG: N/A"
 - Features with `"ui": true` MUST have a complete Visual Rendering Contract (§Visual Rendering Contract): all visual elements listed, rendering technology specified, positive rendering assertions defined. "N/A" is only valid for `"ui": false`. For each positive rendering assertion, at least one `UI/render` Test Inventory row must exist. Missing rows → FAIL.
+- **Codebase constraints** (if Design doc §13 exists): Read {design_doc_path} §13 for codebase conventions. Interface Contract method names must follow §13.5 naming conventions. Error handling must follow §13.6 pattern. Dependencies must use §13.1 internal libraries where applicable. Do not reference prohibited APIs from §13.2.
 - Do NOT start TDD — only produce the design document
 ```
 

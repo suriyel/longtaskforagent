@@ -45,6 +45,8 @@ Tests are driven by three primary sources:
 - **SRS requirement section** (`{srs_section}`) — full FR-xxx with Given/When/Then acceptance criteria, boundary conditions, and error paths (located via the feature's `srs_trace` field)
 - **Feature detailed design** (`docs/features/YYYY-MM-DD-<feature-name>.md`) — Interface Contract (§3), Algorithm pseudocode and boundary matrix (§5)
 
+When writing test files, follow test file naming conventions from Design doc §13.5 (Coding Style Summary) if §13 exists.
+
 The Test Inventory table from feature detailed design is the **primary source** for TDD Red. Each row maps to one or more test cases. TDD rules (Rule 1–6) extend and refine this set. SRS acceptance criteria (from the feature's `srs_trace` requirements) provide supplementary context. ST test case documents are generated *after* TDD as acceptance verification (Worker Step 9).
 
 ### Test Scenario Rules (hard requirements)
@@ -247,6 +249,12 @@ For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-promp
 - Implement fresh from tests — never reference pre-existing code that was "deleted" in the Iron Law
 - One test at a time: make the simplest failing test pass first, then the next
 - No premature optimization or extra features
+- **Codebase constraints** (if Design doc §13 exists):
+  - §13.1: Use mandatory internal libraries — do NOT use replaced standard/3rd-party APIs
+  - §13.2: Do not use prohibited APIs
+  - §13.4: If static analysis tools are listed, run them after implementation (`npx eslint .`, `mvn checkstyle:check`, etc.) — fix violations before proceeding to Refactor
+  - §13.5: Follow documented naming conventions
+  - §13.6: Follow documented error handling pattern
 
 **Startup output requirement** — for any feature that implements a server process or background service:
 The implementation MUST log at startup:

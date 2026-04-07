@@ -42,7 +42,20 @@ elif compgen -G "docs/plans/*-ucd.md" > /dev/null 2>&1; then
 elif compgen -G "docs/plans/*-srs.md" > /dev/null 2>&1; then
     status_hint="\\n\\nSRS doc found. Phase: UCD Style Guide."
 else
-    status_hint="\\n\\nNo SRS, design, or feature-list.json found. Phase: Requirements."
+    # Check if codebase scan has been done (docs/rules/ populated)
+    if compgen -G "docs/rules/*.md" > /dev/null 2>&1; then
+        status_hint="\\n\\nNo SRS, design, or feature-list.json found. Codebase rules exist. Phase: Requirements."
+    else
+        # Check for brownfield (existing source files)
+        # Count source files (cap at 10 — only need to know if > 3)
+        src_count=$(find . -type f \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.tsx" -o -name "*.java" -o -name "*.c" -o -name "*.cpp" -o -name "*.go" -o -name "*.rs" \) -not -path "./.git/*" -not -path "*/node_modules/*" -not -path "*/__pycache__/*" -not -path "*/venv/*" -not -path "*/.venv/*" -not -path "*/dist/*" -not -path "*/build/*" 2>/dev/null | head -10 | wc -l)
+        commit_count=$(git rev-list --count HEAD 2>/dev/null || echo "0")
+        if [ "$src_count" -gt 3 ] && [ "$commit_count" -ge 5 ]; then
+            status_hint="\\n\\nNo SRS found. Existing source files detected (brownfield, ${commit_count} commits). Phase: Codebase Scan → Requirements."
+        else
+            status_hint="\\n\\nNo SRS, design, or feature-list.json found. Phase: Requirements."
+        fi
+    fi
 fi
 
 # ── Render SKILL.md.template → .long-task-bindings/ (enterprise MCP support) ──

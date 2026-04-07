@@ -43,15 +43,20 @@ _LONG_TASK_REFERENCE_BODY = (
     "## Long-Task Agent\n\n"
     "This project uses a multi-session agent workflow with 13 skills loaded on-demand.\n"
     "The `using-long-task` skill is injected at session start and routes to the correct phase.\n"
-    "Flow: Requirements (SRS) → UCD (UI projects) → Design → ATS → Init → Worker cycles → System Testing → Finalize.\n"
+    "Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design (merges rules into §13) → ATS → Init → Worker cycles → System Testing → Finalize.\n"
     "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/UCD in place → new features appended → Worker cycles → ST.\n\n"
-    "Key files: `docs/plans/*-srs.md` (SRS), `docs/plans/*-ucd.md` (UCD style guide), "
-    "`docs/plans/*-design.md` (design), "
+    "Key files: `docs/rules/*.md` (codebase conventions — brownfield only), "
+    "`docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), "
+    "`docs/plans/*-ucd.md` (UCD style guide), "
+    "`docs/plans/*-design.md` (design, includes §13 codebase constraints), "
+    "`docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), "
     "`feature-list.json` (task inventory), "
     "`task-progress.md` (session log), "
     "`RELEASE_NOTES.md` (changelog), "
+    "`docs/features/*.md` (per-feature detailed design), "
     "`docs/test-cases/feature-*.md` (per-feature ST test cases), "
     "`docs/plans/*-st-report.md` (ST report), "
+    "`docs/report/feature-*-report.md` (per-feature development reports), "
     "`increment-request.json` (increment signal).\n"
     "<!-- /long-task-agent -->\n"
 )
@@ -342,6 +347,11 @@ def main():
     # docs/plans dir
     plans_dir = os.path.join(out_dir, "docs", "plans")
     os.makedirs(plans_dir, exist_ok=True)
+
+    # docs/rules dir
+    rules_dir = os.path.join(out_dir, "docs", "rules")
+    os.makedirs(rules_dir, exist_ok=True)
+    print(f"Created: {rules_dir}")
 
     # docs/test-cases dir
     test_cases_dir = os.path.join(out_dir, "docs", "test-cases")
