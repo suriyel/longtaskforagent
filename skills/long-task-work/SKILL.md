@@ -146,18 +146,45 @@ Context to carry forward:
 - Full `{design_section}` from Document Lookup Protocol — architectural constraints and interface contracts
 - **Test commands**: from `long-task-guide.md` — use these directly (no wrapper scripts)
 
-### 8. Quality Gates
-**REQUIRED SUB-SKILL:** Invoke `long-task:long-task-quality` and follow it exactly.
+### 8. Quality Gates — SubAgent Dispatch
 
-The Quality skill dispatches a SubAgent to execute all 3 gates (Coverage → Mutation → Verify). The main Agent does NOT read coverage reports, mutation output, or test runner output — the SubAgent handles everything in its own fresh context and returns a structured summary.
+Delegate quality gate execution to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads coverage reports, mutation output, or test runner output directly.
 
-Context to carry forward (minimal — SubAgent reads files itself):
-- Feature ID from feature-list.json
-- `quality_gates` thresholds (compact JSON)
-- `tech_stack` (compact JSON)
-- Working directory path
-- Feature test file paths (test files written/modified during TDD for this feature — for mutation_feature scoping)
-- Active feature count (total non-deprecated features in feature-list.json — for mutation_full_threshold decision)
+**Construct SubAgent Prompt:**
+
+```
+You are a Quality Gates execution SubAgent.
+
+## Your Task
+1. Read the execution rules: Read {skills_root}/long-task-quality/references/quality-execution.md
+2. Read long-task-guide.md in the project root for test/coverage/mutation commands and environment activation
+3. Execute all 3 gates in order (Gate 1 → 2 → 3)
+   - **Note**: Static analysis tools (Design §13.4) are enforced during TDD Refactor, not here. If Design doc §13.7 documents code generation directories, exclude them from coverage measurement in Gate 1.
+4. If a gate fails, fix and retry per the rules (max 3 attempts per gate)
+5. Return your result using the Structured Return Contract at the end of the execution rules
+
+## Input Parameters
+- Feature ID: {feature_id}
+- Feature: {feature_json}
+- quality_gates thresholds: {quality_gates_json}
+- tech_stack: {tech_stack_json}
+- Working directory: {working_dir}
+- Feature test files: {feature_test_files}
+- Active feature count: {active_feature_count}
+
+## Key Constraint
+- Do NOT mark the feature as "passing" in feature-list.json — only report results
+- If a tool/environment error cannot be resolved after 1 retry, set Verdict to BLOCKED
+```
+
+Replace `{skills_root}` with the path to the skills directory.
+
+**Dispatch:** Use the `Agent` tool with description "Quality Gates for feature #{feature_id}".
+
+**Parse Result:**
+- **`PASS`** → Record metrics in `task-progress.md`, proceed to Feature-ST
+- **`FAIL`** → If SubAgent already retried, escalate to user via `AskUserQuestion`
+- **`BLOCKED`** → Escalate blocker details to user via `AskUserQuestion`
 
 ### 9. ST Acceptance Test Cases
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-st` and follow it exactly.
@@ -348,7 +375,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "I'll mock that config later" | Run Config Gate. Real configs needed. |
 | "This feature is trivial, skip test cases" | Invoke long-task-feature-st. Every feature. |
 | "This feature is trivial, skip TDD" | Invoke long-task-tdd. Every feature. |
-| "Tests pass, mark it done" | Invoke long-task-quality first. |
+| "Tests pass, mark it done" | Run Quality Gates SubAgent first. |
 | "Coverage looks close enough" | Thresholds are hard gates. Run the tool. |
 | "Let me just try this quick fix" | Systematic debugging first. |
 | "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
@@ -378,7 +405,7 @@ Follow the systematic debugging process — **never guess-and-fix**:
 **Called by:** using-long-task (when feature-list.json exists) or long-task-init (Step 16)
 **Invokes (in strict order):**
 1. `long-task:long-task-tdd` (Steps 5-7) — TDD Red-Green-Refactor
-2. `long-task:long-task-quality` (Step 8) — Coverage + Mutation
+2. Quality Gates SubAgent (Step 8) — Coverage + Mutation (inline dispatch, reads `long-task-quality/references/quality-execution.md`)
 3. `long-task:long-task-feature-st` (Step 9) — Black-Box Feature Acceptance Testing (ISO/IEC/IEEE 29119, self-managed lifecycle)
 **Reads/Writes:** feature-list.json, task-progress.md (including `## Current State`), RELEASE_NOTES.md
 **Read on-demand (via Read tool, NOT Skill tool):** `references/systematic-debugging.md`

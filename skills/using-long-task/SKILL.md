@@ -99,8 +99,7 @@ digraph phase_detection {
 |-------|---------|
 | `long-task:long-task-feature-design` | Feature Detailed Design — interface contracts, algorithm pseudocode, state diagrams, boundary matrices, test inventory (bridges system design → TDD) |
 | `long-task:long-task-feature-st` | Black-Box Feature Acceptance Testing — self-managed start/cleanup lifecycle, ISO/IEC/IEEE 29119 test case documentation (per-feature, after Quality Gates) |
-| `long-task:long-task-tdd` | TDD Red-Green-Refactor |
-| `long-task:long-task-quality` | Coverage Gate + Mutation Gate |
+| `long-task:long-task-tdd` | TDD Red-Green-Refactor | |
 
 ### Meta Skills (invoked conditionally by phase skills — do NOT invoke directly)
 | Skill | Purpose |

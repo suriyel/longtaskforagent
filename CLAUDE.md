@@ -53,7 +53,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |-------|---------|
 | `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory |
 | `long-task-tdd` | TDD Red-Green-Refactor |
-| `long-task-quality` | Coverage Gate + Feature-Scoped Mutation Gate |
 | `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, ISO/IEC/IEEE 29119) |
 
 #### Meta Skills
@@ -76,8 +75,8 @@ using-long-task (router)
    ├─→ long-task-work (active features failing)
    │      ├─→ long-task-feature-design (Step 4)
    │      ├─→ long-task-tdd (Steps 6-8)
-   │      ├─→ long-task-quality (Step 9)
-   │      └─→ long-task-feature-st (Step 10)
+   │      ├─→ Quality Gates SubAgent (Step 8, inline dispatch)
+   │      └─→ long-task-feature-st (Step 9)
    └─→ long-task-st (ALL active features passing)
           ├─→ long-task-work (defects found → fix)
           └─→ long-task-finalize (Go verdict)
@@ -208,7 +207,7 @@ long-task-agent/
 │   ├── long-task-feature-st/SKILL.md + prompts/e2e-scenario-prompt.md
 │   ├── long-task-st/SKILL.md + references/st-recipes.md
 │   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + prompts/implementer-prompt.md
-│   ├── long-task-quality/SKILL.md + coverage-recipes.md
+│   ├── long-task-quality/references/{quality-execution,coverage-recipes}.md
 │   ├── long-task-finalize/SKILL.md
 ├── agents/{codebase-scanner,ats-reviewer,example-generator}.md
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index}-template.md
