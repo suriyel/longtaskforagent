@@ -10,7 +10,7 @@ Never apply a fix based on a guess. Always trace the bug to its root cause, then
 
 - Test failure during TDD Green or Refactor
 - Regression detected during smoke tests
-- Runtime error during Chrome DevTools MCP functional testing
+- Runtime error during functional testing
 - Build or environment failure during Bootstrap
 - Any unexpected behavior during implementation
 

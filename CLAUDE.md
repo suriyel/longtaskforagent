@@ -14,18 +14,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---------|---------|
 | Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|typescript] [--line-cov N] [--branch-cov N] [--mutation-score N]` |
 | Validate feature-list | `python scripts/validate_features.py feature-list.json` |
-| Validate guide | `python scripts/validate_guide.py long-task-guide.md [--feature-list feature-list.json]` |
+| Validate guide | `python scripts/validate_guide.py long-task-guide.md` |
 | Check configs | `python scripts/check_configs.py feature-list.json [--feature N]` |
-| Check Jinja2 | `python scripts/check_jinja2.py [--quiet]` |
-| Check MCP providers | `python scripts/check_mcp_providers.py tool-bindings.json [--feature N]` |
-| Apply tool bindings | `python scripts/apply_tool_bindings.py tool-bindings.json [--defaults\|--regenerate-defaults\|--dry-run]` |
 | Validate ATS | `python scripts/validate_ats.py docs/plans/ats.md [--srs docs/plans/srs.md]` |
 | Check ATS coverage | `python scripts/check_ats_coverage.py docs/plans/ats.md --feature-list feature-list.json [--feature N] [--strict]` |
 | Check ST readiness | `python scripts/check_st_readiness.py feature-list.json` |
 | Validate ST cases | `python scripts/validate_st_cases.py docs/test-cases/feature-N.md [--feature-list feature-list.json --feature N]` |
 | Validate increment | `python scripts/validate_increment_request.py increment-request.json` |
 | Validate bugfix | `python scripts/validate_bugfix_request.py bugfix-request.json` |
-| Get tool commands | `python scripts/get_tool_commands.py feature-list.json [--json] [--bindings tool-bindings.json]` |
+| Get tool commands | `python scripts/get_tool_commands.py feature-list.json [--json]` |
 | Run all tests | `python -m pytest tests/` |
 | Run single test | `python -m pytest tests/test_<script_name>.py` |
 | Auto-loop (Claude Code) | `python scripts/auto_loop.py feature-list.json [--max-iterations 30] [--log-dir logs] [--cooldown 10]` |
@@ -199,7 +196,7 @@ Key field notes:
 ```
 long-task-agent/
 ├── skills/
-│   ├── using-long-task/SKILL.md + references/{architecture,roadmap}.md
+│   ├── using-long-task/SKILL.md + references/architecture.md
 │   ├── long-task-requirements/SKILL.md + references/{problem-framing,scenario-walkthrough,hypothesis-correction,alignment-validation}.md
 │   ├── long-task-hotfix/SKILL.md
 │   ├── long-task-increment/SKILL.md
@@ -217,17 +214,16 @@ long-task-agent/
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
 ├── scripts/{get_tool_commands,validate_features,validate_guide,check_configs,
-│           check_jinja2,check_st_readiness,validate_ats,check_ats_coverage,
+│           check_st_readiness,validate_ats,check_ats_coverage,
 │           validate_bugfix_request,validate_increment_request,validate_st_cases,
-│           check_mcp_providers,apply_tool_bindings,auto_loop,auto_loop_opencode}.py
+│           auto_loop,auto_loop_opencode}.py
 └── tests/test_<script_name>.py  (one file per script)
 ```
 
 ## See Also
 
 - [ReadMe.md](ReadMe.md) — Overview and design rationale
-- [skills/using-long-task/references/architecture.md](skills/using-long-task/references/architecture.md) — TDD workflow, Chrome DevTools patterns
-- [skills/using-long-task/references/roadmap.md](skills/using-long-task/references/roadmap.md) — Future enhancements
+- [skills/using-long-task/references/architecture.md](skills/using-long-task/references/architecture.md) — TDD workflow, testing patterns
 - [agents/codebase-scanner.md](agents/codebase-scanner.md) — Brownfield codebase scanner
 - [agents/ats-reviewer.md](agents/ats-reviewer.md) — ATS reviewer (7 dimensions)
 - [skills/long-task-work/references/systematic-debugging.md](skills/long-task-work/references/systematic-debugging.md) — Systematic debugging

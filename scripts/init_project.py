@@ -36,11 +36,11 @@ CLAUDE_MD_MARKER = "<!-- long-task-agent -->"
 _LONG_TASK_REFERENCE_BODY = (
     "\n\n<!-- long-task-agent -->\n"
     "## Long-Task Agent\n\n"
-    "This project uses a multi-session agent workflow with 13 skills loaded on-demand.\n"
+    "This project uses a multi-session agent workflow with 11 skills loaded on-demand.\n"
     "The `using-long-task` skill is injected at session start and routes to the correct phase.\n"
-    "Flow: Requirements (SRS) → UCD (UI projects) → Design → ATS → Init → Worker cycles → System Testing → Finalize.\n"
-    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/UCD in place → new features appended → Worker cycles → ST.\n\n"
-    "Key files: `docs/plans/*-srs.md` (SRS), `docs/plans/*-ucd.md` (UCD style guide), "
+    "Flow: Requirements (SRS) → Design → ATS → Init → Worker cycles → System Testing → Finalize.\n"
+    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles → ST.\n\n"
+    "Key files: `docs/plans/*-srs.md` (SRS), "
     "`docs/plans/*-design.md` (design), "
     "`feature-list.json` (task inventory), "
     "`task-progress.md` (session log), "
@@ -311,7 +311,6 @@ def main():
 
     helper_scripts = [
         "validate_features.py",
-        "check_jinja2.py",
         "validate_guide.py",
         "get_tool_commands.py",
         "validate_st_cases.py",
@@ -319,7 +318,6 @@ def main():
         "validate_bugfix_request.py",
         "check_st_readiness.py",
         "check_ats_coverage.py",
-        "check_mcp_providers.py",
         "auto_loop.py",
         "auto_loop_opencode.py",
     ]

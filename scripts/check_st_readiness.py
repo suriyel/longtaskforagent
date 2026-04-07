@@ -40,9 +40,6 @@ def check_st_readiness(path: str) -> dict:
             srs_path: str or None
             design_found: bool
             design_path: str or None
-            ucd_found: bool
-            ucd_path: str or None
-            has_ui_features: bool
             issues: list[str]
     """
     result = {
@@ -56,9 +53,6 @@ def check_st_readiness(path: str) -> dict:
         "srs_path": None,
         "design_found": False,
         "design_path": None,
-        "ucd_found": False,
-        "ucd_path": None,
-        "has_ui_features": False,
         "issues": [],
     }
 
@@ -91,9 +85,6 @@ def check_st_readiness(path: str) -> dict:
         else:
             result["failing_features"] += 1
             result["failing_ids"].append(feat_id)
-        if feat.get("ui", False):
-            result["has_ui_features"] = True
-
     if result["failing_features"] > 0:
         result["issues"].append(
             f"{result['failing_features']} feature(s) still failing: "
@@ -119,16 +110,6 @@ def check_st_readiness(path: str) -> dict:
         result["design_path"] = design_matches[0]
     else:
         result["issues"].append("Design document not found (docs/plans/*-design.md)")
-
-    # UCD doc (optional — only required if UI features exist)
-    ucd_matches = glob.glob(os.path.join(plans_dir, "*-ucd.md"))
-    if ucd_matches:
-        result["ucd_found"] = True
-        result["ucd_path"] = ucd_matches[0]
-    elif result["has_ui_features"]:
-        result["issues"].append(
-            "UI features exist but UCD document not found (docs/plans/*-ucd.md)"
-        )
 
     # Check ST test case coverage (warning, not blocking)
     features_with_st_cases = 0
@@ -177,9 +158,6 @@ def main():
         print(f"Failing: {result['failing_ids']}")
     print(f"SRS: {'found' if result['srs_found'] else 'MISSING'}")
     print(f"Design: {'found' if result['design_found'] else 'MISSING'}")
-    if result["has_ui_features"]:
-        print(f"UCD: {'found' if result['ucd_found'] else 'MISSING (UI features exist)'}")
-
     # ST test case coverage (warning) — only if st_case_coverage was computed
     if "st_case_coverage" in result:
         if result["st_case_missing"]:

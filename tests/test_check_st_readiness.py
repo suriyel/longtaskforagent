@@ -17,7 +17,7 @@ def create_project(features, docs=None):
 
     Args:
         features: list of feature dicts
-        docs: dict with optional keys 'srs', 'design', 'ucd' (True to create)
+        docs: dict with optional keys 'srs', 'design' (True to create)
 
     Returns:
         (tmp_dir, feature_list_path) — caller must clean up tmp_dir
@@ -44,10 +44,6 @@ def create_project(features, docs=None):
     if docs.get("design"):
         with open(os.path.join(plans_dir, "2025-01-01-test-design.md"), "w") as f:
             f.write("# Design\n")
-    if docs.get("ucd"):
-        with open(os.path.join(plans_dir, "2025-01-01-test-ucd.md"), "w") as f:
-            f.write("# UCD\n")
-
     return tmp_dir, fl_path
 
 
@@ -130,32 +126,6 @@ def test_no_features_not_ready():
         code, stdout, _ = run_checker(fl_path)
         assert code != 0, f"Expected non-zero: {stdout}"
         assert "NOT READY" in stdout
-    finally:
-        cleanup(tmp_dir)
-
-
-def test_ui_features_without_ucd_warns():
-    """UI features without UCD doc → warning in output."""
-    features = [{"id": 1, "status": "passing", "title": "A", "ui": True}]
-    tmp_dir, fl_path = create_project(features, {"srs": True, "design": True})
-    try:
-        code, stdout, _ = run_checker(fl_path)
-        # Still ready (UCD is not a hard gate for ST), but should warn
-        assert code == 0, f"Expected 0: {stdout}"
-        assert "UCD" in stdout
-    finally:
-        cleanup(tmp_dir)
-
-
-def test_ui_features_with_ucd_no_warning():
-    """UI features with UCD doc → no UCD warning."""
-    features = [{"id": 1, "status": "passing", "title": "A", "ui": True}]
-    tmp_dir, fl_path = create_project(features, {"srs": True, "design": True, "ucd": True})
-    try:
-        code, stdout, _ = run_checker(fl_path)
-        assert code == 0, f"Expected 0: {stdout}"
-        assert "READY" in stdout
-        assert "MISSING" not in stdout
     finally:
         cleanup(tmp_dir)
 
@@ -268,8 +238,6 @@ if __name__ == "__main__":
         test_missing_srs_not_ready,
         test_missing_design_not_ready,
         test_no_features_not_ready,
-        test_ui_features_without_ucd_warns,
-        test_ui_features_with_ucd_no_warning,
         test_nonexistent_file,
         test_invalid_json,
         test_failing_ids_listed,

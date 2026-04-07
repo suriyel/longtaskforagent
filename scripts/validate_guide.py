@@ -6,14 +6,10 @@ Checks that the guide contains all required workflow sections and critical
 rule keywords. This prevents the LLM from accidentally omitting essential
 workflow steps when generating a project-tailored guide.
 
-When --feature-list is provided and the project has UI features (any feature
-with "ui": true), additionally checks for Chrome DevTools MCP sections.
-
 Does NOT check exact content — only that required concepts are present.
 
 Usage:
     python validate_guide.py <path/to/long-task-guide.md>
-    python validate_guide.py <path/to/long-task-guide.md> --feature-list <path/to/feature-list.json>
 
 Exit codes:
     0 — all required sections present
@@ -21,7 +17,6 @@ Exit codes:
 """
 
 import argparse
-import json
 import re
 import sys
 
@@ -55,41 +50,15 @@ REQUIRED_SECTIONS = [
      [r"persist", r"save.*state", r"git.*commit", r"task-progress"]),
     ("Critical Rules",
      [r"critical\s*rule", r"iron\s*rule", r"must\s*never"]),
-    ("Real Test Convention",
-     [r"real\s*test\s*convention", r"real.test.identification", r"real.test.marker"]),
 ]
 
 
-# Conditional sections — only required when the project has UI features (ui: true).
-CHROME_DEVTOOLS_SECTIONS = [
-    ("Chrome DevTools MCP / UI functional testing",
-     [r"chrome\s*devtools", r"devtools\s*mcp", r"take_snapshot", r"functional\s*test.*ui"]),
-]
-
-
-def has_ui_features(feature_list_path: str) -> bool:
-    """Check if a feature-list.json contains any feature with ui=true."""
-    try:
-        with open(feature_list_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        features = data.get("features", [])
-        return any(
-            isinstance(feat, dict) and feat.get("ui") is True
-            for feat in features
-        )
-    except (json.JSONDecodeError, FileNotFoundError, Exception):
-        return False
-
-
-def validate_guide(path: str, feature_list_path: str = None) -> list[str]:
+def validate_guide(path: str) -> list[str]:
     """
     Validate that a long-task-guide.md contains all required sections.
 
     Args:
         path: Path to the guide markdown file
-        feature_list_path: Optional path to feature-list.json; when provided
-            and the project has UI features, Chrome DevTools sections are
-            additionally required.
 
     Returns:
         List of error strings (empty = valid)
@@ -118,21 +87,6 @@ def validate_guide(path: str, feature_list_path: str = None) -> list[str]:
         if not found:
             errors.append(f"Missing required section: {label}")
 
-    # Conditional Chrome DevTools sections — only when project has UI features
-    check_ui = False
-    if feature_list_path:
-        check_ui = has_ui_features(feature_list_path)
-
-    if check_ui:
-        for label, patterns in CHROME_DEVTOOLS_SECTIONS:
-            found = False
-            for pattern in patterns:
-                if re.search(pattern, content_lower):
-                    found = True
-                    break
-            if not found:
-                errors.append(f"Missing required section (UI project): {label}")
-
     return errors
 
 
@@ -156,16 +110,11 @@ def _append_footer(path: str) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Validate LLM-generated long-task-guide.md")
     parser.add_argument("guide_path", help="Path to long-task-guide.md")
-    parser.add_argument("--feature-list", default=None,
-                        help="Path to feature-list.json; enables Chrome DevTools section "
-                             "checks when UI features are present")
     args = parser.parse_args()
 
-    errors = validate_guide(args.guide_path, args.feature_list)
+    errors = validate_guide(args.guide_path)
 
     total_sections = len(REQUIRED_SECTIONS)
-    if args.feature_list and has_ui_features(args.feature_list):
-        total_sections += len(CHROME_DEVTOOLS_SECTIONS)
 
     _append_footer(args.guide_path)
 

@@ -24,7 +24,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
 - Read `feature-list.json` — all passing non-deprecated features, `tech_stack`, `quality_gates`
 - Read SRS document (`docs/plans/*-srs.md`) — requirement descriptions, user personas
 - Read Design document (`docs/plans/*-design.md`) — architecture, public API surface
-- Read UCD document (`docs/plans/*-ucd.md`) — only if UI features exist
 - Read `task-progress.md` — session history for ST summary entry
 - Read `RELEASE_NOTES.md` — current state for version entry
 - Note paths for SubAgent dispatch
@@ -46,7 +45,6 @@ Dispatch the example-generator SubAgent to produce scenario-based usage examples
    - feature-list.json: <path>
    - SRS: <srs_path>
    - Design: <design_path>
-   - UCD: <ucd_path> (or "none")
    - tech_stack: <tech_stack_json>
    - Working directory: <project_root>
    ```
@@ -117,6 +115,6 @@ Output completion summary:
 ## Integration
 
 **Called by:** `long-task-st` (Step 13, after Go/Conditional-Go verdict)
-**Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `docs/plans/*-ucd.md` (if UI), `task-progress.md`, `RELEASE_NOTES.md`, implementation code
+**Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `task-progress.md`, `RELEASE_NOTES.md`, implementation code
 **Produces:** `examples/` (usage examples + README.md), updated `RELEASE_NOTES.md`, updated `task-progress.md`
 **Agent:** `agents/example-generator.md`

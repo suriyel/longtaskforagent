@@ -43,7 +43,7 @@ Read these files in order:
 5. `task-progress.md` `## Current State` section — recent session history
 6. `git log --oneline -10` — recent commit context
 
-If `feature_id` is non-null: read the linked feature's entry from `feature-list.json` to understand context (its `ui` field, existing `srs_trace`, `st_case_path`).
+If `feature_id` is non-null: read the linked feature's entry from `feature-list.json` to understand context (existing `srs_trace`, `st_case_path`).
 
 ---
 
@@ -113,7 +113,6 @@ Add a new feature entry to `feature-list.json`. Determine the next available `id
 
 **Notes:**
 - `dependencies`: set to `[fixed_feature_id]` if non-null (ensures Worker processes the original feature before this fix); set to `[]` if null
-- `ui`: if `feature_id` is non-null, use the linked feature's `ui` field; otherwise `false`
 - `wave`: use the current maximum wave id from `feature-list.json`'s `waves` array
 - **ATS hint**: if `fixed_feature_id` is non-null and ATS doc exists (`docs/plans/*-ats.md`), look up the linked feature's requirement in the ATS mapping table. Set `srs_trace` to include the linked feature's requirement IDs so downstream feature-st can derive the required test cases from SRS acceptance criteria
 

@@ -98,7 +98,6 @@ Most AI coding assistants lose context after one conversation. Long-Task Agent s
 | AI forgets everything after `/clear` | Persistent artifacts (`feature-list.json`, `task-progress.md`, git history) bridge sessions automatically |
 | AI generates code without understanding requirements | ISO/IEC/IEEE 29148-aligned requirements elicitation produces an approved SRS before any code is written |
 | AI skips testing or writes shallow tests | Strict TDD (Red→Green→Refactor) with coverage gates (≥90% line, ≥80% branch) and mutation testing (≥80% score) |
-| AI produces inconsistent UI | Style conventions in design document ensure visual consistency across all features |
 | AI generates thin acceptance tests | ATS (Acceptance Test Strategy) pre-plans test categories per requirement after design, with independent subagent review ensuring no coverage blind spots |
 | AI drifts from the approved design | Design interface coverage gate + inline compliance check after every feature |
 | No way to add features to an existing project safely | Increment skill performs impact analysis, updates SRS/Design in place, tracks changes with waves |
@@ -196,7 +195,7 @@ Orient → Bootstrap → Config Gate → DevTools Gate → Plan
 
 ### Phase 3: System Testing
 
-- Per-feature ST (ISO/IEC/IEEE 29119) — black-box acceptance testing via Chrome DevTools MCP
+- Per-feature ST (ISO/IEC/IEEE 29119) — black-box acceptance testing
 - IEEE 829-aligned system-level test planning with Requirements Traceability Matrix
 - Regression, integration, E2E, NFR verification, exploratory testing
 - Go/No-Go verdict — defects loop back to Worker for fixes
@@ -240,7 +239,7 @@ using-long-task (bootstrap router — always loaded)
 | `long-task-work` | Worker orchestrator (one feature per cycle) |
 | `long-task-tdd` | TDD Red→Green→Refactor discipline |
 | `long-task-quality` | Coverage gate + mutation gate |
-| `long-task-feature-st` | Per-feature black-box acceptance testing (Chrome DevTools MCP + ISO/IEC/IEEE 29119) |
+| `long-task-feature-st` | Per-feature black-box acceptance testing (ISO/IEC/IEEE 29119) |
 | `long-task-increment` | Post-launch feature additions with impact analysis |
 | `long-task-st` | IEEE 829 system testing with Go/No-Go verdict |
 
@@ -419,85 +418,6 @@ Configure via `feature-list.json` root-level fields:
 
 ---
 
-## Enterprise MCP Tool Abstraction
-
-All Long-Task Agent skills default to Chrome DevTools MCP and CLI commands for testing, coverage, and mutation testing. The **Enterprise MCP Tool Abstraction** lets you replace these hardcoded tool references with your internal MCP servers — without modifying any skill files.
-
-### How It Works
-
-```
-tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-bindings/
-(enterprise tool mapping)       (Jinja2 template render)    (rendered SKILL.md)
-```
-
-1. Place `tool-bindings.json` in your project root (copy from `docs/templates/tool-bindings-template.json`)
-2. The session-start hook auto-detects it and renders templates to `.long-task-bindings/`
-3. Skills load the rendered files first, falling back to the original SKILL.md
-
-### Capability Bindings
-
-`tool-bindings.json` defines four capability bindings:
-
-| Capability | Default (CLI / Chrome DevTools) | Enterprise MCP Replacement |
-|------------|--------------------------------|---------------------------|
-| `test` | `pytest` / `jest` etc. CLI commands | Enterprise CI MCP server |
-| `coverage` | `pytest-cov` / `c8` etc. CLI commands | Enterprise CI MCP server |
-| `mutation` | `mutmut` / `stryker` etc. CLI commands | Enterprise CI MCP server |
-| `ui_tools` | Chrome DevTools MCP tool names | Enterprise browser automation MCP |
-
-### Configuration Example
-
-```json
-{
-  "version": 1,
-  "mcp_servers": {
-    "corp_ci": {
-      "command": "npx",
-      "args": ["-y", "@your-org/ci-mcp@latest"]
-    },
-    "corp_browser": {
-      "command": "npx",
-      "args": ["-y", "@your-org/browser-mcp@latest"]
-    }
-  },
-  "capability_bindings": {
-    "test": {
-      "type": "mcp",
-      "tool": "corp_ci__run_tests"
-    },
-    "coverage": {
-      "type": "mcp",
-      "tool": "corp_ci__coverage"
-    },
-    "ui_tools": {
-      "type": "mcp",
-      "tool_mapping": {
-        "navigate_page": "corp_browser__navigate",
-        "take_screenshot": "corp_browser__screenshot",
-        "click": "corp_browser__click"
-      }
-    }
-  }
-}
-```
-
-### Related Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `apply_tool_bindings.py` | Render SKILL.md.template → .long-task-bindings/ (Jinja2) |
-| `check_mcp_providers.py` | Detect enterprise MCP server registration, output install guidance |
-| `check_jinja2.py` | Detect Jinja2 availability (required for enterprise MCP template rendering) |
-
-### Design Principles
-
-- **Non-invasive detection** — read-only MCP registration checks, no config file writes
-- **Project-local rendering** — output to `.long-task-bindings/`, eliminates multi-session race conditions
-- **Backward compatible** — works without `tool-bindings.json`, zero impact on default workflow
-- **Stdlib only** — no external dependencies beyond Jinja2 (Python 3 stdlib)
-
----
-
 ## How It Compares
 
 <!-- ILLUSTRATION: Comparison Matrix
@@ -514,7 +434,6 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 | TDD discipline | Optional, often skipped | Mandatory Red→Green→Refactor for every feature |
 | Test quality verification | Line coverage only (if any) | Coverage + mutation testing with configurable thresholds |
 | Acceptance test planning | Ad-hoc, category-biased toward functional | ATS pre-plans test categories per requirement, with independent subagent review |
-| UI consistency | Per-developer taste | Style conventions in design document |
 | Post-implementation verification | None | Design interface coverage gate + inline compliance check |
 | System testing | Manual QA | IEEE 829-aligned with RTM, Go/No-Go verdict |
 | Adding features post-launch | Edit code directly | Impact analysis, tracked waves, document updates |

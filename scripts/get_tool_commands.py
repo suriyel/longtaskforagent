@@ -5,14 +5,9 @@ shell commands for test, coverage, and mutation tooling.
 
 Eliminates the need for the LLM to look up per-language command syntax.
 
-When --bindings is provided, outputs MCP tool call specifications instead of
-CLI commands, for projects using enterprise CI/CD MCP servers.
-
 Usage:
     python get_tool_commands.py feature-list.json
     python get_tool_commands.py feature-list.json --json
-    python get_tool_commands.py feature-list.json --bindings tool-bindings.json
-    python get_tool_commands.py feature-list.json --bindings tool-bindings.json --json
 """
 
 import argparse
@@ -123,88 +118,6 @@ def get_commands(feature_list: dict) -> dict:
     }
 
 
-def get_mcp_commands(feature_list: dict, bindings: dict) -> dict:
-    """
-    Extract MCP tool specifications from tool-bindings.json.
-
-    Returns a dict with keys: mode, test, coverage, mutation_incremental,
-    mutation_full, mutation_results, thresholds, tech_stack.
-    Values describe MCP tool calls instead of CLI commands.
-    """
-    qg = feature_list.get("quality_gates", {})
-    ts = feature_list.get("tech_stack", {})
-    caps = bindings.get("capability_bindings", {})
-
-    def _mcp_spec(cap_key: str) -> dict:
-        cap = caps.get(cap_key, {})
-        if cap.get("type") == "mcp":
-            return {
-                "tool": cap.get("tool", f"UNKNOWN:{cap_key}"),
-                "input_template": cap.get("input_template", {}),
-                "result_fields": cap.get("result_fields", {}),
-            }
-        return {"tool": f"NOT_CONFIGURED:{cap_key}"}
-
-    return {
-        "mode": "mcp",
-        "test": _mcp_spec("test"),
-        "coverage": _mcp_spec("coverage"),
-        "mutation_incremental": _mcp_spec("mutation"),
-        "mutation_feature": _mcp_spec("mutation"),
-        "mutation_full": _mcp_spec("mutation"),
-        "mutation_results": {"note": "see result_fields in test/mutation spec"},
-        "thresholds": {
-            "line_coverage_min": qg.get("line_coverage_min", 90),
-            "branch_coverage_min": qg.get("branch_coverage_min", 80),
-            "mutation_score_min": qg.get("mutation_score_min", 80),
-            "mutation_full_threshold": qg.get("mutation_full_threshold", 100),
-        },
-        "tech_stack": {
-            "language": ts.get("language", "TODO"),
-            "test_framework": ts.get("test_framework", "TODO"),
-            "coverage_tool": ts.get("coverage_tool", "TODO"),
-            "mutation_tool": ts.get("mutation_tool", "TODO"),
-        },
-    }
-
-
-def format_mcp_text(cmds: dict) -> str:
-    """Format MCP commands as human-readable text output."""
-    ts = cmds["tech_stack"]
-    th = cmds["thresholds"]
-
-    def _fmt_spec(spec: dict) -> str:
-        if "tool" not in spec:
-            return "(not configured)"
-        tool = spec["tool"]
-        inp = json.dumps(spec.get("input_template", {}), ensure_ascii=False)
-        res = json.dumps(spec.get("result_fields", {}), ensure_ascii=False)
-        return f"tool={tool}  input={inp}  result_fields={res}"
-
-    lines = [
-        "mode: mcp",
-        f"Language: {ts['language']}",
-        "",
-        "[test]",
-        f"  {_fmt_spec(cmds['test'])}",
-        "",
-        "[coverage]",
-        f"  {_fmt_spec(cmds['coverage'])}",
-        "",
-        "[mutation (feature / incremental / full — same tool)]",
-        f"  {_fmt_spec(cmds['mutation_incremental'])}",
-        "",
-        "[thresholds]",
-        f"  line_coverage  >= {th['line_coverage_min']}%",
-        f"  branch_coverage >= {th['branch_coverage_min']}%",
-        f"  mutation_score  >= {th['mutation_score_min']}%",
-        f"  mutation_full_threshold = {th['mutation_full_threshold']} features",
-        "",
-        "Usage: call each MCP tool with the input_template fields resolved,",
-        "then read results via result_fields JSON paths.",
-    ]
-    return "\n".join(lines)
-
 
 def format_text(cmds: dict) -> str:
     """Format commands as human-readable text output."""
@@ -253,10 +166,6 @@ def main():
     parser.add_argument("feature_list", help="Path to feature-list.json")
     parser.add_argument("--json", action="store_true",
                         help="Output as JSON instead of text")
-    parser.add_argument(
-        "--bindings", default=None, metavar="TOOL_BINDINGS",
-        help="Path to tool-bindings.json for enterprise MCP mode"
-    )
     args = parser.parse_args()
 
     try:
@@ -266,22 +175,6 @@ def main():
         print(f"Error reading {args.feature_list}: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # MCP mode when --bindings is provided
-    if args.bindings:
-        try:
-            with open(args.bindings, "r", encoding="utf-8") as f:
-                bindings = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error reading {args.bindings}: {e}", file=sys.stderr)
-            sys.exit(1)
-        cmds = get_mcp_commands(data, bindings)
-        if args.json:
-            print(json.dumps(cmds, indent=2))
-        else:
-            print(format_mcp_text(cmds))
-        return
-
-    # CLI mode (default)
     cmds = get_commands(data)
 
     if args.json:

@@ -224,7 +224,7 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 
 ### Cross-Browser (UI Projects)
 
-Use Chrome DevTools MCP device emulation for cross-browser and mobile testing.
+Use browser automation tools for cross-browser and mobile testing.
 
 ### Cross-Platform (CLI/Library)
 

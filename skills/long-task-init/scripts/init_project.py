@@ -315,7 +315,6 @@ def main():
 
     helper_scripts = [
         "validate_features.py",
-        "check_jinja2.py",
         "validate_guide.py",
         "get_tool_commands.py",
         "validate_st_cases.py",
@@ -323,7 +322,6 @@ def main():
         "validate_bugfix_request.py",
         "check_st_readiness.py",
         "check_ats_coverage.py",
-        "check_mcp_providers.py",
         "auto_loop.py",
         "auto_loop_opencode.py",
     ]

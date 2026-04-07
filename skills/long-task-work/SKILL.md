@@ -105,7 +105,7 @@ python scripts/check_configs.py feature-list.json --feature <id>
 ### 4. Feature Detailed Design
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-design` and follow it exactly.
 
-The Feature Design skill dispatches a SubAgent to produce the detailed design document. The main Agent does NOT read design/SRS/UCD document sections or write the design document — the SubAgent handles everything in its own fresh context and returns a structured summary.
+The Feature Design skill dispatches a SubAgent to produce the detailed design document. The main Agent does NOT read design/SRS document sections or write the design document — the SubAgent handles everything in its own fresh context and returns a structured summary.
 
 > **For `category: "bugfix"` features**: feature-design is condensed. The SubAgent focuses on: (1) root cause documentation, (2) targeted fix approach, (3) regression test inventory. Full diagrams are skipped unless the bug directly touches those surfaces.
 

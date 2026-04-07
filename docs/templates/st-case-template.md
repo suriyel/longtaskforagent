@@ -84,7 +84,7 @@ ST-{CATEGORY}-{FEATURE_ID}-{SEQ}
 - **已自动化**: Yes / No
 - **测试引用**: {test_file::test_name 或 N/A}
 - **Test Type**: Real / Mock
-  - Real = executed against a real running environment (real DB, real HTTP service, real browser via Chrome DevTools MCP, real file system)
+  - Real = executed against a real running environment (real DB, real HTTP service, real browser, real file system)
   - Mock = primary dependency is a mock/stub implementation
 ```
 

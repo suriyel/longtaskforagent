@@ -98,7 +98,6 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 | AI 在 `/clear` 后忘记所有内容 | 持久化产物（`feature-list.json`、`task-progress.md`、git 历史）自动桥接会话 |
 | AI 不理解需求就生成代码 | 符合 ISO/IEC/IEEE 29148 的需求收集在编写任何代码前产生经批准的 SRS |
 | AI 跳过测试或编写浅层测试 | 严格的 TDD（红→绿→重构）配合覆盖率门禁（≥90% 行覆盖，≥80% 分支覆盖）和变异测试（≥80% 得分） |
-| AI 产生不一致的 UI | 设计文档中的风格约定确保所有功能的视觉一致性 |
 | AI 验收测试覆盖不全 | ATS（验收测试策略）在设计后前置规划每个需求的测试类别，独立 subagent 审核确保无覆盖盲区 |
 | AI 偏离批准的设计 | 设计接口覆盖门 + 每个功能后内联合规检查 |
 | 无法安全地向现有项目添加功能 | 增量技能执行影响分析，就地更新 SRS/设计，用波次跟踪变更 |
@@ -196,7 +195,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 
 ### 阶段 3：系统测试
 
-- 每功能 ST（ISO/IEC/IEEE 29119）—— 通过 Chrome DevTools MCP 进行黑盒验收测试
+- 每功能 ST（ISO/IEC/IEEE 29119）—— 黑盒验收测试
 - 符合 IEEE 829 的系统级测试计划，带需求追溯矩阵
 - 回归、集成、端到端、NFR 验证、探索性测试
 - Go/No-Go 结论——缺陷循环回工作会话进行修复
@@ -240,7 +239,7 @@ using-long-task (引导路由器 — 始终加载)
 | `long-task-work` | 工作编排器（每周期一个功能） |
 | `long-task-tdd` | TDD 红→绿→重构纪律 |
 | `long-task-quality` | 覆盖率门禁 + 变异门禁 |
-| `long-task-feature-st` | 每功能黑盒验收测试（Chrome DevTools MCP + ISO/IEC/IEEE 29119） |
+| `long-task-feature-st` | 每功能黑盒验收测试（ISO/IEC/IEEE 29119） |
 | `long-task-increment` | 带影响分析的发布后功能添加 |
 | `long-task-st` | 带 Go/No-Go 结论的 IEEE 829 系统测试 |
 
@@ -419,85 +418,6 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 
 ---
 
-## 企业级 MCP 工具抽象
-
-Long-Task Agent 的所有技能默认使用 Chrome DevTools MCP 和 CLI 命令进行测试、覆盖率和变异测试。**企业级 MCP 工具抽象**允许您将这些硬编码的工具引用替换为内部 MCP 服务器，无需修改任何技能文件。
-
-### 工作原理
-
-```
-tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-bindings/
-(企业工具映射)                   (Jinja2 模板渲染)           (渲染后的 SKILL.md)
-```
-
-1. 在项目根目录放置 `tool-bindings.json`（从 `docs/templates/tool-bindings-template.json` 复制）
-2. 会话启动时 hook 自动检测并渲染模板到 `.long-task-bindings/`
-3. 技能加载时优先使用渲染后的文件，回退到原始 SKILL.md
-
-### 能力映射
-
-`tool-bindings.json` 定义了四种能力绑定：
-
-| 能力 | 默认（CLI/Chrome DevTools） | 企业 MCP 替换 |
-|------|---------------------------|--------------|
-| `test` | `pytest` / `jest` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `coverage` | `pytest-cov` / `c8` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `mutation` | `mutmut` / `stryker` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `ui_tools` | Chrome DevTools MCP 工具名 | 企业浏览器自动化 MCP |
-
-### 配置示例
-
-```json
-{
-  "version": 1,
-  "mcp_servers": {
-    "corp_ci": {
-      "command": "npx",
-      "args": ["-y", "@your-org/ci-mcp@latest"]
-    },
-    "corp_browser": {
-      "command": "npx",
-      "args": ["-y", "@your-org/browser-mcp@latest"]
-    }
-  },
-  "capability_bindings": {
-    "test": {
-      "type": "mcp",
-      "tool": "corp_ci__run_tests"
-    },
-    "coverage": {
-      "type": "mcp",
-      "tool": "corp_ci__coverage"
-    },
-    "ui_tools": {
-      "type": "mcp",
-      "tool_mapping": {
-        "navigate_page": "corp_browser__navigate",
-        "take_screenshot": "corp_browser__screenshot",
-        "click": "corp_browser__click"
-      }
-    }
-  }
-}
-```
-
-### 相关脚本
-
-| 脚本 | 用途 |
-|------|------|
-| `apply_tool_bindings.py` | 渲染 SKILL.md.template → .long-task-bindings/（Jinja2） |
-| `check_mcp_providers.py` | 检测企业 MCP 服务器注册状态，输出安装指引 |
-| `check_jinja2.py` | 检测 Jinja2 可用性（企业 MCP 模板渲染依赖） |
-
-### 设计原则
-
-- **非侵入式检测** — 只读检查 MCP 注册状态，不写入配置文件
-- **项目级隔离渲染** — 输出到 `.long-task-bindings/`，避免多会话竞态
-- **向后兼容** — 无 `tool-bindings.json` 时使用原始 SKILL.md，零影响
-- **仅标准库依赖** — 除 Jinja2 外无额外依赖（Python 3 标准库）
-
----
-
 ## 对比分析
 
 | 能力 | 典型 AI 编程 | Long-Task Agent |
@@ -508,7 +428,6 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 | TDD 纪律 | 可选，经常跳过 | 每个功能强制 红→绿→重构 |
 | 测试质量验证 | 仅行覆盖（如果有） | 覆盖率 + 变异测试，可配置阈值 |
 | 验收测试规划 | 临时性，类别偏向功能测试 | ATS 前置规划每个需求的测试类别，独立 subagent 审核 |
-| UI 一致性 | 每个开发者的口味 | 设计文档中的风格约定 |
 | 实现后验证 | 无 | 设计接口覆盖门 + 内联合规检查 |
 | 系统测试 | 手动 QA | 符合 IEEE 829，带 RTM、Go/No-Go 结论 |
 | 发布后添加功能 | 直接编辑代码 | 影响分析、跟踪波次、文档更新 |

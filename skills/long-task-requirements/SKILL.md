@@ -128,7 +128,7 @@ Any YES to Q2 → generate EARS-formatted NFR candidates inline. If Q2 reveals s
 After Lite elicitation, proceed to the **shared steps** (Steps 7–16 in the checklist):
 - L4 = Steps 7–8 (classify, EARS, diagrams)
 - L5 = Steps 9–11 + Step 13 (validate, granularity, deferral, SRS reviewer with Group P = PASS-SKIPPED)
-- L6 = Steps 14–16 (present entire SRS in one block as single approval, save, transition to UCD)
+- L6 = Steps 14–16 (present entire SRS in one block as single approval, save, transition to Design)
 
 ---
 

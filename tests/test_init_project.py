@@ -356,7 +356,7 @@ def test_claude_md_contains_key_file_references():
             content = f.read()
         assert "feature-list.json" in content, "Should reference feature list"
         assert "task-progress.md" in content, "Should reference progress log"
-        assert "docs/plans" in content, "Should reference docs/plans for SRS/design/UCD"
+        assert "docs/plans" in content, "Should reference docs/plans for SRS/design"
         assert "increment-request.json" in content, "Should reference increment signal file"
     finally:
         shutil.rmtree(tmp)

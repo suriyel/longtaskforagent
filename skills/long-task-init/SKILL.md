@@ -35,30 +35,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - `<language>` — one of `python|java|typescript|c|cpp` from the design doc tech stack
    - Use `--line-cov`, `--branch-cov`, `--mutation-score` to override thresholds (defaults: 90/80/80)
    - Creates: `feature-list.json`, `CLAUDE.md` (appended), `task-progress.md`, `RELEASE_NOTES.md`, `examples/`, `docs/plans/`
-   - Auto-copies helper scripts (`validate_features.py`, `check_configs.py`, `check_jinja2.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_st_cases.py`, `validate_increment_request.py`, `validate_bugfix_request.py`, `check_st_readiness.py`, `check_ats_coverage.py`, `check_mcp_providers.py`) into project `scripts/`
-3b. **MCP Provider Setup** (SKIP if no enterprise MCP required):
-   - Ask user: "Does this project use enterprise MCP servers for test/coverage/mutation/UI automation?"
-   - If **YES**:
-     1. Collect per capability: MCP server name, install command, tool names, result field paths
-     2. Create `tool-bindings.json` at project root using `docs/templates/tool-bindings-template.json` as a guide
-     3. Check Jinja2 availability (required for template rendering):
-        ```bash
-        python scripts/check_jinja2.py
-        ```
-        → Exit 1: present installation guide to user (`pip install jinja2`); wait for user to install; re-run check to confirm exit 0
-        → Exit 0: continue
-     4. Render skill templates:
-        ```bash
-        python scripts/apply_tool_bindings.py tool-bindings.json --output-dir .long-task-bindings
-        ```
-        → Verify: "N templates rendered to .long-task-bindings/"
-     5. Check MCP server availability:
-        ```bash
-        python scripts/check_mcp_providers.py tool-bindings.json
-        ```
-        → Exit 1: present installation instructions to user (the script outputs exact `claude mcp add` commands); wait for user to install and restart session; re-run check to confirm exit 0
-        → Exit 0: continue
-   - If **NO**: skip (skills use plugin defaults — CLI tools for testing)
+   - Auto-copies helper scripts (`validate_features.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_st_cases.py`, `validate_increment_request.py`, `validate_bugfix_request.py`, `check_st_readiness.py`, `check_ats_coverage.py`) into project `scripts/`
 
 3. **Verify `tech_stack` and `quality_gates`** in `feature-list.json`:
    - Confirm `language`, `test_framework`, `coverage_tool`, `mutation_tool` match the design doc

@@ -3,7 +3,6 @@
 Unit tests for validate_guide.py
 """
 
-import json
 import os
 import subprocess
 import sys
@@ -12,31 +11,19 @@ import tempfile
 SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "validate_guide.py")
 
 
-def run_validator(content, feature_list_data=None):
+def run_validator(content):
     """Write content to temp file, run validate_guide.py, return (exit_code, stdout, stderr)."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
         f.write(content)
         f.flush()
         tmp_path = f.name
 
-    fl_path = None
-    if feature_list_data is not None:
-        fl_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
-        json.dump(feature_list_data, fl_file, indent=2)
-        fl_file.flush()
-        fl_file.close()
-        fl_path = fl_file.name
-
     try:
         cmd = [sys.executable, SCRIPT_PATH, tmp_path]
-        if fl_path:
-            cmd.extend(["--feature-list", fl_path])
         result = subprocess.run(cmd, capture_output=True, text=True)
         return result.returncode, result.stdout, result.stderr
     finally:
         os.unlink(tmp_path)
-        if fl_path:
-            os.unlink(fl_path)
 
 
 # A complete guide that contains all required sections
@@ -87,10 +74,6 @@ NEVER mark "passing" without fresh evidence — run tests, read output
 ### Step 6: Persist — save state
 1. git commit
 2. Update task-progress.md
-
-### Real Test Convention
-Real test marker: @pytest.mark.real_test
-Run real tests only: pytest -m real_test
 
 ## Critical Rules
 - NEVER write implementation before tests
@@ -231,9 +214,6 @@ Spec compliance and design compliance checks.
 ### Save state
 git commit, update task-progress.md.
 
-### Real test identification
-Real test marker convention for this project.
-
 ## Critical Rules
 - Must never skip TDD
 - Must never mark passing without evidence
@@ -259,65 +239,6 @@ def test_error_count_in_output():
     assert "Missing required section" in stdout
 
 
-# --- Chrome DevTools conditional section tests ---
-
-UI_FEATURE_LIST = {
-    "project": "test",
-    "features": [
-        {"id": 1, "category": "frontend", "title": "Login Page",
-         "description": "A", "priority": "high", "status": "failing",
-         "verification_steps": ["[devtools] verify login form"],
-         "dependencies": [], "ui": True}
-    ]
-}
-
-NON_UI_FEATURE_LIST = {
-    "project": "test",
-    "features": [
-        {"id": 1, "category": "core", "title": "API endpoint",
-         "description": "A", "priority": "high", "status": "failing",
-         "verification_steps": ["Run tests"], "dependencies": []}
-    ]
-}
-
-COMPLETE_GUIDE_WITH_DEVTOOLS = COMPLETE_GUIDE + """
-### Chrome DevTools MCP Testing
-Use take_snapshot and functional tests via DevTools MCP for UI features.
-"""
-
-
-def test_ui_project_with_devtools_section_passes():
-    """Guide with Chrome DevTools section for UI project should pass."""
-    code, stdout, _ = run_validator(COMPLETE_GUIDE_WITH_DEVTOOLS, UI_FEATURE_LIST)
-    assert code == 0, f"Expected exit 0 for UI project with devtools section: {stdout}"
-
-
-def test_ui_project_without_devtools_section_fails():
-    """Guide without Chrome DevTools section for UI project should fail."""
-    code, stdout, _ = run_validator(COMPLETE_GUIDE, UI_FEATURE_LIST)
-    assert code != 0, f"Expected non-zero for UI project without devtools section: {stdout}"
-    assert "UI project" in stdout or "Chrome DevTools" in stdout
-
-
-def test_non_ui_project_without_devtools_section_passes():
-    """Guide without Chrome DevTools section for non-UI project should pass."""
-    code, stdout, _ = run_validator(COMPLETE_GUIDE, NON_UI_FEATURE_LIST)
-    assert code == 0, f"Expected exit 0 for non-UI project without devtools section: {stdout}"
-
-
-def test_no_feature_list_skips_devtools_check():
-    """Without --feature-list, Chrome DevTools check should be skipped."""
-    code, stdout, _ = run_validator(COMPLETE_GUIDE)
-    assert code == 0, f"Expected exit 0 without feature list: {stdout}"
-
-
-def test_devtools_section_via_take_snapshot_keyword():
-    """Guide mentioning take_snapshot should satisfy Chrome DevTools check."""
-    guide_with_snapshot = COMPLETE_GUIDE + "\n### UI Testing\nUse take_snapshot for UI verification.\n"
-    code, stdout, _ = run_validator(guide_with_snapshot, UI_FEATURE_LIST)
-    assert code == 0, f"Expected exit 0 for guide with take_snapshot: {stdout}"
-
-
 if __name__ == "__main__":
     tests = [
         test_complete_guide_passes,
@@ -332,11 +253,6 @@ if __name__ == "__main__":
         test_alternative_wording_passes,
         test_nonexistent_file,
         test_error_count_in_output,
-        test_ui_project_with_devtools_section_passes,
-        test_ui_project_without_devtools_section_fails,
-        test_non_ui_project_without_devtools_section_passes,
-        test_no_feature_list_skips_devtools_check,
-        test_devtools_section_via_take_snapshot_keyword,
     ]
     passed = 0
     failed = 0

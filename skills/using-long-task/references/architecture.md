@@ -2,15 +2,14 @@
 
 ## Core Concept
 
-Long-running tasks exceed a single context window. The solution: split work into a **Requirements Phase** (SRS), a **UCD Phase** (UI projects), a **Design Phase**, an **ATS Phase** (Acceptance Test Strategy), an **Initializer Session** (runs once), and multiple **Worker Sessions** (run iteratively), connected by persistent artifacts on disk.
+Long-running tasks exceed a single context window. The solution: split work into a **Requirements Phase** (SRS), a **Design Phase**, an **ATS Phase** (Acceptance Test Strategy), an **Initializer Session** (runs once), and multiple **Worker Sessions** (run iteratively), connected by persistent artifacts on disk.
 
 ### ATS Downstream Impact
 
 The ATS document (`docs/plans/*-ats.md`) maps every SRS requirement to acceptance scenarios with required test categories (`FUNC, BNDRY, SEC, UI, PERF`). It flows downstream:
 
 - **SRS → ATS**: Acceptance criteria written in the SRS (Given/When/Then) drive ATS scenario derivation. Well-structured acceptance criteria with explicit boundary conditions and error cases produce stronger ATS coverage.
-- **UCD → ATS**: UI components and pages defined in the UCD have corresponding UI test categories assigned in the ATS phase. Components with interactive states and accessibility constraints become ATS test scenarios.
-- **ATS → Init**: Init uses `srs_trace` → ATS category lookup to set `ui` flags and guide feature decomposition.
+- **ATS → Init**: Init uses `srs_trace` → ATS category lookup to guide feature decomposition.
 - **ATS → Feature-Design**: Test Inventory (§7) must cover all ATS-required main categories for the feature's requirement(s).
 - **ATS → Feature-ST**: Hard gate — ST test cases must cover ATS-required categories.
 - **ATS → System-ST**: Hard gate — `check_ats_coverage.py --strict` must exit 0.
@@ -303,10 +302,9 @@ Each worker cycle follows this exact sequence.
      - Ensure negative test ratio >= 40%
      - Ensure low-value assertion ratio <= 20%
      - Apply the "wrong implementation" challenge to each test
-10. If feature has UI: write Chrome DevTools MCP functional tests (snapshot, click, fill, screenshot assertions) — tests MUST fail
 
 ### Phase 4: TDD Green — implement to pass tests
-11. Write minimal code to make ALL tests pass (unit tests + functional tests)
+11. Write minimal code to make ALL tests pass
 12. Run full test suite — confirm all new tests green, no regressions
 
 ### Phase 4.5: Coverage Gate — verify test coverage
@@ -328,7 +326,7 @@ Each worker cycle follows this exact sequence.
 15e. Full mutation testing (all source files, all tests) runs during ST phase (Step 3b) — no per-feature milestone runs needed
 
 ### Phase 5.5: Inline Compliance Check
-16. Run mechanical compliance checks (interface contract verification, test inventory cross-check, dependency version spot-check, UCD token grep for UI features)
+16. Run mechanical compliance checks (interface contract verification, test inventory cross-check, dependency version spot-check)
 17. Fix any findings inline — no SubAgent dispatch
 
 ### Phase 6: Persist (save state for next session)
@@ -369,7 +367,6 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | Attempting multiple features in parallel | Context exhaustion mid-implementation, cascading failures | One feature per cycle |
 | Declaring victory without testing | Features appear done but break in practice | Verify every feature through actual tests |
 | Writing code before tests (skipping TDD Red) | Tests end up testing implementation rather than behavior; missed edge cases | Always write failing tests first, then implement |
-| Skipping Chrome DevTools functional tests for UI | UI may render but not function correctly for users | Every UI feature (ui=true) needs [devtools] verification steps |
 | Not updating RELEASE_NOTES.md | Release notes drift from actual state; costly catch-up later | Update after every git commit |
 | Skipping examples for user-facing features | Users can't understand how to use new features; reduces project value | Add runnable example for every user-facing feature |
 | Removing srs_trace entries | Breaks ATS category traceability | srs_trace maps features to SRS requirements — keep intact |
@@ -401,11 +398,6 @@ Requirements → SRS approved → Design → design approved → Initializer →
 - Integration tests: make actual HTTP requests and check responses
 - Verify database state when applicable
 
-### For UI / frontend features (Chrome DevTools MCP required):
-- Unit tests for component logic
-- **Functional tests via Chrome DevTools MCP**: navigate, snapshot, click, fill, screenshot assertions
-- Test flow: navigate → wait → snapshot → interact → snapshot → console check
-
 ### For ALL features (Coverage & Mutation mandatory):
 - **Coverage**: Run language-specific coverage tool, verify line/branch thresholds met
 - **Mutation**: Run feature-scoped mutation (large projects) or full mutation (small projects ≤ `mutation_full_threshold`), verify mutation score threshold met
@@ -432,9 +424,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
 │    (scenario rules:      │
 │     40% negative,        │
 │     ≤20% low-value)      │
-│ 3. Write [devtools]      │
-│    tests (if ui=true)    │
-│ 4. Run tests → ALL FAIL  │
+│ 3. Run tests → ALL FAIL  │
 └──────────┬───────────────┘
            ↓
 ┌─── TDD Green ───────────┐

@@ -425,109 +425,21 @@ def test_empty_verification_points():
 
 # --- Quality warning tests ---
 
-UI_DOC_SINGLE_STEP = """\
-# 测试用例集: User Profile Page
-
-**Feature ID**: 5
-**关联需求**: FR-005
-**日期**: 2026-02-28
-**测试标准**: ISO/IEC/IEEE 29119-3
-
-## 摘要
-
-| 类别 | 用例数 |
-|------|--------|
-| ui | 1 |
-| **合计** | **1** |
-
----
-
-### 用例编号
-
-ST-UI-005-001
-
-### 关联需求
-
-FR-005（用户资料页面）
-
-### 测试目标
-
-验证用户资料页面显示正确
-
-### 前置条件
-
-- 用户已登录
-
-### 测试步骤
-
-| Step | 操作 | 预期结果 |
-| ---- | ---- | -------- |
-| 1 | 打开资料页面 | 页面显示正确 |
-
-### 验证点
-
-- 页面可访问
-
-### 后置检查
-
-- 无
-
-### 元数据
-
-- **优先级**: High
-- **类别**: ui
-- **已自动化**: No
-- **测试引用**: N/A
-
-## 可追溯矩阵
-
-| 用例 ID | 关联需求 | verification_step | 自动化测试 | 结果 |
-|---------|----------|-------------------|-----------|------|
-| ST-UI-005-001 | FR-005 | verification_step[0] | N/A | PENDING |
-"""
-
-
-def test_quality_warning_single_step_ui_case():
-    """UI test case with only 1 step should produce quality warning."""
-    code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
-    assert code == 0, f"Expected exit 0 (quality warnings don't fail): {stdout}"
-    assert "[QUALITY]" in stdout, f"Expected quality warning: {stdout}"
-    assert "only 1 step" in stdout.lower(), f"Expected single-step warning: {stdout}"
-
-
-def test_quality_warning_missing_layer2():
-    """UI test case without EXPECT/REJECT should warn about missing Layer 2."""
-    code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
-    assert code == 0
-    assert "Layer 2" in stdout or "EXPECT/REJECT" in stdout, f"Expected Layer 2 warning: {stdout}"
-
-
-def test_quality_warning_missing_console_check():
-    """UI test case without console error check should warn about missing console gate."""
-    code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
-    assert code == 0
-    assert "console" in stdout.lower(), f"Expected console error gate warning: {stdout}"
-
-
 def test_quality_warning_vague_expected_result():
     """Test step with vague expected result should produce quality warning."""
-    code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
-    assert code == 0
-    # "页面显示正确" doesn't match our regex (it's Chinese), but "displays correctly" would
-    # The single-step doc has "页面显示正确" — let's test with English
     doc_vague = VALID_DOC.replace(
         "| 1 | 打开登录页面 | 页面加载成功 |",
         "| 1 | Open login page | Page displays correctly |"
-    ).replace("ST-FUNC-001-001", "ST-UI-001-001")
-    code2, stdout2, _ = run_validator(doc_vague)
-    assert code2 == 0
-    assert "[QUALITY]" in stdout2 and "vague" in stdout2.lower(), f"Expected vague result warning: {stdout2}"
+    )
+    code, stdout, _ = run_validator(doc_vague)
+    assert code == 0
+    assert "[QUALITY]" in stdout and "vague" in stdout.lower(), f"Expected vague result warning: {stdout}"
 
 
 def test_quality_warning_no_negative_path():
     """Document with no negative/error test cases should warn."""
-    # UI_DOC_SINGLE_STEP has a single positive case with objective "验证用户资料页面显示正确"
-    code, stdout, _ = run_validator(UI_DOC_SINGLE_STEP)
+    # VALID_DOC only has a single positive happy-path case
+    code, stdout, _ = run_validator(VALID_DOC)
     assert code == 0
     assert "negative" in stdout.lower() or "error path" in stdout.lower(), \
         f"Expected no-negative-path warning: {stdout}"
@@ -543,82 +455,3 @@ def test_quality_no_warning_for_func_cases():
     assert "Layer 3" not in stdout, f"Unexpected Layer 3 warning for FUNC case: {stdout}"
 
 
-UI_DOC_WITH_LAYERS = """\
-# 测试用例集: Login Page
-
-**Feature ID**: 3
-**关联需求**: FR-003
-**日期**: 2026-02-28
-**测试标准**: ISO/IEC/IEEE 29119-3
-
-## 摘要
-
-| 类别 | 用例数 |
-|------|--------|
-| ui | 1 |
-| **合计** | **1** |
-
----
-
-### 用例编号
-
-ST-UI-003-001
-
-### 关联需求
-
-FR-003（登录页面）
-
-### 测试目标
-
-验证登录页面表单交互和错误处理 (error path)
-
-### 前置条件
-
-- 后端服务运行中
-- 测试用户已注册
-
-### 测试步骤
-
-| Step | 操作 | 预期结果 |
-| ---- | ---- | -------- |
-| 1 | navigate_page(url='/login') | 页面开始加载 |
-| 2 | wait_for(['登录']) → evaluate_script(error_detector) | Layer 1: count = 0 |
-| 3 | take_snapshot() | EXPECT: 邮箱输入框, 密码输入框, 登录按钮; REJECT: TODO文字, 控制台错误 |
-| 4 | fill(uid, 'test@example.com') → fill(uid, 'password') → click(uid) | 表单提交 |
-| 5 | evaluate_script(error_detector) → list_console_messages(["error"]) | Layer 1: count = 0; Layer 3: 控制台无error |
-
-### 验证点
-
-- 表单提交成功
-- 页面无JS错误
-
-### 后置检查
-
-- 清理测试数据
-
-### 元数据
-
-- **优先级**: High
-- **类别**: ui
-- **已自动化**: Yes
-- **测试引用**: tests/test_login_ui.py::test_login_form
-
-## 可追溯矩阵
-
-| 用例 ID | 关联需求 | verification_step | 自动化测试 | 结果 |
-|---------|----------|-------------------|-----------|------|
-| ST-UI-003-001 | FR-003 | verification_step[0] | test_login_form | PENDING |
-"""
-
-
-def test_quality_no_warning_for_rich_ui_case():
-    """UI test case with all 3 layers and 5+ steps should NOT produce layer warnings."""
-    code, stdout, _ = run_validator(UI_DOC_WITH_LAYERS)
-    assert code == 0, f"Expected exit 0: {stdout}"
-    # Should not have Layer 1/2/3 warnings
-    assert "Layer 1" not in stdout, f"Unexpected Layer 1 warning: {stdout}"
-    assert "Layer 2" not in stdout, f"Unexpected Layer 2 warning: {stdout}"
-    assert "Layer 3" not in stdout, f"Unexpected Layer 3 warning: {stdout}"
-    # Should not have single-step warning (has 5 steps)
-    assert "only" not in stdout.lower() or "step" not in stdout.lower(), \
-        f"Unexpected step count warning: {stdout}"
