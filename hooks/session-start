@@ -41,10 +41,9 @@ fi
 #
 # Validation: only include directories that are genuine, independent git repos:
 #   1. git -C <dir> rev-parse --is-inside-work-tree  → confirms it's a real repo
-#   2. git -C <dir> rev-parse --show-toplevel         → confirms <dir> IS the root
-#      (filters out nested repos where toplevel != dir)
-#   3. git -C <dir> rev-parse --git-dir               → must be ".git" (not a
-#      path like ../.git/worktrees/X, which indicates a worktree, not a standalone repo)
+#   2. git -C <dir> rev-parse --git-dir               → must be ".git" (not a
+#      path like ../.git, ../.git/worktrees/X — confirms we're at the repo root,
+#      not in a subdirectory or a worktree link)
 if [ ! -d ".git" ]; then
     log "no .git at project root — entering multi-repo detection"
     # Phase 1: discover and validate repos into an array
@@ -58,15 +57,11 @@ if [ ! -d ".git" ]; then
             log "    SKIP: not a git working tree"
             continue
         fi
-        # Check 2: is this directory the repo root (not a subdirectory of another repo)?
-        # Strip \r from git output — git on some platforms (WSL, Windows, certain configs)
-        # appends \r\n; $() strips \n but leaves \r, causing invisible string mismatch.
-        toplevel="$(git -C "$candidate" rev-parse --show-toplevel 2>/dev/null | tr -d '\r')" || { log "    SKIP: show-toplevel failed"; continue; }
-        if [ "$toplevel" != "$candidate" ]; then
-            log "    SKIP: toplevel mismatch (toplevel=$toplevel, candidate=$candidate)"
-            continue  # nested directory inside another repo — skip
-        fi
-        # Check 3: is .git a real directory, not a worktree link?
+        # Check 2: is this directory the repo root, not a worktree/submodule link?
+        # git-dir returns ".git" ONLY at the repo root; subdirectories return
+        # "../.git" or an absolute path; worktrees return a linked path.
+        # This replaces the old show-toplevel string comparison which broke on
+        # Windows Git Bash (pwd returns /c/Users/... vs git returns C:/Users/...).
         git_dir_val="$(git -C "$candidate" rev-parse --git-dir 2>/dev/null | tr -d '\r')" || { log "    SKIP: git-dir failed"; continue; }
         if [ "$git_dir_val" != ".git" ]; then
             log "    SKIP: git-dir is '$git_dir_val', not '.git' (worktree/submodule)"
