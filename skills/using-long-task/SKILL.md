@@ -9,6 +9,8 @@ You are in a long-task multi-session project. You MUST invoke the correct phase 
 IF A PHASE SKILL APPLIES, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
 
 This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+
+**LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
 </EXTREMELY-IMPORTANT>
 
 ## How to Access Skills
