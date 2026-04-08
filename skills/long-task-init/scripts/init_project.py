@@ -41,6 +41,7 @@ CLAUDE_MD_MARKER = "<!-- long-task-agent -->"
 _LONG_TASK_REFERENCE_BODY = (
     "\n\n<!-- long-task-agent -->\n"
     "## Long-Task Agent\n\n"
+    "**语言规则（Language Rule）**：所有对用户的回复和生成的文档必须使用中文（简体）。技能名称、代码标识符、JSON 字段名保持英文不变。\n\n"
     "This project uses a multi-session agent workflow with 13 skills loaded on-demand.\n"
     "The `using-long-task` skill is injected at session start and routes to the correct phase.\n"
     "Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design (merges rules into §13) → ATS → Init → Worker cycles → System Testing → Finalize.\n"
