@@ -38,7 +38,7 @@ _LONG_TASK_REFERENCE_BODY = (
     "## Long-Task Agent\n\n"
     "**语言规则（Language Rule）**：所有对用户的回复和生成的文档必须使用中文（简体）。技能名称、代码标识符、JSON 字段名保持英文不变。\n\n"
     "This project uses a multi-session agent workflow with 11 skills loaded on-demand.\n"
-    "The `using-long-task` skill is injected at session start and routes to the correct phase.\n"
+    "The `using-long-task` skill routes to the correct phase based on project state.\n"
     "Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §13) → ATS → Init → Worker cycles → System Testing → Finalize.\n"
     "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles → ST.\n\n"
     "Key files: `docs/rules/*.md` (codebase conventions — brownfield only), "

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart hook for long-task-agent plugin
-# Injects the using-long-task bootstrap skill into every session.
+# Copies init_project.py to the consumer project so that the Init phase
+# skill instruction `python scripts/init_project.py …` works out of the box.
 
 set -euo pipefail
 
@@ -8,57 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# Read using-long-task bootstrap skill
-using_long_task_content=$(cat "${PLUGIN_ROOT}/skills/using-long-task/SKILL.md" 2>&1 \
-  || echo "Error reading using-long-task skill")
-
-# Detect project phase and build status hint
-status_hint=""
-if [ -f "increment-request.json" ]; then
-    # Phase 1.5: Increment — incremental requirements development
-    status_hint="\\n\\nIncrement request found. Phase: Increment."
-elif [ -f "feature-list.json" ]; then
-    # Count feature progress (exclude deprecated features)
-    total=$(python3 -c "import json; d=json.load(open('feature-list.json')); print(len([f for f in d.get('features',[]) if not f.get('deprecated',False)]))" 2>/dev/null || echo "?")
-    passing=$(python3 -c "import json; d=json.load(open('feature-list.json')); print(sum(1 for f in d.get('features',[]) if f.get('status')=='passing' and not f.get('deprecated',False)))" 2>/dev/null || echo "?")
-    deprecated=$(python3 -c "import json; d=json.load(open('feature-list.json')); print(sum(1 for f in d.get('features',[]) if f.get('deprecated',False)))" 2>/dev/null || echo "0")
-    if [ "$total" != "?" ] && [ "$passing" != "?" ] && [ "$total" = "$passing" ] && [ "$total" != "0" ]; then
-        # Phase 3: System Testing — all active features passing
-        dep_note=""
-        [ "$deprecated" != "0" ] && dep_note=" (${deprecated} deprecated)"
-        status_hint="\\n\\nProject status: ${passing}/${total} active features passing (ALL)${dep_note}. Phase: System Testing."
-    else
-        # Phase 2: Worker — some active features still failing
-        dep_note=""
-        [ "$deprecated" != "0" ] && dep_note=" (${deprecated} deprecated)"
-        status_hint="\\n\\nProject status: ${passing}/${total} active features passing${dep_note}. Phase: Worker."
-    fi
-elif compgen -G "docs/plans/*-ats.md" > /dev/null 2>&1; then
-    status_hint="\\n\\nATS doc found. Phase: Initializer."
-elif compgen -G "docs/plans/*-design.md" > /dev/null 2>&1; then
-    status_hint="\\n\\nDesign doc found. Phase: ATS (Acceptance Test Strategy)."
-elif compgen -G "docs/plans/*-srs.md" > /dev/null 2>&1; then
-    status_hint="\\n\\nSRS doc found. Phase: Design."
-else
-    # Check if codebase scan has been done (docs/rules/ populated)
-    if compgen -G "docs/rules/*.md" > /dev/null 2>&1; then
-        status_hint="\\n\\nNo SRS, design, or feature-list.json found. Codebase rules exist. Phase: Requirements."
-    else
-        # Check for brownfield (existing source files)
-        # Count source files (cap at 10 — only need to know if > 3)
-        src_count=$(find . -type f \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.tsx" -o -name "*.java" -o -name "*.c" -o -name "*.cpp" -o -name "*.go" -o -name "*.rs" \) -not -path "./.git/*" -not -path "*/node_modules/*" -not -path "*/__pycache__/*" -not -path "*/venv/*" -not -path "*/.venv/*" -not -path "*/dist/*" -not -path "*/build/*" 2>/dev/null | head -10 | wc -l)
-        commit_count=$(git rev-list --count HEAD 2>/dev/null || echo "0")
-        if [ "$src_count" -gt 3 ] && [ "$commit_count" -ge 5 ]; then
-            status_hint="\\n\\nNo SRS found. Existing source files detected (brownfield, ${commit_count} commits). Phase: Codebase Scan → Requirements."
-        else
-            status_hint="\\n\\nNo SRS, design, or feature-list.json found. Phase: Requirements."
-        fi
-    fi
-fi
-
 # ── Copy init_project.py to project scripts dir ──────────────────────────────
-# Ensures that models following the SKILL.md instruction
-# `python scripts/init_project.py …` can find the script in the target project.
 # The companion hint file tells the copied script where the plugin root is so it
 # can locate and copy the helper scripts (validate_features.py etc.) correctly.
 INIT_SCRIPT_SRC="${PLUGIN_ROOT}/skills/long-task-init/scripts/init_project.py"
@@ -74,34 +25,5 @@ if [ -f "$INIT_SCRIPT_SRC" ]; then
     fi
     printf '%s' "${PLUGIN_ROOT_HINT}" > "scripts/.long-task-plugin-root"
 fi
-
-# Escape string for JSON embedding using bash parameter substitution.
-escape_for_json() {
-    local s="$1"
-    s="${s//\\/\\\\}"
-    s="${s//\"/\\\"}"
-    s="${s//$'\n'/\\n}"
-    s="${s//$'\r'/\\r}"
-    s="${s//$'\t'/\\t}"
-    printf '%s' "$s"
-}
-
-content_escaped=$(escape_for_json "$using_long_task_content")
-status_escaped=$(escape_for_json "$status_hint")
-session_context="<EXTREMELY_IMPORTANT>\nYou are in a long-task project.\n\n**Below is your 'long-task:using-long-task' skill - your project router. For all other skills, use the Skill tool:**\n\n${content_escaped}\n${status_escaped}\n</EXTREMELY_IMPORTANT>"
-
-# Output context injection as JSON.
-# Keep both shapes for compatibility:
-# - Cursor hooks expect additional_context.
-# - Claude hooks expect hookSpecificOutput.additionalContext.
-cat <<EOF
-{
-  "additional_context": "${session_context}",
-  "hookSpecificOutput": {
-    "hookEventName": "SessionStart",
-    "additionalContext": "${session_context}"
-  }
-}
-EOF
 
 exit 0

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 12 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) injected at session start via hook. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 12 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -37,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Skill | Phase | Trigger |
 |-------|-------|---------|
-| `using-long-task` | Bootstrap | Injected via SessionStart hook into every session |
+| `using-long-task` | Bootstrap | Routes to correct phase; invoked by LLM at session start based on skill description |
 | `long-task-hotfix` | Hotfix | `bugfix-request.json` exists (HIGHEST priority) |
 | `long-task-increment` | Phase 1.5 | `increment-request.json` exists |
 | `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS/rules docs, >3 source files — brownfield scan |
@@ -247,7 +247,7 @@ long-task-agent/
 ## Long-Task Agent
 
 This project uses a multi-session agent workflow with 12 skills loaded on-demand.
-The `using-long-task` skill is injected at session start and routes to the correct phase.
+The `using-long-task` skill routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS in place → new features appended → Worker cycles → ST.
 
