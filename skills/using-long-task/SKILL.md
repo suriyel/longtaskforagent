@@ -37,12 +37,15 @@ digraph phase_detection {
     "Design doc (*-design.md) in docs/plans/?" [shape=diamond];
     "ATS doc (*-ats.md) in docs/plans/?" [shape=diamond];
     "SRS doc (*-srs.md) in docs/plans/?" [shape=diamond];
+    "docs/rules/ populated? (pre-design)" [shape=diamond];
+    "Brownfield? (pre-design)" [shape=diamond];
     "docs/rules/ populated?" [shape=diamond];
     "Source files > 3 AND commits >= 5?" [shape=diamond];
     "Invoke long-task:long-task-hotfix" [shape=box style=filled fillcolor=orange];
     "Invoke long-task:long-task-increment" [shape=box style=filled fillcolor=plum];
     "Invoke long-task:long-task-requirements" [shape=box style=filled fillcolor=lightyellow];
     "Run codebase-scanner then long-task:long-task-requirements" [shape=box style=filled fillcolor=wheat];
+    "Run codebase-scanner then long-task:long-task-design" [shape=box style=filled fillcolor=wheat];
     "Invoke long-task:long-task-design" [shape=box style=filled fillcolor=lightblue];
     "Invoke long-task:long-task-ats" [shape=box style=filled fillcolor=lightskyblue];
     "Invoke long-task:long-task-init" [shape=box style=filled fillcolor=lightyellow];
@@ -70,7 +73,11 @@ digraph phase_detection {
     "ATS doc (*-ats.md) in docs/plans/?" -> "Design doc (*-design.md) in docs/plans/?" [label="no"];
     "Design doc (*-design.md) in docs/plans/?" -> "Invoke long-task:long-task-ats" [label="yes"];
     "Design doc (*-design.md) in docs/plans/?" -> "SRS doc (*-srs.md) in docs/plans/?" [label="no"];
-    "SRS doc (*-srs.md) in docs/plans/?" -> "Invoke long-task:long-task-design" [label="yes"];
+    "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated? (pre-design)" [label="yes"];
+    "docs/rules/ populated? (pre-design)" -> "Invoke long-task:long-task-design" [label="yes"];
+    "docs/rules/ populated? (pre-design)" -> "Brownfield? (pre-design)" [label="no"];
+    "Brownfield? (pre-design)" -> "Run codebase-scanner then long-task:long-task-design" [label="yes (brownfield)"];
+    "Brownfield? (pre-design)" -> "Invoke long-task:long-task-design" [label="no (greenfield)"];
     "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated?" [label="no"];
     "docs/rules/ populated?" -> "Invoke long-task:long-task-requirements" [label="yes"];
     "docs/rules/ populated?" -> "Source files > 3 AND commits >= 5?" [label="no"];
@@ -115,7 +122,12 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
    - Otherwise (some active features failing) → `long-task-work`
 3. Check `docs/plans/*-ats.md` → if any match → `long-task-init` (ATS done, proceed to init)
 4. Check `docs/plans/*-design.md` → if any match → `long-task-ats` (Design done, proceed to ATS)
-5. Check `docs/plans/*-srs.md` → if any match → `long-task-design` (SRS done, proceed to design)
+5. Check `docs/plans/*-srs.md` → if any match:
+   a. Check `docs/rules/` — if exists AND contains ≥1 `.md` file (beyond a greenfield stub) → `long-task-design` (rules present, proceed to design)
+   b. Check for existing source files (brownfield heuristic — same logic as rule 7b): count source files excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`; and check `git rev-list --count HEAD 2>/dev/null || echo 0`
+      - If source files > 3 AND git commits ≥ 5 → **run codebase-scanner** (see Phase 0-pre below) → then `long-task-design`
+      - If source files > 3 AND git unavailable (no `.git` in cwd) → still treat as brownfield → **run codebase-scanner** → then `long-task-design`
+   c. Else (greenfield or no source files) → create `docs/rules/README.md` stub ("Greenfield — no conventions to extract") if missing → `long-task-design`
 7. Otherwise → check codebase conventions:
    a. Check `docs/rules/` — if exists AND contains ≥1 `.md` file (beyond a greenfield stub) → `long-task-requirements` (rules already scanned)
    b. Check for existing source files (brownfield heuristic): count source files (`*.py`, `*.js`, `*.ts`, `*.java`, `*.c`, `*.cpp`, `*.go`, `*.rs`, etc.) excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`; and check `git rev-list --count HEAD 2>/dev/null || echo 0`
@@ -130,7 +142,7 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 |-------|-------|------|
 | `long-task:long-task-hotfix` | Hotfix | bugfix-request.json exists (HIGHEST priority) |
 | `long-task:long-task-increment` | Phase 1.5 | increment-request.json exists |
-| `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS, no rules docs, existing source files > 3 — scan codebase before requirements |
+| `codebase-scanner` (SubAgent) | Phase 0-pre | No rules docs AND existing source files > 3 — scan codebase before requirements (rule 7b) or before design (rule 5b, multi-repo brownfield) |
 | `long-task:long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json |
 | `long-task:long-task-design` | Phase 0b | SRS exists, no design doc, no feature-list.json |
 | `long-task:long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
@@ -203,7 +215,7 @@ These thoughts mean STOP — you're rationalizing:
 
 ## Phase 0-pre: Codebase Convention Scan (Brownfield Only)
 
-When detection rule 7b triggers (brownfield project, no existing `docs/rules/`), execute these steps **before** invoking `long-task-requirements`:
+When detection rule 5b or 7b triggers (brownfield project, no existing `docs/rules/`), execute these steps **before** invoking the next phase skill (`long-task-design` for rule 5b, `long-task-requirements` for rule 7b):
 
 1. **Create output directory**: `mkdir -p docs/rules/`
 

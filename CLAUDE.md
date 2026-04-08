@@ -66,7 +66,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 using-long-task (router)
-   ├─→ codebase-scanner SubAgent (brownfield, no docs/rules/) ──→ long-task-requirements
+   ├─→ codebase-scanner SubAgent (brownfield, no docs/rules/) ──→ long-task-requirements (rule 7b) OR long-task-design (rule 5b)
    ├─→ long-task-requirements ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ long-task-work
    │                                                  (auto-skip: ≤5 FR)
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
@@ -122,7 +122,7 @@ long-task-explore (standalone — no pipeline dependency)
 - **Service lifecycle via env-guide.md**: All start/stop/restart use `env-guide.md` commands. Follow 4-step Restart Protocol between test cycles. Capture first 30 lines of startup output for PID/port.
 - **Startup output in code**: Servers must print bound port, PID, and ready signal at startup.
 - **2/3方件 constraints binding**: Design §13.1 mandatory internal libraries and §13.2 prohibited APIs are binding for all new code.
-- **Codebase scan before requirements (brownfield)**: >3 source files + ≥5 commits → run codebase-scanner first.
+- **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → run codebase-scanner first (rule 7b: before requirements; rule 5b: before design in multi-repo sub-repos where SRS was created by Step 15.5).
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
 - **Multi-repo: hook detection + global SRS + per-repo pipeline**: session-start hook detects multi-repo topology and generates `repos-manifest.json`. Requirements phase does global SRS then splits to per-repo SRS. Each repo then independently follows the full single-repo pipeline (Design → ATS → Init → Worker → ST). Router asks user which repo to work on each session.
