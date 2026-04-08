@@ -92,47 +92,22 @@ if [ ! -d ".git" ]; then
 
     # Only write manifest if we found at least 1 validated sub-repo
     if [ "$FIRST" = false ]; then
-        log "writing/merging repos-manifest.json"
-        # Merge with existing manifest to preserve enrichment fields
-        # (srs_path, status, global_srs, cross_repo_deps, etc.)
-        # added by downstream skills (e.g., Requirements Step 15.5).
-        python3 -c "
-import json, sys, os
-detected_repos = json.loads(sys.argv[1])  # [{name, path}, ...]
-manifest_path = 'repos-manifest.json'
-ts = sys.argv[2]
-
-if os.path.isfile(manifest_path):
-    with open(manifest_path, encoding='utf-8') as f:
-        existing = json.load(f)
-    # Index existing repos by path for quick lookup
-    existing_by_path = {r['path']: r for r in existing.get('repos', []) if isinstance(r, dict)}
-    # Merge: keep enrichment fields from existing, add new repos
-    merged = []
-    for repo in detected_repos:
-        path = repo['path']
-        if path in existing_by_path:
-            # Preserve all existing fields, update name if changed
-            entry = existing_by_path[path]
-            entry['name'] = repo['name']
-            merged.append(entry)
-        else:
-            merged.append(repo)
-    # Preserve top-level enrichment fields (global_srs, cross_repo_deps, etc.)
-    existing['repos'] = merged
-    existing['detected'] = ts
-    manifest = existing
-else:
-    manifest = {
-        'detected': ts,
-        'project_root_is_git': False,
-        'repos': detected_repos
-    }
-
-with open(manifest_path, 'w', encoding='utf-8') as f:
-    json.dump(manifest, f, indent=2, ensure_ascii=False)
-    f.write('\n')
-" "$REPOS_JSON" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        # Preserve existing manifest — downstream skills (Requirements Step 15.5)
+        # enrich it with srs_path, status, global_srs, cross_repo_deps, etc.
+        # Hook only creates the initial manifest; never overwrites an existing one.
+        # To re-detect repos, delete repos-manifest.json and restart the session.
+        if [ -f "repos-manifest.json" ]; then
+            log "repos-manifest.json already exists — preserving (delete to re-detect)"
+        else
+            log "creating repos-manifest.json with $(echo "$REPOS_JSON" | grep -o '"name"' | wc -l) repo(s)"
+            cat > "repos-manifest.json" <<EOFMANIFEST
+{
+  "detected": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "project_root_is_git": false,
+  "repos": ${REPOS_JSON}
+}
+EOFMANIFEST
+        fi
 
         # ── Copy init_project.py + plugin-root hint into each validated sub-repo
         # Each sub-repo runs the Init phase independently and needs its own
