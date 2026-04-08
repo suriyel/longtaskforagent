@@ -29,25 +29,54 @@ fi
 # ── Multi-repo detection ────────────────────────────────────────────────────
 # If project root is NOT a git repo but has sub-dirs with .git, generate
 # repos-manifest.json so the router skill can detect the multi-repo topology.
+#
+# Validation: only include directories that are genuine, independent git repos:
+#   1. git -C <dir> rev-parse --is-inside-work-tree  → confirms it's a real repo
+#   2. git -C <dir> rev-parse --show-toplevel         → confirms <dir> IS the root
+#      (filters out nested repos where toplevel != dir)
+#   3. git -C <dir> rev-parse --git-dir               → must be ".git" (not a
+#      path like ../.git/worktrees/X, which indicates a worktree, not a standalone repo)
 if [ ! -d ".git" ]; then
+    # Phase 1: discover and validate repos into an array
+    VALIDATED_REPOS=()
+    while IFS= read -r gitdir; do
+        candidate="$(cd "$(dirname "$gitdir")" && pwd)"
+        # Check 1: is it a real git working tree?
+        if ! git -C "$candidate" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            continue
+        fi
+        # Check 2: is this directory the repo root (not a subdirectory of another repo)?
+        toplevel="$(git -C "$candidate" rev-parse --show-toplevel 2>/dev/null)" || continue
+        if [ "$toplevel" != "$candidate" ]; then
+            continue  # nested directory inside another repo — skip
+        fi
+        # Check 3: is .git a real directory, not a worktree link?
+        git_dir_val="$(git -C "$candidate" rev-parse --git-dir 2>/dev/null)" || continue
+        if [ "$git_dir_val" != ".git" ]; then
+            continue  # worktree or submodule with linked .git — skip
+        fi
+        VALIDATED_REPOS+=("$candidate")
+    done < <(find . -maxdepth 2 -name ".git" -type d 2>/dev/null | sort)
+
+    # Phase 2: build JSON from validated repos
+    PROJECT_ROOT="$(pwd)"
     REPOS_JSON="["
     FIRST=true
-    # Use process substitution to handle directory names with spaces
-    while IFS= read -r gitdir; do
-        repo_path="$(dirname "$gitdir")"
-        repo_path="${repo_path#./}"  # strip leading ./
+    for candidate in "${VALIDATED_REPOS[@]}"; do
+        # Convert absolute path to relative path from project root
+        repo_path="${candidate#"$PROJECT_ROOT"/}"
         repo_name="$(basename "$repo_path")"
-        # Escape double quotes and backslashes in names/paths for valid JSON
+        # Escape double quotes and backslashes for valid JSON
         repo_name="${repo_name//\\/\\\\}"
         repo_name="${repo_name//\"/\\\"}"
         repo_path="${repo_path//\\/\\\\}"
         repo_path="${repo_path//\"/\\\"}"
         if [ "$FIRST" = true ]; then FIRST=false; else REPOS_JSON="${REPOS_JSON},"; fi
         REPOS_JSON="${REPOS_JSON}{\"name\":\"${repo_name}\",\"path\":\"${repo_path}\"}"
-    done < <(find . -maxdepth 2 -name ".git" -type d 2>/dev/null | sort)
+    done
     REPOS_JSON="${REPOS_JSON}]"
 
-    # Only write manifest if we found at least 1 sub-repo
+    # Only write manifest if we found at least 1 validated sub-repo
     if [ "$FIRST" = false ]; then
         cat > "repos-manifest.json" <<EOFMANIFEST
 {
@@ -57,19 +86,17 @@ if [ ! -d ".git" ]; then
 }
 EOFMANIFEST
 
-        # ── Copy init_project.py + plugin-root hint into each sub-repo ──────
+        # ── Copy init_project.py + plugin-root hint into each validated sub-repo
         # Each sub-repo runs the Init phase independently and needs its own
         # scripts/init_project.py + .long-task-plugin-root to locate and copy
         # helper scripts (validate_features.py, check_configs.py, etc.).
         if [ -f "$INIT_SCRIPT_SRC" ]; then
-            while IFS= read -r gitdir; do
-                repo_dir="$(dirname "$gitdir")"
-                repo_dir="${repo_dir#./}"
-                repo_scripts_dir="${repo_dir}/scripts"
+            for candidate in "${VALIDATED_REPOS[@]}"; do
+                repo_scripts_dir="${candidate}/scripts"
                 mkdir -p "$repo_scripts_dir"
                 cp "$INIT_SCRIPT_SRC" "$repo_scripts_dir/init_project.py"
                 printf '%s' "${PLUGIN_ROOT_HINT}" > "$repo_scripts_dir/.long-task-plugin-root"
-            done < <(find . -maxdepth 2 -name ".git" -type d 2>/dev/null | sort)
+            done
         fi
     fi
 else
