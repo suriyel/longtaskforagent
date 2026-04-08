@@ -56,6 +56,21 @@ if [ ! -d ".git" ]; then
   "repos": ${REPOS_JSON}
 }
 EOFMANIFEST
+
+        # ── Copy init_project.py + plugin-root hint into each sub-repo ──────
+        # Each sub-repo runs the Init phase independently and needs its own
+        # scripts/init_project.py + .long-task-plugin-root to locate and copy
+        # helper scripts (validate_features.py, check_configs.py, etc.).
+        if [ -f "$INIT_SCRIPT_SRC" ]; then
+            while IFS= read -r gitdir; do
+                repo_dir="$(dirname "$gitdir")"
+                repo_dir="${repo_dir#./}"
+                repo_scripts_dir="${repo_dir}/scripts"
+                mkdir -p "$repo_scripts_dir"
+                cp "$INIT_SCRIPT_SRC" "$repo_scripts_dir/init_project.py"
+                printf '%s' "${PLUGIN_ROOT_HINT}" > "$repo_scripts_dir/.long-task-plugin-root"
+            done < <(find . -maxdepth 2 -name ".git" -type d 2>/dev/null | sort)
+        fi
     fi
 else
     # Project root IS a git repo — single repo mode, clean up any stale manifest
