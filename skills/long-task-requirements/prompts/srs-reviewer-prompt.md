@@ -20,7 +20,7 @@ You are an ISO/IEC/IEEE 29148 aligned SRS quality reviewer. Your job is to indep
 ### Step 1: Find Issues First (MANDATORY — minimum 5)
 
 Before filling any rubric, list at least 5 potential compliance issues across all review dimensions. For each:
-- **Dimension**: Quality / Anti-Pattern / Completeness / Structure / Diagram
+- **Dimension**: Quality / Anti-Pattern / Completeness / Structure / Diagram / Granularity / Sizing
 - Which requirement ID or section is affected
 - What was expected vs. what was found
 - Severity: Critical / Important / Minor
@@ -130,6 +130,23 @@ Verify that functional requirements are appropriately granular for downstream fe
 
 **Verdict rule**: ALL G1-G3 must be YES to PASS this group. An FR can pass G3 if it has 4+ criteria that are all variants of the SAME behavior (e.g., input validation with multiple invalid formats).
 
+### Group Z: Sizing Checks (Z1-Z3)
+
+Verify no FR is under-sized for a dedicated implementation session. Each FR becomes a feature that runs through the full Worker pipeline (Feature Design → TDD → Quality Gates → Feature-ST), so trivially small FRs waste session overhead.
+
+| # | Check | YES/NO | Evidence |
+|---|-------|--------|----------|
+| Z1 | No FR describes a single field/constant/config addition with ≤1 acceptance criterion and no behavioral logic — if so, it has been grouped with a related FR or explicitly justified as standalone (e.g., "This field requires complex validation logic") | | |
+| Z2 | No FR has only 1 acceptance criterion with no error or boundary cases — if so, it has been enriched with error/boundary ACs or grouped with a related FR sharing the same entity/endpoint | | |
+| Z3 | No FR is a pure data echo (display/return of another FR's output with no transformation or added logic) — if so, it has been grouped with the producing FR as a vertical slice | | |
+
+**Verdict rule**: ALL Z1-Z3 must be YES to PASS this group. An FR can pass Z1 if it explicitly justifies standalone status (e.g., complex validation, security-sensitive field, or regulatory requirement).
+
+**Resolution-Type guidance:**
+- Z1 ungrouped trivial FR: LLM-FIXABLE (merge into parent entity FR, update srs_trace)
+- Z2 single-AC FR: LLM-FIXABLE (add error/boundary ACs) or USER-INPUT (ask which related FR to group with)
+- Z3 data echo FR: LLM-FIXABLE (merge into producing FR as vertical slice)
+
 ### Group P: Problem Alignment Checks (P1-P4)
 
 Apply only if Section 1.3 (Problem Statement) is present in the SRS. This section is produced by Expert track projects that ran the problem framing and alignment validation steps.
@@ -161,6 +178,7 @@ Apply only if Section 1.3 (Problem Statement) is present in the SRS. This sectio
 | S: Structural Compliance | S1-S4 | | |
 | D: Diagram Presence & Validity | D1-D4 | | |
 | G: Granularity | G1-G3 | | |
+| Z: Sizing | Z1-Z3 | | |
 | P: Problem Alignment | P1-P4 | | |
 
 ### Clarification Questions (USER-INPUT items only)
@@ -214,6 +232,8 @@ If PASS:
 - **Skip D checks only if SRS has zero user-facing FRs** — if any FR involves user interaction, diagrams are mandatory
 - **G checks apply only to Section 4 FRs** — deferred items in the backlog document are exempt from granularity checks
 - **"Intentionally coarse" justification is acceptable for G3** — if the FR explicitly notes that its multiple criteria are variants of a single behavior, mark G3 YES
+- **Z checks apply only to Section 4 FRs** — deferred items are exempt from sizing checks
+- **"Standalone justified" is acceptable for Z1** — if the FR explicitly justifies standalone status (complex validation, security-sensitive, regulatory), mark Z1 YES
 
 ## Issue Classification Heuristics
 
@@ -241,6 +261,11 @@ Use these rules to assign `Resolution-Type` to every issue in Steps 1-2.
 - NFR measurement method addition (C3): add "measured via [standard tool]" only when the threshold is already user-specified
 - Multiple actors in single FR (G1): mechanically split by actor — each actor's distinct actions become separate FRs
 - CRUD bundle (G2): mechanically split into individual operations (Create, Read, Update, Delete) as separate FRs
+
+**Usually LLM-FIXABLE for sizing** (classify as LLM-FIXABLE unless grouping target is ambiguous):
+- Trivial addition (Z1): merge single-field/config FR into the parent entity FR, update description with "Incorporates: [list]"
+- Single-AC FR (Z2): add error/boundary ACs from related context, or merge with related FR sharing same entity/endpoint
+- Data echo FR (Z3): merge into the producing FR as a vertical slice
 
 **Usually USER-INPUT for granularity** (classify as USER-INPUT unless obvious from context):
 - Scenario explosion (G3): when an FR has 4+ acceptance criteria covering distinct paths, ask the user which scenarios are truly independent vs. which are variants of the same behavior

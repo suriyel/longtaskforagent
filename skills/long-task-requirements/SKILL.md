@@ -36,7 +36,7 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 7. **Classify requirements** — functional / NFR / constraint / assumption / interface / exclusion
 8. **Write requirements** — apply EARS templates, assign IDs, write acceptance criteria, generate diagrams
 9. **Validate SRS** — check 8 quality attributes, detect anti-patterns, verify testability
-10. **Granularity analysis** — detect oversized FRs via 6 heuristics (G1-G6), decompose candidates, user approval for non-trivial splits
+10. **Granularity analysis** — bidirectional sizing: detect oversized FRs (G1-G6 split) AND undersized FRs (S1-S4 group) to fit context budget; user approval for non-trivial changes
 11. **Scope fit & deferral** — assess current-round vs next-round, generate deferred backlog if applicable
 12. **[Expert only] Alignment validation** — via `references/alignment-validation.md`
 13. **SRS Compliance Review** — dispatch srs-reviewer subagent; gate: all checks PASS before proceeding
@@ -351,25 +351,53 @@ After all requirements are written, generate visual aids:
 - Glossary covers all domain-specific terms
 - Out-of-Scope section lists deferred features
 
-### Step 10: Granularity Analysis & Decomposition
+### Step 10: Granularity Analysis — Bidirectional Sizing
 
-Apply 6 heuristics to each FR. If ANY triggers, the FR is a decomposition candidate:
+Right-size each FR for one Worker session. Apply both over-size (G) and under-size (S) heuristics. The goal: each FR should produce a feature that productively uses ~50% of the model's context window.
+
+**Step 10.0 — Select your sizing profile:** You know your own maximum context window. Apply the matching row to all G/S decisions below.
+
+| Context window | Profile | Target ACs per FR | Single-feature implementation scope |
+|---|---|---|---|
+| ≤ 200K tokens | **Standard** | 3-12 | ~200-600 lines code + tests |
+| > 200K tokens | **Extended** | 5-20 | ~500-3000 lines code + tests |
+
+An FR below the profile minimum AC count is under-sized (S-heuristic candidate). An FR above the profile maximum is over-sized (G-heuristic candidate).
+
+**Phase 1 — Over-size detection (G1-G6):** Split FRs that are too coarse for a single session.
 
 | # | Heuristic | Detection Signal |
 |---|---|---|
 | G1 | **Multiple actors** | 2+ distinct roles performing different actions |
 | G2 | **CRUD bundle** | Create + Read + Update + Delete as single requirement |
-| G3 | **Scenario explosion** | 4+ acceptance criteria covering distinct paths |
+| G3 | **Scenario explosion** | 4+ acceptance criteria covering distinct behavioral paths |
 | G4 | **Cross-layer concern** | Backend logic AND user-facing UI in one FR |
 | G5 | **Multi-state behavior** | 3+ distinct system states or modes |
 | G6 | **Temporal coupling** | Trigger event + deferred/scheduled consequence |
 
 For decomposition candidates: identify atomic behaviors, apply Single Responsibility Test, preserve traceability (FR-003 → FR-003a, FR-003b), re-validate children.
 
-| Candidate Count | Action |
+**Phase 2 — Under-size detection (S1-S4):** Group FRs that are too trivial for a dedicated session.
+
+| # | Heuristic | Detection Signal | Action |
+|---|---|---|---|
+| S1 | **Trivial addition** | Single field/constant/config, no behavioral logic, ≤1 AC | Group with parent entity/endpoint FR |
+| S2 | **Single-assertion test** | Only 1 AC with no error/boundary cases | Enrich with error/boundary ACs, or group with related FR sharing same entity/endpoint |
+| S3 | **Pure data echo** | Displays/returns data another FR produces, no transformation | Group with the producing FR as vertical slice |
+| S4 | **Config/setup only** | Env setup, dependency install, scaffolding, no business logic | Group all S4 FRs into single Foundation FR |
+
+**Grouping rules:**
+- Grouped FRs keep the primary FR's ID; description notes "Incorporates: [list]"
+- Combined ACs must stay ≤ 20 (if exceeds, G3 re-triggers — split along better seams)
+- Grouped FRs must share primary actor and functional area
+- If both G and S trigger on the same FR: G wins (split first, then S re-checks children)
+
+**Decision thresholds:**
+
+| Candidate Count (G or S) | Action |
 |---|---|
 | 0 | Skip |
-| 1-3 | Auto-decompose; present rationale inline |
+| 1-3 | Auto-apply; present rationale inline |
 | 4+ | Present to user via AskUserQuestion for approval |
 
 ### Step 11: Scope Fit & Deferral
@@ -414,7 +442,8 @@ Task(
 - Group C (C1-C5): completeness
 - Group S (S1-S4): structural compliance
 - Group D (D1-D4): diagrams
-- Group G (G1-G3): granularity
+- Group G (G1-G3): granularity (over-size detection)
+- Group Z (Z1-Z3): sizing (under-size detection)
 - Group P (P1-P4): problem alignment (Expert track; PASS-SKIPPED for Lite track)
 
 **On FAIL — two-track resolution:**
@@ -483,7 +512,8 @@ If a deferred backlog was generated in Step 11, save alongside: `docs/plans/YYYY
 | "NFRs don't apply to this project" | Every project has at least implicit performance/reliability needs — make them explicit |
 | "The glossary is obvious" | Obvious to whom? Define every term the user and developer might interpret differently |
 | "I'll just start with the happy path" | Error cases, boundaries, and negatives must be captured NOW |
-| "This FR is fine as one big requirement" | Apply the 6 granularity heuristics (G1-G6) — hidden complexity creates oversized features |
+| "This FR is fine as one big requirement" | Apply the 6 over-size heuristics (G1-G6) — hidden complexity creates oversized features |
+| "This FR is small but clear — leave it" | Apply the 4 under-size heuristics (S1-S4) — trivially small FRs waste full pipeline sessions on fixed overhead |
 | "All requirements belong in this round" | Scope fit assessment ensures focus — defer lower-priority items |
 | "Deferred items can just go in Out-of-Scope" | Out-of-Scope is prose; deferred backlog preserves EARS + acceptance criteria |
 | "This is complex but I'll use Lite to save time" | Complexity assessment exists for a reason. If ≥3 Expert signals fired, use Expert. |

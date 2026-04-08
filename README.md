@@ -177,7 +177,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 ### 阶段 1：初始化
 
 - 读取 SRS + 设计 + ATS，脚手架项目骨架
-- 将需求分解为 10-200+ 个可验证功能
+- 需求阶段双向粒度分析（G1-G6拆分 + S1-S4合并），确保每个FR适配单次会话上下文预算
 - 生成环境引导脚本（`init.sh` / `init.ps1`）
 - 创建初始 git 提交
 

@@ -230,14 +230,14 @@ graph LR
 
 ### 10.2 Task Decomposition & Priority
 
-> **Instructions**: Break down features into implementation tasks, ordered by priority and dependency. This feeds directly into `feature-list.json` during Init phase.
+> **Instructions**: Each row becomes one feature in `feature-list.json`. Group related right-sized FRs (already validated by SRS G1-G6 + S1-S4 bidirectional sizing) into vertical slices. Include Mapped FRs for traceability. Each feature should productively fill one Worker session (~50% of model context window).
 
-| Priority | Feature(s) | Dependencies | Milestone | Rationale |
-|---|---|---|---|---|
-| P0 - Critical | [Feature A, B] | None | M1 | Foundation required by all others |
-| P1 - High | [Feature C, D] | A | M2 | Core value proposition |
-| P2 - Medium | [Feature E, F] | C | M3 | Extended functionality |
-| P3 - Low | [Feature G] | None | M4 | Nice-to-have |
+| Priority | Feature | Mapped FRs | Dependencies | Milestone | Rationale |
+|---|---|---|---|---|---|
+| P0 - Critical | [Feature A] | FR-001, FR-002 | None | M1 | Foundation required by all others |
+| P1 - High | [Feature B] | FR-003, FR-004, FR-005 | A | M2 | Core value proposition |
+| P2 - Medium | [Feature C] | FR-008, FR-009 | B | M3 | Extended functionality |
+| P3 - Low | [Feature D] | FR-012 | None | M4 | Nice-to-have |
 
 ### 10.3 Dependency Chain
 [Show the critical path and feature dependency ordering]
