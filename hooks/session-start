@@ -92,7 +92,9 @@ EOFMANIFEST
         # helper scripts (validate_features.py, check_configs.py, etc.).
         if [ -f "$INIT_SCRIPT_SRC" ]; then
             for candidate in "${VALIDATED_REPOS[@]}"; do
-                repo_scripts_dir="${candidate}/scripts"
+                # Use relative path from project root (consistent with manifest)
+                rel_path="${candidate#"$PROJECT_ROOT"/}"
+                repo_scripts_dir="${rel_path}/scripts"
                 mkdir -p "$repo_scripts_dir"
                 cp "$INIT_SCRIPT_SRC" "$repo_scripts_dir/init_project.py"
                 printf '%s' "${PLUGIN_ROOT_HINT}" > "$repo_scripts_dir/.long-task-plugin-root"

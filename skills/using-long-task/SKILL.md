@@ -24,6 +24,12 @@ Check project state and invoke the corresponding skill:
 ```dot
 digraph phase_detection {
     "Session Start" [shape=doublecircle];
+    "repos-manifest.json exists?" [shape=diamond];
+    "Global SRS exists?" [shape=diamond];
+    "Per-repo SRS split done?" [shape=diamond];
+    "Ask user: which repo?" [shape=box style=filled fillcolor=lightyellow];
+    "Global requirements (project root)" [shape=box style=filled fillcolor=lightyellow];
+    "Execute SRS split (Step 15.5)" [shape=box style=filled fillcolor=lightyellow];
     "bugfix-request.json exists?" [shape=diamond];
     "increment-request.json exists?" [shape=diamond];
     "feature-list.json exists?" [shape=diamond];
@@ -43,7 +49,15 @@ digraph phase_detection {
     "Invoke long-task:long-task-work" [shape=box style=filled fillcolor=lightgreen];
     "Invoke long-task:long-task-st" [shape=box style=filled fillcolor=lightcoral];
 
-    "Session Start" -> "bugfix-request.json exists?";
+    "Session Start" -> "repos-manifest.json exists?";
+    "repos-manifest.json exists?" -> "Global SRS exists?" [label="yes (multi-repo)"];
+    "repos-manifest.json exists?" -> "bugfix-request.json exists?" [label="no (single-repo)"];
+    "Global SRS exists?" -> "Global requirements (project root)" [label="no"];
+    "Global SRS exists?" -> "Per-repo SRS split done?" [label="yes"];
+    "Per-repo SRS split done?" -> "Execute SRS split (Step 15.5)" [label="no"];
+    "Per-repo SRS split done?" -> "Ask user: which repo?" [label="yes"];
+    "Ask user: which repo?" -> "bugfix-request.json exists?" [label="cd to selected repo"];
+
     "bugfix-request.json exists?" -> "Invoke long-task:long-task-hotfix" [label="yes"];
     "bugfix-request.json exists?" -> "increment-request.json exists?" [label="no"];
     "increment-request.json exists?" -> "Invoke long-task:long-task-increment" [label="yes"];
@@ -76,7 +90,8 @@ If `repos-manifest.json` exists → **multi-repo project**:
      - Requirements skill will detect `repos-manifest.json` and run multi-repo exploration (Step 1.1)
      - After global SRS completion, Step 15.5 splits it into per-repo SRS
    - **Global SRS exists** → check if split is done: do any repos in manifest have SRS in `<repo_path>/docs/plans/*-srs.md`?
-     - **Not yet split** → invoke `long-task:long-task-requirements` to resume at Step 15.5 (SRS split)
+     - **Not yet split** (global SRS exists but no per-repo SRS found):
+       Read the global SRS and execute Step 15.5 (Split Global SRS into Per-Repo SRS) inline here in the router — follow the instructions in `long-task-requirements` Step 15.5 directly. Do NOT re-invoke the full requirements skill (which would restart from Step 1).
      - **Already split** → proceed to per-repo routing:
        a. Build per-repo status table by scanning each repo directory:
           | Repo | SRS | Design | ATS | feature-list.json | Status |

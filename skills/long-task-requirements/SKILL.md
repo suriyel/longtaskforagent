@@ -590,12 +590,8 @@ If a deferred backlog was generated in Step 11, save alongside: `docs/plans/YYYY
       - Add metadata header: `Global SRS Reference: <relative_path_to_global_srs>`
    c. If deferred backlog exists, copy applicable items to `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-deferred.md`
 
-3. **Per-repo codebase rules** (brownfield repos):
-   For each repo that is brownfield (has existing source code):
-   - If `<repo_path>/docs/rules/` does not exist yet:
-     - Dispatch `codebase-scanner` SubAgent with `repo_path` as working directory
-     - Generate `<repo_path>/docs/rules/*.md` with that repo's conventions
-   - If already scanned (reuse from Step 1.1 explore results): skip
+3. **Per-repo codebase rules**: Do NOT dispatch `codebase-scanner` here.
+   When the router later directs the user into a sub-repo, the router's own Phase 0-pre brownfield detection (rule 7b) will trigger `codebase-scanner` for that repo if `<repo_path>/docs/rules/` does not exist yet. This avoids duplicate scanning.
 
 4. **Update `repos-manifest.json`**:
    ```json
