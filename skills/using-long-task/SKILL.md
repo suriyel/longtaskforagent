@@ -188,11 +188,27 @@ When detection rule 7b triggers (brownfield project, no existing `docs/rules/`),
    | 1,000–10,000 | Standard (top 50 files) |
    | > 10,000 | Deep (top 100 + all configs) |
 
-3. **Dispatch `codebase-scanner` SubAgent** — read `agents/codebase-scanner.md` for the full agent definition. Construct a prompt including:
-   - Working directory path
-   - Detected primary language(s) and framework(s)
-   - Scan depth level
-   - Pre-filtered source file list
+3. **Dispatch `codebase-scanner` SubAgent**:
+
+   ```
+   Agent(
+     subagent_type="general-purpose",
+     description="Scan codebase conventions for [project]",
+     prompt="""
+     Read the agent definition at: {plugin_root}/agents/codebase-scanner.md
+
+     ## Scan Parameters
+     - Working directory: {working_directory}
+     - Primary language(s): {languages}
+     - Primary framework(s): {frameworks}
+     - Scan depth: {scan_depth}
+     - Source file list: {file_list}
+
+     Execute the full codebase scanner process per the agent definition.
+     Return structured output per the Structured Return Contract.
+     """
+   )
+   ```
 
 4. **Validate results**: verify ≥1 output file exists in `docs/rules/`. If SubAgent returns BLOCKED, write minimal stubs (non-blocking — scan is best-effort).
 
