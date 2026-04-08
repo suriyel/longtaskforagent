@@ -9,7 +9,7 @@
             "command": "bash '${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd' session-start",
             "timeout": 10000,
             "async": false
-          },
+          }
         ]
       }
     ]

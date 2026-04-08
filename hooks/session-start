@@ -10,9 +10,13 @@
 # This is a best-effort hook — partial failure should not abort the whole script.
 set +e
 
+# Diagnostic helper — all output goes to stderr so it doesn't pollute hook stdout
+log() { echo "[long-task hook] $*" >&2; }
+
 # Determine plugin root directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+log "session-start running in $(pwd), plugin=$PLUGIN_ROOT"
 
 # ── Copy init_project.py to project scripts dir ──────────────────────────────
 # The companion hint file tells the copied script where the plugin root is so it
@@ -42,6 +46,7 @@ fi
 #   3. git -C <dir> rev-parse --git-dir               → must be ".git" (not a
 #      path like ../.git/worktrees/X, which indicates a worktree, not a standalone repo)
 if [ ! -d ".git" ]; then
+    log "no .git at project root — entering multi-repo detection"
     # Phase 1: discover and validate repos into an array
     VALIDATED_REPOS=()
     while IFS= read -r gitdir; do
@@ -61,7 +66,9 @@ if [ ! -d ".git" ]; then
             continue  # worktree or submodule with linked .git — skip
         fi
         VALIDATED_REPOS+=("$candidate")
+        log "  validated repo: $candidate"
     done < <(find . -maxdepth 4 -name ".git" -type d 2>/dev/null | sort)
+    log "found ${#VALIDATED_REPOS[@]} validated repo(s)"
 
     # Phase 2: build JSON from validated repos
     PROJECT_ROOT="$(pwd)"
@@ -83,6 +90,7 @@ if [ ! -d ".git" ]; then
 
     # Only write manifest if we found at least 1 validated sub-repo
     if [ "$FIRST" = false ]; then
+        log "writing repos-manifest.json with $(echo "$REPOS_JSON" | grep -o '"name"' | wc -l) repo(s)"
         cat > "repos-manifest.json" <<EOFMANIFEST
 {
   "detected": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
@@ -103,10 +111,14 @@ EOFMANIFEST
                 mkdir -p "$repo_scripts_dir"
                 cp "$INIT_SCRIPT_SRC" "$repo_scripts_dir/init_project.py"
                 printf '%s' "${PLUGIN_ROOT_HINT}" > "$repo_scripts_dir/.long-task-plugin-root"
+                log "  copied init_project.py → $repo_scripts_dir"
             done
         fi
+    else
+        log "no validated repos found — skipping manifest"
     fi
 else
+    log "project root IS a git repo — single-repo mode"
     # Project root IS a git repo — single repo mode, clean up any stale manifest
     if [ -f "repos-manifest.json" ]; then
         rm -f "repos-manifest.json"
