@@ -50,28 +50,33 @@ if [ ! -d ".git" ]; then
     # Phase 1: discover and validate repos into an array
     VALIDATED_REPOS=()
     while IFS= read -r gitdir; do
-        candidate="$(cd "$(dirname "$gitdir")" && pwd)"
+        # Use pwd -P (physical path) to match git's resolved-symlink paths
+        candidate="$(cd "$(dirname "$gitdir")" 2>/dev/null && pwd -P)" || continue
+        log "  candidate: $candidate"
         # Check 1: is it a real git working tree?
         if ! git -C "$candidate" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            log "    SKIP: not a git working tree"
             continue
         fi
         # Check 2: is this directory the repo root (not a subdirectory of another repo)?
-        toplevel="$(git -C "$candidate" rev-parse --show-toplevel 2>/dev/null)" || continue
+        toplevel="$(git -C "$candidate" rev-parse --show-toplevel 2>/dev/null)" || { log "    SKIP: show-toplevel failed"; continue; }
         if [ "$toplevel" != "$candidate" ]; then
+            log "    SKIP: toplevel mismatch (toplevel=$toplevel, candidate=$candidate)"
             continue  # nested directory inside another repo — skip
         fi
         # Check 3: is .git a real directory, not a worktree link?
-        git_dir_val="$(git -C "$candidate" rev-parse --git-dir 2>/dev/null)" || continue
+        git_dir_val="$(git -C "$candidate" rev-parse --git-dir 2>/dev/null)" || { log "    SKIP: git-dir failed"; continue; }
         if [ "$git_dir_val" != ".git" ]; then
+            log "    SKIP: git-dir is '$git_dir_val', not '.git' (worktree/submodule)"
             continue  # worktree or submodule with linked .git — skip
         fi
         VALIDATED_REPOS+=("$candidate")
-        log "  validated repo: $candidate"
+        log "    OK"
     done < <(find . -maxdepth 4 -name ".git" -type d 2>/dev/null | sort)
     log "found ${#VALIDATED_REPOS[@]} validated repo(s)"
 
     # Phase 2: build JSON from validated repos
-    PROJECT_ROOT="$(pwd)"
+    PROJECT_ROOT="$(pwd -P)"
     REPOS_JSON="["
     FIRST=true
     for candidate in ${VALIDATED_REPOS[@]+"${VALIDATED_REPOS[@]}"}; do
