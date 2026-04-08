@@ -3,6 +3,8 @@ name: long-task-ats
 description: "Use when design doc exists but no ATS doc and no feature-list.json - generate a global Acceptance Test Strategy mapping every requirement to acceptance scenarios with category constraints"
 ---
 
+**LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
+
 # Acceptance Test Strategy (ATS) Generation
 
 Take the approved SRS and Design as input. Produce a global Acceptance Test Strategy document that maps every requirement to acceptance scenarios with required test categories — constraining downstream feature-st (test case derivation via srs_trace).
