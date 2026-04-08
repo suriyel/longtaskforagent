@@ -59,13 +59,15 @@ if [ ! -d ".git" ]; then
             continue
         fi
         # Check 2: is this directory the repo root (not a subdirectory of another repo)?
-        toplevel="$(git -C "$candidate" rev-parse --show-toplevel 2>/dev/null)" || { log "    SKIP: show-toplevel failed"; continue; }
+        # Strip \r from git output — git on some platforms (WSL, Windows, certain configs)
+        # appends \r\n; $() strips \n but leaves \r, causing invisible string mismatch.
+        toplevel="$(git -C "$candidate" rev-parse --show-toplevel 2>/dev/null | tr -d '\r')" || { log "    SKIP: show-toplevel failed"; continue; }
         if [ "$toplevel" != "$candidate" ]; then
             log "    SKIP: toplevel mismatch (toplevel=$toplevel, candidate=$candidate)"
             continue  # nested directory inside another repo — skip
         fi
         # Check 3: is .git a real directory, not a worktree link?
-        git_dir_val="$(git -C "$candidate" rev-parse --git-dir 2>/dev/null)" || { log "    SKIP: git-dir failed"; continue; }
+        git_dir_val="$(git -C "$candidate" rev-parse --git-dir 2>/dev/null | tr -d '\r')" || { log "    SKIP: git-dir failed"; continue; }
         if [ "$git_dir_val" != ".git" ]; then
             log "    SKIP: git-dir is '$git_dir_val', not '.git' (worktree/submodule)"
             continue  # worktree or submodule with linked .git — skip
