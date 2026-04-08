@@ -1,11 +1,11 @@
 ---
 name: long-task-init
-description: "Use when ATS doc exists (or auto-skipped) but feature-list.json not yet created - scaffold project artifacts and decompose requirements into features"
+description: "Use when ATS doc exists (or auto-skipped) but feature-list.json not yet created - scaffold project artifacts and populate features from Design §10.2"
 ---
 
 # Initialize Long-Task Project
 
-Run once after both SRS and design are approved. Scaffolds all persistent artifacts, decomposes requirements into verifiable features, and prepares the project for iterative Worker cycles.
+Run once after both SRS and design are approved. Scaffolds all persistent artifacts, populates features from Design §10.2 (FRs already right-sized at Requirements phase), and prepares the project for iterative Worker cycles.
 
 **Announce at start:** "I'm using the long-task-init skill to scaffold the project."
 
@@ -172,31 +172,29 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - `constraints[]` — copy CON-xxx items from SRS "Constraints" section; each a concise string
    - `assumptions[]` — copy ASM-xxx items from SRS "Assumptions & Dependencies" section; each a concise string
    - NFR-xxx rows → create `category: "non-functional"` features with `srs_trace` (e.g. `["NFR-001"]`) and optionally measurable `verification_steps`; coverage/mutation gates do not apply to NFR features
-8. **Decompose requirements into features** — from the **SRS document** and **design document's Development Plan** (section 11), populate `feature-list.json` `features[]`:
-   - Each FR-xxx → one or more features with `id`, `category`, `title`, `description`, `priority`, `status` (always `"failing"`), `srs_trace`, `dependencies`
-   - Each feature MUST include `srs_trace`: an array of SRS requirement IDs (e.g. `["FR-001", "FR-002"]`) that this feature implements
-   - `verification_steps` is OPTIONAL — if provided, should trace to SRS acceptance criteria (Given/When/Then)
+8. **Populate features from Design §10.2** — FRs are already right-sized at the Requirements phase (G1-G6 over-size + S1-S4 under-size heuristics). The design document's Task Decomposition table (§10.2) maps right-sized FRs to prioritized features with dependency ordering. Populate `feature-list.json` `features[]`:
+   - Each §10.2 row → one feature. Do NOT further split or merge — granularity was finalized in the SRS phase.
+   - `srs_trace`: copy the "Mapped FRs" column — the array of FR IDs this feature implements (e.g. `["FR-003", "FR-004", "FR-005"]`)
+   - `title` + `description`: derive from the §10.2 Feature name + the grouped FRs' descriptions
+   - `priority`: P0/P1 → `"high"`, P2 → `"medium"`, P3 → `"low"`
+   - `dependencies`: from §10.3 Dependency Chain diagram
+   - `status`: always `"failing"`
    - For UI features: set `"ui": true`, `"ui_entry": "/path"` (mandatory — specify the URL where this feature's UI is accessed); include at least one `[devtools]`-prefixed verification step asserting **positive visual presence** of the feature's primary rendered output (not just error absence). Example: `"[devtools] /game | EXPECT: canvas#game-board with rendered game elements (snake segments, food item, score display), game board grid visible | REJECT: blank canvas, empty game container, 'undefined' in score"`
-   - **If verification_steps are provided** — quality rules (drives downstream ST case and TDD quality):
+   - `verification_steps` is OPTIONAL — if provided, consolidate acceptance criteria from all mapped FRs into behavioral scenarios (Given/When/Then):
      - Each step MUST be a behavioral scenario with Given/When/Then structure, not a simple assertion
      - BAD: `"Login page displays correctly"` → no action, no assertion
      - GOOD: `"[devtools] Navigate /login → EXPECT: email input, password input, 'Sign In' button; fill valid creds → click Sign In → EXPECT: redirect to /dashboard, user name in header; REJECT: console errors, broken images"`
-     - BAD: `"API returns 200 on valid input"` → this is an assertion, not a scenario
      - GOOD: `"Given a registered user, when POST /api/orders with valid payload, then response 201 with order ID; and GET /api/orders/{id} returns the created order with correct fields"`
      - For `"ui": true` features: every `[devtools]` step MUST describe a multi-step interaction chain (navigate → interact → verify → interact → verify)
      - For features with backend dependencies: at least one step MUST verify real data flow across the dependency boundary
      - **Minimum complexity**: each feature SHOULD have ≥ 1 verification_step with 3+ chained actions
    - **ATS category constraint** (if ATS document exists): for each feature, use srs_trace to look up ATS-required categories. If ANY srs_trace requirement has UI in its ATS categories, set `ui: true`.
-   - **Backend-frontend pairing rule**: Frontend features (`"ui": true`) MUST list their backend API dependency features in `dependencies[]`. Additionally, features MUST be ordered in the `features[]` array using **paired grouping**: after each backend feature, place its corresponding frontend feature(s) immediately next in the array. This ensures the Worker develops Backend A → Frontend A → Backend B → Frontend B, rather than all backends then all frontends.
-   - Aim for 10-200+ features; each independently verifiable and completable in one session
-   - **Priority ordering**: follow the design document's Task Decomposition table (section 11.2) — P0/P1/P2/P3 maps to high/high/medium/low
-   - **Dependency chain**: follow the design document's Dependency Chain diagram (section 11.3) to populate each feature's `dependencies[]`
-   - **Milestone mapping**: group features by the design document's milestones for logical ordering
-   - **Paired ordering within priorities**: Within each priority level, order features so that each backend feature is immediately followed by its frontend counterpart(s). Framework/infrastructure features (P0) come first without pairing. Example ordering:
-     - P0: framework/infrastructure features (no pairing needed)
-     - P1: [Backend Auth API, Frontend Auth Pages, Backend Orders API, Frontend Orders Pages, ...]
-     - P2: [Backend Reports API, Frontend Reports Dashboard, ...]
-     - The dependency mechanism ensures Frontend A cannot start until Backend A passes. The array ordering ensures Frontend A is the next candidate after Backend A.
+   - **Backend-frontend pairing rule**: Frontend features (`"ui": true`) MUST list their backend API dependency features in `dependencies[]`.
+   - **Ordering**: follow §10.2 row order (already priority-sorted and paired backend/frontend by Design)
+   - Each feature MUST be independently verifiable and completable in one session
+   - **Validation gate**: after populating all features, verify:
+     - Every FR-xxx from SRS appears in at least one feature's `srs_trace` (no orphaned requirements)
+     - Every feature's `srs_trace` contains at least one FR (no empty traces)
 9. **Populate `required_configs`** — from the **SRS document** (IFR-xxx interface requirements) and design doc:
    - API keys, service URLs → type `env`
    - Config files, certificates → type `file`
