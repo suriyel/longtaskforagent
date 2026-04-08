@@ -112,9 +112,11 @@ For non-trivial projects, break the design into sections and get approval per se
 8. **Deployment / infrastructure** (if applicable) — hosting, CI/CD, environments
 9. **Development plan** — milestones, task decomposition, priority ordering
    - Must define milestones with clear exit criteria
-   - Must decompose features into prioritized tasks (P0-P3)
+   - Must decompose into context-budget-sized features (P0-P3) — each row in §10.2 becomes one feature in `feature-list.json`; group related right-sized FRs (already validated by SRS G+S heuristics) into vertical slices; include `Mapped FRs` column for traceability
    - Must show dependency chain (Mermaid `graph`) identifying the critical path
    - Must include risk assessment with mitigation strategies
+
+> **Feature sizing is upstream**: FRs are right-sized at the Requirements phase via bidirectional granularity analysis (G1-G6 split + S1-S4 group). §10.2 groups these right-sized FRs into implementation features. Each row should map 1+ related FRs into a vertical slice that productively fills one Worker session (~50% of context window). Feature counts in the scaling table below refer to the final §10.2 row count.
 
 Present each section. Wait for user feedback. Incorporate changes before moving to the next.
 
