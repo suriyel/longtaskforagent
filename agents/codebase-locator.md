@@ -25,7 +25,7 @@ Collect source files based on depth:
 
 | Depth | Sampling Strategy |
 |-------|-------------------|
-| Quick | Top 30 files by most recently modified (use `git ls-files` + `ls -t`) |
+| Quick | Top 30 files by most recently modified (use `git ls-files` + `ls -t` if inside a git repo; fall back to `Glob` if not) |
 | Standard | Top 60 files: 40 most recent + 20 from diverse directories |
 | Deep | Top 120 files + all config files (`*.json`, `*.yaml`, `*.yml`, `*.toml`, `*.ini`, `*.xml`, `*.properties`, `*.env*`) |
 

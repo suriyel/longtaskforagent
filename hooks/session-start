@@ -26,4 +26,42 @@ if [ -f "$INIT_SCRIPT_SRC" ]; then
     printf '%s' "${PLUGIN_ROOT_HINT}" > "scripts/.long-task-plugin-root"
 fi
 
+# ── Multi-repo detection ────────────────────────────────────────────────────
+# If project root is NOT a git repo but has sub-dirs with .git, generate
+# repos-manifest.json so the router skill can detect the multi-repo topology.
+if [ ! -d ".git" ]; then
+    REPOS_JSON="["
+    FIRST=true
+    # Use process substitution to handle directory names with spaces
+    while IFS= read -r gitdir; do
+        repo_path="$(dirname "$gitdir")"
+        repo_path="${repo_path#./}"  # strip leading ./
+        repo_name="$(basename "$repo_path")"
+        # Escape double quotes and backslashes in names/paths for valid JSON
+        repo_name="${repo_name//\\/\\\\}"
+        repo_name="${repo_name//\"/\\\"}"
+        repo_path="${repo_path//\\/\\\\}"
+        repo_path="${repo_path//\"/\\\"}"
+        if [ "$FIRST" = true ]; then FIRST=false; else REPOS_JSON="${REPOS_JSON},"; fi
+        REPOS_JSON="${REPOS_JSON}{\"name\":\"${repo_name}\",\"path\":\"${repo_path}\"}"
+    done < <(find . -maxdepth 2 -name ".git" -type d 2>/dev/null | sort)
+    REPOS_JSON="${REPOS_JSON}]"
+
+    # Only write manifest if we found at least 1 sub-repo
+    if [ "$FIRST" = false ]; then
+        cat > "repos-manifest.json" <<EOFMANIFEST
+{
+  "detected": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "project_root_is_git": false,
+  "repos": ${REPOS_JSON}
+}
+EOFMANIFEST
+    fi
+else
+    # Project root IS a git repo — single repo mode, clean up any stale manifest
+    if [ -f "repos-manifest.json" ]; then
+        rm -f "repos-manifest.json"
+    fi
+fi
+
 exit 0
