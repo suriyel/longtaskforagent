@@ -35,6 +35,13 @@ You MUST complete each step in order:
 
 Read all input artifacts listed in Inputs above.
 
+### 1a. Project Structure
+
+After loading context, fill the "Project Structure" section of the template:
+1. From the design document §4.N and existing code (dependency features), identify all files this feature will create or modify
+2. Mark each as [existing], [new], or [modified]
+3. Include only files architecturally relevant to this feature — omit test utilities, configs unless directly modified
+
 ### 1b. Ambiguity Scan
 
 After reading all inputs and BEFORE writing any design content, scan for specification ambiguities that could affect design correctness. This scan uses the following taxonomy:

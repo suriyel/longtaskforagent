@@ -4,6 +4,26 @@
 **Status**: Approved
 **SRS Reference**: docs/plans/YYYY-MM-DD-<topic>-srs.md
 
+## 0. Project Structure
+
+> Target project directory tree. Mark each entry as **[existing]**, **[new]**, or **[modified]** to show the design's footprint on the codebase.
+
+```
+project-root/
+├── src/
+│   ├── models/              [existing]
+│   ├── services/            [new]
+│   │   └── auth_service.py  [new]
+│   └── api/
+│       ├── routes.py        [existing]
+│       └── middleware.py     [modified]
+├── tests/
+│   └── test_auth.py         [new]
+└── config.py                [existing]
+```
+
+[Replace the example above with the actual project directory tree. Include only directories and files that are architecturally significant — omit generated files, caches, and IDE configs. For brownfield projects, focus on areas touched by this design.]
+
 ## 1. Design Drivers
 [Key SRS inputs: NFR thresholds, constraints, interface requirements that shaped this design]
 

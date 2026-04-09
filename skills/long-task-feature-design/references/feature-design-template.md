@@ -7,6 +7,22 @@
 **Design Reference**: docs/plans/YYYY-MM-DD-<topic>-design.md § 4.N
 **SRS Reference**: FR-xxx
 
+## Project Structure
+
+> Files and directories touched by this feature. Mark as **[existing]**, **[new]**, or **[modified]**.
+
+```
+src/
+├── services/
+│   └── auth_service.py      [new]
+└── api/
+    └── middleware.py         [modified]
+tests/
+└── test_auth.py             [new]
+```
+
+[Replace with actual paths for this feature. Show only files this feature creates or modifies.]
+
 ## Context
 
 [1-2 sentences: what this feature does and why it matters]

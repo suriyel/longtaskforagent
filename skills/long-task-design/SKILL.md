@@ -77,6 +77,9 @@ Present **2-3 implementation approaches** with explicit trade-offs:
 
 For non-trivial projects, break the design into sections and get approval per section:
 
+0. **Project structure** — target project directory tree, marking [existing] / [new] / [modified] entries
+   - For greenfield: show the planned directory layout
+   - For brownfield: explore the existing codebase first (Step 2), then mark which directories/files this design will add or modify
 1. **Architecture** — system components, logical view, tech stack decisions
    - Must include a **Logical View** (Mermaid `graph`) showing layers/packages/modules and dependency directions
    - Must include a **Component Diagram** (Mermaid `graph`) showing runtime components and interactions
