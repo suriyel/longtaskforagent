@@ -196,8 +196,17 @@ You MUST create a TodoWrite task for each step and complete them in order:
     python scripts/validate_features.py feature-list.json
     ```
 12. **Scaffold project skeleton** (dirs, configs, dependency manifests) — based on **design doc** architecture
-13. **Git init + initial commit**
+13. **Git init + commit-msg hook + initial commit**
     > **Existing repo**: If the current directory already contains a `.git/` directory, **skip `git init`** — only stage and commit the newly scaffolded files. If the directory is not a git repo, run `git init` first.
+    
+    a. **Generate `.commit-conventions.json`** in project root:
+       - Read Design doc §12.8 (Commit Conventions) for format, subject length, branch naming
+       - If `docs/rules/commit-conventions.md` exists (brownfield), cross-reference scanner-detected conventions
+       - Map to config fields: `profile`, `prefix_whitelist`, `subject_max_length`, `subject_min_length`, `custom_pattern`
+       - Convention mapping: "Conventional Commits" → profile `conventional-commits`; "Angular" → `angular`; ticket prefix (e.g., `JIRA-xxx:`) → `ticket-prefixed` + `custom_pattern`; gitmoji → `gitmoji`; no convention → `freeform`
+       - If greenfield with no specific convention, default to `conventional-commits`
+    b. The `commit-msg` hook is **auto-installed by the session-start hook** whenever `.commit-conventions.json` exists — no manual install needed. If a pre-existing hook is found, it is chained as `.git/hooks/commit-msg.user`.
+    c. Include `.commit-conventions.json` in the initial commit (project config, should be versioned)
 14. **Run init script and verify environment**:
     - Run `init.sh` (or `init.ps1`), verify environment setup completes without errors
     - Verify test execution works: activate env → run test command from `long-task-guide.md` → confirm tests execute (may all fail at this point — that's expected)

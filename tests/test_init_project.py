@@ -436,6 +436,18 @@ def test_stdout_mentions_llm_todo():
         shutil.rmtree(tmp)
 
 
+def test_commit_msg_hook_not_copied_by_init():
+    """commit-msg-hook should NOT be in scripts/ — it is installed by the session-start hook."""
+    tmp = tempfile.mkdtemp()
+    try:
+        run_init("test-project", tmp)
+        hook_path = os.path.join(tmp, "scripts", "commit-msg-hook")
+        assert not os.path.exists(hook_path), \
+            "scripts/commit-msg-hook should NOT be created by init_project.py"
+    finally:
+        shutil.rmtree(tmp)
+
+
 if __name__ == "__main__":
     tests = [
         test_creates_all_artifacts,

@@ -252,6 +252,7 @@ Record in `task-progress.md`:
   > **Commit format**: If Design §13.8 documents commit conventions, follow that format. Otherwise use defaults below.
   > **For `category: "bugfix"` features**: use commit prefix `"fix:"` instead of `"feat:"`.
   > Format: `fix: <feature title without the "Fix: " prefix> (#<fixed_feature_id>)`
+  > **Hook enforcement**: The `commit-msg` hook validates conventions automatically via `.commit-conventions.json`. If the commit is rejected, read the printed convention spec and retry with the correct format.
 - Capture the commit SHA immediately after the commit:
   ```bash
   git rev-parse --short HEAD

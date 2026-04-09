@@ -161,6 +161,7 @@ Key files:
 | `docs/plans/*-ats.md` | 0d | Approved ATS (req→scenario mapping; reviewed by ats-reviewer) |
 | `bugfix-request.json` | Hotfix | Signal file (deleted after processing) |
 | `increment-request.json` | Increment | Signal file (deleted after processing) |
+| `.commit-conventions.json` | 1 | Commit convention config (hook reads at commit time) |
 | `feature-list.json` | 1 | Task inventory with status, constraints, assumptions, waves |
 | `long-task-guide.md` | 1 | Worker session guide (env activation, test/coverage/mutation commands) |
 | `env-guide.md` | 1 | Service lifecycle commands (start/stop/restart/verify) |
