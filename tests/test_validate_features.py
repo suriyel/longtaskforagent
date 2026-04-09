@@ -1180,114 +1180,6 @@ def test_report_path_valid_passes():
         assert "no report_path" not in stdout.lower()
 
 
-# --- cross_repo_dep validation tests ---
-
-def test_valid_cross_repo_dep():
-    """Feature with valid cross_repo_dep should pass."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "Frontend Login",
-                "description": "Login page", "priority": "high", "status": "failing",
-                "dependencies": [],
-                "cross_repo_dep": {
-                    "repo": "backend",
-                    "repo_path": "/home/user/project/backend",
-                    "feature_title": "Auth API",
-                    "srs_trace": "FR-001a"
-                }
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 for valid cross_repo_dep: {stdout}"
-
-
-def test_cross_repo_dep_not_dict_fails():
-    """cross_repo_dep that is not a dict should fail."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "dependencies": [],
-                "cross_repo_dep": "backend"
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero for non-dict cross_repo_dep: {stdout}"
-    assert "cross_repo_dep" in stdout
-
-
-def test_cross_repo_dep_missing_key_fails():
-    """cross_repo_dep missing a required key should fail."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "dependencies": [],
-                "cross_repo_dep": {
-                    "repo": "backend",
-                    "repo_path": "/home/user/project/backend"
-                    # missing feature_title and srs_trace
-                }
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero for missing cross_repo_dep keys: {stdout}"
-    assert "feature_title" in stdout or "srs_trace" in stdout
-
-
-def test_cross_repo_dep_non_string_value_fails():
-    """cross_repo_dep with a non-string value should fail."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "dependencies": [],
-                "cross_repo_dep": {
-                    "repo": 123,
-                    "repo_path": "/home/user/project/backend",
-                    "feature_title": "Auth API",
-                    "srs_trace": "FR-001a"
-                }
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero for non-string cross_repo_dep value: {stdout}"
-    assert "cross_repo_dep" in stdout
-
-
-def test_feature_without_cross_repo_dep_ok():
-    """Feature without cross_repo_dep should pass (field is optional)."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "dependencies": []
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 for feature without cross_repo_dep: {stdout}"
-
-
 if __name__ == "__main__":
     tests = [
         test_valid_feature_list,
@@ -1345,11 +1237,6 @@ if __name__ == "__main__":
         test_report_path_file_does_not_exist_fails,
         test_report_path_missing_on_passing_feature_warns,
         test_report_path_valid_passes,
-        test_valid_cross_repo_dep,
-        test_cross_repo_dep_not_dict_fails,
-        test_cross_repo_dep_missing_key_fails,
-        test_cross_repo_dep_non_string_value_fails,
-        test_feature_without_cross_repo_dep_ok,
     ]
     passed = 0
     failed = 0

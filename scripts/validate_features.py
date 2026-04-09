@@ -13,7 +13,6 @@ Checks:
 - tech_stack.language is a supported value (if present)
 - quality_gates values are numbers between 0 and 100 (if present)
 - git_sha field is a valid hex string 7–40 chars (if present)
-- cross_repo_dep is a valid object with required keys (if present, for multi-repo projects)
 - report_path file exists on disk (if present); warns if missing for passing features
 
 Usage:
@@ -291,24 +290,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                 errors.append(
                     f"{prefix} (id={fid}): 'git_sha' must be a hex string of 7–40 characters, got {git_sha!r}"
                 )
-
-        # Check cross_repo_dep field (optional — set during multi-repo SRS split)
-        cross_repo_dep = feat.get("cross_repo_dep")
-        if cross_repo_dep is not None:
-            if not isinstance(cross_repo_dep, dict):
-                errors.append(
-                    f"{prefix} (id={fid}): 'cross_repo_dep' must be an object, got {type(cross_repo_dep).__name__}"
-                )
-            else:
-                for req_key in ("repo", "repo_path", "feature_title", "srs_trace"):
-                    if req_key not in cross_repo_dep:
-                        errors.append(
-                            f"{prefix} (id={fid}): 'cross_repo_dep' missing required key '{req_key}'"
-                        )
-                    elif not isinstance(cross_repo_dep[req_key], str):
-                        errors.append(
-                            f"{prefix} (id={fid}): 'cross_repo_dep.{req_key}' must be a string"
-                        )
 
         # Check report_path field (optional — set by Worker Step 11a after report generation)
         report_path = feat.get("report_path")

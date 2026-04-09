@@ -9,12 +9,10 @@ You are a codebase convention scanner. You analyze an existing project's source 
 ## Invocation
 
 Dispatched as a SubAgent during Phase 0-pre (before requirements elicitation) by the `using-long-task` router. Receives:
-- Working directory path (may be a sub-repo directory in multi-repo projects)
+- Working directory path
 - Primary language(s) and framework(s) detected by the router
 - Scan depth level (`lightweight` / `standard` / `deep`)
 - Source file list (pre-filtered, excluding .git/, node_modules/, venv/, dist/, build/)
-
-> **Multi-repo note**: In multi-repo projects, this agent is dispatched once per repo with the repo's directory as the working directory. All git commands must run relative to the provided working directory (which IS a git repo). Output files go to `<working_directory>/docs/rules/`.
 
 ## Design Principles
 
@@ -174,7 +172,7 @@ This is the **most critical** output. Focus on constraints that would cause non-
 
 Analyze git history and repository configuration.
 
-> **Git command context**: All git commands below run in the working directory provided at invocation. In multi-repo projects, this is a sub-repo directory that IS a git repository. Do NOT attempt to run git commands from a parent directory that may not have `.git/`.
+> **Git command context**: All git commands run in the working directory provided at invocation. Ensure the working directory is a git repository before running git commands.
 
 **Commit Message Format** — run `git log --oneline -100` and analyze:
 - Format detection: Conventional Commits (`feat:`, `fix:`, `chore:`), Angular-style, gitmoji, ticket-prefixed (`JIRA-123:`), free-form

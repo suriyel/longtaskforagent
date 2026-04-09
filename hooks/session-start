@@ -92,8 +92,8 @@ if [ ! -d ".git" ]; then
 
     # Only write manifest if we found at least 1 validated sub-repo
     if [ "$FIRST" = false ]; then
-        # Preserve existing manifest — downstream skills (Requirements Step 15.5)
-        # enrich it with srs_path, status, global_srs, cross_repo_deps, etc.
+        # Preserve existing manifest — downstream skills (long-task-multi-repo)
+        # enrich it with global_srs, cross_repo_deps, etc.
         # Hook only creates the initial manifest; never overwrites an existing one.
         # To re-detect repos, delete repos-manifest.json and restart the session.
         if [ -f "repos-manifest.json" ]; then

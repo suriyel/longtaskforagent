@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 12 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 13 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration. Independent `long-task-multi-repo` skill for multi-repo projects.
 
 ## Key Commands
 
@@ -31,17 +31,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 12-Skill System
+### 13-Skill System
 
 #### Phase Skills
 
 | Skill | Phase | Trigger |
 |-------|-------|---------|
 | `using-long-task` | Bootstrap | Routes to correct phase; invoked by LLM at session start based on skill description |
+| `long-task-multi-repo` | Multi-repo | `repos-manifest.json` exists — exploration, global SRS, split, dependency distribution |
 | `long-task-hotfix` | Hotfix | `bugfix-request.json` exists (HIGHEST priority) |
 | `long-task-increment` | Phase 1.5 | `increment-request.json` exists |
 | `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS/rules docs, >3 source files — brownfield scan |
-| `long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json |
+| `long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json (single-repo only) |
 | `long-task-design` | Phase 0b | SRS exists, no design doc, no feature-list.json |
 | `long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
 | `long-task-init` | Phase 1 | ATS doc exists (or auto-skipped), no feature-list.json |
@@ -66,6 +67,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 using-long-task (router)
+   ├─→ long-task-multi-repo (repos-manifest.json exists — exploration, global SRS, split, dep distribution, handoff)
    ├─→ codebase-scanner SubAgent (brownfield, no docs/rules/) ──→ long-task-requirements (rule 7b) OR long-task-design (rule 5b)
    ├─→ long-task-requirements ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ long-task-work
    │                                                  (auto-skip: ≤5 FR)
@@ -93,7 +95,8 @@ long-task-explore (standalone — no pipeline dependency)
 | Phase | Skill | Key Output |
 |-------|-------|------------|
 | 0-pre: Codebase Scan (brownfield) | `codebase-scanner` SubAgent | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns, commit conventions |
-| 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds); multi-repo: global SRS + per-repo SRS split (Step 15.5) |
+| 0-multi: Multi-Repo | `long-task-multi-repo` | Global SRS + per-repo SRS split + dependency distribution; session ends with handoff |
+| 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds) |
 | 0b: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §13 if brownfield) |
 | 0d: ATS | `long-task-ats` | `docs/plans/*-ats.md` (req→scenario mapping; independent reviewer subagent; auto-skips ≤5 FR) |
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
@@ -122,35 +125,37 @@ long-task-explore (standalone — no pipeline dependency)
 - **Service lifecycle via env-guide.md**: All start/stop/restart use `env-guide.md` commands. Follow 4-step Restart Protocol between test cycles. Capture first 30 lines of startup output for PID/port.
 - **Startup output in code**: Servers must print bound port, PID, and ready signal at startup.
 - **2/3方件 constraints binding**: Design §13.1 mandatory internal libraries and §13.2 prohibited APIs are binding for all new code.
-- **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → run codebase-scanner first (rule 7b: before requirements; rule 5b: before design in multi-repo sub-repos where SRS was created by Step 15.5).
+- **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → run codebase-scanner first (rule 7b: before requirements; rule 5b: before design in brownfield repos).
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
-- **Multi-repo: hook detection + global SRS + per-repo pipeline**: session-start hook detects multi-repo topology and generates `repos-manifest.json`. Requirements phase does global SRS then splits to per-repo SRS. Each repo then independently follows the full single-repo pipeline (Design → ATS → Init → Worker → ST). Router asks user which repo to work on each session.
-- **Multi-repo: cross-repo features split in requirements**: Cross-repo requirements are split into per-repo FRs during SRS split (Step 15.5), linked via `dependencies` and IFR contracts with absolute paths. Never create a single feature spanning multiple repos.
+- **Multi-repo: fully handled by independent `long-task-multi-repo` skill**: Hook detects topology → router invokes skill → skill does exploration, global SRS, split, dependency distribution, handoff. User then independently cd's into each repo for single-repo pipeline.
 
 ### Multi-Repo Support
 
-Projects with multiple git repositories under a non-git root directory are supported via:
+Projects with multiple git repositories under a non-git root directory are handled by the independent `long-task-multi-repo` skill:
 
-1. **Hook detection**: `hooks/session-start` detects sub-directory git repos and generates `repos-manifest.json` at project root
-2. **Global requirements**: `long-task-requirements` runs at project root, exploring all repos (Step 1.1), collecting global SRS
-3. **SRS split**: Step 15.5 splits global SRS into per-repo SRS documents (`<repo>/docs/plans/*-srs.md`), with cross-repo deps as IFR contracts
-4. **Per-repo pipeline**: Each repo independently runs Design → ATS → Init → Worker → ST in its own directory (which IS a git repo)
-5. **Session routing**: Router presents repo selection UI via `AskUserQuestion` at session start
+1. **Hook detection**: `hooks/session-start` detects sub-directory git repos, generates `repos-manifest.json`
+2. **Router invocation**: `using-long-task` detects manifest → invokes `long-task-multi-repo`
+3. **Multi-repo skill**: Explores all repos, elicits global requirements, writes global SRS, splits into per-repo SRS with IFR contracts, distributes dependency files (reference docs, global SRS, deferred backlog, cross-repo deps) to each sub-repo
+4. **Independent execution**: User cd's into each repo directory and runs the full single-repo pipeline (Design → ATS → Init → Worker → ST) independently
 
 Key files:
-- `repos-manifest.json` — multi-repo topology (generated by hook; absent in single-repo projects)
-- `docs/plans/*-srs.md` (at project root) — global SRS (multi-repo reference document)
-- `<repo>/docs/plans/*-srs.md` — per-repo SRS (each repo's independent SRS)
-- `cross_repo_dep` field in `feature-list.json` features — links to features in other repos
+- `repos-manifest.json` — multi-repo topology + cross-repo deps (generated by hook, enriched by multi-repo skill; absent in single-repo projects)
+- `docs/plans/*-srs.md` (at project root) — global SRS (multi-repo reference)
+- `<repo>/docs/plans/*-srs.md` — per-repo SRS with IFR contracts
+- `<repo>/docs/plans/cross-repo-deps.md` — per-repo cross-repo dependency summary
+- `<repo>/docs/references/` — user-provided reference docs copied from project root
 
 ### Generated Persistent Artifacts
 
 | File | Phase | Purpose |
 |------|-------|---------|
-| `repos-manifest.json` | Hook | Multi-repo topology manifest (generated by session-start hook; absent in single-repo) |
+| `repos-manifest.json` | Hook + multi-repo | Multi-repo topology + cross-repo deps (generated by hook, enriched by multi-repo skill; absent in single-repo) |
 | `docs/rules/*.md` | 0-pre | Codebase conventions (brownfield; merged into Design §13) |
-| `docs/plans/*-srs.md` | 0a | Approved SRS |
+| `docs/plans/*-srs.md` | 0a / multi-repo | Approved SRS (single-repo: per-repo; multi-repo: global at root + per-repo in each sub-repo) |
+| `<repo>/docs/plans/global-srs.md` | multi-repo | Copy of global SRS distributed to each sub-repo |
+| `<repo>/docs/plans/cross-repo-deps.md` | multi-repo | Per-repo cross-repo interface dependency summary |
+| `<repo>/docs/references/*` | multi-repo | User-provided reference docs copied from project root |
 | `docs/plans/*-deferred.md` | 0a | Deferred requirements backlog |
 | `docs/plans/*-design.md` | 0b | Approved design (includes §13 codebase constraints) |
 | `docs/plans/*-ats.md` | 0d | Approved ATS (req→scenario mapping; reviewed by ats-reviewer) |
@@ -207,8 +212,7 @@ Each feature:
   "report_path": "optional — set by Worker Step 11a",
   "bug_severity": "Critical|Major|Minor|Cosmetic (bugfix only)",
   "bug_source": "manual-testing (bugfix only)",
-  "fixed_feature_id": null, "root_cause": "confirmed root cause (bugfix only)",
-  "cross_repo_dep": {"repo": "backend", "repo_path": "/abs/path/to/backend", "feature_title": "Backend Auth API", "srs_trace": "FR-001a"}
+  "fixed_feature_id": null, "root_cause": "confirmed root cause (bugfix only)"
 }
 ```
 
@@ -217,7 +221,6 @@ Key field notes:
 - `git_sha`: 7–40 char hex; validated by `validate_features.py`
 - `deprecated: true` → `deprecated_reason` required; excluded from Worker/ST/routing
 - `waves[]`: increment batch tracking; `wave` on feature = which wave introduced/modified it
-- `cross_repo_dep`: optional; multi-repo only — links to a feature in another repo via absolute path + SRS trace ID
 
 ## File Structure
 
@@ -226,6 +229,7 @@ long-task-agent/
 ├── skills/
 │   ├── using-long-task/SKILL.md + references/architecture.md
 │   ├── long-task-requirements/SKILL.md + references/{problem-framing,scenario-walkthrough,hypothesis-correction,alignment-validation}.md
+│   ├── long-task-multi-repo/SKILL.md + references/ (symlinks to requirements refs) + prompts/ (symlinks)
 │   ├── long-task-hotfix/SKILL.md
 │   ├── long-task-increment/SKILL.md
 │   ├── long-task-design/SKILL.md
@@ -258,6 +262,7 @@ long-task-agent/
 - [skills/long-task-work/references/subagent-development.md](skills/long-task-work/references/subagent-development.md) — Subagent-driven development
 - [skills/long-task-work/references/worktree-isolation.md](skills/long-task-work/references/worktree-isolation.md) — Worktree isolation
 - [skills/long-task-st/references/st-recipes.md](skills/long-task-st/references/st-recipes.md) — ST tool recipes per language
+- [skills/long-task-multi-repo/SKILL.md](skills/long-task-multi-repo/SKILL.md) — Multi-repo requirements, SRS split, dependency distribution
 - [skills/long-task-explore/SKILL.md](skills/long-task-explore/SKILL.md) — Standalone deep codebase exploration
 - [agents/codebase-locator.md](agents/codebase-locator.md) — Codebase structure locator (breadth-first)
 - [agents/codebase-analyzer.md](agents/codebase-analyzer.md) — Architecture/data flow/domain analyzer (depth-first)
@@ -267,11 +272,11 @@ long-task-agent/
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 12 skills loaded on-demand.
+This project uses a multi-session agent workflow with 13 skills loaded on-demand.
 The `using-long-task` skill routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS in place → new features appended → Worker cycles → ST.
 
-Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS; in multi-repo: global SRS at root + per-repo SRS in each repo dir), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory; in multi-repo: one per repo), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `docs/report/feature-*-report.md` (per-feature development reports), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
-Multi-repo support: session-start hook detects sub-directory git repos → `repos-manifest.json`. Requirements phase builds global SRS then splits per-repo (Step 15.5). Each repo then independently follows the full single-repo pipeline. Router asks user which repo to work on each session.
+Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `docs/report/feature-*-report.md` (per-feature development reports), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
+Multi-repo support: session-start hook detects sub-directory git repos → `repos-manifest.json`. Independent `long-task-multi-repo` skill handles exploration, global SRS, per-repo split, and dependency distribution. User then independently cd's into each repo to run the single-repo pipeline.
 <!-- /long-task-agent -->
