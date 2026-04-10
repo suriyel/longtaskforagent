@@ -39,10 +39,6 @@ COMPLETE_GUIDE = """# My Project — Long-Task Worker Guide
 1. Run `bash init.sh`
 2. Quick smoke test
 
-### Step 2.5: Config Gate — verify required configurations
-1. Read `required_configs` from `feature-list.json`
-2. Run: `python scripts/check_configs.py feature-list.json --feature <id>`
-
 ### Step 3: TDD Red — write failing tests first
 1. Write unit tests covering verification_steps — they MUST fail
 
@@ -92,18 +88,6 @@ def test_empty_guide_fails():
     """An empty guide should fail validation."""
     code, stdout, _ = run_validator("")
     assert code != 0, f"Expected non-zero for empty guide: {stdout}"
-
-
-def test_missing_config_gate_fails():
-    """A guide missing the Config Gate section should fail."""
-    # Remove config gate related content
-    content = COMPLETE_GUIDE.replace("Config Gate", "Setup Check")
-    content = content.replace("required_config", "setup_item")
-    content = content.replace("required config", "setup item")
-    content = content.replace("check_configs", "setup_checker")
-    code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when Config Gate missing: {stdout}"
-    assert "Config Gate" in stdout or "required config" in stdout.lower()
 
 
 def test_missing_tdd_red_fails():
@@ -184,9 +168,6 @@ Read task-progress.md and feature-list.json.
 ### Restore environment
 Run init.sh to bootstrap.
 
-### Check required configurations
-Run check_configs.py for the target feature.
-
 ### Write failing tests first
 Write unit tests that MUST fail before implementation.
 
@@ -243,7 +224,6 @@ if __name__ == "__main__":
     tests = [
         test_complete_guide_passes,
         test_empty_guide_fails,
-        test_missing_config_gate_fails,
         test_missing_tdd_red_fails,
         test_missing_coverage_gate_fails,
         test_missing_mutation_gate_fails,

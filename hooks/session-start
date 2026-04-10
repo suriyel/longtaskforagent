@@ -112,7 +112,7 @@ EOFMANIFEST
         # ── Copy init_project.py + plugin-root hint into each validated sub-repo
         # Each sub-repo runs the Init phase independently and needs its own
         # scripts/init_project.py + .long-task-plugin-root to locate and copy
-        # helper scripts (validate_features.py, check_configs.py, etc.).
+        # helper scripts (validate_features.py, etc.).
         if [ -f "$INIT_SCRIPT_SRC" ]; then
             for candidate in ${VALIDATED_REPOS[@]+"${VALIDATED_REPOS[@]}"}; do
                 # Use relative path from project root (consistent with manifest)

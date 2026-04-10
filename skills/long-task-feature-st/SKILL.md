@@ -87,7 +87,7 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
 - **`### Verdict: FAIL`** or **`### Verdict: BLOCKED`**
   1. Read the Issues table — identify failure details
   2. **Main Agent classifies each issue** into one of two categories:
-     - **Human manual testing** (escalate immediately via `AskUserQuestion`): missing `required_configs[]` secrets or credentials the AI cannot provide, external human action required (third-party approval, manual account setup, hardware interaction)
+     - **Human manual testing** (escalate immediately via `AskUserQuestion`): missing secrets or credentials the AI cannot provide, external human action required (third-party approval, manual account setup, hardware interaction)
      - **AI self-fix** (everything else): code bugs causing test failures, environment startup issues, port conflicts, dependency errors, external service errors, test execution failures due to implementation issues
   3. For AI self-fix issues: record in `task-progress.md`, fix code or environment, re-dispatch SubAgent. **No retry limit** — AI must keep fixing until resolved.
   4. For human manual testing issues: escalate via `AskUserQuestion` with issue details. Feature stays BLOCKED until human responds.

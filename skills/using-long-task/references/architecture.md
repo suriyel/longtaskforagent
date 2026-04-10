@@ -249,7 +249,7 @@ Its job:
 2. **Run `init_project.py`** — scaffolds deterministic artifacts: `feature-list.json`, `task-progress.md`, `RELEASE_NOTES.md`, `examples/`, `scripts/`, `docs/plans/`
 3. **LLM generates `long-task-guide.md`** — project-tailored Worker guide based on SKILL.md + references + design doc; only includes the project's language-specific commands; validated by `validate_guide.py`
 4. **LLM generates `init.sh`/`init.ps1`** — real, runnable bootstrap scripts based on the design doc's tech stack; must support the project's environment manager (conda/miniconda/mamba, venv, poetry, uv, nvm, fnm, sdkman, docker, etc.); see `skills/long-task-init/references/init-script-recipes.md` for per-tool templates; must be idempotent and cross-platform
-5. **Populate `feature-list.json`** — from SRS: `constraints[]` (CON-xxx), `assumptions[]` (ASM-xxx), NFR-xxx → non-functional features, FR-xxx → functional features with `srs_trace` (requirement IDs) and optional `verification_steps`; from design: `required_configs` for external dependencies
+5. **Populate `feature-list.json`** — from SRS: `constraints[]` (CON-xxx), `assumptions[]` (ASM-xxx), NFR-xxx → non-functional features, FR-xxx → functional features with `srs_trace` (requirement IDs) and optional `verification_steps`
 7. **Set up project skeleton** — directory structure, config files, package.json / pyproject.toml etc. (based on design doc architecture)
 8. **Initial git commit** — establish baseline
 9. **Verify environment** — run init script, confirm basic setup works
@@ -267,7 +267,6 @@ Its job:
 | `features[]` content | **LLM** | **SRS** | FR-xxx → features with `srs_trace` (requirement IDs) and optional `verification_steps` |
 | `constraints[]` content | **LLM** | **SRS** | Extracted from SRS "Constraints" section (CON-xxx) |
 | `assumptions[]` content | **LLM** | **SRS** | Extracted from SRS "Assumptions" section (ASM-xxx) |
-| `required_configs[]` | **LLM** | **SRS** + Design | Interface requirements (IFR-xxx) + design integration points |
 
 ## Worker Session Workflow (Context Cycle)
 
@@ -283,15 +282,6 @@ Each worker cycle follows this exact sequence.
 
 ### Phase 2: Bootstrap (restore environment)
 6. Run `init.sh` / `init.ps1` — start dev server / services
-
-### Phase 2.5: Config Gate (verify required configurations)
-7a. Read `required_configs` from `feature-list.json`
-7b. Filter to configs where the target feature's ID appears in `required_by`
-7c. For `env` type: check environment variable is set and non-empty
-7d. For `file` type: check file at `path` exists and is non-empty
-7e. If any missing: report with name, description, check_hint; ask user via `AskUserQuestion`; re-check after user responds
-7f. Only proceed to Phase 3 when all required configs pass
-7g. Shortcut: `python scripts/check_configs.py feature-list.json --feature <id>`
 
 ### Phase 3: TDD Red — write failing tests first
 8. Pick the highest-priority `"failing"` feature whose dependencies are all `"passing"`
@@ -375,8 +365,6 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | Skipping progress file update | Next session wastes tokens rediscovering state | Always update before ending session |
 | Not committing at session end | Work may be lost, next session can't diff | Always commit working code |
 | Using markdown for feature list | Models tend to corrupt/reformat markdown lists | Use JSON for structured data |
-| Mocking configs that should be real | Tests pass but app fails with real services | Declare in `required_configs`, gate before planning |
-| Skipping config check before feature work | Wasted planning/TDD cycle when config turns out missing | Always run Config Gate for features with external deps |
 | Skipping requirements phase | Incomplete/ambiguous requirements cause rework | Run requirements elicitation, produce approved SRS first |
 | Skipping design phase | Ad-hoc design causes inconsistency and rework | Run design phase after SRS, get approval first |
 | Guess-and-fix debugging | Random fixes waste time and may introduce new bugs | Follow systematic debugging — trace root cause. See [systematic-debugging.md](../../long-task-work/references/systematic-debugging.md) |

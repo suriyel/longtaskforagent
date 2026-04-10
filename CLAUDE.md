@@ -15,7 +15,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|typescript] [--line-cov N] [--branch-cov N] [--mutation-score N]` |
 | Validate feature-list | `python scripts/validate_features.py feature-list.json` |
 | Validate guide | `python scripts/validate_guide.py long-task-guide.md` |
-| Check configs | `python scripts/check_configs.py feature-list.json [--feature N]` |
 | Validate ATS | `python scripts/validate_ats.py docs/plans/ats.md [--srs docs/plans/srs.md]` |
 | Check ATS coverage | `python scripts/check_ats_coverage.py docs/plans/ats.md --feature-list feature-list.json [--feature N] [--strict]` |
 | Check ST readiness | `python scripts/check_st_readiness.py feature-list.json` |
@@ -107,7 +106,7 @@ long-task-explore (standalone — no pipeline dependency)
 
 ### Critical Rules
 
-- **Gate order**: Config gate → Requirements (SRS) → Design → ATS → Init → TDD → Coverage → Mutation → Feature-ST → ST → Finalize. No skipping.
+- **Gate order**: Requirements (SRS) → Design → ATS → Init → TDD → Coverage → Mutation → Feature-ST → ST → Finalize. No skipping.
 - **ATS reviewer mandatory**: Independent subagent reviews ATS before approval; max 2 fix rounds then user escalation.
 - **ATS constrains downstream**: `srs_trace` → ATS category lookup; feature-st must satisfy ATS category requirements.
 - **Strict TDD**: Always Red→Green→Refactor. Coverage: line ≥90%, branch ≥80%. Mutation: score ≥80% (feature-scoped if >`mutation_full_threshold` active features; full during ST).
@@ -169,7 +168,6 @@ Key files:
 | `task-progress.md` | 1 | `## Current State` + session log |
 | `RELEASE_NOTES.md` | 1 | Keep a Changelog format |
 | `init.sh` / `init.ps1` | 1 | Environment bootstrap |
-| `.env.example` | 1 | Required env config template |
 | `docs/features/YYYY-MM-DD-<name>.md` | 2 | Per-feature detailed design |
 | `docs/test-cases/feature-*.md` | 2 | Per-feature ST test cases (ISO/IEC/IEEE 29119) |
 | `docs/report/feature-*-report.md` | 2 | Per-feature development report |
@@ -200,10 +198,6 @@ Key files:
   "waves": [{ "id": 0, "date": "2025-01-15", "description": "Initial release" }],
   "constraints": ["Hard limit"],
   "assumptions": ["Implicit belief"],
-  "required_configs": [{
-    "name": "Display name", "type": "env|file", "key": "ENV_VAR (env type)", "path": "path/to/file (file type)",
-    "description": "...", "required_by": [1, 3], "check_hint": "..."
-  }],
   "ats_template_path": "optional", "ats_review_template_path": "optional", "ats_example_path": "optional",
   "st_case_template_path": "optional", "st_case_example_path": "optional",
   "features": [...]
@@ -259,7 +253,7 @@ long-task-agent/
 ├── agents/{codebase-scanner,ats-reviewer,example-generator,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
-├── scripts/{get_tool_commands,validate_features,validate_guide,check_configs,
+├── scripts/{get_tool_commands,validate_features,validate_guide,
 │           check_st_readiness,validate_ats,check_ats_coverage,
 │           validate_bugfix_request,validate_increment_request,validate_st_cases,
 │           auto_loop,auto_loop_opencode}.py

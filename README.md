@@ -186,7 +186,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 
 每个循环遵循严格纪律：
 
 ```
-定位 → 引导 → 配置门禁 → 开发工具门禁 → 计划
+定位 → 引导 → 开发工具门禁 → 计划
   → TDD 红 → TDD 绿 → 覆盖率门禁
     → TDD 重构 → 变异门禁
       → 功能 ST（黑盒） → 内联合规检查
@@ -312,7 +312,6 @@ python scripts/auto_loop.py feature-list.json --prompt "继续"
 |------|------|
 | `validate_features.py` | 验证 `feature-list.json` 模式和数据完整性 |
 | `validate_guide.py` | 验证 `long-task-guide.md` 结构完整性 |
-| `check_configs.py` | 在功能工作前验证所需的环境配置 |
 | `check_st_readiness.py` | 在系统测试前确认所有功能通过 |
 | `validate_increment_request.py` | 验证增量请求信号文件 |
 | `validate_st_cases.py` | 验证 ST 测试用例文档（ISO/IEC/IEEE 29119） |

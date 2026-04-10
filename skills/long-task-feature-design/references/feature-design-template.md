@@ -131,7 +131,7 @@ END
 | B  | FUNC/error | §Interface Contract Raises | [trigger condition] | [exception type + msg] | [missing branch] |
 | C  | BNDRY/edge | §Algorithm boundary table | [edge value] | [exact behavior] | [off-by-one or missing guard] |
 | D  | FUNC/state | §State Diagram transition | [pre-state + event] | [post-state] | [missing guard condition] |
-| E  | INTG/db    | §Interface Contract + required_configs | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
+| E  | INTG/db    | §Interface Contract + external dependency | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
 | F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
 
 Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, PERF, INTG` and subtag is a free-form label.

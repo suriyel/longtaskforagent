@@ -132,7 +132,7 @@ Test cross-feature interactions. Read `references/st-recipes.md` for language-sp
 <HARD-GATE>
 Every internal cross-feature boundary MUST have at least one real integration test (real DB, real HTTP, real file system). Contract tests (mocks) do NOT satisfy this gate.
 
-For external third-party boundaries: if test credentials are available in `required_configs` or environment, write real integration tests. Otherwise, use contract tests and record the reason in the Mock Authorization column.
+For external third-party boundaries: if test credentials are available in the project configuration or environment, write real integration tests. Otherwise, use contract tests and record the reason in the Mock Authorization column.
 </HARD-GATE>
 
 For each pair of features sharing data, state, or API boundaries:
@@ -154,7 +154,7 @@ For each pair of features sharing data, state, or API boundaries:
 - If real service cannot start: boundary is **BLOCKED** (not skipped) — diagnose via env-guide.md
 
 **External boundary protocol:**
-1. Check `required_configs` and environment for test credentials/sandbox environment
+1. Check project configuration and environment for test credentials/sandbox environment
 2. If available → write real integration tests (preferred)
 3. If unavailable → use contract tests; record reason in Mock Authorization column
 

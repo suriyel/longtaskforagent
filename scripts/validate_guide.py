@@ -28,8 +28,6 @@ REQUIRED_SECTIONS = [
      [r"orient", r"current state", r"understand.*state"]),
     ("Bootstrap / restore environment",
      [r"bootstrap", r"restore.*environment", r"init\s*script", r"init\.sh"]),
-    ("Config Gate / required configurations",
-     [r"config\s*gate", r"required.config", r"check_configs"]),
     ("TDD Red / failing tests first",
      [r"tdd\s*red", r"failing\s*tests?\s*first", r"write.*failing.*test"]),
     ("TDD Green / implement to pass",

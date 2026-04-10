@@ -53,7 +53,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - `skills/long-task-quality/coverage-recipes.md` — coverage/mutation tool setup
      - `skills/using-long-task/references/architecture.md` — TDD workflow details
    - Include ONLY the project's language-specific coverage/mutation commands (get from `python scripts/get_tool_commands.py feature-list.json`)
-   - **Must include all required sections**: Orient, Bootstrap, Config Gate, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules
+   - **Must include all required sections**: Orient, Bootstrap, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules
    - **Must include `Environment Commands` section** with:
      - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate myenv`, `nvm use 20`)
      - Direct test execution command (e.g., `pytest --cov=src tests/`)
@@ -61,7 +61,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - Direct coverage report command
      - These replace the now-removed test.sh/mutate.sh wrappers — Claude runs these directly
    - **Must include `Service Commands` section** (only if project has server processes): reference `env-guide.md` as the authoritative source for start/stop/restart commands; list health check URLs; include reminder about the Restart Protocol
-   - **Must include `Config Management` section**: describe how to add/update a config value for this project (e.g., "append `KEY=value` to `.env`" for dotenv projects, "set `key=value` in `application.properties`" for Spring Boot projects, "export KEY=value" for system-env-only projects). This section is referenced by the Worker Config Gate when prompting users for missing values.
+   - **Must include `Config Management` section**: describe how to add/update a config value for this project (e.g., "append `KEY=value` to `.env`" for dotenv projects, "set `key=value` in `application.properties`" for Spring Boot projects, "export KEY=value" for system-env-only projects).
    - Validate:
      ```bash
      python scripts/validate_guide.py long-task-guide.md --feature-list feature-list.json
@@ -162,42 +162,12 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - Every FR-xxx from SRS appears in at least one feature's `srs_trace` (no orphaned requirements)
      - Every feature's `srs_trace` contains at least one FR (no empty traces)
    - **Single-round flag propagation**: If the SRS document metadata contains `Single-Round: Yes`, set `"single_round": true` at the root level of `feature-list.json`. This is an informational flag — all Worker steps (feature-design, TDD, quality gates, feature-ST) execute their full standard flow regardless of this flag.
-9. **Populate `required_configs`** — from the **SRS document** (IFR-xxx interface requirements) and design doc:
-   - API keys, service URLs → type `env`
-   - Config files, certificates → type `file`
-   - Link each to features via `required_by`; provide `check_hint` with setup instructions
-9b. **Generate `scripts/check_configs.py`** — project-specific config checker (LLM-generated, not copied from plugin):
-    - Analyze the project's config format based on `tech_stack.language` and the design doc:
-      - Python + `.env` pattern → use `load_dotenv`-style KEY=VALUE parsing
-      - Java/Spring → parse `src/main/resources/application.properties` or `application.yml`
-      - Node.js → read `.env` or `config/` directory
-      - Go / Rust → read TOML / YAML config files, or rely on system environment
-      - Any project that relies solely on system environment variables → no file loading needed
-    - Generate a script with this **standardized interface**:
-      - Usage: `python scripts/check_configs.py feature-list.json [--feature <id>]`
-      - Reads `required_configs[]` from `feature-list.json`
-      - Loads config values using the project-native format (hardcoded for this project)
-      - Checks each `env`-type config via `os.environ`, each `file`-type config via `os.path.exists`
-      - Prints each missing config with its `name` and `check_hint`
-      - Exit 0 = all required configs present; Exit 1 = one or more missing
-    - **No `--dotenv` or format flag needed** — the loading logic is built in for this project
-    - The plugin's `scripts/check_configs.py` is available as a reference template if useful
-10. **Generate `.env.example`** — from `required_configs`:
-    - For each `env`-type config, write a commented template line:
-      ```
-      # <name> — <description>
-      # Hint: <check_hint>
-      # Required by features: <required_by ids>
-      <KEY>=
-      ```
-    - Add secrets config files to `.gitignore` (e.g., `.env`); `.env.example` is safe to commit
-    - This template lists the required env vars; users load them via whichever config format the project uses; the Worker Config Gate will prompt for missing values
-11. **Validate**:
+9. **Validate**:
     ```bash
     python scripts/validate_features.py feature-list.json
     ```
-12. **Scaffold project skeleton** (dirs, configs, dependency manifests) — based on **design doc** architecture
-13. **Git init + build/commit conventions + initial commit**
+10. **Scaffold project skeleton** (dirs, configs, dependency manifests) — based on **design doc** architecture
+11. **Git init + build/commit conventions + initial commit**
     > **Existing repo**: If the current directory already contains a `.git/` directory, **skip `git init`** — only stage and commit the newly scaffolded files. If the directory is not a git repo, run `git init` first.
     
     a. **Populate `feature-list.json` `build_system` field** (from rules → Design):
@@ -215,14 +185,14 @@ You MUST create a TodoWrite task for each step and complete them in order:
        - Show the auto-extracted `build_system` and `commit_conventions` values
        - User confirms or modifies before writing to `feature-list.json`
     d. Commit the updated `feature-list.json` in the initial commit
-14. **Run init script and verify environment**:
+12. **Run init script and verify environment**:
     - Run `init.sh` (or `init.ps1`), verify environment setup completes without errors
     - Verify test execution works: activate env → run test command from `long-task-guide.md` → confirm tests execute (may all fail at this point — that's expected)
     - Verify mutation testing command is available: activate env → run mutation tool version check
     - If any check fails: diagnose root cause, fix the script or configuration, re-run
     - Do NOT start services here — services are started during ST testing using the commands defined in `env-guide.md`
-15. **Update `task-progress.md`** — update `## Current State` with initial progress (0/N features passing), then append Session 0 entry (include SRS + design doc references)
-16. **Begin first Worker cycle** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-work`
+13. **Update `task-progress.md`** — update `## Current State` with initial progress (0/N features passing), then append Session 0 entry (include SRS + design doc references)
+14. **Begin first Worker cycle** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-work`
 
 ## Service Config Maintenance (Worker cycles)
 
@@ -254,17 +224,6 @@ Root structure:
   },
   "constraints": ["Hard limit — one string per item"],
   "assumptions": ["Implicit belief — one string per item"],
-  "required_configs": [
-    {
-      "name": "Display name",
-      "type": "env|file",
-      "key": "ENV_VAR (for env type)",
-      "path": "path/to/file (for file type)",
-      "description": "What this config is for",
-      "required_by": [1, 3],
-      "check_hint": "How to set it up"
-    }
-  ],
   "features": [...]
 }
 ```
@@ -296,7 +255,6 @@ Each feature:
 | `init.sh` / `init.ps1` | Environment bootstrap (LLM-generated) |
 | `env-guide.md` | Service lifecycle commands — start/stop/restart/verify with output capture; user-editable |
 | `long-task-guide.md` | Worker session guide with env activation + direct test commands (LLM-generated, validated) |
-| `.env.example` | Template for required env configs (safe to commit) |
 
 ## Integration
 

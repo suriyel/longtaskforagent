@@ -159,21 +159,6 @@ def test_feature_list_has_quality_gates():
         shutil.rmtree(tmp)
 
 
-def test_feature_list_has_required_configs():
-    """feature-list.json should contain required_configs as empty array."""
-    tmp = tempfile.mkdtemp()
-    try:
-        run_init("test-project", tmp)
-        fl_path = os.path.join(tmp, "feature-list.json")
-        with open(fl_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        assert "required_configs" in data, "Missing 'required_configs' key"
-        assert isinstance(data["required_configs"], list)
-        assert len(data["required_configs"]) == 0
-    finally:
-        shutil.rmtree(tmp)
-
-
 def test_feature_list_has_constraints():
     """feature-list.json should contain constraints as empty array."""
     tmp = tempfile.mkdtemp()
@@ -458,7 +443,6 @@ if __name__ == "__main__":
         test_examples_dir_created,
         test_feature_list_has_tech_stack,
         test_feature_list_has_quality_gates,
-        test_feature_list_has_required_configs,
         test_lang_preset_fills_tools,
         test_lang_preset_javascript,
         test_custom_thresholds,

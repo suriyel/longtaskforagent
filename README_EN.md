@@ -186,7 +186,7 @@ Each worker session focuses on exactly one feature. This prevents context exhaus
 Each cycle follows a strict discipline:
 
 ```
-Orient → Bootstrap → Config Gate → DevTools Gate → Plan
+Orient → Bootstrap → DevTools Gate → Plan
   → TDD Red → TDD Green → Coverage Gate
     → TDD Refactor → Mutation Gate
       → Feature ST (Black-Box) → Inline Compliance Check
@@ -312,7 +312,6 @@ The plugin includes a suite of validation scripts to prevent common failures:
 |--------|---------|
 | `validate_features.py` | Validate `feature-list.json` schema and data integrity |
 | `validate_guide.py` | Validate `long-task-guide.md` structural integrity |
-| `check_configs.py` | Verify required environment configs before feature work |
 | `check_st_readiness.py` | Confirm all features passing before system testing |
 | `validate_increment_request.py` | Validate increment request signal file |
 | `validate_st_cases.py` | Validate ST test case documents (ISO/IEC/IEEE 29119) |

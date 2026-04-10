@@ -16,12 +16,12 @@ Per-language/framework recipes for each ST test category. Select recipes based o
 - `supertest` against running Express/Fastify — preferred over `msw` for internal APIs
 
 **External third-party service testing strategy (priority order):**
-1. **Prefer real tests** — use test credentials from `required_configs` or environment (e.g., Stripe test key, GitHub personal token)
+1. **Prefer real tests** — use test credentials from the project configuration or environment (e.g., Stripe test key, GitHub personal token)
 2. **If unavailable** — use contract tests (mocks) and record the reason
 3. **Record decision** — note in ST plan Classification table: `External (credentials unavailable)` as mock authorization
 
 **Mocks are allowed ONLY when:**
-- External third-party service (e.g., Stripe API, GitHub API) AND test credentials are not available in `required_configs` or environment
+- External third-party service (e.g., Stripe API, GitHub API) AND test credentials are not available in the project configuration or environment
 - Must record reason in ST plan as mock authorization basis
 
 ### Python

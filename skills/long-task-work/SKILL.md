@@ -18,15 +18,14 @@ You MUST create a TodoWrite task for each step and complete them in order:
 ### 1. Orient
 - Load config values if applicable — activate the project environment per `long-task-guide.md`; if the project uses a file-based config (e.g., `.env`), ensure it is sourced so required env vars are set before running checks
 - Read `task-progress.md` `## Current State` section — progress stats, last completed feature, next feature up
-- Read `feature-list.json` — note `constraints[]`, `assumptions[]`, `required_configs[]`, feature statuses
+- Read `feature-list.json` — note `constraints[]`, `assumptions[]`, feature statuses
 - Read `long-task-guide.md` — project-specific workflow guidance
 - Read `env-guide.md` (if it exists) — note service names, ports, and health check URLs; required if the target feature has service dependencies
 - **Determine service dependencies**: A feature has service dependencies if ANY of the following are true:
-  1. Its `required_configs[]` entries include connection-string keys (key contains `URL`, `URI`, `DSN`, `CONNECTION`, `HOST`, or `PORT` — e.g., `DATABASE_URL`, `REDIS_HOST`)
-  2. Its `dependencies[]` include a feature whose title references database setup, schema migration, or service initialization
-  3. The design section (`{design_section}`) specifies external service interactions (DB queries, HTTP calls to own services, message queue operations)
+  1. Its `dependencies[]` include a feature whose title references database setup, schema migration, or service initialization
+  2. The design section (`{design_section}`) specifies external service interactions (DB queries, HTTP calls to own services, message queue operations)
 
-  Record determination (yes/no + which services) in `task-progress.md` under the current feature heading. This determination drives Bootstrap Step 2 and Config Gate Step 3.
+  Record determination (yes/no + which services) in `task-progress.md` under the current feature heading. This determination drives Bootstrap Step 2.
 - Read design doc **Section 1** (`docs/plans/*-design.md`) — project overview and architecture snapshot for global context
 - Read design doc **§13** (Codebase Conventions & Constraints, if exists) — note 2/3方件 library constraints (§13.1), prohibited APIs (§13.2), static analysis tools (§13.4), naming conventions (§13.5), error handling pattern (§13.6). These are binding for all new code.
 - Read `build_system` and `commit_conventions` from `feature-list.json` — use `build_command` for compilation, follow `commit_conventions` for git formatting (profile, prefix whitelist, subject length, branch naming, strip_trailers)
@@ -37,7 +36,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
   - Pick the next eligible `"failing"` feature (by priority + dependency order) whose dependencies are all satisfied
   - If NO features have all dependencies satisfied → warn user via `AskUserQuestion`: "All remaining features have unsatisfied dependencies. Circular or over-constrained dependency graph detected." → let user choose which feature to force-start (override dependency check)
   - Record skipped features and reason in `task-progress.md`
-**Document Lookup Protocol (used by Steps 5, 10, and 11):**
+**Document Lookup Protocol (used by Steps 4, 9, and 10):**
 
 When you need the design section or SRS requirement for a feature, do NOT grep for the feature title. Instead:
 
@@ -45,7 +44,7 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
    - Read the design document's **Section 4 heading area** (use Read tool with offset/limit to scan section 4 headers — look for lines matching `### 4.N Feature:`)
    - Identify which `### 4.N` subsection corresponds to the target feature by matching the feature title or FR-ID
    - Read the **entire subsection** from `### 4.N` through the line before `### 4.(N+1)` (or end of section 4) — this includes Overview, Class Diagram, Sequence Diagram, Flow Diagram, and Design Decisions
-   - Store this full text as `{design_section}` for use in Plan (Step 5) and ST Acceptance (Step 9)
+   - Store this full text as `{design_section}` for use in Plan (Step 4) and ST Acceptance (Step 8)
 
 2. **SRS document** (`docs/plans/*-srs.md`):
    - Read the SRS **Section 4 (Functional Requirements)** heading area to find the `### FR-xxx` subsection matching the target feature
@@ -60,7 +59,7 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
   - Record decision in `task-progress.md` if script was executed
 - **Confirm test commands available**: Activate environment per `long-task-guide.md` and verify the test/coverage/mutation commands are correct for the tech stack; use these directly throughout the cycle (no wrapper scripts)
 - **Service readiness** (conditional — based on Orient service dependency determination):
-  - **No service dependencies**: Skip service startup. Feature-ST (Step 10) manages services for acceptance testing.
+  - **No service dependencies**: Skip service startup. Feature-ST (Step 9) manages services for acceptance testing.
   - **Has service dependencies**: Integration tests need running infrastructure. Ensure availability:
     1. Read `env-guide.md` → locate "Verify Services Running" health checks
     2. Run health checks. If all pass → record PID/port in `task-progress.md`; proceed
@@ -73,36 +72,9 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
     4. Re-run health checks — block until pass
     5. If start fails → diagnose per `env-guide.md`; escalate via `AskUserQuestion` if unresolvable
     6. Record running services, PIDs, ports in `task-progress.md`
-  - Feature-ST (Step 10) handles restart/cleanup. Services started here remain running through TDD and Quality Gates.
+  - Feature-ST (Step 9) handles restart/cleanup. Services started here remain running through TDD and Quality Gates.
 
-### 3. Config Gate
-```bash
-python scripts/check_configs.py feature-list.json --feature <id>
-```
-`<id>` = the feature ID selected in Step 1. The generated `check_configs.py` loads config values using the project's native format automatically.
-
-**If configs are missing — prompt for text input and save to the project config:**
-
-1. For each missing `env`-type config, use `AskUserQuestion` to ask the user to **type the value** — do NOT provide predefined option buttons. Frame the question with the config's `name`, `description`, and `check_hint` so the user knows what to provide.
-   - Example: "Please enter the value for `OPENAI_API_KEY` (OpenAI API key for LLM integration). Hint: Get it from https://platform.openai.com/api-keys"
-2. For each missing `file`-type config, ask the user to provide the file path or create the file manually.
-3. After receiving all values, **save env-type configs following the project's config format** — refer to the `Config Management` section in `long-task-guide.md` for the exact method (e.g., append to `.env`, set in `application.properties`, export as system env var).
-4. Re-run the check to confirm:
-   ```bash
-   python scripts/check_configs.py feature-list.json --feature <id>
-   ```
-5. Ensure any secrets config file is listed in `.gitignore` if not already present.
-6. **Block until all configs pass.**
-7. **Connectivity verification** (features with service dependencies only):
-   After config keys pass existence checks, verify connection-string configs actually connect:
-   - For each `env`-type config whose key matches a connection-string pattern (`DATABASE_URL`, `REDIS_URL`, etc.): run the corresponding health check from `env-guide.md` "Verify Services Running"
-   - If health check fails: config value exists but service is unreachable — start service per Bootstrap service readiness protocol above
-   - **Block until connectivity confirmed** — a config pointing to a dead service is functionally missing
-
-**Config Gate is non-negotiable for features with external dependencies.** If configs are missing:
-- MUST use `AskUserQuestion` to request values from the user
-- MUST NOT proceed to TDD without all configs resolved
-### 4. Feature Detailed Design
+### 3. Feature Detailed Design
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-design` and follow it exactly.
 
 The Feature Design skill dispatches a SubAgent to produce the detailed design document. The main Agent does NOT read design/SRS document sections or write the design document — the SubAgent handles everything in its own fresh context and returns a structured summary.
@@ -133,9 +105,9 @@ Output: `docs/features/YYYY-MM-DD-<feature-name>.md` (written by SubAgent) — f
   2. Suggest to user: "Consider placing an `increment-request.json` to update the SRS before continuing with this feature"
   3. If user approves: skip this feature, proceed to next eligible feature (or end session if none)
   4. If user says "proceed with current interpretation": continue with the resolved clarifications
-- **Same pattern applies to Feature-ST** (Step 9): the feature-st skill's CLARIFY handler manages its own loop (max 1 round); Worker sees PASS or BLOCKED.
+- **Same pattern applies to Feature-ST** (Step 8): the feature-st skill's CLARIFY handler manages its own loop (max 1 round); Worker sees PASS or BLOCKED.
 
-### 5-7. TDD Cycle (Red → Green → Refactor)
+### 4-6. TDD Cycle (Red → Green → Refactor)
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-tdd` and follow it exactly.
 
 Context to carry forward:
@@ -147,7 +119,7 @@ Context to carry forward:
 - **Design doc §13** (Codebase Conventions & Constraints) — passed as `CODEBASE_CONSTRAINTS` to implementer SubAgent; TDD Red uses §13.5 for test naming
 - **Test commands**: from `long-task-guide.md` — use these directly (no wrapper scripts)
 
-### 8. Quality Gates — SubAgent Dispatch
+### 7. Quality Gates — SubAgent Dispatch
 
 Delegate quality gate execution to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads coverage reports, mutation output, or test runner output directly.
 
@@ -187,7 +159,7 @@ Replace `{skills_root}` with the path to the skills directory.
 - **`FAIL`** → If SubAgent already retried, escalate to user via `AskUserQuestion`
 - **`BLOCKED`** → Escalate blocker details to user via `AskUserQuestion`
 
-### 9. ST Acceptance Test Cases
+### 8. ST Acceptance Test Cases
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-st` and follow it exactly.
 
 Execute black-box acceptance testing for the feature **after** TDD and quality gates pass. The skill dispatches a SubAgent that reads SRS/Design/ATS documents in its own fresh context, generates ISO/IEC/IEEE 29119 compliant test case documents, executes test cases, and manages service lifecycle. The main Agent does NOT read document sections, test case content, or execution output — only the structured summary.
@@ -205,7 +177,7 @@ Output: `docs/test-cases/feature-{id}-{slug}.md` (written by SubAgent)
 - **No bypass allowed** — cannot skip ST for any reason
 - Main Agent classifies failures per feature-st SKILL.md: AI self-fix issues (code bugs, env issues) are resolved autonomously with no retry limit; only issues requiring human manual testing (missing credentials, physical device, visual judgment) escalate via `AskUserQuestion`
 
-### 10. Inline Compliance Check (no SubAgent)
+### 9. Inline Compliance Check (no SubAgent)
 
 Run these mechanical checks directly — no SubAgent dispatch needed.
 Read the feature design document (`docs/features/YYYY-MM-DD-<feature-name>.md`)
@@ -231,7 +203,7 @@ If §3 or §5 specifies third-party library versions, spot-check that
 `requirements.txt` / `package.json` / `pom.xml` matches. Flag mismatches.
 
 **d) ST document integrity:**
-Confirm `validate_st_cases.py` already passed in Feature-ST (Step 9).
+Confirm `validate_st_cases.py` already passed in Feature-ST (Step 8).
 No re-validation needed — Feature-ST Step 5b + Step 6 already cover T1.
 
 **f) Codebase convention compliance check (blocking for §13.1/§13.2, advisory for §13.5/§13.6):**
@@ -262,7 +234,7 @@ Record in `task-progress.md`:
 - Inline Check: PASS (P2: N/N methods verified, T2: N/N tests found, D3: OK, §13: N violations fixed / M checked, Reuse: R items verified)
 ```
 
-### 11. Persist
+### 10. Persist
 - Git commit (include implementation, tests, **test case document**)
   > **Commit format**: If Design §13.8 documents commit conventions, follow that format. Otherwise use defaults below.
   > **For `category: "bugfix"` features**: use commit prefix `"fix:"` instead of `"feat:"`.
@@ -293,17 +265,17 @@ Record in `task-progress.md`:
     - ⚠ [Dependency] lib==ver — known patch / breaking change pending
     ```
   - **`{commit_sha}` must be the actual captured value** — never a placeholder. This ensures `task-progress.md` and `feature-list.json` carry the same verified SHA.
-  - **Collecting risks**: after Step 8 (Quality) and Step 9 (Feature-ST) complete, extract every row from their `### Risks` tables; merge into a single list; append as `#### Risks` bullets only if the list is non-empty
+  - **Collecting risks**: after Step 7 (Quality) and Step 8 (Feature-ST) complete, extract every row from their `### Risks` tables; merge into a single list; append as `#### Risks` bullets only if the list is non-empty
 - Mark feature `"status": "passing"` in `feature-list.json`
 - Set `"st_case_path"`, `"st_case_count"`, and `"git_sha": "{commit_sha}"` on the feature object in `feature-list.json`
 - Validate:
   ```bash
   python scripts/validate_features.py feature-list.json
   ```
-- **MUST execute Step 11a (Generate Feature Report) before the final commit — no bypass allowed.**
+- **MUST execute Step 10a (Generate Feature Report) before the final commit — no bypass allowed.**
   Do NOT run the final git commit until `docs/report/feature-{id}-{slug}-report.md` exists on disk.
 
-### 11a. Generate Feature Report — MANDATORY (no bypass)
+### 10a. Generate Feature Report — MANDATORY (no bypass)
 
 **This step is non-negotiable. Every feature. No exceptions.**
 Generate a per-feature development report at `docs/report/feature-{id}-{slug}-report.md`.
@@ -311,11 +283,11 @@ Generate a per-feature development report at `docs/report/feature-{id}-{slug}-re
 **Data sources** (use in-context data where available; read feature design doc §4 if SRS AC text is needed for Section B — one targeted read is acceptable):
 - Feature object from `feature-list.json` (id, title, category, priority, wave, srs_trace, dependencies)
 - Feature design doc: `docs/features/YYYY-MM-DD-<feature-name>.md` (§3 Interface Contract, §4 SRS Requirement, §7 Test Inventory)
-- Quality Gates metrics from Step 8 SubAgent result (line %, branch %, mutation %)
+- Quality Gates metrics from Step 7 SubAgent result (line %, branch %, mutation %)
 - Feature-ST SubAgent result (verdict, metrics table, issues)
-- Inline Check results from Step 10 (P2, T2, D3)
-- Risks collected during Step 11 (merged from Quality + Feature-ST)
-- Commit SHA from Step 11
+- Inline Check results from Step 9 (P2, T2, D3)
+- Risks collected during Step 10 (merged from Quality + Feature-ST)
+- Commit SHA from Step 10
 
 **Steps:**
 1. `mkdir -p docs/report`
@@ -359,8 +331,8 @@ Generate a per-feature development report at `docs/report/feature-{id}-{slug}-re
   git commit -m "chore: update progress — feature #{id} passing"
   ```
 
-### 12. End Session
-- Stop any services you started directly during this cycle (services started during ST acceptance testing in Step 10 are stopped by `long-task-feature-st`)
+### 11. End Session
+- Stop any services you started directly during this cycle (services started during ST acceptance testing in Step 9 are stopped by `long-task-feature-st`)
 - Output a concise completion summary:
   > **Feature #\<id\> (\<title\>) — DONE**
   >
@@ -376,19 +348,17 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 - **One feature per session** — end session after completing one feature; multi-feature automation is handled by the external auto-loop script (`scripts/auto_loop.py`)
 - **Strict step order** — no skipping, no reordering
 - **Sub-skills are non-negotiable** — ST Test Cases, TDD, Quality MUST be invoked via Skill tool
-- **Config gate before planning** — never plan or code when required configs are missing
 - **Never mark "passing" without fresh evidence** — run tests, read output, then mark
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause, never guess-and-fix
 - **Update RELEASE_NOTES.md after every git commit**
 - **Always commit + update progress before ending session** — bridges context gap
-- **Always generate feature report before final commit** — Write `docs/report/feature-{id}-{slug}-report.md` in Step 11a; set `report_path` in feature-list.json; include the report file in the progress commit. Every feature, no exceptions.
+- **Always generate feature report before final commit** — Write `docs/report/feature-{id}-{slug}-report.md` in Step 10a; set `report_path` in feature-list.json; include the report file in the progress commit. Every feature, no exceptions.
 - **Never leave broken code** — revert incomplete work
 
 ## Red Flags
 
 | Rationalization | Correct Action |
 |---|---|
-| "I'll mock that config later" | Run Config Gate. Real configs needed. |
 | "This feature is trivial, skip test cases" | Invoke long-task-feature-st. Every feature. |
 | "This feature is trivial, skip TDD" | Invoke long-task-tdd. Every feature. |
 | "Tests pass, mark it done" | Run Quality Gates SubAgent first. |
@@ -403,7 +373,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "This deprecated feature still needs work" | Skip it. Deprecated features are excluded. |
 | "Backend isn't ready but I'll mock it for now" | Dependency check exists for a reason. Develop backend features first. |
 | "I'll skip the dependency check this once" | Never skip. Reorder features so deps are satisfied. |
-| "The report can wait / I'll generate it later" | Step 11a is mandatory. Generate the report now — before the final git commit. |
+| "The report can wait / I'll generate it later" | Step 10a is mandatory. Generate the report now — before the final git commit. |
 | "The SRS is ambiguous but I'll just assume..." | SubAgent should flag CLARIFY. Assumptions on critical paths (Interface Contract, Test Inventory expected results, cross-feature contracts) cause late-stage rework. Only low-impact ambiguities may be assumed. |
 
 ## On Error
@@ -420,8 +390,8 @@ Follow the systematic debugging process — **never guess-and-fix**:
 
 **Called by:** using-long-task (when feature-list.json exists) or long-task-init (Step 16)
 **Invokes (in strict order):**
-1. `long-task:long-task-tdd` (Steps 5-7) — TDD Red-Green-Refactor
-2. Quality Gates SubAgent (Step 8) — Coverage + Mutation (inline dispatch, reads `long-task-quality/references/quality-execution.md`)
-3. `long-task:long-task-feature-st` (Step 9) — Black-Box Feature Acceptance Testing (ISO/IEC/IEEE 29119, self-managed lifecycle)
+1. `long-task:long-task-tdd` (Steps 4-6) — TDD Red-Green-Refactor
+2. Quality Gates SubAgent (Step 7) — Coverage + Mutation (inline dispatch, reads `long-task-quality/references/quality-execution.md`)
+3. `long-task:long-task-feature-st` (Step 8) — Black-Box Feature Acceptance Testing (ISO/IEC/IEEE 29119, self-managed lifecycle)
 **Reads/Writes:** feature-list.json, task-progress.md (including `## Current State`), RELEASE_NOTES.md
 **Read on-demand (via Read tool, NOT Skill tool):** `references/systematic-debugging.md`

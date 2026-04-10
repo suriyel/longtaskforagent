@@ -245,7 +245,7 @@ Build this table as the FINAL design step — it synthesizes all sections above 
 | B  | FUNC/error | §3 Raises row | [trigger] | [exception type + msg] | [missing branch] |
 | C  | BNDRY/edge | §5c boundary table | [edge value] | [behavior] | [off-by-one] |
 | D  | FUNC/state | §6 transition | [pre-state + event] | [post-state] | [missing guard] |
-| E  | INTG/db    | §3 method + required_configs | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
+| E  | INTG/db    | §3 method + external dependency | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
 | F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
 
 Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF, INTG` and subtag is a free-form label.
@@ -260,7 +260,7 @@ Rules:
 
 **Integration test rows (INTG category):**
 - For features with external dependencies (DB, HTTP services, file system, third-party SDK): add ≥1 `INTG/*` row per dependency type
-- Derive from: Interface Contract (§3) methods that interact with external systems + `required_configs[]` entries with connection-string keys
+- Derive from: Interface Contract (§3) methods that interact with external systems + design doc external dependency specifications
 - "Traces To" = §3 method + the specific external dependency
 - "Kills Which Bug?" = connection/integration failure the unit mock would miss
 - If feature is pure computation with no external deps: write "INTG: N/A — pure function, no external I/O" (mirrors TDD Rule 5 exemption)
