@@ -114,7 +114,7 @@ For non-trivial projects, break the design into sections and get approval per se
    - Must show dependency chain (Mermaid `graph`) identifying the critical path
    - Must include risk assessment with mitigation strategies
 
-> **Feature sizing is upstream**: FRs are right-sized at the Requirements phase via bidirectional granularity analysis (G1-G6 split + S1-S4 group). §10.2 groups these right-sized FRs into implementation features. Each row should map 1+ related FRs into a vertical slice that productively fills one Worker session (~50% of context window). Feature counts in the scaling table below refer to the final §10.2 row count.
+> **Feature sizing is upstream**: FRs are right-sized at the Requirements phase via bidirectional granularity analysis (G1-G6 split + S1-S4 merge). §10.2 groups these right-sized FRs into implementation features. Each row should map 1+ related FRs into a vertical slice that productively fills one Worker session (~50% of context window, targeting ~1,000 lines implementation code excluding UT per FR). Feature counts in the scaling table below refer to the final §10.2 row count.
 
 Present each section. Wait for user feedback. Incorporate changes before moving to the next.
 

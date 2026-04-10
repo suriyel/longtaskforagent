@@ -250,7 +250,7 @@ graph LR
 
 ### 10.2 Task Decomposition & Priority
 
-> **Instructions**: Each row becomes one feature in `feature-list.json`. Group related right-sized FRs (already validated by SRS G1-G6 + S1-S4 bidirectional sizing) into vertical slices. Include Mapped FRs for traceability. Each feature should productively fill one Worker session (~50% of model context window).
+> **Instructions**: Each row becomes one feature in `feature-list.json`. Group related right-sized FRs (already validated by SRS G1-G6 + S1-S4 bidirectional sizing) into vertical slices. Include Mapped FRs for traceability. Each feature should productively fill one Worker session (~50% of model context window, target ~1,000 lines implementation code excluding UT per FR).
 
 | Priority | Feature | Mapped FRs | Dependencies | Milestone | Rationale |
 |---|---|---|---|---|---|

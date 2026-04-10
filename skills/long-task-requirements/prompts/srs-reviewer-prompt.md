@@ -132,20 +132,20 @@ Verify that functional requirements are appropriately granular for downstream fe
 
 ### Group Z: Sizing Checks (Z1-Z3)
 
-Verify no FR is under-sized for a dedicated implementation session. Each FR becomes a feature that runs through the full Worker pipeline (Feature Design → TDD → Quality Gates → Feature-ST), so trivially small FRs waste session overhead.
+Verify no FR is under-sized for a dedicated implementation session. Each FR becomes a feature that runs through the full Worker pipeline (Feature Design → TDD → Quality Gates → Feature-ST), so trivially small FRs waste session overhead. The target implementation size per FR is approximately 1,000 lines of implementation code (excluding unit tests).
 
 | # | Check | YES/NO | Evidence |
 |---|-------|--------|----------|
-| Z1 | No FR describes a single field/constant/config addition with ≤1 acceptance criterion and no behavioral logic — if so, it has been grouped with a related FR or explicitly justified as standalone (e.g., "This field requires complex validation logic") | | |
-| Z2 | No FR has only 1 acceptance criterion with no error or boundary cases — if so, it has been enriched with error/boundary ACs or grouped with a related FR sharing the same entity/endpoint | | |
-| Z3 | No FR is a pure data echo (display/return of another FR's output with no transformation or added logic) — if so, it has been grouped with the producing FR as a vertical slice | | |
+| Z1 | No FR describes a single field/constant/config addition with ≤1 acceptance criterion and no behavioral logic — if so, it has been merged into a related FR or explicitly justified as standalone (e.g., "This field requires complex validation logic") | | |
+| Z2 | No FR has only 1 acceptance criterion with no error or boundary cases — if so, it has been enriched with error/boundary ACs or merged into a related FR sharing the same entity/endpoint | | |
+| Z3 | No FR is a pure data echo (display/return of another FR's output with no transformation or added logic) — if so, it has been merged into the producing FR as a vertical slice | | |
 
 **Verdict rule**: ALL Z1-Z3 must be YES to PASS this group. An FR can pass Z1 if it explicitly justifies standalone status (e.g., complex validation, security-sensitive field, or regulatory requirement).
 
 **Resolution-Type guidance:**
-- Z1 ungrouped trivial FR: LLM-FIXABLE (merge into parent entity FR, update srs_trace)
-- Z2 single-AC FR: LLM-FIXABLE (add error/boundary ACs) or USER-INPUT (ask which related FR to group with)
-- Z3 data echo FR: LLM-FIXABLE (merge into producing FR as vertical slice)
+- Z1 ungrouped trivial FR: LLM-FIXABLE (merge into parent entity FR; eliminate absorbed FR entry and re-number)
+- Z2 single-AC FR: LLM-FIXABLE (add error/boundary ACs) or USER-INPUT (ask which related FR to merge into)
+- Z3 data echo FR: LLM-FIXABLE (merge into producing FR as vertical slice; eliminate absorbed FR entry)
 
 ### Group P: Problem Alignment Checks (P1-P4)
 
@@ -262,10 +262,10 @@ Use these rules to assign `Resolution-Type` to every issue in Steps 1-2.
 - Multiple actors in single FR (G1): mechanically split by actor — each actor's distinct actions become separate FRs
 - CRUD bundle (G2): mechanically split into individual operations (Create, Read, Update, Delete) as separate FRs
 
-**Usually LLM-FIXABLE for sizing** (classify as LLM-FIXABLE unless grouping target is ambiguous):
-- Trivial addition (Z1): merge single-field/config FR into the parent entity FR, update description with "Incorporates: [list]"
-- Single-AC FR (Z2): add error/boundary ACs from related context, or merge with related FR sharing same entity/endpoint
-- Data echo FR (Z3): merge into the producing FR as a vertical slice
+**Usually LLM-FIXABLE for sizing** (classify as LLM-FIXABLE unless merge target is ambiguous):
+- Trivial addition (Z1): merge single-field/config FR into the parent entity FR; fully integrate EARS + all ACs into the primary FR, then eliminate absorbed entry and re-number
+- Single-AC FR (Z2): add error/boundary ACs from related context, or merge into related FR sharing same entity/endpoint; preserve all ACs from absorbed FR
+- Data echo FR (Z3): merge into the producing FR as a vertical slice; fully integrate content, then eliminate the absorbed FR entry
 
 **Usually USER-INPUT for granularity** (classify as USER-INPUT unless obvious from context):
 - Scenario explosion (G3): when an FR has 4+ acceptance criteria covering distinct paths, ask the user which scenarios are truly independent vs. which are variants of the same behavior

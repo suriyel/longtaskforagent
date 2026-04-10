@@ -38,7 +38,8 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 7. **Classify requirements** — functional / NFR / constraint / assumption / interface / exclusion
 8. **Write requirements** — apply EARS templates, assign IDs, write acceptance criteria, generate diagrams
 9. **Validate SRS** — check 8 quality attributes, detect anti-patterns, verify testability
-10. **Granularity analysis** — bidirectional sizing: detect oversized FRs (G1-G6 split) AND undersized FRs (S1-S4 group) to fit context budget; user approval for non-trivial changes
+10. **Granularity analysis** — bidirectional sizing: detect oversized FRs (G1-G6 split) AND undersized FRs (S1-S4 merge) to fit context budget; user approval for non-trivial changes
+10b. **FR granularity confirmation** — present finalized FR list; dedicated user approval of split/merge rationality
 11. **Scope fit & deferral** — assess current-round vs next-round, generate deferred backlog if applicable
 12. **[Expert only] Alignment validation** — via `references/alignment-validation.md`
 13. **SRS Compliance Review** — dispatch srs-reviewer subagent; gate: all checks PASS before proceeding
@@ -175,7 +176,7 @@ Any YES to Q2 → generate EARS-formatted NFR candidates inline. If Q2 reveals s
 
 After Lite elicitation, proceed to the **shared steps** (Steps 7–16 in the checklist):
 - L4 = Steps 7–8 (classify, EARS, diagrams)
-- L5 = Steps 9–11 + Step 13 (validate, granularity, deferral, SRS reviewer with Group P = PASS-SKIPPED)
+- L5 = Steps 9–10b–11 + Step 13 (validate, granularity, granularity confirmation, deferral, SRS reviewer with Group P = PASS-SKIPPED)
 - L6 = Steps 14–16 (present entire SRS in one block as single approval, save, transition to Design)
 
 ---
@@ -261,7 +262,7 @@ Skip categories clearly irrelevant. **Rule**: Every NFR must have a **measurable
 
 ### E9: Classify, Write, Validate, Granularity, Deferral
 
-Same as shared Steps 7–11 in the checklist. No differences from standard process.
+Same as shared Steps 7–11 (including Step 10b granularity confirmation) in the checklist. No differences from standard process.
 
 ### E10: Alignment Validation [Expert only]
 
@@ -354,16 +355,16 @@ After all requirements are written, generate visual aids:
 
 ### Step 10: Granularity Analysis — Bidirectional Sizing
 
-Right-size each FR for one Worker session. Apply both over-size (G) and under-size (S) heuristics. The goal: each FR should produce a feature that productively uses ~50% of the model's context window.
+Right-size each FR for one Worker session. Apply both over-size (G) and under-size (S) heuristics. The goal: each FR should produce a feature that productively uses ~50% of the model's context window. As a concrete sizing target, each FR should produce approximately 1,000 lines of implementation code (excluding unit test code).
 
 **Step 10.0 — Select your sizing profile:** You know your own maximum context window. Apply the matching row to all G/S decisions below.
 
 | Context window | Profile | Target ACs per FR | Single-feature implementation scope |
 |---|---|---|---|
-| ≤ 200K tokens | **Standard** | 3-12 | ~200-600 lines code + tests |
-| > 200K tokens | **Extended** | 5-20 | ~500-3000 lines code + tests |
+| ≤ 200K tokens | **Standard** | 3-12 | ~1,000 lines implementation code (excluding UT) |
+| > 200K tokens | **Extended** | 5-20 | ~1,000 lines implementation code (excluding UT) |
 
-An FR below the profile minimum AC count is under-sized (S-heuristic candidate). An FR above the profile maximum is over-sized (G-heuristic candidate).
+An FR below the profile minimum AC count is under-sized (S-heuristic candidate). An FR above the profile maximum is over-sized (G-heuristic candidate). When the AC-based heuristic is ambiguous, estimate the likely implementation LOC: an FR producing significantly fewer than ~1,000 lines is a merge candidate; significantly more is a split candidate.
 
 **Phase 1 — Over-size detection (G1-G6):** Split FRs that are too coarse for a single session.
 
@@ -378,19 +379,20 @@ An FR below the profile minimum AC count is under-sized (S-heuristic candidate).
 
 For decomposition candidates: identify atomic behaviors, apply Single Responsibility Test, preserve traceability (FR-003 → FR-003a, FR-003b), re-validate children.
 
-**Phase 2 — Under-size detection (S1-S4):** Group FRs that are too trivial for a dedicated session.
+**Phase 2 — Under-size detection (S1-S4):** Merge FRs that are too trivial for a dedicated session.
 
 | # | Heuristic | Detection Signal | Action |
 |---|---|---|---|
-| S1 | **Trivial addition** | Single field/constant/config, no behavioral logic, ≤1 AC | Group with parent entity/endpoint FR |
-| S2 | **Single-assertion test** | Only 1 AC with no error/boundary cases | Enrich with error/boundary ACs, or group with related FR sharing same entity/endpoint |
-| S3 | **Pure data echo** | Displays/returns data another FR produces, no transformation | Group with the producing FR as vertical slice |
-| S4 | **Config/setup only** | Env setup, dependency install, scaffolding, no business logic | Group all S4 FRs into single Foundation FR |
+| S1 | **Trivial addition** | Single field/constant/config, no behavioral logic, ≤1 AC | Merge into parent entity/endpoint FR |
+| S2 | **Single-assertion test** | Only 1 AC with no error/boundary cases | Enrich with error/boundary ACs, or merge into related FR sharing same entity/endpoint |
+| S3 | **Pure data echo** | Displays/returns data another FR produces, no transformation | Merge into the producing FR as vertical slice |
+| S4 | **Config/setup only** | Env setup, dependency install, scaffolding, no business logic | Merge all S4 FRs into a single Foundation FR |
 
-**Grouping rules:**
-- Grouped FRs keep the primary FR's ID; description notes "Incorporates: [list]"
+**Merge rules:**
+- **Content preservation (mandatory)**: the absorbed FR's EARS statement, all acceptance criteria, and description text are fully integrated into the primary FR — no requirement content may be lost or summarized away. The primary FR's description and AC list must contain the complete union of both FRs' content.
+- The absorbed FR entry is then eliminated from the SRS. After all merges, re-number FR IDs sequentially (FR-001, FR-002, ...) and update all SRS cross-references (Use Case View, Process Flows, Traceability Matrix).
 - Combined ACs must stay ≤ 20 (if exceeds, G3 re-triggers — split along better seams)
-- Grouped FRs must share primary actor and functional area
+- Merged FRs must share primary actor and functional area
 - If both G and S trigger on the same FR: G wins (split first, then S re-checks children)
 
 **Decision thresholds:**
@@ -400,6 +402,31 @@ For decomposition candidates: identify atomic behaviors, apply Single Responsibi
 | 0 | Skip |
 | 1-3 | Auto-apply; present rationale inline |
 | 4+ | Present to user via AskUserQuestion for approval |
+
+Note: All granularity changes (auto-applied or user-approved) are subject to the holistic FR granularity confirmation in Step 10b.
+
+### Step 10b: FR Granularity Confirmation
+
+After all G1-G6 splits, S1-S4 merges, and FR ID re-numbering, present the finalized FR list for dedicated user confirmation.
+
+**Content preservation check (before presenting):** For every merged FR, verify that the primary FR now contains the complete union of EARS statements and acceptance criteria from all absorbed FRs. No original requirement content may be lost.
+
+**Present via AskUserQuestion:**
+
+1. Show the complete FR list in table format:
+   | FR ID | Title | AC Count | Est. Impl. LOC | Changed? | Notes |
+   |-------|-------|----------|----------------|----------|-------|
+   - "Changed?" column: "split from FR-XXX" / "absorbed FR-YYY" / "unchanged"
+   - "Est. Impl. LOC" column: rough estimate targeting ~1,000 lines (excluding UT)
+   - For merged FRs, list which original FRs were absorbed so user can verify completeness
+
+2. Ask: "Please review the FR list above. Each FR targets ~1,000 lines of implementation code (excluding unit tests). All merged FRs retain the complete requirement content of the absorbed FRs. Confirm the granularity is appropriate, or indicate which FRs should be further split, merged, or adjusted."
+
+3. Process response:
+   - **Confirmed** → proceed to Step 11
+   - **Adjustment requested** → apply changes, re-number IDs, re-present (loop until confirmed)
+
+**Mandatory for both Lite and Expert tracks.** Even if Step 10 produced 0 granularity candidates (no splits or merges), present the FR list for confirmation — the user may identify granularity issues the heuristics missed.
 
 ### Step 11: Scope Fit & Deferral
 

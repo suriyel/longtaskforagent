@@ -146,7 +146,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
 8. **Populate features from Design §10.2** — FRs are already right-sized at the Requirements phase (G1-G6 over-size + S1-S4 under-size heuristics). The design document's Task Decomposition table (§10.2) maps right-sized FRs to prioritized features with dependency ordering. Populate `feature-list.json` `features[]`:
    - Each §10.2 row → one feature. Do NOT further split or merge — granularity was finalized in the SRS phase.
    - `srs_trace`: copy the "Mapped FRs" column — the array of FR IDs this feature implements (e.g. `["FR-003", "FR-004", "FR-005"]`)
-   - `title` + `description`: derive from the §10.2 Feature name + the grouped FRs' descriptions
+   - `title` + `description`: derive from the §10.2 Feature name + the mapped FRs' descriptions
    - `priority`: P0/P1 → `"high"`, P2 → `"medium"`, P3 → `"low"`
    - `dependencies`: from §10.3 Dependency Chain diagram
    - `status`: always `"failing"`
