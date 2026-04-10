@@ -35,28 +35,6 @@ if [ -f "$INIT_SCRIPT_SRC" ]; then
     printf '%s' "${PLUGIN_ROOT_HINT}" > "scripts/.long-task-plugin-root"
 fi
 
-# ── Install commit-msg hook (if .commit-conventions.json exists) ────────────
-# The hook reads .commit-conventions.json at commit time and validates the
-# message format. It is auto-installed every session so it survives clone,
-# worktree creation, and manual deletion.
-COMMIT_HOOK_SRC="${PLUGIN_ROOT}/hooks/commit-msg-hook"
-if [ -f ".commit-conventions.json" ] && [ -d ".git" ] && [ -f "$COMMIT_HOOK_SRC" ]; then
-    mkdir -p ".git/hooks"
-    if [ -f ".git/hooks/commit-msg" ]; then
-        # Check if it's already our hook (has our marker comment)
-        if ! grep -q "reads .commit-conventions.json" ".git/hooks/commit-msg" 2>/dev/null; then
-            # Pre-existing user hook — chain it
-            mv ".git/hooks/commit-msg" ".git/hooks/commit-msg.user"
-            log "renamed existing commit-msg hook → commit-msg.user (chaining)"
-        fi
-    fi
-    if ! grep -q "reads .commit-conventions.json" ".git/hooks/commit-msg" 2>/dev/null; then
-        cp "$COMMIT_HOOK_SRC" ".git/hooks/commit-msg"
-        chmod +x ".git/hooks/commit-msg"
-        log "installed commit-msg hook"
-    fi
-fi
-
 # ── Multi-repo detection ────────────────────────────────────────────────────
 # If project root is NOT a git repo but has sub-dirs with .git, generate
 # repos-manifest.json so the router skill can detect the multi-repo topology.
@@ -144,15 +122,6 @@ EOFMANIFEST
                 cp "$INIT_SCRIPT_SRC" "$repo_scripts_dir/init_project.py"
                 printf '%s' "${PLUGIN_ROOT_HINT}" > "$repo_scripts_dir/.long-task-plugin-root"
                 log "  copied init_project.py → $repo_scripts_dir"
-                # Install commit-msg hook if sub-repo has .commit-conventions.json
-                if [ -f "${rel_path}/.commit-conventions.json" ] && [ -f "$COMMIT_HOOK_SRC" ]; then
-                    mkdir -p "${rel_path}/.git/hooks"
-                    if [ ! -f "${rel_path}/.git/hooks/commit-msg" ] || ! grep -q "reads .commit-conventions.json" "${rel_path}/.git/hooks/commit-msg" 2>/dev/null; then
-                        cp "$COMMIT_HOOK_SRC" "${rel_path}/.git/hooks/commit-msg"
-                        chmod +x "${rel_path}/.git/hooks/commit-msg"
-                        log "  installed commit-msg hook → ${rel_path}"
-                    fi
-                fi
             done
         fi
     else

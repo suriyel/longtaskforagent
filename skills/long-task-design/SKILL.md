@@ -142,6 +142,8 @@ If `docs/rules/` is populated with convention scan results (from Phase 0-pre cod
    - If conflicts exist: mark with "⚠ Design Override: [reason]" and present to user for confirmation
 4. **Present §13 to user** for review (same approval flow as other sections)
 
+> **Note**: §13.7 (Build & CI/CD) and §13.8 (Commit Conventions) content will be synced to `feature-list.json` fields `build_system` and `commit_conventions` during the Init phase (Step 13), with user confirmation.
+
 ## Step 5: Write Design Document
 
 Save the approved design to `docs/plans/YYYY-MM-DD-<topic>-design.md`.

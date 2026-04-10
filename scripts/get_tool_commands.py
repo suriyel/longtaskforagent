@@ -95,7 +95,12 @@ def get_commands(feature_list: dict) -> dict:
     mut_results = mut_cmds.get("results", f"UNKNOWN: {mut_tool}")
     mut_show = mut_cmds.get("show", f"UNKNOWN: {mut_tool}")
 
+    # Build system
+    bs = feature_list.get("build_system", {})
+    build_cmd = bs.get("build_command") if isinstance(bs, dict) else None
+
     return {
+        "build": build_cmd,
         "test": test_cmd,
         "coverage": cov_cmd,
         "mutation_incremental": mut_inc,
@@ -129,6 +134,14 @@ def format_text(cmds: dict) -> str:
         f"Coverage tool: {ts['coverage_tool']}",
         f"Mutation tool: {ts['mutation_tool']}",
         "",
+    ]
+    if cmds.get("build"):
+        lines += [
+            f"[build]",
+            f"  {cmds['build']}",
+            "",
+        ]
+    lines += [
         f"[test]",
         f"  {cmds['test']}",
         "",

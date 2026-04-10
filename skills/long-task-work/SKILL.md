@@ -28,7 +28,8 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
   Record determination (yes/no + which services) in `task-progress.md` under the current feature heading. This determination drives Bootstrap Step 2 and Config Gate Step 3.
 - Read design doc **Section 1** (`docs/plans/*-design.md`) — project overview and architecture snapshot for global context
-- Read design doc **§13** (Codebase Conventions & Constraints, if exists) — note 2/3方件 library constraints (§13.1), prohibited APIs (§13.2), static analysis tools (§13.4), naming conventions (§13.5), error handling pattern (§13.6), commit conventions (§13.8). These are binding for all new code.
+- Read design doc **§13** (Codebase Conventions & Constraints, if exists) — note 2/3方件 library constraints (§13.1), prohibited APIs (§13.2), static analysis tools (§13.4), naming conventions (§13.5), error handling pattern (§13.6). These are binding for all new code.
+- Read `build_system` and `commit_conventions` from `feature-list.json` — use `build_command` for compilation, follow `commit_conventions` for git formatting (profile, prefix whitelist, subject length, branch naming, strip_trailers)
 - Run `git log --oneline -10` — recent commit context
 - Pick next `"status": "failing"` feature by priority, then by array position in `features[]` (first eligible wins) — **skip features with `"deprecated": true`**
 - **Dependency satisfaction check**: After selecting a candidate feature, verify that ALL feature IDs in its `dependencies[]` have `"status": "passing"` in `feature-list.json`. If any dependency is still `"failing"`:
@@ -251,7 +252,7 @@ Record in `task-progress.md`:
   > **Commit format**: If Design §13.8 documents commit conventions, follow that format. Otherwise use defaults below.
   > **For `category: "bugfix"` features**: use commit prefix `"fix:"` instead of `"feat:"`.
   > Format: `fix: <feature title without the "Fix: " prefix> (#<fixed_feature_id>)`
-  > **Hook enforcement**: The `commit-msg` hook validates conventions automatically via `.commit-conventions.json`. If the commit is rejected, read the printed convention spec and retry with the correct format.
+  > **Commit convention compliance**: Read `commit_conventions` from `feature-list.json` (if present) or Design §12.8 to determine the required format (profile, prefix whitelist, subject length limits, branch naming). Format your commit message to match BEFORE running `git commit`. If `strip_trailers` is true, do NOT add Co-Authored-By, Signed-off-by, or any other trailer lines.
 - Capture the commit SHA immediately after the commit:
   ```bash
   git rev-parse --short HEAD

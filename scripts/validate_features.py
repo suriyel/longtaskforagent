@@ -33,6 +33,10 @@ VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c+
 QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min", "mutation_score_min"}
 VALID_CONFIG_TYPES = {"env", "file"}
 REQUIRED_CONFIG_FIELDS = {"name", "type", "description", "required_by"}
+VALID_COMMIT_PROFILES = {
+    "conventional-commits", "angular", "ticket-prefixed",
+    "gitmoji", "freeform", "custom",
+}
 
 
 def validate(path: str) -> tuple[list[str], list[str]]:
@@ -81,6 +85,66 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                     errors.append(
                         f"quality_gates.mutation_full_threshold must be a positive integer, got {mft!r}"
                     )
+
+    # Validate build_system if present
+    build_system = data.get("build_system")
+    if build_system is not None:
+        if not isinstance(build_system, dict):
+            errors.append("build_system must be an object")
+        else:
+            bc = build_system.get("build_command")
+            if bc is not None and not isinstance(bc, str):
+                errors.append(
+                    f"build_system.build_command must be a string, got {type(bc).__name__}"
+                )
+
+    # Validate commit_conventions if present
+    commit_conventions = data.get("commit_conventions")
+    if commit_conventions is not None:
+        if not isinstance(commit_conventions, dict):
+            errors.append("commit_conventions must be an object")
+        else:
+            cc_profile = commit_conventions.get("profile")
+            if cc_profile is not None:
+                if not isinstance(cc_profile, str) or cc_profile not in VALID_COMMIT_PROFILES:
+                    errors.append(
+                        f"commit_conventions.profile must be one of {sorted(VALID_COMMIT_PROFILES)}, "
+                        f"got {cc_profile!r}"
+                    )
+            cc_max = commit_conventions.get("subject_max_length")
+            cc_min = commit_conventions.get("subject_min_length")
+            if cc_max is not None:
+                if not isinstance(cc_max, int) or cc_max < 1:
+                    errors.append(
+                        f"commit_conventions.subject_max_length must be a positive integer, got {cc_max!r}"
+                    )
+            if cc_min is not None:
+                if not isinstance(cc_min, int) or cc_min < 1:
+                    errors.append(
+                        f"commit_conventions.subject_min_length must be a positive integer, got {cc_min!r}"
+                    )
+            if (isinstance(cc_min, int) and cc_min >= 1 and
+                    isinstance(cc_max, int) and cc_max >= 1 and cc_min >= cc_max):
+                errors.append(
+                    f"commit_conventions.subject_min_length ({cc_min}) must be less than "
+                    f"subject_max_length ({cc_max})"
+                )
+            cc_prefixes = commit_conventions.get("prefix_whitelist")
+            if cc_prefixes is not None:
+                if not isinstance(cc_prefixes, list):
+                    errors.append("commit_conventions.prefix_whitelist must be an array")
+                elif not all(isinstance(p, str) for p in cc_prefixes):
+                    errors.append("commit_conventions.prefix_whitelist must contain only strings")
+            cc_strip = commit_conventions.get("strip_trailers")
+            if cc_strip is not None and not isinstance(cc_strip, bool):
+                errors.append(
+                    f"commit_conventions.strip_trailers must be a boolean, got {type(cc_strip).__name__}"
+                )
+            cc_branch = commit_conventions.get("branch_naming")
+            if cc_branch is not None and not isinstance(cc_branch, str):
+                errors.append(
+                    f"commit_conventions.branch_naming must be a string, got {type(cc_branch).__name__}"
+                )
 
     # Validate waves if present
     waves = data.get("waves")
@@ -436,6 +500,20 @@ def main():
             lang = ts.get("language", "N/A")
             if lang != "TODO":
                 summary += f" | Language: {lang}"
+
+        # Show build system if configured
+        bs = data.get("build_system")
+        if bs and isinstance(bs, dict):
+            bc = bs.get("build_command")
+            if bc:
+                summary += f" | Build: {bc}"
+
+        # Show commit conventions if configured
+        cc = data.get("commit_conventions")
+        if cc and isinstance(cc, dict):
+            cp = cc.get("profile")
+            if cp:
+                summary += f" | Commit: {cp}"
 
         if warnings:
             summary += f" | {len(warnings)} warning(s)"

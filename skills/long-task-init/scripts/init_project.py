@@ -116,6 +116,8 @@ def create_feature_list(
             "mutation_score_min": mutation_score_min,
             "mutation_full_threshold": mutation_full_threshold
         },
+        "build_system": None,
+        "commit_conventions": None,
         "constraints": [],
         "assumptions": [],
         "required_configs": [],
