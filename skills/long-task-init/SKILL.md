@@ -161,6 +161,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - **Validation gate**: after populating all features, verify:
      - Every FR-xxx from SRS appears in at least one feature's `srs_trace` (no orphaned requirements)
      - Every feature's `srs_trace` contains at least one FR (no empty traces)
+   - **Single-round flag propagation**: If the SRS document metadata contains `Single-Round: Yes`, set `"single_round": true` at the root level of `feature-list.json`. This is an informational flag — all Worker steps (feature-design, TDD, quality gates, feature-ST) execute their full standard flow regardless of this flag.
 9. **Populate `required_configs`** — from the **SRS document** (IFR-xxx interface requirements) and design doc:
    - API keys, service URLs → type `env`
    - Config files, certificates → type `file`

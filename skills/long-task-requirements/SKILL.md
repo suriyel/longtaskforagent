@@ -428,6 +428,24 @@ After all G1-G6 splits, S1-S4 merges, and FR ID re-numbering, present the finali
 
 **Mandatory for both Lite and Expert tracks.** Even if Step 10 produced 0 granularity candidates (no splits or merges), present the FR list for confirmation — the user may identify granularity issues the heuristics missed.
 
+### Step 10c: Single-Round Mode Confirmation (1-FR projects only)
+
+If the finalized FR list contains exactly 1 functional requirement, present via `AskUserQuestion`:
+
+> "The project has a single functional requirement ({FR-ID}: {FR-Title}).
+>
+> **Single-round mode available**: The entire project will be implemented as one feature in one Worker session. All pipeline steps (feature-design, TDD, quality gates, feature-ST) run normally — no steps are skipped.
+>
+> **Context overflow risk**: A single FR containing all project scope may produce a large implementation. If the estimated implementation exceeds ~1,000 lines (excluding unit tests), the Worker session context window may become strained. In that case, consider splitting the FR into smaller units (return to Step 10 for re-analysis).
+>
+> [Enable single-round mode — proceed with 1 FR] / [Return to Step 10 — re-analyze granularity]"
+
+Process response:
+- **Enable** → record `Single-Round: Yes` in the SRS document metadata header. Proceed to Step 11.
+- **Return** → go back to Step 10 for user-driven re-splitting. Step 10b re-presents after changes.
+
+**Mandatory for both Lite and Expert tracks.** Only triggered when the finalized FR list contains exactly 1 FR. If the project has 2+ FRs, skip this step entirely.
+
 ### Step 11: Scope Fit & Deferral
 
 Assess whether all requirements belong in the current round. Apply scope fit criteria (Priority, Dependency, Completeness, Risk, Scope budget). Present deferral recommendations to user. If deferrals approved, generate `docs/plans/YYYY-MM-DD-<topic>-deferred.md`.

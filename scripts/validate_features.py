@@ -86,6 +86,13 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                         f"quality_gates.mutation_full_threshold must be a positive integer, got {mft!r}"
                     )
 
+    # Validate single_round if present
+    single_round = data.get("single_round")
+    if single_round is not None and not isinstance(single_round, bool):
+        errors.append(
+            f"single_round must be a boolean, got {type(single_round).__name__}"
+        )
+
     # Validate build_system if present
     build_system = data.get("build_system")
     if build_system is not None:

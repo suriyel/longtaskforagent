@@ -96,7 +96,7 @@ long-task-explore (standalone — no pipeline dependency)
 |-------|-------|------------|
 | 0-pre: Codebase Scan (brownfield) | `codebase-scanner` SubAgent | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns, commit conventions |
 | 0-multi: Multi-Repo | `long-task-multi-repo` | Global SRS + per-repo SRS split + dependency distribution; session ends with handoff |
-| 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds) |
+| 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds; Step 10c: single-round confirmation for 1-FR projects) |
 | 0b: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §13 if brownfield) |
 | 0d: ATS | `long-task-ats` | `docs/plans/*-ats.md` (req→scenario mapping; independent reviewer subagent; auto-skips ≤5 FR) |
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
@@ -188,6 +188,7 @@ Key files:
   "created": "2025-01-15",
   "tech_stack": { "language": "python|java|typescript|c|cpp", "test_framework": "...", "coverage_tool": "...", "mutation_tool": "..." },
   "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80, "mutation_score_min": 80, "mutation_full_threshold": 100 },
+  "single_round": false,
   "build_system": { "build_command": "make build (from Design §13.7, user-confirmed)" },
   "commit_conventions": {
     "profile": "conventional-commits|angular|ticket-prefixed|gitmoji|freeform|custom",
@@ -231,6 +232,7 @@ Key field notes:
 - `git_sha`: 7–40 char hex; validated by `validate_features.py`
 - `deprecated: true` → `deprecated_reason` required; excluded from Worker/ST/routing
 - `waves[]`: increment batch tracking; `wave` on feature = which wave introduced/modified it
+- `single_round`: optional boolean; set to `true` by Init when SRS contains `Single-Round: Yes` metadata (1-FR project, user-confirmed at Requirements Step 10c); informational flag — all Worker steps execute their full standard flow regardless
 - `build_system`: optional; populated from `docs/rules/build-and-compilation.md` → Design §13.7 during Init (user-confirmed)
 - `commit_conventions`: optional; populated from `docs/rules/commit-conventions.md` → Design §13.8 during Init (user-confirmed); replaces `.commit-conventions.json`; `strip_trailers: true` prohibits Co-Authored-By/Signed-off-by trailers
 

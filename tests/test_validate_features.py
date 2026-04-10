@@ -1335,6 +1335,66 @@ def test_no_build_system_or_commit_conventions_ok():
     assert "Commit:" not in stdout
 
 
+def test_single_round_true_valid():
+    """single_round: true should pass validation."""
+    data = {
+        "project": "test",
+        "created": "2025-01-01",
+        "single_round": True,
+        "features": [
+            {"id": 1, "category": "core", "title": "A", "description": "A",
+             "priority": "high", "status": "failing", "dependencies": []}
+        ]
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+
+
+def test_single_round_false_valid():
+    """single_round: false should pass validation."""
+    data = {
+        "project": "test",
+        "created": "2025-01-01",
+        "single_round": False,
+        "features": [
+            {"id": 1, "category": "core", "title": "A", "description": "A",
+             "priority": "high", "status": "failing", "dependencies": []}
+        ]
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+
+
+def test_single_round_invalid_type():
+    """single_round must be a boolean."""
+    data = {
+        "project": "test",
+        "created": "2025-01-01",
+        "single_round": "yes",
+        "features": [
+            {"id": 1, "category": "core", "title": "A", "description": "A",
+             "priority": "high", "status": "failing", "dependencies": []}
+        ]
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 1
+    assert "single_round must be a boolean" in stdout
+
+
+def test_no_single_round_backward_compat():
+    """Omitting single_round should be fine (backward compat)."""
+    data = {
+        "project": "test",
+        "created": "2025-01-01",
+        "features": [
+            {"id": 1, "category": "core", "title": "A", "description": "A",
+             "priority": "high", "status": "failing", "dependencies": []}
+        ]
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+
+
 if __name__ == "__main__":
     tests = [
         test_valid_feature_list,
@@ -1401,6 +1461,10 @@ if __name__ == "__main__":
         test_commit_conventions_invalid_strip_trailers,
         test_commit_conventions_not_object,
         test_no_build_system_or_commit_conventions_ok,
+        test_single_round_true_valid,
+        test_single_round_false_valid,
+        test_single_round_invalid_type,
+        test_no_single_round_backward_compat,
     ]
     passed = 0
     failed = 0
