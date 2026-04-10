@@ -141,9 +141,10 @@ Output: `docs/features/YYYY-MM-DD-<feature-name>.md` (written by SubAgent) — f
 Context to carry forward:
 - Current feature object from feature-list.json
 - `quality_gates` and `tech_stack` from feature-list.json
-- Feature detailed design document from Step 4 (includes Test Inventory table, Interface Contract, Algorithm pseudocode) — **Test Inventory (section 7) is the primary TDD spec input**
-- Full `{srs_section}` from Document Lookup Protocol — TDD Red uses this as specification input alongside Feature Design Test Inventory; `verification_steps` are optional supplementary input
+- **Full feature design document** from Step 4 (`docs/features/YYYY-MM-DD-<feature-name>.md`) — TDD MUST read the complete document cover to cover, not individual sections. Includes: Existing Code Reuse (reusable items + §13.1 library patterns from dependencies), Interface Contract (§3 with §13.1 annotations), Algorithm (§5 with §13 library mapping), Test Inventory (§7, primary TDD spec input).
+- Full `{srs_section}` from Document Lookup Protocol — TDD Red uses this alongside Feature Design Test Inventory; `verification_steps` are optional supplementary input
 - Full `{design_section}` from Document Lookup Protocol — architectural constraints and interface contracts
+- **Design doc §13** (Codebase Conventions & Constraints) — passed as `CODEBASE_CONSTRAINTS` to implementer SubAgent; TDD Red uses §13.5 for test naming
 - **Test commands**: from `long-task-guide.md` — use these directly (no wrapper scripts)
 
 ### 8. Quality Gates — SubAgent Dispatch
@@ -233,18 +234,32 @@ If §3 or §5 specifies third-party library versions, spot-check that
 Confirm `validate_st_cases.py` already passed in Feature-ST (Step 9).
 No re-validation needed — Feature-ST Step 5b + Step 6 already cover T1.
 
-**f) Codebase convention spot-check (advisory, non-blocking — skip if Design §13 absent):**
-Spot-check 2-3 new/modified files against Design doc §13:
-- §13.1: new imports don't use prohibited standard/3rd-party APIs when internal library alternative exists
-- §13.5: naming conventions match documented patterns (variable/function/class names)
-If deviations found: log as advisory note in `task-progress.md`. **Not a blocking gate** — Design doc / framework conventions override scanner observations.
+**f) Codebase convention compliance check (blocking for §13.1/§13.2, advisory for §13.5/§13.6):**
+
+Check ALL new/modified files (`git diff --name-only` of feature changes) against Design doc §13:
+
+**Blocking checks:**
+- §13.1: For each non-empty §13.1 "Replaces" entry, grep new/modified source files for the replaced import pattern. Match → violation → fix before proceeding.
+  ```bash
+  grep -rn "import.*{replaced}\|require.*{replaced}\|from {replaced}" {files}
+  ```
+- §13.2: For each non-empty §13.2 "Prohibited" entry, grep new/modified source files. Match → violation → fix.
+
+**Advisory checks** (log to `task-progress.md`):
+- §13.5: Spot-check variable/function/class naming patterns
+- §13.6: Spot-check error handling approach
+
+**Existing code reuse verification** (blocking):
+- Read feature design "Existing Code Reuse" section. For each REUSE item: grep implementation files for the expected import. If the REUSE item is NOT imported but equivalent functionality is reimplemented → violation → replace with REUSE import.
+
+On blocking violation: log file:line + what was used vs. what §13 requires; fix the violation; re-run tests to confirm no regression; re-check.
 
 If all checks pass → proceed to Persist.
 If any check fails → fix inline, re-verify. No SubAgent dispatch.
 
 Record in `task-progress.md`:
 ```
-- Inline Check: PASS (P2: N/N methods verified, T2: N/N tests found, D3: OK, D4: OK)
+- Inline Check: PASS (P2: N/N methods verified, T2: N/N tests found, D3: OK, §13: N violations fixed / M checked, Reuse: R items verified)
 ```
 
 ### 11. Persist
@@ -252,7 +267,7 @@ Record in `task-progress.md`:
   > **Commit format**: If Design §13.8 documents commit conventions, follow that format. Otherwise use defaults below.
   > **For `category: "bugfix"` features**: use commit prefix `"fix:"` instead of `"feat:"`.
   > Format: `fix: <feature title without the "Fix: " prefix> (#<fixed_feature_id>)`
-  > **Commit convention compliance**: Read `commit_conventions` from `feature-list.json` (if present) or Design §12.8 to determine the required format (profile, prefix whitelist, subject length limits, branch naming). Format your commit message to match BEFORE running `git commit`. If `strip_trailers` is true, do NOT add Co-Authored-By, Signed-off-by, or any other trailer lines.
+  > **Commit convention compliance**: Read `commit_conventions` from `feature-list.json` (if present) or Design §13.8 to determine the required format (profile, prefix whitelist, subject length limits, branch naming). Format your commit message to match BEFORE running `git commit`. If `strip_trailers` is true, do NOT add Co-Authored-By, Signed-off-by, or any other trailer lines.
 - Capture the commit SHA immediately after the commit:
   ```bash
   git rev-parse --short HEAD

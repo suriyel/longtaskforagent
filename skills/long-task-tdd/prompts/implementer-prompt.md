@@ -8,6 +8,21 @@ You are implementing a task for the {{PROJECT_NAME}} project.
 - Key patterns: {{KEY_PATTERNS}}
 - Working directory: {{WORKING_DIR}}
 
+## Codebase Constraints
+{{CODEBASE_CONSTRAINTS}}
+
+## Existing Code Reuse
+{{EXISTING_CODE_REUSE}}
+
+When implementing, you MUST:
+- Use mandatory internal libraries (§13.1) instead of their replaced alternatives
+- Never use prohibited APIs (§13.2)
+- Follow naming conventions (§13.5) for all new identifiers
+- Follow error handling pattern (§13.6)
+- Import and call items marked REUSE directly — do NOT reimplement
+- Extend items marked EXTEND — do NOT copy-paste
+- Follow PATTERN items' structural shape for new implementations
+
 ## Task
 {{FULL_TASK_TEXT}}
 

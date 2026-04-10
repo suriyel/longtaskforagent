@@ -188,7 +188,7 @@ Key files:
   "created": "2025-01-15",
   "tech_stack": { "language": "python|java|typescript|c|cpp", "test_framework": "...", "coverage_tool": "...", "mutation_tool": "..." },
   "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80, "mutation_score_min": 80, "mutation_full_threshold": 100 },
-  "build_system": { "build_command": "make build (from Design §12.7, user-confirmed)" },
+  "build_system": { "build_command": "make build (from Design §13.7, user-confirmed)" },
   "commit_conventions": {
     "profile": "conventional-commits|angular|ticket-prefixed|gitmoji|freeform|custom",
     "prefix_whitelist": ["feat", "fix", "chore", "..."],
@@ -231,8 +231,8 @@ Key field notes:
 - `git_sha`: 7–40 char hex; validated by `validate_features.py`
 - `deprecated: true` → `deprecated_reason` required; excluded from Worker/ST/routing
 - `waves[]`: increment batch tracking; `wave` on feature = which wave introduced/modified it
-- `build_system`: optional; populated from `docs/rules/build-and-compilation.md` → Design §12.7 during Init (user-confirmed)
-- `commit_conventions`: optional; populated from `docs/rules/commit-conventions.md` → Design §12.8 during Init (user-confirmed); replaces `.commit-conventions.json`; `strip_trailers: true` prohibits Co-Authored-By/Signed-off-by trailers
+- `build_system`: optional; populated from `docs/rules/build-and-compilation.md` → Design §13.7 during Init (user-confirmed)
+- `commit_conventions`: optional; populated from `docs/rules/commit-conventions.md` → Design §13.8 during Init (user-confirmed); replaces `.commit-conventions.json`; `strip_trailers: true` prohibits Co-Authored-By/Signed-off-by trailers
 
 ## File Structure
 

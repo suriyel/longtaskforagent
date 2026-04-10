@@ -280,12 +280,12 @@ graph LR
 ## 11. Open Questions / Risks
 [Any remaining items to resolve during implementation]
 
-## 12. Codebase Conventions & Constraints
+## 13. Codebase Conventions & Constraints
 
-> *This section is auto-populated from `docs/rules/` during design if the project has an existing codebase (brownfield). For greenfield projects, mark "[Not applicable — greenfield project]".*
+> *This section is auto-populated from `docs/rules/` during design if the project has an existing codebase (brownfield). For greenfield projects, keep each subsection with empty tables — do NOT mark the entire section "N/A". Downstream skills always read §13; empty tables signal "no constraints" without requiring conditional logic.*
 > *These conventions are binding for all new code unless explicitly overridden elsewhere in this design document. Design overrides are marked with "⚠ Design Override" annotations.*
 
-### 12.1 2nd-Party Library Constraints
+### 13.1 2nd-Party Library Constraints
 
 > Mandatory internal libraries that replace standard library or 3rd-party alternatives. All new code MUST use these — do not use the replaced APIs directly.
 
@@ -293,19 +293,19 @@ graph LR
 |--------|-----------------|----------|---------------|-------|
 | [e.g., HTTP Client] | [e.g., `@company/http`] | [e.g., axios, fetch] | [e.g., `import { get } from '@company/http'`] | [e.g., All external HTTP calls] |
 
-### 12.2 Prohibited APIs
+### 13.2 Prohibited APIs
 
 | Prohibited | Reason | Use Instead |
 |------------|--------|-------------|
 | [e.g., `console.log`] | [e.g., Structured logging required] | [e.g., `internal.logger`] |
 
-### 12.3 Approved 3rd-Party Libraries
+### 13.3 Approved 3rd-Party Libraries
 
 | Purpose | Library | Version | Pinning Strategy |
 |---------|---------|---------|-----------------|
 | [e.g., Testing] | [e.g., pytest] | [e.g., ^7.4] | [e.g., Range-pinned] |
 
-### 12.4 Static Analysis Tools
+### 13.4 Static Analysis Tools
 
 > Downstream TDD/Quality skills run these tools directly — the tools read their own config files.
 
@@ -313,18 +313,18 @@ graph LR
 |------|------------|-------------|
 | [e.g., eslint] | [e.g., `.eslintrc.json`] | [e.g., `npx eslint .`] |
 
-### 12.5 Coding Style Summary
+### 13.5 Coding Style Summary
 
 | Rule | Convention | Source |
 |------|-----------|--------|
 | [e.g., Variable naming] | [e.g., camelCase] | [e.g., Observed 95% consistency] |
 | [e.g., Indentation] | [e.g., 2 spaces] | [e.g., .editorconfig] |
 
-### 12.6 Error Handling Pattern
+### 13.6 Error Handling Pattern
 
 [Dominant error handling approach: try/catch, Result types, custom Error classes, centralized middleware, etc.]
 
-### 12.7 Build & CI/CD Summary
+### 13.7 Build & CI/CD Summary
 
 | Aspect | Value |
 |--------|-------|
@@ -333,7 +333,7 @@ graph LR
 | Pre-commit Hooks | [e.g., husky + lint-staged] |
 | Code Generation | [e.g., protobuf → src/generated/ (exclude from convention checks)] |
 
-### 12.8 Commit Conventions
+### 13.8 Commit Conventions
 
 | Element | Convention |
 |---------|-----------|

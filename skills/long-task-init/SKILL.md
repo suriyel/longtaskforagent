@@ -201,11 +201,11 @@ You MUST create a TodoWrite task for each step and complete them in order:
     
     a. **Populate `feature-list.json` `build_system` field** (from rules → Design):
        - Read `docs/rules/build-and-compilation.md` (if exists) → extract build tool and key commands
-       - Read Design doc §12.7 (Build & CI/CD Summary) → extract Build System value
+       - Read Design doc §13.7 (Build & CI/CD Summary) → extract Build System value
        - Map to `build_system.build_command`
     b. **Populate `feature-list.json` `commit_conventions` field** (from rules → Design):
        - Read `docs/rules/commit-conventions.md` (if exists, brownfield) → extract commit format, subject length, branch pattern
-       - Read Design doc §12.8 (Commit Conventions) → extract Format, Subject Length, Branch Naming
+       - Read Design doc §13.8 (Commit Conventions) → extract Format, Subject Length, Branch Naming
        - Map to `commit_conventions` sub-fields: `profile`, `prefix_whitelist`, `subject_max_length`, `subject_min_length`, `branch_naming`
        - Convention mapping: "Conventional Commits" → profile `conventional-commits`; "Angular" → `angular`; ticket prefix (e.g., `JIRA-xxx:`) → `ticket-prefixed` + `custom_pattern`; gitmoji → `gitmoji`; no convention → `freeform`
        - If greenfield with no specific convention, default to `conventional-commits`

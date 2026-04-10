@@ -36,6 +36,22 @@ tests/
 - **Third-party deps**: [from dependency table — exact library versions]
 - **Deviations**: [none, or explain deviation with user approval note]
 
+## Existing Code Reuse
+
+> Code discovered in passing dependency features that this feature should reuse, extend, or follow as a pattern. Populated during Step 1c (Existing Implementation Discovery).
+
+| # | Category | Source File | Name | Signature / Pattern | Action | Rationale |
+|---|----------|------------|------|---------------------|--------|-----------|
+| 1 | [Utility / API Client / Data Access / Error Helper / Library Pattern] | [file path] | [function/class name] | [signature or import pattern] | [REUSE / EXTEND / PATTERN] | [why this is relevant to the current feature] |
+
+**§13.1 Library Usage Examples** (concrete usage from passing features):
+
+| §13.1 Library | Existing Usage File | Import Statement | Call Pattern |
+|---------------|-------------------|-----------------|-------------|
+| [library name] | [file:line] | [import statement] | [how it's called in practice] |
+
+> If zero passing dependencies: "No passing dependencies — all library usage follows §13.1 import patterns directly."
+
 ## SRS Requirement
 
 [Copy the FULL FR-xxx section from SRS — EARS statement, acceptance criteria, Given/When/Then scenarios]
@@ -165,6 +181,10 @@ If the feature has no external dependencies (pure computation, no IO, no DB, no 
 - [ ] Error handling table covers all Raises entries
 - [ ] Test Inventory negative ratio >= 40%
 - [ ] Every skipped section has explicit "N/A — [reason]"
+- [ ] All functions/methods named in §4.N have at least one Test Inventory row
+- [ ] All method/class/parameter names comply with §13.5 naming conventions
+- [ ] All operations covered by §13.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
+- [ ] Existing Code Reuse section documents all discoverable reusable code from passing dependencies
 
 ## Clarification Addendum
 

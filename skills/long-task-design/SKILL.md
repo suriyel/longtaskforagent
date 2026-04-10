@@ -120,11 +120,11 @@ Present each section. Wait for user feedback. Incorporate changes before moving 
 
 **For simple projects** (< 5 features): Combine all sections into a single approval step, but still include the required diagrams and dependency versions.
 
-## Step 4b: Merge Codebase Conventions into Design
+## Step 4b: Populate §13 — Codebase Conventions & Constraints
 
-**Skip this step if `docs/rules/` does not exist or contains only a greenfield stub.**
+**Always execute this step** — for both brownfield and greenfield projects. §13 must be present in every design document so downstream skills (feature-design, TDD, Worker) can read it unconditionally.
 
-If `docs/rules/` is populated with convention scan results (from Phase 0-pre codebase scanner):
+**Brownfield** (if `docs/rules/` exists and is populated with convention scan results from Phase 0-pre):
 
 1. **Read all `docs/rules/*.md` files** — `coding-style.md`, `coding-constraints.md`, `build-and-compilation.md`, `commit-conventions.md`
 2. **Populate §13 of the design document** (Codebase Conventions & Constraints) using the design template's §13 structure:
@@ -141,6 +141,13 @@ If `docs/rules/` is populated with convention scan results (from Phase 0-pre cod
    - §6.2 (Internal API Contracts): libraries used must comply with §13.1 internal library mandates
    - If conflicts exist: mark with "⚠ Design Override: [reason]" and present to user for confirmation
 4. **Present §13 to user** for review (same approval flow as other sections)
+
+**Greenfield** (if `docs/rules/` does not exist or is empty):
+
+1. **Populate §13 with empty tables** (column headers + zero rows) for each subsection §13.1–§13.8, using the design template's §13 structure
+2. **Present to user**: "§13 created with empty convention tables. Add constraints now if known, or leave empty — downstream skills read §13 unconditionally."
+3. If user adds constraints: incorporate and re-present for approval
+4. If user leaves empty: proceed — empty tables signal "no constraints" to downstream skills
 
 > **Note**: §13.7 (Build & CI/CD) and §13.8 (Commit Conventions) content will be synced to `feature-list.json` fields `build_system` and `commit_conventions` during the Init phase (Step 13), with user confirmation.
 
@@ -280,4 +287,4 @@ The Init phase uses this plan to populate `feature-list.json` with correct prior
 **Called by:** using-long-task (when SRS exists, no design doc, no feature-list.json)
 **Requires:** Approved SRS at `docs/plans/*-srs.md`; optionally `docs/rules/*.md` (codebase conventions from Phase 0-pre scan)
 **Chains to:** long-task-ats (after design approval)
-**Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md` (includes §13 Codebase Conventions if `docs/rules/` exists)
+**Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md` (always includes §13 Codebase Conventions — populated from `docs/rules/` for brownfield, empty tables for greenfield)

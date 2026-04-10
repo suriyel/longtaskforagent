@@ -40,14 +40,21 @@ Write tests for ALL rows in the Feature Design Test Inventory (§7). Tests MUST 
 
 ### Specification Input
 
-Tests are driven by three primary sources:
-- **Feature Design Test Inventory** (`docs/features/YYYY-MM-DD-<feature-name>.md` §7) — the primary test source; each row maps to one or more test cases
-- **SRS requirement section** (`{srs_section}`) — full FR-xxx with Given/When/Then acceptance criteria, boundary conditions, and error paths (located via the feature's `srs_trace` field)
-- **Feature detailed design** (`docs/features/YYYY-MM-DD-<feature-name>.md`) — Interface Contract (§3), Algorithm pseudocode and boundary matrix (§5)
+**Read the COMPLETE feature design document** (`docs/features/YYYY-MM-DD-<feature-name>.md`) cover to cover before writing any test. Do NOT selectively read sections — the document is an integrated whole where later sections depend on earlier context.
 
-When writing test files, follow test file naming conventions from Design doc §13.5 (Coding Style Summary) if §13 exists.
+Key sections and their TDD role:
+- **Existing Code Reuse** — utilities, API clients, data access patterns, §13.1 library usage examples from passing dependencies. Tests MUST use the same imports/patterns; implementation MUST REUSE/EXTEND items as marked.
+- **Interface Contract (§3)** — method signatures, pre/postconditions, §13.1 library annotations ("Uses: ..."). Tests assert postconditions; implementation follows signatures exactly including library annotations.
+- **Algorithm / Core Logic (§5)** — pseudocode, boundary matrix, error table, §13 library usage mapping. Tests cover boundaries (§5c) and errors (§5d); implementation follows pseudocode using §13-compliant libraries per §5e mapping.
+- **Test Inventory (§7)** — PRIMARY test source. Each row maps to one or more test cases.
 
-The Test Inventory table from feature detailed design is the **primary source** for TDD Red. Each row maps to one or more test cases. TDD rules (Rule 1–6) extend and refine this set. SRS acceptance criteria (from the feature's `srs_trace` requirements) provide supplementary context. ST test case documents are generated *after* TDD as acceptance verification (Worker Step 9).
+Supplementary (also mandatory):
+- **SRS requirement section** (`{srs_section}`) — full FR-xxx with Given/When/Then acceptance criteria
+- **Design doc §13** — test file naming per §13.5
+
+When a test exercises a method annotated "Uses: [§13.1 library]" in the Interface Contract, the test setup should verify the correct library is used (e.g., mock/stub the §13.1 library, NOT the replaced alternative).
+
+TDD rules (Rule 1–6) extend and refine the Test Inventory set. ST test case documents are generated *after* TDD as acceptance verification (Worker Step 9).
 
 ### Test Scenario Rules (hard requirements)
 
@@ -151,17 +158,31 @@ Write ONLY enough code to make tests pass.
 For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-prompt.md` template:
 - Provide FULL task text (don't make subagent read files)
 - Include tech_stack, test command, coverage command, mutation command
+- Include `CODEBASE_CONSTRAINTS` — populated from Design doc §13:
+  - §13.1 table (mandatory internal libraries with import patterns)
+  - §13.2 table (prohibited APIs with replacements)
+  - §13.5 summary (naming conventions)
+  - §13.6 summary (error handling pattern)
+  Empty tables = "No constraints for this category."
+- Include `EXISTING_CODE_REUSE` — populated from feature design "Existing Code Reuse" section:
+  - All items with their Action (REUSE/EXTEND/PATTERN), file paths, and signatures
+  - §13.1 Library Usage Examples table
 - Exit criteria: all tests pass, no regressions
 
 **Rules:**
 - Implement fresh from tests — never reference pre-existing code that was "deleted" in the Iron Law
 - One test at a time: make the simplest failing test pass first, then the next
 - No premature optimization or extra features
-- **Codebase constraints** (if Design doc §13 exists):
+- **Codebase constraints** (from Design doc §13):
   - §13.1: Use mandatory internal libraries — do NOT use replaced standard/3rd-party APIs
   - §13.2: Do not use prohibited APIs
   - §13.5: Follow documented naming conventions
   - §13.6: Follow documented error handling pattern
+- **Existing code reuse** (from feature design "Existing Code Reuse" section):
+  - Items marked **REUSE**: import and call directly — do NOT reimplement
+  - Items marked **EXTEND**: subclass or extend — do NOT copy-paste
+  - Items marked **PATTERN**: follow same structural pattern, create new implementation
+  - §13.1 Library Usage Examples: use the exact import statement and call pattern from passing features
 
 **Startup output requirement** — for any feature that implements a server process or background service:
 The implementation MUST log at startup:
