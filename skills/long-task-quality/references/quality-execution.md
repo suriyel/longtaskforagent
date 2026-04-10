@@ -159,7 +159,7 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 | Trust that refactoring didn't break anything | Re-run full suite after every refactor |
 | Read only the summary line of test output | Read complete output |
 | Run mutation on uncovered code | Pass coverage gate FIRST; mutation on uncovered code is wasteful |
-| Skip re-verification at session start | Always smoke-test passing features |
+| Skip re-verification at session start | Always re-verify passing features |
 
 ---
 

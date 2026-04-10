@@ -283,7 +283,6 @@ Each worker cycle follows this exact sequence.
 
 ### Phase 2: Bootstrap (restore environment)
 6. Run `init.sh` / `init.ps1` — start dev server / services
-7. Run smoke tests — verify previously-passing features still work
 
 ### Phase 2.5: Config Gate (verify required configurations)
 7a. Read `required_configs` from `feature-list.json`

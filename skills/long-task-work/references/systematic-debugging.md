@@ -9,7 +9,7 @@ Never apply a fix based on a guess. Always trace the bug to its root cause, then
 ## When This Applies
 
 - Test failure during TDD Green or Refactor
-- Regression detected during smoke tests
+- Regression detected during testing
 - Runtime error during functional testing
 - Build or environment failure during Bootstrap
 - Any unexpected behavior during implementation

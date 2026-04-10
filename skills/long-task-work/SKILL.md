@@ -73,7 +73,6 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
     5. If start fails → diagnose per `env-guide.md`; escalate via `AskUserQuestion` if unresolvable
     6. Record running services, PIDs, ports in `task-progress.md`
   - Feature-ST (Step 10) handles restart/cleanup. Services started here remain running through TDD and Quality Gates.
-- Smoke-test previously passing features (activate environment per `long-task-guide.md` → run test command directly)
 
 ### 3. Config Gate
 ```bash
