@@ -428,23 +428,23 @@ After all G1-G6 splits, S1-S4 merges, and FR ID re-numbering, present the finali
 
 **Mandatory for both Lite and Expert tracks.** Even if Step 10 produced 0 granularity candidates (no splits or merges), present the FR list for confirmation — the user may identify granularity issues the heuristics missed.
 
-### Step 10c: Single-Round Mode Confirmation (1-FR projects only)
+### Step 10c: Single-Round Mode Confirmation
 
-If the finalized FR list contains exactly 1 functional requirement, present via `AskUserQuestion`:
+After FR granularity confirmation, present via `AskUserQuestion`:
 
-> "The project has a single functional requirement ({FR-ID}: {FR-Title}).
+> "The finalized FR list contains {N} functional requirement(s).
 >
-> **Single-round mode available**: The entire project will be implemented as one feature in one Worker session. All pipeline steps (feature-design, TDD, quality gates, feature-ST) run normally — no steps are skipped.
+> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD, quality gates, feature-ST) run normally — no steps are skipped.
 >
-> **Context overflow risk**: A single FR containing all project scope may produce a large implementation. If the estimated implementation exceeds ~1,000 lines (excluding unit tests), the Worker session context window may become strained. In that case, consider splitting the FR into smaller units (return to Step 10 for re-analysis).
+> **Context overflow risk**: If any single FR is estimated to exceed ~1,000 lines of implementation code (excluding unit tests), consider splitting it further (return to Step 10).
 >
-> [Enable single-round mode — proceed with 1 FR] / [Return to Step 10 — re-analyze granularity]"
+> [Enable single-round mode] / [Skip — proceed to deferral analysis]"
 
 Process response:
-- **Enable** → record `Single-Round: Yes` in the SRS document metadata header. Proceed to Step 11.
-- **Return** → go back to Step 10 for user-driven re-splitting. Step 10b re-presents after changes.
+- **Enable** → record `Single-Round: Yes` in the SRS document metadata header. Step 11 (Scope Fit & Deferral) still executes but presents a confirmation summary instead of deferral recommendations — user has declared intent to implement all FRs in this round.
+- **Skip** → proceed to Step 11 normally (full deferral analysis).
 
-**Mandatory for both Lite and Expert tracks.** Only triggered when the finalized FR list contains exactly 1 FR. If the project has 2+ FRs, skip this step entirely.
+**Mandatory for both Lite and Expert tracks.**
 
 ### Step 11: Scope Fit & Deferral
 
