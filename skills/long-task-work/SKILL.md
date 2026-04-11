@@ -272,62 +272,9 @@ Record in `task-progress.md`:
   ```bash
   python scripts/validate_features.py feature-list.json
   ```
-- **MUST execute Step 10a (Generate Feature Report) before the final commit — no bypass allowed.**
-  Do NOT run the final git commit until `docs/report/feature-{id}-{slug}-report.md` exists on disk.
-
-### 10a. Generate Feature Report — MANDATORY (no bypass)
-
-**This step is non-negotiable. Every feature. No exceptions.**
-Generate a per-feature development report at `docs/report/feature-{id}-{slug}-report.md`.
-
-**Data sources** (use in-context data where available; read feature design doc §4 if SRS AC text is needed for Section B — one targeted read is acceptable):
-- Feature object from `feature-list.json` (id, title, category, priority, wave, srs_trace, dependencies)
-- Feature design doc: `docs/features/YYYY-MM-DD-<feature-name>.md` (§3 Interface Contract, §4 SRS Requirement, §7 Test Inventory)
-- Quality Gates metrics from Step 7 SubAgent result (line %, branch %, mutation %)
-- Feature-ST SubAgent result (verdict, metrics table, issues)
-- Inline Check results from Step 9 (P2, T2, D3)
-- Risks collected during Step 10 (merged from Quality + Feature-ST)
-- Commit SHA from Step 10
-
-**Steps:**
-1. `mkdir -p docs/report`
-2. Populate template (see `docs/templates/feature-report-template.md`) with session data
-3. Write to `docs/report/feature-{id}-{slug}-report.md`
-4. Set `"report_path"` on the feature object in `feature-list.json`
-
-**Report sections** (see template for full structure):
-
-**A. Basic Info** — Feature metadata, completion date, git SHA.
-
-**B. Requirements Consistency Briefing (需求一致性简报)** — Read §4 (SRS Requirement) from the feature design doc (`docs/features/YYYY-MM-DD-<feature-name>.md`). For each `srs_trace` requirement ID:
-- Copy EARS statement + Given/When/Then ACs from §4
-- Map each AC to: implementing Interface Contract methods + verifying Test Inventory rows
-- Verdict per AC: **Covered** / **Partial** / **Gap**
-- Overall consistency score: N/N ACs fully covered
-
-**C. Quality Gates** — Line coverage, branch coverage, mutation score vs thresholds.
-
-**D. Test Execution Summary** — From Feature-ST return:
-- Test case counts and pass rates
-- Per-case breakdown: Case ID, Category, Result, Key Assertion
-
-**E. Risk Assessment with Mitigations (风险与解决办法)** — For each risk:
-- Original risk description + Severity (Critical/Major/Minor)
-- Concrete mitigation recommendation (not just restating the risk)
-- Status: Resolved / Accepted / Deferred
-- If no risks: "No risks identified — all quality gates passed with comfortable margins."
-
-**F. Inline Compliance Check** — P2, T2, D3, U1 status.
-
-**G. Feature-ST Summary** — Total cases, pass rate, category breakdown.
-
-**H. Files Changed** — `git diff --name-only` of the feature commit.
-
-**I. Dependencies** — Dependency feature IDs with current status.
-
-- Git commit again (progress files + report):
+- Git commit (progress files):
   ```bash
-  git add feature-list.json task-progress.md RELEASE_NOTES.md docs/report/feature-{id}-{slug}-report.md
+  git add feature-list.json task-progress.md RELEASE_NOTES.md
   git commit -m "chore: update progress — feature #{id} passing"
   ```
 
@@ -352,7 +299,6 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause, never guess-and-fix
 - **Update RELEASE_NOTES.md after every git commit**
 - **Always commit + update progress before ending session** — bridges context gap
-- **Always generate feature report before final commit** — Write `docs/report/feature-{id}-{slug}-report.md` in Step 10a; set `report_path` in feature-list.json; include the report file in the progress commit. Every feature, no exceptions.
 - **Never leave broken code** — revert incomplete work
 
 ## Red Flags
@@ -373,7 +319,6 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "This deprecated feature still needs work" | Skip it. Deprecated features are excluded. |
 | "Backend isn't ready but I'll mock it for now" | Dependency check exists for a reason. Develop backend features first. |
 | "I'll skip the dependency check this once" | Never skip. Reorder features so deps are satisfied. |
-| "The report can wait / I'll generate it later" | Step 10a is mandatory. Generate the report now — before the final git commit. |
 | "The SRS is ambiguous but I'll just assume..." | SubAgent should flag CLARIFY. Assumptions on critical paths (Interface Contract, Test Inventory expected results, cross-feature contracts) cause late-stage rework. Only low-impact ambiguities may be assumed. |
 
 ## On Error
