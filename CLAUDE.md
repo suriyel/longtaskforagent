@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 13 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration. Independent `long-task-multi-repo` skill for multi-repo projects.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 15 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration. Standalone `/static-review` skill for pre-push static analysis (iterative scan-fix to zero violations). Independent `long-task-multi-repo` skill for multi-repo projects.
 
 ## Key Commands
 
@@ -27,10 +27,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Auto-loop (Claude Code) | `python scripts/auto_loop.py feature-list.json [--max-iterations 30] [--log-dir logs] [--cooldown 10]` |
 | Auto-loop (OpenCode) | `python scripts/auto_loop_opencode.py feature-list.json [--model anthropic/claude-sonnet-4-6]` |
 | Deep-explore codebase | Invoke `long-task:long-task-explore` or `/deep-explore [quick\|standard\|deep] [--focus area] [--path dir]` |
+| Static analysis review | Invoke `long-task:long-task-static-review` or `/static-review [--tool checkstyle] [--max-iterations N] [--path dir] [--dry-run]` |
 
 ## Architecture
 
-### 13-Skill System
+### 15-Skill System
 
 #### Phase Skills
 
@@ -53,6 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Skill | Purpose | Trigger |
 |-------|---------|---------|
 | `long-task-explore` | Deep codebase exploration — architecture, data flow, domain model, API surface, dependencies, code health | On-demand via `/deep-explore` |
+| `long-task-static-review` | Pre-push static analysis — auto-detect and fix Checkstyle violations to zero with quality gates per iteration | On-demand via `/static-review [--tool checkstyle] [--max-iterations N] [--path dir]` |
 
 #### Discipline Skills (sub-skills of long-task-work)
 
@@ -87,6 +89,9 @@ long-task-explore (standalone — no pipeline dependency)
    ├─→ codebase-locator SubAgent (breadth-first scan)
    ├─→ codebase-analyzer SubAgent (architecture, data flow, domain, API)
    └─→ codebase-pattern-finder SubAgent (dependencies, coupling, health, debt)
+
+long-task-static-review (standalone — no pipeline dependency)
+   └─→ iterative scan-fix cycle (detect tool → scan → fix → compile → UT → mutation → re-scan → repeat until 0)
 ```
 
 ### Phase Workflow Summary
@@ -248,6 +253,7 @@ long-task-agent/
 │   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + prompts/implementer-prompt.md
 │   ├── long-task-quality/{references/quality-execution.md,coverage-recipes.md}
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
+│   ├── long-task-static-review/SKILL.md + references/tool-profiles.md (standalone)
 ├── agents/{codebase-scanner,ats-reviewer,example-generator,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
@@ -270,6 +276,7 @@ long-task-agent/
 - [skills/long-task-st/references/st-recipes.md](skills/long-task-st/references/st-recipes.md) — ST tool recipes per language
 - [skills/long-task-multi-repo/SKILL.md](skills/long-task-multi-repo/SKILL.md) — Multi-repo requirements, SRS split, dependency distribution
 - [skills/long-task-explore/SKILL.md](skills/long-task-explore/SKILL.md) — Standalone deep codebase exploration
+- [skills/long-task-static-review/SKILL.md](skills/long-task-static-review/SKILL.md) — Standalone pre-push static analysis (Checkstyle)
 - [agents/codebase-locator.md](agents/codebase-locator.md) — Codebase structure locator (breadth-first)
 - [agents/codebase-analyzer.md](agents/codebase-analyzer.md) — Architecture/data flow/domain analyzer (depth-first)
 - [agents/codebase-pattern-finder.md](agents/codebase-pattern-finder.md) — Pattern/health/debt finder (metrics-driven)
@@ -278,8 +285,8 @@ long-task-agent/
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 13 skills loaded on-demand.
-The `using-long-task` skill routes to the correct phase based on project state.
+This project uses a multi-session agent workflow with 15 skills loaded on-demand.
+The `using-long-task` skill is injected at session start and routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS in place → new features appended → Worker cycles → ST.
 
