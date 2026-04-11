@@ -7,6 +7,8 @@
 **Design Reference**: docs/plans/YYYY-MM-DD-<topic>-design.md § 4.N
 **SRS Reference**: FR-xxx
 
+> **Increment wave change tracking**: When this feature design is produced or updated during an increment wave (feature.wave > 0 and prior design exists), apply visual change markers (green=NEW, amber=MODIFIED) to all Mermaid diagrams per the design template's Diagram Change Tracking Convention. Remove previous-wave markers before applying current-wave markers.
+
 ## Project Structure
 
 > Files and directories touched by this feature. Mark as **[existing]**, **[new]**, or **[modified]**.

@@ -254,6 +254,7 @@ All architectural and design views MUST use **Mermaid** syntax. This ensures:
 - [ ] Flow diagrams include decision nodes for all branching logic
 - [ ] No placeholder diagrams — every diagram reflects actual approved design content
 - [ ] Every edge in §3.3 component diagram includes Contract ID referencing §6.2
+- [ ] During increment updates: new/modified diagram elements use visual change-tracking styles (green=NEW, amber=MODIFIED) per design template convention; previous-wave markers removed
 
 ## Third-Party Dependency Rules
 

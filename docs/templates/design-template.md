@@ -4,6 +4,28 @@
 **Status**: Approved
 **SRS Reference**: docs/plans/YYYY-MM-DD-<topic>-srs.md
 
+<!-- Diagram Change Tracking Convention -->
+> **Diagram Change Tracking** — applied only during increment updates (Wave N > 0). Initial design documents do NOT use change markers.
+>
+> | Diagram Type | New Element | Modified Element | Edge Marking |
+> |---|---|---|---|
+> | `graph`/`flowchart` | `Node[Label]:::newNode` | `Node[Label]:::modNode` | `A -->\|"label 🟢"\| B` / `🟡` |
+> | `classDiagram` | `<<NEW - Wave N>>` annotation | `<<MODIFIED - Wave N>>` annotation | N/A |
+> | `sequenceDiagram` | `rect rgb(209,250,229)` wrapper + Note | `rect rgb(254,243,199)` wrapper + Note | Wrapped in `rect` |
+> | `erDiagram` | `ENTITY["NEW EntityName"]` alias | `ENTITY["MOD EntityName"]` alias | N/A |
+> | `stateDiagram-v2` | `State:::newNode` | `State:::modNode` | Label with `🟢`/`🟡` |
+>
+> Standard `classDef` block (for graph/flowchart/stateDiagram-v2):
+> ```
+> classDef newNode fill:#d1fae5,stroke:#2ea043,stroke-width:2px
+> classDef modNode fill:#fef3c7,stroke:#d4a017,stroke-width:2px
+> ```
+>
+> **Legend**: Each diagram containing change markers MUST include a Markdown note before the code fence:
+> `> **Change Legend (Wave N):** 🟢 = NEW | 🟡 = MODIFIED`
+>
+> **Cleanup rule**: Remove change markers from previous waves before applying new ones. Each diagram shows only current-wave markers.
+
 ## 0. Project Structure
 
 > Target project directory tree. Mark each entry as **[existing]**, **[new]**, or **[modified]** to show the design's footprint on the codebase.
@@ -40,6 +62,7 @@ project-root/
 
 ```mermaid
 graph TB
+    %% Increment change tracking: add classDef newNode/modNode here during Wave N updates
     subgraph Presentation Layer
         API[API Controllers]
     end
@@ -66,6 +89,7 @@ graph TB
 
 ```mermaid
 graph LR
+    %% Increment change tracking: add classDef newNode/modNode here during Wave N updates
     A[Component A] -->|"REST: ResourceDTO (IAPI-001)"| B[Component B]
     B -->|"event: ResourceCreatedEvent (IAPI-002)"| C[Component C]
 ```
@@ -90,6 +114,7 @@ graph LR
 
 ```mermaid
 classDiagram
+    %% Increment change tracking: use <<NEW - Wave N>> / <<MODIFIED - Wave N>> annotations during Wave N updates
     class ClassName {
         -privateField: Type
         +publicMethod(param: Type): ReturnType
@@ -106,6 +131,7 @@ classDiagram
 
 ```mermaid
 sequenceDiagram
+    %% Increment change tracking: wrap new flows in rect rgb(209,250,229), modified in rect rgb(254,243,199) during Wave N updates
     participant User
     participant Controller
     participant Service
@@ -123,6 +149,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
+    %% Increment change tracking: add classDef newNode/modNode here during Wave N updates
     A[Start] --> B{Condition?}
     B -->|Yes| C[Action A]
     B -->|No| D[Action B]
@@ -157,6 +184,7 @@ flowchart TD
 
 ```mermaid
 erDiagram
+    %% Increment change tracking: use ENTITY["NEW Name"] / ENTITY["MOD Name"] aliases during Wave N updates
     ENTITY_A ||--o{ ENTITY_B : "relationship"
     ENTITY_A {
         type field_name PK
@@ -223,6 +251,7 @@ interface ResourceDTO {
 
 ```mermaid
 graph LR
+    %% Increment change tracking: add classDef newNode/modNode here during Wave N updates
     App --> LibA["LibA v1.2"]
     App --> LibB["LibB v3.0"]
     LibB --> LibC["LibC v2.1"]
@@ -264,6 +293,7 @@ graph LR
 
 ```mermaid
 graph LR
+    %% Increment change tracking: add classDef newNode/modNode here during Wave N updates
     A[Feature A<br/>P0] --> C[Feature C<br/>P1]
     B[Feature B<br/>P0] --> D[Feature D<br/>P1]
     C --> E[Feature E<br/>P2]

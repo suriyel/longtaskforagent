@@ -345,6 +345,7 @@ Concrete, verifiable rules:
 - **Sequence diagrams**: include alt/opt/loop blocks for all branches; show return types; participant names match class names from §2
 - **Flow diagrams**: every decision node has exactly 2 exits; no transitions without labeled conditions
 - **State diagrams**: every state reachable from initial; every terminal reachable; no orphan states; guard conditions on ambiguous transitions
+- **Increment change tracking** (when feature.wave > 0 and prior feature design exists): apply visual change markers per design template Diagram Change Tracking Convention. New nodes/states/participants use green styling (`classDef newNode fill:#d1fae5,stroke:#2ea043,stroke-width:2px` or equivalent per diagram type); modified elements use amber styling (`classDef modNode fill:#fef3c7,stroke:#d4a017,stroke-width:2px`). Include legend before each affected diagram. Remove previous-wave markers.
 
 ## Skip-Explicitly Rule
 

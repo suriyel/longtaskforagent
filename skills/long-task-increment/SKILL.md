@@ -138,14 +138,42 @@ Update the existing design document **in place** for affected sections:
    - Update Dependency Chain (section 11.3) if new features have dependencies
    - Update Task Decomposition (section 11.2) with new priorities
    - Add any new third-party dependencies to the dependency table
+   - Apply **green (NEW)** visual change markers to all diagrams in new sections (see sub-step 5b)
 3. For **modified** requirements:
    - Update the corresponding Key Feature Design section (4.N) in place
    - Update sequence/flow diagrams as needed
    - Update §6.2 contracts and §4.N.6 Integration Surface if the modification changes cross-feature interfaces
+   - Apply **amber (MODIFIED)** visual change markers to changed elements in affected diagrams (see sub-step 5b)
 4. For **deprecated** requirements:
    - Add `[DEPRECATED - Wave N]` marker to the corresponding design section
    - Do NOT delete the section (preserve history context)
 5. **§13 Codebase Conventions** (if exists): carry forward as-is unless new constraints surface. If the increment introduces new internal libraries, prohibits additional APIs, or adds static analysis tools, update the corresponding §13 subsections. If codebase conventions have materially changed since the original scan, consider re-scanning (delete `docs/rules/` and re-run in a new session).
+5b. **Apply Visual Change Tracking to Diagrams** — mark new/modified elements in every Mermaid diagram touched by this wave. **First**, remove any change markers from previous waves so each diagram shows only current-wave markers.
+
+   **Standard classDef block** (add after diagram declaration in `graph`/`flowchart`/`stateDiagram-v2`):
+   ```
+   classDef newNode fill:#d1fae5,stroke:#2ea043,stroke-width:2px
+   classDef modNode fill:#fef3c7,stroke:#d4a017,stroke-width:2px
+   ```
+
+   **Per-diagram-type syntax:**
+
+   | Diagram Type | New Element | Modified Element | Edge Marking |
+   |---|---|---|---|
+   | `graph`/`flowchart` | `Node[Label]:::newNode` | `Node[Label]:::modNode` | `A -->\|"label 🟢"\| B` / `🟡` |
+   | `classDiagram` | `<<NEW - Wave N>>` annotation | `<<MODIFIED - Wave N>>` annotation | N/A |
+   | `sequenceDiagram` | `rect rgb(209,250,229)` wrapper + `Note: 🟢 NEW` | `rect rgb(254,243,199)` wrapper + `Note: 🟡 MODIFIED` | Wrapped in `rect` |
+   | `erDiagram` | `ENTITY["NEW EntityName"]` alias | `ENTITY["MOD EntityName"]` alias | N/A |
+   | `stateDiagram-v2` | `State:::newNode` | `State:::modNode` | Label with `🟢`/`🟡` |
+
+   **Scope — apply markers to:**
+   - All diagrams in **new** §4.N+1 sections (all elements green)
+   - Changed elements in **modified** §4.N sections (changed elements amber, unchanged elements unmarked)
+   - New/modified elements in **architectural diagrams** updated by this wave: §3.2 Logical View, §3.3 Component Diagram, §5 Data Model, §7.2 Dependency Graph, §10.3 Dependency Chain
+
+   **Legend** — add a Markdown note before each diagram containing change markers:
+   `> **Change Legend (Wave N):** 🟢 = NEW | 🟡 = MODIFIED`
+
 6. Get user approval section-by-section
 7. Git commit the design update with descriptive message:
    ```
