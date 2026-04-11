@@ -36,6 +36,7 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 11. **Validate SRS** — 8 quality attributes, anti-patterns, testability
 12. **Granularity analysis** — bidirectional sizing (G1-G6 split, S1-S4 merge)
 12b. **FR granularity confirmation** — present finalized FR list; dedicated user approval of split/merge rationality
+12c. **Single-round mode confirmation** — offer single-round mode (all FRs in wave 0); decision applies globally to all per-repo pipelines
 13. **Scope fit & deferral** — assess current-round vs next-round, deferred backlog
 14. **[Expert only] Alignment validation** — via `references/alignment-validation.md`
 15. **SRS Compliance Review** — dispatch srs-reviewer subagent; gate: all checks PASS
@@ -236,7 +237,7 @@ Any YES to Q2 → generate EARS-formatted NFR candidates inline. If Q2 reveals s
 
 After Lite elicitation, proceed to the **shared steps** (Steps 9–17 in the checklist):
 - L4 = Steps 9–10 (classify, EARS + repo annotation, diagrams)
-- L5 = Steps 11–12b–13 + Step 15 (validate, granularity, granularity confirmation, deferral, SRS reviewer with Group P = PASS-SKIPPED)
+- L5 = Steps 11–12b–12c–13 + Step 15 (validate, granularity, granularity confirmation, single-round mode confirmation, deferral, SRS reviewer with Group P = PASS-SKIPPED)
 - L6 = Steps 16–17 (present entire SRS in one block as single approval, save)
 
 Then proceed to **Steps 18–20** (split, distribute, handoff).
@@ -328,7 +329,7 @@ Skip categories clearly irrelevant. **Rule**: Every NFR must have a **measurable
 
 ### E9: Classify, Write, Validate, Granularity, Deferral
 
-Same as shared Steps 9–13 (including Step 12b granularity confirmation) in the checklist. No differences from standard process.
+Same as shared Steps 9–13 (including Step 12b granularity confirmation and Step 12c single-round mode confirmation) in the checklist. No differences from standard process.
 
 ### E10: Alignment Validation [Expert only]
 
@@ -437,14 +438,16 @@ After all requirements are written, generate visual aids:
 
 Right-size each FR for one Worker session. Apply both over-size (G) and under-size (S) heuristics. The goal: each FR should produce a feature that productively uses ~50% of the model's context window. As a concrete sizing target, each FR should produce approximately 1,000 lines of implementation code (excluding unit test code).
 
+**Multi-repo sizing basis**: The ~1,000 LOC target refers to the **per-repo implementation** of a single FR, not the combined total across all repos. For cross-repo FRs (annotated with multiple repos), estimate the LOC for each repo's portion independently — if any repo's portion falls below ~500 LOC, the FR is an under-size candidate for that repo after Step 18 split. For single-repo FRs, the target applies directly.
+
 **Step 12.0 — Select your sizing profile:** You know your own maximum context window. Apply the matching row to all G/S decisions below.
 
 | Context window | Profile | Target ACs per FR | Single-feature implementation scope |
 |---|---|---|---|
-| ≤ 200K tokens | **Standard** | 3-12 | ~1,000 lines implementation code (excluding UT) |
-| > 200K tokens | **Extended** | 5-20 | ~1,000 lines implementation code (excluding UT) |
+| ≤ 200K tokens | **Standard** | 3-12 | ~1,000 lines implementation code per repo (excluding UT) |
+| > 200K tokens | **Extended** | 5-20 | ~1,000 lines implementation code per repo (excluding UT) |
 
-An FR below the profile minimum AC count is under-sized (S-heuristic candidate). An FR above the profile maximum is over-sized (G-heuristic candidate). When the AC-based heuristic is ambiguous, estimate the likely implementation LOC: an FR producing significantly fewer than ~1,000 lines is a merge candidate; significantly more is a split candidate.
+An FR below the profile minimum AC count is under-sized (S-heuristic candidate). An FR above the profile maximum is over-sized (G-heuristic candidate). When the AC-based heuristic is ambiguous, estimate the likely implementation LOC **per repo**: an FR producing significantly fewer than ~1,000 lines in its target repo is a merge candidate; significantly more is a split candidate.
 
 **Phase 1 — Over-size detection (G1-G6):** Split FRs that are too coarse for a single session.
 
@@ -497,16 +500,36 @@ After all G1-G6 splits, S1-S4 merges, and FR ID re-numbering, present the finali
    | FR ID | Title | AC Count | Est. Impl. LOC | Changed? | Notes |
    |-------|-------|----------|----------------|----------|-------|
    - "Changed?" column: "split from FR-XXX" / "absorbed FR-YYY" / "unchanged"
-   - "Est. Impl. LOC" column: rough estimate targeting ~1,000 lines (excluding UT)
+   - "Est. Impl. LOC" column: rough estimate targeting ~1,000 lines **per repo** (excluding UT). For cross-repo FRs, show per-repo breakdown (e.g., "backend: ~800, frontend: ~400")
    - For merged FRs, list which original FRs were absorbed so user can verify completeness
 
-2. Ask: "Please review the FR list above. Each FR targets ~1,000 lines of implementation code (excluding unit tests). All merged FRs retain the complete requirement content of the absorbed FRs. Confirm the granularity is appropriate, or indicate which FRs should be further split, merged, or adjusted."
+2. Ask: "Please review the FR list above. Each FR targets ~1,000 lines of implementation code per repo (excluding unit tests). For cross-repo FRs, per-repo LOC breakdowns are shown — portions below ~500 LOC may be merged after Step 18 split. All merged FRs retain the complete requirement content of the absorbed FRs. Confirm the granularity is appropriate, or indicate which FRs should be further split, merged, or adjusted."
 
 3. Process response:
-   - **Confirmed** → proceed to Step 13
+   - **Confirmed** → proceed to Step 12c
    - **Adjustment requested** → apply changes, re-number IDs, re-present (loop until confirmed)
 
 **Mandatory for both Lite and Expert tracks.** Even if Step 12 produced 0 granularity candidates (no splits or merges), present the FR list for confirmation — the user may identify granularity issues the heuristics missed.
+
+### Step 12c: Single-Round Mode Confirmation
+
+After FR granularity confirmation, present via `AskUserQuestion`:
+
+> "The finalized FR list contains {N} functional requirement(s).
+>
+> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD, quality gates, feature-ST) run normally — no steps are skipped.
+>
+> **Multi-repo scope**: This decision applies at the global SRS level. When the global SRS is split into per-repo SRS documents (Step 18), each per-repo SRS inherits `Single-Round: Yes` — all per-repo pipelines will set `single_round: true` in their `feature-list.json` and skip deferral analysis.
+>
+> **Context overflow risk**: If any single FR is estimated to exceed ~1,000 lines of implementation code (excluding unit tests), consider splitting it further (return to Step 12).
+>
+> [Enable single-round mode] / [Skip — proceed to deferral analysis]"
+
+Process response:
+- **Enable** → record `Single-Round: Yes` in the global SRS document metadata header. Step 13 (Scope Fit & Deferral) still executes but presents a confirmation summary instead of deferral recommendations — user has declared intent to implement all FRs in this round.
+- **Skip** → proceed to Step 13 normally (full deferral analysis).
+
+**Mandatory for both Lite and Expert tracks.**
 
 ### Step 13: Scope Fit & Deferral
 
@@ -516,6 +539,8 @@ Rules:
 - Must-priority FRs are NEVER auto-deferred
 - Dependency integrity — if FR-X depends on FR-Y, both stay
 - Deferred backlog preserves EARS + acceptance criteria for increment pickup
+
+**Single-round mode behavior**: If `Single-Round: Yes` was recorded in Step 12c, this step still executes but replaces deferral recommendations with a confirmation summary: list all FRs, confirm all are assigned to wave 0, and present for user acknowledgment. No FRs are deferred.
 
 ---
 
@@ -619,6 +644,7 @@ If a deferred backlog was generated in Step 13, save alongside: `docs/plans/YYYY
       - Include only this repo's FRs, NFRs, CONs, ASMs
       - Add `## Interface Requirements` section: list all cross-repo IFRs with dependency repo names
       - Add metadata header: `Global SRS Reference: docs/plans/global-srs.md`
+      - If global SRS metadata contains `Single-Round: Yes`, propagate to per-repo SRS metadata header: `Single-Round: Yes`
    c. If deferred backlog exists, copy applicable items to `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-deferred.md`
 
 3. **Per-repo codebase rules**: Do NOT dispatch `codebase-scanner` here.
@@ -646,11 +672,24 @@ If a deferred backlog was generated in Step 13, save alongside: `docs/plans/YYYY
    }
    ```
 
-5. **Commit** (if project root has git) or skip if no root-level git
+5. **Per-repo granularity re-check** — after splitting, each repo's FR set may contain under-sized child FRs that were properly sized at the global level but became too small after split. For each repo:
 
-6. **Present split summary** to user for confirmation via `AskUserQuestion`:
-   - Per-repo FR count and key requirements
+   a. List the repo's FRs with **per-repo LOC estimates** (not global totals)
+   b. Apply S1-S4 under-size heuristics within the repo's FR set:
+      - Child FRs estimated below ~500 LOC are merge candidates with other FRs in the **same repo**
+      - S-heuristic merge rules apply identically to Step 12 (content preservation mandatory, combined ACs ≤ 20, same actor/functional area)
+   c. If merges are applied:
+      - Re-number per-repo FR IDs sequentially
+      - Update per-repo SRS cross-references and IFR dependency links
+      - Update `repos-manifest.json` cross_repo_deps entries accordingly
+   d. Skip this step if the repo has only 1 FR (nothing to merge into)
+
+6. **Commit** (if project root has git) or skip if no root-level git
+
+7. **Present split summary** to user for confirmation via `AskUserQuestion`:
+   - Per-repo FR list with per-repo LOC estimates (table format per repo)
    - Cross-repo dependencies and interface contracts
+   - Any merges applied in step 5 with rationale
    - Ask: "各仓库 SRS 拆分结果是否正确？是否需要调整？"
 
 ## Step 19: Distribute Dependency Files

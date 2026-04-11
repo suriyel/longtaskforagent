@@ -40,6 +40,7 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 9. **Validate SRS** — check 8 quality attributes, detect anti-patterns, verify testability
 10. **Granularity analysis** — bidirectional sizing: detect oversized FRs (G1-G6 split) AND undersized FRs (S1-S4 merge) to fit context budget; user approval for non-trivial changes
 10b. **FR granularity confirmation** — present finalized FR list; dedicated user approval of split/merge rationality
+10c. **Single-round mode confirmation** — offer single-round mode (all FRs in wave 0, no deferral)
 11. **Scope fit & deferral** — assess current-round vs next-round, generate deferred backlog if applicable
 12. **[Expert only] Alignment validation** — via `references/alignment-validation.md`
 13. **SRS Compliance Review** — dispatch srs-reviewer subagent; gate: all checks PASS before proceeding
@@ -176,7 +177,7 @@ Any YES to Q2 → generate EARS-formatted NFR candidates inline. If Q2 reveals s
 
 After Lite elicitation, proceed to the **shared steps** (Steps 7–16 in the checklist):
 - L4 = Steps 7–8 (classify, EARS, diagrams)
-- L5 = Steps 9–10b–11 + Step 13 (validate, granularity, granularity confirmation, deferral, SRS reviewer with Group P = PASS-SKIPPED)
+- L5 = Steps 9–10b–10c–11 + Step 13 (validate, granularity, granularity confirmation, single-round mode confirmation, deferral, SRS reviewer with Group P = PASS-SKIPPED)
 - L6 = Steps 14–16 (present entire SRS in one block as single approval, save, transition to Design)
 
 ---
@@ -262,7 +263,7 @@ Skip categories clearly irrelevant. **Rule**: Every NFR must have a **measurable
 
 ### E9: Classify, Write, Validate, Granularity, Deferral
 
-Same as shared Steps 7–11 (including Step 10b granularity confirmation) in the checklist. No differences from standard process.
+Same as shared Steps 7–11 (including Step 10b granularity confirmation and Step 10c single-round mode confirmation) in the checklist. No differences from standard process.
 
 ### E10: Alignment Validation [Expert only]
 
@@ -423,7 +424,7 @@ After all G1-G6 splits, S1-S4 merges, and FR ID re-numbering, present the finali
 2. Ask: "Please review the FR list above. Each FR targets ~1,000 lines of implementation code (excluding unit tests). All merged FRs retain the complete requirement content of the absorbed FRs. Confirm the granularity is appropriate, or indicate which FRs should be further split, merged, or adjusted."
 
 3. Process response:
-   - **Confirmed** → proceed to Step 11
+   - **Confirmed** → proceed to Step 10c
    - **Adjustment requested** → apply changes, re-number IDs, re-present (loop until confirmed)
 
 **Mandatory for both Lite and Expert tracks.** Even if Step 10 produced 0 granularity candidates (no splits or merges), present the FR list for confirmation — the user may identify granularity issues the heuristics missed.
