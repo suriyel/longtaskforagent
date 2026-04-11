@@ -6,38 +6,40 @@
 
 # 快速开始
 
+> **分支说明**：本仓库有两个主要分支：
+> - **`simple`** — 精简版，适合大多数项目（推荐）
+> - **`main`** — 完整版，包含全部高级功能
+
 ### 1. 安装
 
-#### 方式一：Claude Code 原生命令（推荐）
+#### 方式一：一键安装脚本（推荐）
 
-在 Claude Code 中，首先注册市场：
-
-```bash
-/plugin marketplace add suriyel/longtaskforagent
-```
-
-然后从该市场安装插件：
-
-```shell
-/plugin install long-task@longtaskforagent
-```
-
-#### 方式二：一键安装脚本
+默认安装 `simple` 分支。
 
 **macOS / Linux：**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/claude-code/install.sh | bash
 ```
 
 **Windows（PowerShell）：**
 
 ```powershell
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/claude-code/install.ps1 | iex
+```
+
+如需安装其他分支，通过 `BRANCH` 环境变量指定：
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/claude-code/install.sh | BRANCH=main bash
+
+# Windows PowerShell
+$env:BRANCH="main"; irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/claude-code/install.ps1 | iex
 ```
 
 脚本会自动：
-- Clone 仓库到 `~/.claude/plugins/marketplaces/longtaskforagent/`
+- Clone 指定分支到 `~/.claude/plugins/marketplaces/longtaskforagent/`
 - 更新 `known_marketplaces.json` 注册信息
 
 安装完成后，使用 Claude Code 安装插件：
@@ -46,6 +48,24 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/
 /plugin install long-task@longtaskforagent
 ```
 
+切换分支时重新运行安装脚本即可（会自动替换已有安装）。
+
+#### 方式二：Claude Code 原生命令
+
+在 Claude Code 中，首先注册市场：
+
+```bash
+/plugin marketplace add suriyel/longtaskforagent
+```
+
+然后安装插件：
+
+```shell
+/plugin install long-task@longtaskforagent
+```
+
+> 注意：此方式默认安装 `main` 分支，如需 `simple` 分支请使用方式一。
+
 #### 方式三：OpenCode 用户
 
 如果您使用 [OpenCode](https://opencode.ai)：
@@ -53,13 +73,13 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/
 **macOS / Linux：**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.sh | bash
 ```
 
 **Windows（PowerShell，需开发者模式或管理员权限）：**
 
 ```powershell
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps1 | iex
 ```
 
 安装完成后重启 OpenCode 即可激活。完整说明请参阅 [OpenCode 安装指南](docs/README.opencode.md)。
