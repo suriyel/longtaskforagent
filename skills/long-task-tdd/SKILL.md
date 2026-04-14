@@ -186,12 +186,6 @@ For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-promp
 
 Write a TDD Red test that verifies the startup output contains these values before implementing the server binding. This enables reliable port/PID extraction via `head -30` of the startup log.
 
-**env-guide.md sync rule** — after implementing or modifying a server/background service:
-1. Compare the actual start command and bound port with `env-guide.md` "Start All Services" and Services table
-2. If they differ (port changed, command renamed, new service added): update `env-guide.md` — fix the Services table row and Start/Stop/Verify commands to match
-3. If the startup sequence requires >2 shell commands (e.g., DB migration + seed + server): extract to `scripts/svc-<slug>-start.sh` (Unix) / `scripts/svc-<slug>-start.ps1` (Windows); update env-guide.md "Start All Services" to call `bash scripts/svc-<slug>-start.sh`; same pattern for stop sequences
-4. Include any `env-guide.md` and `scripts/svc-*` changes in the **same git commit** as the implementation
-
 ## Step 3: TDD Refactor
 
 Clean up while keeping tests green:
