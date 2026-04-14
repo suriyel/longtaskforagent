@@ -60,9 +60,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Skill | Purpose |
 |-------|---------|
-| `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory |
-| `long-task-tdd` | TDD Red-Green-Refactor |
-| `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, ISO/IEC/IEEE 29119) |
+| `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, test inventory |
+| `long-task-tdd-red` | TDD Red — write failing tests for Test Inventory |
+| `long-task-tdd-green` | TDD Green — minimal implementation to pass all tests |
+| `long-task-tdd-refactor` | TDD Refactor — clean up + static analysis + §11 compliance |
+| `long-task-quality-gates` | Quality Gates — coverage + mutation testing |
+| `long-task-feature-st` | Black-Box Feature Acceptance Testing (ISO/IEC/IEEE 29119) |
 
 #### Skill Call Graph
 
@@ -77,10 +80,12 @@ using-long-task (router)
    ├─→ long-task-increment (increment-request.json)
    │      └─→ update SRS/Design → append features → long-task-work
    ├─→ long-task-work (active features failing)
-   │      ├─→ long-task-feature-design (Step 4)
-   │      ├─→ long-task-tdd (Steps 6-8)
-   │      ├─→ Quality Gates SubAgent (Step 8, inline dispatch)
-   │      └─→ long-task-feature-st (Step 9)
+   │      ├─→ long-task-feature-design (Step 2)
+   │      ├─→ long-task-tdd-red (Step 3)
+   │      ├─→ long-task-tdd-green (Step 4)
+   │      ├─→ long-task-tdd-refactor (Step 5)
+   │      ├─→ long-task-quality-gates (Step 6)
+   │      └─→ long-task-feature-st (Step 7)
    └─→ long-task-st (ALL active features passing)
           ├─→ long-task-work (defects found → fix)
           └─→ Finalize (Go verdict — inline Step 13)
@@ -106,17 +111,17 @@ long-task-static-review (standalone — no pipeline dependency)
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design updated in place; new features appended with `wave` metadata |
 | 1: Init | `long-task-init` | `feature-list.json`, `long-task-guide.md`, project skeleton |
-| 2: Worker | `long-task-work` | TDD → Quality → Feature-ST → Inline Check per feature |
+| 2: Worker | `long-task-work` | Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gates → Feature-ST per feature |
 | 3: System Testing | `long-task-st` | ST plan/report; Go/No-Go verdict; chains to Finalize |
 
 ### Critical Rules
 
-- **Gate order**: Requirements (SRS) → Design → ATS → Init → TDD → Coverage → Mutation → Feature-ST → ST → Finalize. No skipping.
+- **Gate order**: Requirements (SRS) → Design → ATS → Init → Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gates → Feature-ST → ST → Finalize. No skipping.
 - **ATS reviewer mandatory**: Independent subagent reviews ATS before approval; max 2 fix rounds then user escalation.
 - **ATS constrains downstream**: `srs_trace` → ATS category lookup; feature-st must satisfy ATS category requirements.
-- **Strict TDD**: Always Red→Green→Refactor. Coverage: line ≥90%, branch ≥80%. Mutation: score ≥80% (feature-scoped if >`mutation_full_threshold` active features; full during ST).
+- **Strict TDD**: Always Red→Green→Refactor (3 separate SubAgents). Coverage: line ≥90%, branch ≥80%. Mutation: score ≥80% (feature-scoped if >`mutation_full_threshold` active features; full during ST).
 - **Verification enforcement**: Never mark "passing" without fresh evidence.
-- **Inline compliance after every feature**: interface contract, test inventory, dependency versions (no SubAgent).
+- **§11 compliance in TDD Refactor**: §11.1/§11.2 grep, dependency versions, code reuse verification — merged into TDD Refactor SubAgent.
 - **Systematic debugging**: Never guess-and-fix; trace root cause first.
 - **One feature per session**: Multi-feature automation via `scripts/auto_loop.py`.
 - **System testing before release**: ST phase required (regression, integration, E2E, exploratory); no release without Go verdict.
@@ -230,10 +235,15 @@ long-task-agent/
 │   ├── long-task-init/SKILL.md + scripts/init_project.py
 │   ├── long-task-feature-design/SKILL.md + references/feature-design-template.md
 │   ├── long-task-work/SKILL.md + references/{systematic-debugging,subagent-development,worktree-isolation}.md
+│   ├── long-task-tdd/SKILL.md (redirect → 3 phase skills below)
+│   ├── long-task-tdd-shared/references/{iron-law,testing-anti-patterns}.md
+│   ├── long-task-tdd-red/SKILL.md + references/tdd-red-execution.md
+│   ├── long-task-tdd-green/SKILL.md + references/tdd-green-execution.md
+│   ├── long-task-tdd-refactor/SKILL.md + references/tdd-refactor-execution.md
+│   ├── long-task-quality-gates/SKILL.md + references/quality-execution.md (symlink)
+│   ├── long-task-quality/{references/quality-execution.md,coverage-recipes.md}
 │   ├── long-task-feature-st/SKILL.md + prompts/e2e-scenario-prompt.md
 │   ├── long-task-st/SKILL.md + references/st-recipes.md (includes Finalize Step 13)
-│   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + prompts/implementer-prompt.md
-│   ├── long-task-quality/{references/quality-execution.md,coverage-recipes.md}
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
 │   ├── long-task-static-review/SKILL.md + references/tool-profiles.md (standalone)
 │   ├── long-task-codebase-scanner/SKILL.md (standalone + pipeline Phase 0-pre)

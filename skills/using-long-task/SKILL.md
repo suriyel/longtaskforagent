@@ -134,9 +134,12 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 ### Discipline Skills (invoked by long-task-work as sub-skills — do NOT invoke directly)
 | Skill | Purpose |
 |-------|---------|
-| `long-task:long-task-feature-design` | Feature Detailed Design — interface contracts, algorithm pseudocode, state diagrams, boundary matrices, test inventory (bridges system design → TDD) |
-| `long-task:long-task-feature-st` | Black-Box Feature Acceptance Testing — self-managed start/cleanup lifecycle, ISO/IEC/IEEE 29119 test case documentation (per-feature, after Quality Gates) |
-| `long-task:long-task-tdd` | TDD Red-Green-Refactor | |
+| `long-task:long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, test inventory |
+| `long-task:long-task-tdd-red` | TDD Red — write failing tests for Test Inventory |
+| `long-task:long-task-tdd-green` | TDD Green — minimal implementation to pass all tests |
+| `long-task:long-task-tdd-refactor` | TDD Refactor — clean up + static analysis + §11 compliance |
+| `long-task:long-task-quality-gates` | Quality Gates — coverage + mutation testing |
+| `long-task:long-task-feature-st` | Feature-ST — black-box acceptance testing (ISO/IEC/IEEE 29119) |
 
 ## Key Files (shared contract)
 
