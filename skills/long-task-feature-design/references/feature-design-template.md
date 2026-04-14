@@ -80,31 +80,6 @@ tests/
 
 > N/A — [reason, e.g., "single-class implementation, error paths documented in Algorithm error handling table"]
 
-## Algorithm / Core Logic
-
-### [Method Name]
-
-#### Flow Diagram
-
-```mermaid
-flowchart TD
-    A[Start] --> B{Decision?}
-    B -->|Yes| C[Process]
-    B -->|No| D[Return default]
-    C --> E[Return result]
-```
-
-#### Pseudocode
-
-```
-FUNCTION name(param1: Type, param2: Type) -> ReturnType
-  // Step 1: [major step]
-  // Step 2: [formula or key decision]
-  // Step 3: [edge case handling]
-  RETURN result
-END
-```
-
 #### Boundary Decisions
 
 | Parameter | Min | Max | Empty/Null | At boundary |
