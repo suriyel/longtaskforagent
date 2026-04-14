@@ -5,7 +5,7 @@ description: "Use when all features in feature-list.json are passing - run compr
 
 # System Testing — Cross-Feature & System-Wide Verification Before Release
 
-Run cross-feature and system-wide testing after all features are implemented and passing. Per-feature ST test cases (functional, boundary, UI, security) have already been executed during each Worker cycle via `long-task-feature-st`. This phase focuses on what per-feature testing **cannot** cover: cross-feature interactions, multi-feature E2E workflows, system-wide NFR verification, compatibility, and exploratory testing.
+Run cross-feature and system-wide testing after all features are implemented and passing. Per-feature ST test cases (functional, boundary, UI, security) have already been executed during each Worker cycle via `long-task-feature-st`. This phase focuses on what per-feature testing **cannot** cover: cross-feature interactions, multi-feature E2E workflows, system-wide performance/security verification, compatibility, and exploratory testing.
 
 **Announce at start:** "I'm using the long-task-st skill. All features are passing — time for cross-feature system testing."
 
@@ -28,19 +28,8 @@ python scripts/check_st_readiness.py feature-list.json
 - All features have `"status": "passing"` — if any failing, invoke `long-task:long-task-work` instead
 - SRS document exists (`docs/plans/*-srs.md`); Design document exists (`docs/plans/*-design.md`)
 - Load config values if applicable — activate environment per `long-task-guide.md`; if the project uses a file-based config, ensure it is sourced before running the checks
-- **Start ST runtime services**: Start services using commands from `env-guide.md` (skip if CLI/library only)
-  - Read `env-guide.md` — use "Start All Services" section; run each command with output redirect:
-    ```bash
-    [start command] > /tmp/svc-<slug>-start.log 2>&1 &
-    sleep 3
-    head -30 /tmp/svc-<slug>-start.log
-    ```
-  - Extract PID and port from the first 30 lines
-  - Run "Verify Services Running" health checks from `env-guide.md` — must respond before proceeding
-  - If start fails: check the log, diagnose root cause; try corrected commands (port conflict, env vars, missing deps); once a working command is confirmed **update `env-guide.md`** (Services table + Start command); if the fix needs >2 steps, extract to `scripts/svc-<slug>-start.sh` and reference from env-guide.md
-  - **Record info**: PIDs and ports in `task-progress.md` — required for Step 11 cleanup
 - Read `feature-list.json` — note `tech_stack`, `quality_gates`, `constraints[]`, `assumptions[]`
-- Read SRS — extract all FR-xxx, NFR-xxx, IFR-xxx, CON-xxx requirements; read Stakeholders, User Personas, and Glossary sections
+- Read SRS — extract all FR-xxx, IFR-xxx, CON-xxx requirements; read Stakeholders, User Personas, and Glossary sections
 - Read Design doc — extract architecture, API design, testing strategy (§9), third-party dependencies (§8)
 - Read `task-progress.md` — session history context
 
@@ -55,8 +44,8 @@ Create `docs/plans/YYYY-MM-DD-st-plan.md` with:
 | Regression | Always | Never |
 | Integration | 2+ features with shared data/state/APIs | Single isolated feature |
 | E2E Scenarios | SRS has multi-step user workflows | Pure library/utility projects |
-| Performance | SRS has NFR-xxx with response time / throughput targets | No performance NFRs |
-| Security | Security NFRs OR project handles user input / auth / external data | Isolated offline tools |
+| Performance | SRS specifies response time / throughput targets | No performance targets |
+| Security | Security requirements OR project handles user input / auth / external data | Isolated offline tools |
 | Compatibility | SRS specifies platform / browser / runtime targets | Single-platform CLI tools |
 | Exploratory | Always | Never |
 
@@ -68,11 +57,10 @@ Map EVERY SRS requirement to ST test approach. Reference per-feature test case d
 | Req ID | Requirement | Feature ST Status | System ST Category | ATS Categories | Test Approach | Priority |
 |--------|-------------|-------------------|--------------------|----------------|---------------|----------|
 | FR-001 | ... | docs/test-cases/feature-1-xxx.md (PASS) | E2E | FUNC,BNDRY,SEC | Scenario: ... | High |
-| NFR-001 | ... | docs/test-cases/feature-5-xxx.md (PASS) | Performance | PERF | Load test: ... | Critical |
 | IFR-001 | ... | N/A (cross-feature) | Integration | FUNC,BNDRY | Contract test: ... | High |
 ```
 
-Every FR-xxx, NFR-xxx, IFR-xxx must appear in the RTM. Requirements without a test approach = **gap**.
+Every FR-xxx, IFR-xxx must appear in the RTM. Requirements without a test approach = **gap**.
 
 **ATS compliance gate** (if ATS document exists):
 ```bash
@@ -84,13 +72,13 @@ Must exit 0. Any ATS category gap = finding to resolve before proceeding.
 
 **Entry** (must ALL be true): all features passing, environment provisioned, all required configs present.
 
-**Exit** (must ALL be true for Go verdict): all regression/integration/E2E tests pass, all NFR thresholds met with measured evidence, no Critical or Major defects open, RTM shows 100% requirement coverage, **ATS category compliance verified** (if ATS exists: `check_ats_coverage.py --strict` exits 0).
+**Exit** (must ALL be true for Go verdict): all regression/integration/E2E tests pass, all performance/security thresholds met with measured evidence, no Critical or Major defects open, RTM shows 100% requirement coverage, **ATS category compliance verified** (if ATS exists: `check_ats_coverage.py --strict` exits 0).
 
 #### 2d. Risk-Based Prioritization
 
 1. Critical path — core user workflows, highest business impact
 2. Integration boundaries — cross-feature data flows, API contracts
-3. NFR thresholds — performance, security (highest technical risk)
+3. Performance/security thresholds (highest technical risk)
 4. Edge cases — boundary conditions, error recovery
 5. Compatibility — platform/browser variations
 
@@ -151,7 +139,7 @@ For each pair of features sharing data, state, or API boundaries:
 
 **Minimum per internal boundary:**
 - ≥1 real test that writes/reads through the real shared resource
-- If real service cannot start: boundary is **BLOCKED** (not skipped) — diagnose via env-guide.md
+- If real service cannot start: boundary is **BLOCKED** (not skipped) — diagnose the issue
 
 **External boundary protocol:**
 1. Check project configuration and environment for test credentials/sandbox environment
@@ -186,7 +174,7 @@ At least ONE smoke test must exercise a real end-to-end data path (input → pro
    - Persists to real storage (if applicable)
    - Retrieves and verifies the persisted result
    - Uses ONLY real services — no mocks
-3. Run the smoke test against running services (started in Step 1)
+3. Run the smoke test against the running system
 4. If it fails → **Critical** severity defect — diagnose before proceeding to E2E
 
 **Scaling:**
@@ -212,9 +200,9 @@ For each scenario: set up initial state, execute step-by-step, verify intermedia
 
 Write E2E tests in `tests/e2e/` or `tests/st/`. Run and record results.
 
-### 6. System-Wide NFR Verification
+### 6. System-Wide Performance & Security Verification
 
-Per-feature NFR checks were handled in feature-level ST. This step focuses on **system-wide aggregate** NFR measurement. For each NFR-xxx in SRS, verify with **measured evidence** — not estimates.
+Per-feature checks were handled in feature-level ST. This step focuses on **system-wide aggregate** measurement. For each performance/security requirement in SRS, verify with **measured evidence** — not estimates.
 
 - **Performance**: measure p50/p95/p99 under expected load; throughput; memory/CPU/disk I/O. See `references/st-recipes.md` for benchmarking tools. Record: measured value vs SRS threshold.
 - **Security**: input validation audit (SQL, XSS, command injection, path traversal); auth/session/privilege escalation; dependency vulnerability scan (npm audit, pip-audit, etc.); OWASP Top 10 checklist; secrets in code/logs. Record: per-check PASS/FAIL with evidence.
@@ -253,7 +241,7 @@ If ANY defects were found in Steps 3-8:
 | Severity | Definition | Action |
 |----------|-----------|--------|
 | **Critical** | System crash, data loss, security breach | BLOCK release — fix immediately |
-| **Major** | Core workflow broken, NFR threshold failed | BLOCK release — fix before release |
+| **Major** | Core workflow broken, performance/security threshold failed | BLOCK release — fix before release |
 | **Minor** | Non-core affected, workaround exists | Document — fix now or defer (decide with user) |
 | **Cosmetic** | Visual/text issue, no functional impact | Document — defer to next release |
 
@@ -282,7 +270,7 @@ For Minor/Cosmetic deferrals: document in ST report with severity, description, 
 
 ### 10. ST Report
 
-Before writing, verify: every SRS requirement appears in RTM; every NFR has a measured value meeting the threshold; every applicable category has results; all defects are classified.
+Before writing, verify: every SRS requirement appears in RTM; every performance/security requirement has a measured value meeting the threshold; every applicable category has results; all defects are classified.
 
 Generate `docs/plans/YYYY-MM-DD-st-report.md` with these sections:
 1. **Executive Summary** — 1-3 sentences: overall quality assessment and release recommendation
@@ -296,18 +284,13 @@ Generate `docs/plans/YYYY-MM-DD-st-report.md` with these sections:
 ### 11. Persist
 
 - Validate: `python scripts/validate_features.py feature-list.json`
-- **Cleanup (MANDATORY)**: Stop services started in Step 1
-  - Read `env-guide.md` "Stop All Services" section — kill by PID (from `task-progress.md`, preferred) or by port (fallback)
-  - If the stop command fails: try port-based fallback; once a working command is confirmed, **update `env-guide.md`** Stop command; if >2 steps are needed, extract to `scripts/svc-<slug>-stop.sh` and reference from env-guide.md
-  - Run `env-guide.md` "Verify Services Stopped" commands — ports must not respond
-  - **Record cleanup result**: Note cleanup status in `task-progress.md`
 
 ### 12. Verdict
 
 Determine the Go/No-Go verdict based on exit criteria. Record in the ST report:
 - **Go**: All exit criteria met, no open Critical/Major defects, RTM 100% covered
 - **Conditional-Go**: Minor/Cosmetic defects deferred, all critical paths verified
-- **No-Go**: Open Critical/Major defects, NFR thresholds not met, or RTM gaps
+- **No-Go**: Open Critical/Major defects, performance/security thresholds not met, or RTM gaps
 
 ### 13. Finalize (on Go/Conditional-Go)
 
@@ -349,16 +332,16 @@ Dispatch via `Agent` tool. Parse return: PASS/PARTIAL/FAIL (examples are non-blo
 | Project Size | Features | ST Depth |
 |---|---|---|
 | Tiny (1-5) | 1-5 features | Regression + lightweight integration + 1 smoke test + 2-3 E2E scenarios + 1-2 exploratory charters |
-| Small (5-15) | 5-15 features | Full regression + integration per shared boundary + 1-2 smoke tests + E2E per persona + NFR spot-checks + 3-5 charters |
-| Medium (15-50) | 15-50 features | Full regression + systematic integration + 2-3 smoke tests + comprehensive E2E + full NFR + compatibility matrix + 5-10 charters |
-| Large (50+) | 50+ features | Full regression + integration test suite + 3-5 smoke tests + E2E automation + full NFR load testing + full compatibility + security audit + 10+ charters |
+| Small (5-15) | 5-15 features | Full regression + integration per shared boundary + 1-2 smoke tests + E2E per persona + performance spot-checks + 3-5 charters |
+| Medium (15-50) | 15-50 features | Full regression + systematic integration + 2-3 smoke tests + comprehensive E2E + full performance/security + compatibility matrix + 5-10 charters |
+| Large (50+) | 50+ features | Full regression + integration test suite + 3-5 smoke tests + E2E automation + full performance/security load testing + full compatibility + security audit + 10+ charters |
 
 ## Critical Rules
 
 - **Readiness gate first** — never start ST with failing features
 - **Evidence-based verdicts** — every PASS must have measured evidence; "it looks OK" is not evidence
 - **RTM completeness** — every SRS requirement must appear in the RTM; gaps are findings
-- **NFR thresholds are hard gates** — measured value must meet SRS threshold, not "close enough"
+- **Performance/security thresholds are hard gates** — measured value must meet SRS threshold, not "close enough"
 - **Defect severity is non-negotiable** — Critical/Major defects block release; no exceptions
 - **ALL bugs must be fixed** — Any bug found in ST testing (frontend, backend, integration) MUST be fixed before release. There is no "not my code" exemption.
 - **Re-test after fix** — never assume a fix works; re-run affected test categories

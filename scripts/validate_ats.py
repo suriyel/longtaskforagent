@@ -7,8 +7,7 @@ Checks:
 - Mapping table rows reference valid requirement IDs
 - Category assignments use valid categories
 - Minimum case counts are positive integers
-- When --srs is given: every FR/NFR/IFR from SRS appears in the mapping table
-- NFR rows have test methods with tools and thresholds
+- When --srs is given: every FR/IFR from SRS appears in the mapping table
 
 Usage:
     python validate_ats.py <path/to/ats-doc.md>
@@ -30,11 +29,11 @@ REQUIRED_SECTIONS = [
 ]
 
 # Requirement ID patterns
-REQ_ID_PATTERN = re.compile(r"^(FR|NFR|IFR)-\d{3}$")
+REQ_ID_PATTERN = re.compile(r"^(FR|IFR)-\d{3}$")
 
 # Table row pattern: | REQ-ID | ... |
 TABLE_ROW_PATTERN = re.compile(
-    r"^\|\s*((?:FR|NFR|IFR)-\d{3})\s*\|"
+    r"^\|\s*((?:FR|IFR)-\d{3})\s*\|"
 )
 
 
@@ -78,13 +77,13 @@ def _extract_srs_req_ids(srs_path: str) -> tuple[set[str], list[str]]:
     except Exception as e:
         return set(), [f"Cannot read SRS file: {e}"]
 
-    # Find all FR-xxx, NFR-xxx, IFR-xxx patterns in headings or bold text
+    # Find all FR-xxx, IFR-xxx patterns in headings or bold text
     ids = set()
-    for match in re.finditer(r"(?:^#{1,4}\s+|(?:\*\*))?((?:FR|NFR|IFR)-\d{3})", srs_content, re.MULTILINE):
+    for match in re.finditer(r"(?:^#{1,4}\s+|(?:\*\*))?((?:FR|IFR)-\d{3})", srs_content, re.MULTILINE):
         ids.add(match.group(1))
 
     if not ids:
-        errors.append(f"No requirement IDs (FR-xxx/NFR-xxx/IFR-xxx) found in {srs_path}")
+        errors.append(f"No requirement IDs (FR-xxx/IFR-xxx) found in {srs_path}")
 
     return ids, errors
 
@@ -126,7 +125,7 @@ def validate(path: str, srs_path: str = None) -> tuple[list[str], list[str]]:
     rows = _extract_mapping_rows(content)
 
     if not rows:
-        errors.append("No mapping table rows found (expected rows starting with '| FR-xxx |' or '| NFR-xxx |')")
+        errors.append("No mapping table rows found (expected rows starting with '| FR-xxx |' or '| IFR-xxx |')")
         return errors, warnings
 
     ats_req_ids = set()
@@ -182,15 +181,6 @@ def validate(path: str, srs_path: str = None) -> tuple[list[str], list[str]]:
             orphans = ats_req_ids - srs_ids
             for oid in sorted(orphans):
                 warnings.append(f"ATS mapping row {oid} not found in SRS — possible orphan")
-
-    # Check for NFR test method section
-    has_nfr_rows = any(r["req_id"].startswith("NFR-") for r in rows)
-    has_nfr_matrix = any(
-        v.lower() in all_headings_text
-        for v in ["nfr 测试方法", "nfr test method", "测试方法矩阵"]
-    )
-    if has_nfr_rows and not has_nfr_matrix:
-        warnings.append("ATS has NFR requirements but no NFR Test Method Matrix section")
 
     # Check for integration scenarios section (warn if >5 requirements but no integration section)
     has_integration = any(

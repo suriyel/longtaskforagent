@@ -19,16 +19,15 @@ Read ALL of these BEFORE writing any design content:
 2. **System design section** — full §4.N from the design document (read the entire subsection, NOT grep)
 3. **SRS requirement** — full FR-xxx from the SRS document
 4. **Constraints & assumptions** from feature-list.json root
-6. **Related NFRs** — NFR-xxx from SRS traceable to this feature
-7. **Existing code** — if dependency features are passing, read their public interfaces (imports, class/function signatures)
-8. **Internal API contracts** (if §6.2 exists) — from Design Section 6.2, read rows where this feature appears as Provider or Consumer. These define cross-feature schemas that this feature's Interface Contract (§3) must align with.
-9. **Codebase Conventions & Constraints** — Read Design doc §13 in full. Extract and keep in working memory:
-   - §13.1: Mandatory internal libraries table (domain, library, replaces, import pattern)
-   - §13.2: Prohibited APIs table (prohibited, reason, use instead)
-   - §13.3: Approved 3rd-party libraries (purpose, library, version)
-   - §13.5: Naming conventions table (rule, convention)
-   - §13.6: Error handling pattern description
-   §13 is always present in the design document. Empty tables mean no constraints for that category.
+5. **Existing code** — if dependency features are passing, read their public interfaces (imports, class/function signatures)
+6. **Internal API contracts** (if §6.2 exists) — from Design Section 6.2, read rows where this feature appears as Provider or Consumer. These define cross-feature schemas that this feature's Interface Contract (§3) must align with.
+7. **Codebase Conventions & Constraints** — Read Design doc §11 in full. Extract and keep in working memory:
+   - §11.1: Mandatory internal libraries table (domain, library, replaces, import pattern)
+   - §11.2: Prohibited APIs table (prohibited, reason, use instead)
+   - §11.3: Approved 3rd-party libraries (purpose, library, version)
+   - §11.5: Naming conventions table (rule, convention)
+   - §11.6: Error handling pattern description
+   §11 is always present in the design document. Empty tables mean no constraints for that category.
 
 ## Template
 
@@ -60,8 +59,7 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 | `SRS-MISSING` | Acceptance criterion has no Given/When/Then or the expected result is not specified |
 | `ATS-MISMATCH` | ATS requires a test category (e.g., SEC) but the feature's observable behavior has no surface for that category |
 | `DEP-AMBIGUOUS` | Cross-feature interface is unclear — missing or incomplete §6.2 entry for a dependency |
-| `NFR-GAP` | Referenced NFR has no measurable threshold (e.g., "should scale" without numbers) |
-| `CONSTRAINT-CONFLICT` | §13 codebase convention conflicts with feature requirement — e.g., §13.1 mandates an internal library that lacks capabilities the feature needs (streaming, specific protocol, batch size), or §13.2 prohibits an API the feature's SRS explicitly requires |
+| `CONSTRAINT-CONFLICT` | §11 codebase convention conflicts with feature requirement — e.g., §11.1 mandates an internal library that lacks capabilities the feature needs (streaming, specific protocol, batch size), or §11.2 prohibits an API the feature's SRS explicitly requires |
 
 **Scan procedure:**
 
@@ -70,8 +68,7 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 3. For each SRS acceptance criterion: verify Given/When/Then exists with explicit expected results → `SRS-MISSING`
 4. For each ATS-required category (if ATS doc provided): check if the feature's observable behavior has a testable surface for that category → `ATS-MISMATCH`
 5. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
-7. For referenced NFRs: verify measurable thresholds exist → `NFR-GAP`
-8. For each non-empty §13.1 row: check if the feature's requirements demand capabilities beyond the mandatory library's known API. For each non-empty §13.2 row: check if the feature's SRS acceptance criteria explicitly require the prohibited API → `CONSTRAINT-CONFLICT`
+6. For each non-empty §11.1 row: check if the feature's requirements demand capabilities beyond the mandatory library's known API. For each non-empty §11.2 row: check if the feature's SRS acceptance criteria explicitly require the prohibited API → `CONSTRAINT-CONFLICT`
 
 **For each detected ambiguity, produce a structured record:**
 ```
@@ -83,7 +80,7 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 - Question for user: [specific, actionable question that would resolve the ambiguity]
 ```
 
-**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria. Skip `ATS-MISMATCH` and `NFR-GAP` (bugfix features focus on root cause, not full specification coverage).
+**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria. Skip `ATS-MISMATCH` (bugfix features focus on root cause, not full specification coverage).
 
 **Decision gate:**
 - **Zero ambiguities detected** → proceed to Step 2 normally. No friction added.
@@ -107,16 +104,16 @@ After loading context and BEFORE writing design content, discover reusable code 
    | API client implementations | HTTP clients, SDK wrappers, service connectors | Class/module, file path, target service, available methods |
    | Data access patterns | Repository classes, ORM models, query builders | Class, file path, entity/table, CRUD methods |
    | Error handling helpers | Custom exception classes, error middleware, Result types | Class/type name, file path, usage pattern |
-   | §13.1 library usage patterns | How mandatory internal libraries are actually imported and called | Import statement, typical call site with file:line |
+   | §11.1 library usage patterns | How mandatory internal libraries are actually imported and called | Import statement, typical call site with file:line |
 
-3. For each §13.1 mandatory library with non-empty rows: find at least one concrete usage example in passing features. Record the import pattern and typical call site. If no usage exists yet (first feature needing it), note: "First usage — implement per §13.1 import pattern."
+3. For each §11.1 mandatory library with non-empty rows: find at least one concrete usage example in passing features. Record the import pattern and typical call site. If no usage exists yet (first feature needing it), note: "First usage — implement per §11.1 import pattern."
 
 4. Record ALL discoveries in the "## Existing Code Reuse" section of the design document. For each item, assign one of:
    - **REUSE**: This feature should import and call existing code directly
    - **EXTEND**: This feature should extend/subclass existing code
    - **PATTERN**: This feature should follow the same structural pattern but create own implementation
 
-**If zero passing dependencies**: Write "No passing dependencies — all §13.1 library usage follows import patterns directly." and proceed.
+**If zero passing dependencies**: Write "No passing dependencies — all §11.1 library usage follows import patterns directly." and proceed.
 
 ### 2. Component Data-Flow Diagram
 
@@ -144,9 +141,9 @@ Rules:
 - Every SRS acceptance criterion (from srs_trace requirements) must trace to at least one method's postcondition
 - Include internal methods only if they contain non-trivial logic
 - **§6.2 alignment rule**: For methods that produce or consume cross-feature data, the method signature (parameters, return type) MUST be compatible with the schema defined in Design Section 6.2. If the feature is a **Provider**, postconditions MUST guarantee the Response Schema. If a **Consumer**, preconditions MUST assume the Request Schema format. Any deviation requires explicit justification in Design Rationale and triggers the Contract Deviation Protocol below.
-- **§13.5 naming compliance**: All method, parameter, and class names MUST follow §13.5 naming conventions. If §13.5 documents `snake_case` and the design names a method `getUserData`, change to `get_user_data`.
-- **§13.1 library compliance**: For any method that performs HTTP calls, DB queries, file I/O, logging, or other operations covered by §13.1 mandatory libraries: annotate in a "Uses" note after the Raises column — e.g., "Uses: @company/http (§13.1)". The method signature MUST NOT assume direct use of replaced APIs (e.g., do not type-hint `axios.Response` when §13.1 replaces axios).
-- **§13.2 prohibited API check**: If any method's preconditions, postconditions, or Raises reference APIs from §13.2 prohibited list, this is a design defect. Replace with the §13.2-specified alternative before proceeding.
+- **§11.5 naming compliance**: All method, parameter, and class names MUST follow §11.5 naming conventions. If §11.5 documents `snake_case` and the design names a method `getUserData`, change to `get_user_data`.
+- **§11.1 library compliance**: For any method that performs HTTP calls, DB queries, file I/O, logging, or other operations covered by §11.1 mandatory libraries: annotate in a "Uses" note after the Raises column — e.g., "Uses: @company/http (§11.1)". The method signature MUST NOT assume direct use of replaced APIs (e.g., do not type-hint `axios.Response` when §11.1 replaces axios).
+- **§11.2 prohibited API check**: If any method's preconditions, postconditions, or Raises reference APIs from §11.2 prohibited list, this is a design defect. Replace with the §11.2-specified alternative before proceeding.
 - **Existing code reuse check**: For each method in the Interface Contract, cross-check the "Existing Code Reuse" section. If a passing dependency already provides equivalent functionality marked REUSE, do NOT create a new method — reference the existing one. If EXTEND, design the method as an override/extension of the existing class.
 
 ### Contract Deviation Protocol
@@ -209,16 +206,16 @@ END
 |-----------|-----------|----------|----------|
 | [condition] | [how detected] | [exception or default] | [caller action] |
 
-**e) §13 library usage mapping:**
+**e) §11 library usage mapping:**
 
-For each non-trivial method, identify which §13.1 mandatory libraries and "Existing Code Reuse" REUSE items it must use:
+For each non-trivial method, identify which §11.1 mandatory libraries and "Existing Code Reuse" REUSE items it must use:
 
 | Method | Operation | Required Library/Reuse Item | Import Pattern | Replaces |
 |--------|-----------|---------------------------|----------------|----------|
-| [method] | [e.g., HTTP GET to external API] | [e.g., @company/http (§13.1)] | [e.g., `from company.http import get`] | [e.g., requests.get, urllib] |
+| [method] | [e.g., HTTP GET to external API] | [e.g., @company/http (§11.1)] | [e.g., `from company.http import get`] | [e.g., requests.get, urllib] |
 | [method] | [e.g., validate email format] | [e.g., REUSE: validate_email() from Feature #2] | [e.g., `from src.utils.validators import validate_email`] | [new implementation] |
 
-Error handling within pseudocode: follow §13.6 error handling pattern. If §13.6 documents "custom Error subclasses + centralized handler", pseudocode RAISE statements must use project custom error classes, not generic exceptions.
+Error handling within pseudocode: follow §11.6 error handling pattern. If §11.6 documents "custom Error subclasses + centralized handler", pseudocode RAISE statements must use project custom error classes, not generic exceptions.
 
 > **Skip rule**: If the method has no external I/O and no reusable items apply, write "N/A — pure computation, no library dependencies"
 
@@ -333,8 +330,8 @@ After the design is complete, decompose into TDD tasks.
 - [ ] Test Inventory negative ratio >= 40%
 - [ ] Every skipped section has explicit "N/A — [reason]"
 - [ ] All functions/methods named in §4.N have at least one Test Inventory row
-- [ ] All method/class/parameter names comply with §13.5 naming conventions
-- [ ] All operations covered by §13.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
+- [ ] All method/class/parameter names comply with §11.5 naming conventions
+- [ ] All operations covered by §11.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
 - [ ] Existing Code Reuse section documents all discoverable reusable code from passing dependencies
 
 ## Diagram Quality Rules
@@ -376,7 +373,7 @@ When the design document is complete, return your result in EXACTLY this format:
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
 | Verification Checklist | N/11 | 11/11 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
-| §13 Compliance | N checked / M total | All checked | PASS/FAIL |
+| §11 Compliance | N checked / M total | All checked | PASS/FAIL |
 | Existing Code Reuse Items | N | ≥ 0 (informational) | INFO |
 ### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |

@@ -172,12 +172,6 @@ This is the **most critical** output. Focus on constraints that would cause non-
 - Package publishing: setup.py, pyproject.toml, npm publish config, Cargo.toml
 - Distribution format
 
-**CI/CD** — detect config files and summarize:
-- Platform: GitHub Actions, GitLab CI, Jenkins, CircleCI
-- Config file path
-- Pipeline stages (build, test, lint, deploy)
-- Triggers (push, PR, schedule)
-
 **Pre-commit Hooks** — detect:
 - `.pre-commit-config.yaml`, `.husky/`, `lefthook.yml`, `.githooks/`
 - List configured hooks
@@ -207,7 +201,7 @@ Create an index file linking all 3 documents with a scan summary:
 |----------|-------------|
 | [coding-style.md](coding-style.md) | Naming, formatting, file organization |
 | [coding-constraints.md](coding-constraints.md) | 2/3方件 constraints, static analysis tools, error handling, imports |
-| [build-and-compilation.md](build-and-compilation.md) | Build system, CI/CD, packaging, environment |
+| [build-and-compilation.md](build-and-compilation.md) | Build system, packaging, environment |
 
 ## Key Findings Summary
 
@@ -216,7 +210,6 @@ Create an index file linking all 3 documents with a scan summary:
 - **Prohibited APIs**: [count] detected
 - **Static Analysis Tools**: [list]
 - **Build System**: [name]
-- **CI/CD**: [platform]
 ```
 
 ### Step 8: Validate Results
@@ -280,4 +273,4 @@ Each output file follows this structure:
 - **Reads**: Source files, dependency manifests, git history
 - **Chains to**: `long-task-requirements` (rule 7b) or `long-task-design` (rule 5b) — in pipeline mode; nothing in standalone mode
 - **Produces**: `docs/rules/coding-style.md`, `docs/rules/coding-constraints.md`, `docs/rules/build-and-compilation.md`, `docs/rules/README.md`
-- **Downstream consumers**: Design skill merges rules into Design §13; Worker skill references Design §13 during TDD
+- **Downstream consumers**: Design skill merges rules into Design §11; Worker skill references Design §11 during TDD

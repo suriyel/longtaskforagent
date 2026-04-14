@@ -121,7 +121,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 | AI 验收测试覆盖不全 | ATS（验收测试策略）在设计后前置规划每个需求的测试类别，独立 subagent 审核确保无覆盖盲区 |
 | AI 偏离批准的设计 | 设计接口覆盖门 + 每个功能后内联合规检查 |
 | 无法安全地向现有项目添加功能 | 增量技能执行影响分析，就地更新 SRS/设计，用波次跟踪变更 |
-| "在我机器上能跑"综合症 | 系统测试阶段（IEEE 829）包含回归、集成、端到端和 NFR 验证 |
+| "在我机器上能跑"综合症 | 系统测试阶段（IEEE 829）包含回归、集成、端到端验证 |
 
 ![Problem vs Solution](images/2.png)
 
@@ -185,11 +185,10 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 
 ### 阶段 0c：验收测试策略（ATS）
 
-- 将每个 FR/NFR/IFR 映射到验收场景，标注必须的测试类别（FUNC、BNDRY、SEC、PERF、UI）
-- NFR 测试方法矩阵（工具 + 阈值 + 负载参数）
+- 将每个 FR/IFR 映射到验收场景，标注必须的测试类别（FUNC、BNDRY、SEC、UI）
 - 跨功能集成场景预规划
 - 风险驱动测试优先级排序
-- 独立 ATS 审核 subagent（7 维度：覆盖完整性、类别多样性、场景充分性、可验证性、NFR 可测性、集成覆盖、风险一致性），支持自定义审核模板
+- 独立 ATS 审核 subagent（6 维度：覆盖完整性、类别多样性、场景充分性、可验证性、集成覆盖、风险一致性），支持自定义审核模板
 - 小项目（≤5 FR）自动跳过，Tiny 项目嵌入设计文档
 - 产出一份已批准的 **ATS**（`docs/plans/*-ats.md`）
 - 约束下游 Init（verification_steps）和 feature-st（用例派生）
@@ -198,7 +197,6 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 
 - 读取 SRS + 设计 + ATS，脚手架项目骨架
 - 需求阶段双向粒度分析（G1-G6拆分 + S1-S4合并），确保每个FR适配单次会话上下文预算
-- 生成环境引导脚本（`init.sh` / `init.ps1`）
 - 创建初始 git 提交
 
 ### 阶段 2：工作循环
@@ -217,7 +215,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 
 - 每功能 ST（ISO/IEC/IEEE 29119）—— 黑盒验收测试
 - 符合 IEEE 829 的系统级测试计划，带需求追溯矩阵
-- 回归、集成、端到端、NFR 验证、探索性测试
+- 回归、集成、端到端、探索性测试
 - Go/No-Go 结论——缺陷循环回工作会话进行修复
 
 ### 阶段 1.5：增量（发布后变更）

@@ -136,7 +136,7 @@ def _extract_ats_requirements(ats_path: str, feature_id: int = None) -> dict:
 
     Returns dict: {req_id: {"categories": set}} or empty dict on failure.
     """
-    ats_row_pattern = re.compile(r"^\|\s*((?:FR|NFR|IFR)-\d{3})\s*\|")
+    ats_row_pattern = re.compile(r"^\|\s*((?:FR|IFR)-\d{3})\s*\|")
     valid_cats = {"FUNC", "BNDRY", "UI", "SEC", "PERF"}
     result = {}
     try:

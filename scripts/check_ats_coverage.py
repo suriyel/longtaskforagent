@@ -25,7 +25,7 @@ VALID_CATEGORIES = {"FUNC", "BNDRY", "UI", "SEC", "PERF"}
 
 # Table row pattern: | REQ-ID | ... |
 TABLE_ROW_PATTERN = re.compile(
-    r"^\|\s*((?:FR|NFR|IFR)-\d{3})\s*\|"
+    r"^\|\s*((?:FR|IFR)-\d{3})\s*\|"
 )
 
 # Case ID pattern in ST documents

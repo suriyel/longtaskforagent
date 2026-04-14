@@ -18,8 +18,7 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, ru
 ## Why ATS Exists
 
 Without a global acceptance test strategy, per-feature ST test cases suffer from:
-- Category imbalance (heavy FUNC/BNDRY, near-zero SEC/PERF)
-- NFR test methods decided ad-hoc during feature-st
+- Category imbalance (heavy FUNC/BNDRY, near-zero SEC)
 - Cross-feature integration scenarios discovered too late in ST phase
 - Risk-based test prioritization missing entirely
 
@@ -57,7 +56,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
 From the SRS, extract a complete list of:
 - **FR-xxx**: Functional Requirements — with acceptance criteria (Given/When/Then)
-- **NFR-xxx**: Non-Functional Requirements — with measurable thresholds
 - **IFR-xxx**: Interface Requirements — with protocols and data formats
 - **CON-xxx**: Constraints — hard limits
 - **ASM-xxx**: Assumptions — implicit beliefs
@@ -66,13 +64,12 @@ Count FR-xxx requirements. If ≤ 5, apply the **Tiny project auto-skip** rule (
 
 ### 3. Generate Requirement → Acceptance Scenario Mapping
 
-For each FR/NFR/IFR, generate one or more acceptance scenarios with:
+For each FR/IFR, generate one or more acceptance scenarios with:
 
 ```markdown
 | Req ID | Requirement Summary | Acceptance Scenarios | Required Categories | Priority | Notes |
 |--------|---------------------|----------------------|---------------------|----------|-------|
 | FR-001 | User login | Normal login/wrong password/account lockout/session expiry | FUNC,BNDRY,SEC | Critical | Handles user input→SEC required |
-| NFR-001 | Response time<200ms | P95 latency/concurrent load/degradation/cold start | PERF | High | Threshold: P95<200ms @100 concurrent |
 | FR-010 | Search results page | Search/empty results/pagination/sorting/filtering | FUNC,BNDRY | High | — |
 ```
 
@@ -82,7 +79,6 @@ For each FR/NFR/IFR, generate one or more acceptance scenarios with:
 |-----------|---------------------|
 | All FRs | FUNC + BNDRY (at minimum) |
 | Handles user input/authentication/authorization/external data | + SEC |
-| Linked to NFR-xxx with performance metrics | + PERF |
 
 ### 4. Define Test Category Strategies
 
@@ -91,20 +87,8 @@ For each test category, specify the strategy:
 - **FUNC**: Every FR must cover at least one happy-path + one error-path scenario
 - **BNDRY**: Boundary value analysis + equivalence class partitioning requirements per FR
 - **SEC**: Input validation (SQL injection, XSS, path traversal), authentication bypass, authorization escalation, data leakage
-- **PERF**: NFR metric thresholds + load scenarios + tool specification + pass criteria
 
-### 5. NFR Test Method Matrix
-
-For each NFR-xxx with measurable thresholds:
-
-```markdown
-| NFR ID | Test Method | Tool | Pass Criteria | Load Parameters | Related Feature |
-|--------|---------|------|---------|---------|-------------|
-| NFR-001 | Load test | k6/locust/ab | P95 < 200ms | 100 concurrent, 60s ramp | Feature 15, 16 |
-| NFR-002 | Memory profiling | tracemalloc/heapdump | RSS < 512MB | 10K records | Feature 8 |
-```
-
-### 6. Cross-Feature Integration Scenarios
+### 5. Cross-Feature Integration Scenarios
 
 Identify critical data flow paths that span multiple features:
 
@@ -121,7 +105,7 @@ For each row in Design §6.2 Internal API Contracts:
 3. If the contract involves shared persistent state (same DB table), create a consistency scenario (concurrent access, stale reads)
 4. Reference the Contract ID (IAPI-xxx) in the scenario's "Data Flow Path" column
 
-### 7. Risk-Driven Test Priority
+### 6. Risk-Driven Test Priority
 
 Assess risk per requirement and assign test depth:
 
@@ -132,21 +116,20 @@ Assess risk per requirement and assign test depth:
 | Data import | Medium | Feature 3-5 | Standard (FUNC+BNDRY) | Data integrity |
 ```
 
-### 8. Section-by-Section User Approval
+### 7. Section-by-Section User Approval
 
 Present each section to the user for approval (same pattern as design skill):
 
 1. Requirement → Scenario mapping table (Step 3)
 2. Test category strategies (Step 4)
-3. NFR test method matrix (Step 5) — skip if no NFRs with metrics
-4. Cross-feature integration scenarios (Step 6)
-5. Risk-driven priority (Step 7)
+3. Cross-feature integration scenarios (Step 5)
+4. Risk-driven priority (Step 6)
 
 Present each section. Wait for user feedback. Incorporate changes before moving to the next.
 
 **For Small projects** (5-15 features): Combine into 2 approval steps: (a) mapping table + categories, (b) everything else.
 
-### 9. Subagent Review
+### 8. Subagent Review
 
 Dispatch the ATS reviewer subagent for independent quality review:
 
@@ -178,18 +161,18 @@ Agent(
 - Subagent does NOT modify any files — returns structured report only
 - Main skill processes the report and decides on fixes
 
-### 10. Process Review Report
+### 9. Process Review Report
 
 Parse the subagent's review report:
 
-1. **0 Major defects** → PASS → proceed to Step 11
-2. **Has Major defects** → fix the ATS document per defect descriptions → re-run Step 9 (max 2 review rounds)
+1. **0 Major defects** → PASS → proceed to Step 10
+2. **Has Major defects** → fix the ATS document per defect descriptions → re-run Step 8 (max 2 review rounds)
 3. **Third round still FAIL** → present full report to user via `AskUserQuestion`:
    - Show all remaining Major defects
    - Options: fix manually / accept with known gaps / terminate
    - If user accepts with gaps: document gaps in ATS footer section
 
-### 11. Save ATS Document
+### 10. Save ATS Document
 
 1. Save the approved ATS to `docs/plans/YYYY-MM-DD-<topic>-ats.md`
 2. Append the final review report as an appendix section
@@ -198,11 +181,11 @@ Parse the subagent's review report:
    docs: add acceptance test strategy (ATS)
 
    Maps N requirements to acceptance scenarios
-   Categories: FUNC, BNDRY, SEC, PERF
+   Categories: FUNC, BNDRY, SEC
    Reviewed: [PASS / CONDITIONAL PASS with N gaps]
    ```
 
-### 12. Transition to Initializer
+### 11. Transition to Initializer
 
 Once the ATS document is saved and committed:
 
@@ -221,7 +204,6 @@ The **design doc** (Section 7, Testing Strategy) describes the *approach*:
 
 The **ATS document** describes the *detailed mapping*:
 - Which specific requirement gets which specific test categories
-- NFR test methods with exact thresholds and load parameters
 - Cross-feature integration scenarios
 - Risk-driven test depth
 
@@ -233,7 +215,7 @@ See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-cate
 ## Critical Rules
 
 - **Requirements-driven**: Every mapping row traces to a specific SRS requirement ID
-- **No orphan requirements**: Every FR/NFR/IFR must appear in the mapping table
+- **No orphan requirements**: Every FR/IFR must appear in the mapping table
 - **Category assignment is auditable**: Every required category has a documented reason
 - **Review is mandatory**: ATS reviewer subagent runs before save — no skip
 - **Scaling applies**: Tiny projects (≤5 FR) skip standalone ATS; see Scaling Guide
@@ -244,9 +226,8 @@ See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-cate
 | Rationalization | Correct Response |
 |---|---|
 | "The SRS already has acceptance criteria, ATS is redundant" | SRS has business criteria; ATS maps them to test categories |
-| "We'll figure out test categories during feature-st" | Ad-hoc category assignment leads to SEC/PERF gaps |
+| "We'll figure out test categories during feature-st" | Ad-hoc category assignment leads to SEC gaps |
 | "This project is too small for ATS" | Check Scaling Guide — Tiny projects auto-skip; Small projects get lightweight ATS |
-| "NFR testing can be decided during ST phase" | NFR test methods must be specified upfront with tools and thresholds |
 | "The review is overkill" | Independent review catches coverage gaps the author misses |
 
 ## Integration

@@ -31,11 +31,9 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 4. **Functional requirements elicitation**
    - Lite: L2 (flat capability rounds)
    - Expert: E3 (scenario walkthrough via `references/scenario-walkthrough.md`) + E4 (hypothesis-correction via `references/hypothesis-correction.md`)
-5. **NFR + hidden requirements**
-   - Lite: L3 (merged, 1 round)
-   - Expert: E5 (hidden requirements) + E6 (NFR quantification)
+5. **Hidden requirements** — Lite: L3 (merged, 1 round); Expert: E5 (hidden requirements)
 6. **Constraints, assumptions, glossary** — same for both tracks
-7. **Classify requirements** — functional / NFR / constraint / assumption / interface / exclusion
+7. **Classify requirements** — functional / constraint / assumption / interface / exclusion
 8. **Write requirements** — apply EARS templates, assign IDs, write acceptance criteria, generate diagrams
 9. **Validate SRS** — check 8 quality attributes, detect anti-patterns, verify testability
 10. **Granularity analysis** — bidirectional sizing: detect oversized FRs (G1-G6 split) AND undersized FRs (S1-S4 merge) to fit context budget; user approval for non-trivial changes
@@ -57,7 +55,7 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 3. Identify initial constraints: tech stack, platform, integrations, regulations
 4. Read `docs/rules/` (if exists and populated) — codebase conventions extracted by Phase 0-pre scanner:
    - `coding-constraints.md` — 2/3方件 library constraints, prohibited APIs, internal library mandates
-   - `build-and-compilation.md` — build system and CI/CD constraints
+   - `build-and-compilation.md` — build system constraints
    - These constraints may affect requirement feasibility and should be considered during elicitation (e.g., "this feature requires HTTP calls — project mandates using internal HTTP library, not standard fetch"; "project CI requires all code to pass checkstyle — affects acceptance criteria")
 5. Check for an SRS template:
    - If the user specified a template path → read and validate it
@@ -164,20 +162,19 @@ For each capability area, ask per round (up to 4 questions):
 
 Group related capabilities into the same round when they share a workflow. Split large capability areas across multiple rounds.
 
-### L3: Quick NFR + Hidden Requirements Check (single AskUserQuestion)
+### L3: Quick Hidden Requirements Check (single AskUserQuestion)
 
-1. "Any performance targets — response time, throughput, data volume?"
-2. "Does this handle personal data, face regulations, or need accessibility support? (If yes, which?)"
-3. "Multiple languages or timezones?"
-4. "Any security requirements beyond basic auth?"
+1. "Does this handle personal data, face regulations, or need accessibility support? (If yes, which?)"
+2. "Multiple languages or timezones?"
+3. "Any security requirements beyond basic auth?"
 
-Any YES to Q2 → generate EARS-formatted NFR candidates inline. If Q2 reveals significant regulatory exposure → escalation trigger.
+Any YES to Q1 → generate EARS-formatted constraint or functional requirement candidates inline. If Q1 reveals significant regulatory exposure → escalation trigger.
 
 ### L4–L6: Classify, Write, Validate, Present, Save
 
 After Lite elicitation, proceed to the **shared steps** (Steps 7–16 in the checklist):
 - L4 = Steps 7–8 (classify, EARS, diagrams)
-- L5 = Steps 9–10b–10c–11 + Step 13 (validate, granularity, granularity confirmation, single-round mode confirmation, deferral, SRS reviewer with Group P = PASS-SKIPPED)
+- L5 = Steps 9–10b–10c–11 + Step 13 (validate, granularity, granularity confirmation, single-round mode confirmation, deferral, SRS reviewer)
 - L6 = Steps 14–16 (present entire SRS in one block as single approval, save, transition to Design)
 
 ---
@@ -223,43 +220,27 @@ Read `references/hypothesis-correction.md` and follow it exactly.
 Single AskUserQuestion, checkbox-style (YES/NO + tell me more), ≤4 probes:
 
 1. **Regulatory/Compliance**: "Does this system handle data or processes subject to regulations? (Personal data → GDPR/CCPA; Health → HIPAA; Payments → PCI-DSS; Financial → SOX; Government → sector-specific)"
-   - YES → implied NFRs: data residency, audit logging, breach notification timeline, consent management, data retention limits
+   - YES → implied constraints/FRs: data residency, audit logging, breach notification timeline, consent management, data retention limits
 
 2. **Accessibility**: "Do any users have accessibility needs — visual impairment, motor limitations, older adults, screen reader users, or keyboard-only navigation? Will this run on mobile?"
-   - YES → implied NFRs: WCAG 2.1 AA compliance, keyboard navigability, minimum touch targets (44×44px), sufficient color contrast (4.5:1)
+   - YES → implied constraints/FRs: WCAG 2.1 AA compliance, keyboard navigability, minimum touch targets (44x44px), sufficient color contrast (4.5:1)
 
 3. **Privacy by design**: "Will the system collect, store, or process personally identifiable information (names, emails, locations, behavioral data, device IDs)?"
-   - YES → implied NFRs: data minimization, user-controlled data export/deletion, consent recording, breach response time
+   - YES → implied constraints/FRs: data minimization, user-controlled data export/deletion, consent recording, breach response time
 
 4. **Internationalization**: "Will any users interact in a language other than [detected primary], or from a different timezone or locale?"
-   - YES → implied NFRs: locale-aware date/time/currency formatting, string externalization (no hardcoded UI text), RTL layout if applicable, timezone-aware storage
+   - YES → implied constraints/FRs: locale-aware date/time/currency formatting, string externalization (no hardcoded UI text), RTL layout if applicable, timezone-aware storage
 
-**Rule**: Any YES → create an NFR candidate in EARS format before proceeding. Mark with Source = "Hidden (E5)". E6 quantifies thresholds.
+**Rule**: Any YES → create a constraint or functional requirement candidate in EARS format before proceeding. Mark with Source = "Hidden (E5)".
 
 **Smart Skip**: If Step 1 context clearly shows a purely internal, no-PII, single-language, non-regulated developer tool → collapse all four probes into one confirmation:
 > "This appears to be an internal tool with no personal data, no regulated industry exposure, no accessibility requirements, and no i18n needs — correct?"
 
-### E6–E8: NFR, Constraints, Glossary
+### E6–E7: Constraints, Glossary
 
-Same structure as standard elicitation:
+**E6 (Constraints & Interfaces)**: Hard limits, assumptions, external system contracts.
 
-**E6 (NFR Quantification)**: Use the same probes as current Round N+1. Absorb E5 candidates as pre-populated rows — quantify their thresholds.
-
-| Category (ISO 25010) | Probe |
-|---|---|
-| **Performance** | Response time target? Throughput? Concurrent users? |
-| **Reliability** | Uptime target? Recovery time? Data loss tolerance? |
-| **Usability** | Accessibility requirements? Learnability criteria? |
-| **Security** | Authentication method? Authorization model? Data encryption? |
-| **Maintainability** | Modularity constraints? Test coverage targets? |
-| **Portability** | Platform restrictions? Browser support? |
-| **Scalability** | Current load? Target load? Growth timeline? |
-
-Skip categories clearly irrelevant. **Rule**: Every NFR must have a **measurable criterion**.
-
-**E7 (Constraints & Interfaces)**: Hard limits, assumptions, external system contracts.
-
-**E8 (Glossary)**: Domain terms with potential ambiguity.
+**E7 (Glossary)**: Domain terms with potential ambiguity.
 
 ### E9: Classify, Write, Validate, Granularity, Deferral
 
@@ -288,7 +269,6 @@ Organize into categories:
 | Category | ID Prefix | Description |
 |---|---|---|
 | Functional | FR-001 | Observable system behaviors |
-| Non-Functional | NFR-001 | Quality attributes with measurable criteria |
 | Constraint | CON-001 | Hard limits that restrict the solution space |
 | Assumption | ASM-001 | Beliefs assumed true; document invalidation risk |
 | Interface | IFR-001 | External system contracts |
@@ -344,13 +324,11 @@ After all requirements are written, generate visual aids:
 | **Passive without agent** | "data shall be validated" — by whom? | Add actor |
 | **TBD / TBC** | Unresolved placeholders | Resolve or Open Question |
 | **Missing negatives** | Only positive cases specified | Add error/boundary cases |
-| **Untestable NFR** | NFR without measurable threshold | Add metric |
 
 #### 9c. Completeness Cross-Check
 
 - Every functional area has at least one error/boundary case
 - All external interfaces have data format + protocol
-- All NFRs have measurement method, not just target
 - Glossary covers all domain-specific terms
 - Out-of-Scope section lists deferred features
 
@@ -486,7 +464,7 @@ Task(
 **ALL checks must PASS to proceed:**
 - Group R (R1-R8): quality attributes
 - Group A (A1-A6): anti-patterns
-- Group C (C1-C5): completeness
+- Group C (C1-C4): completeness
 - Group S (S1-S4): structural compliance
 - Group D (D1-D4): diagrams
 - Group G (G1-G3): granularity (over-size detection)
@@ -515,8 +493,7 @@ Fix all LLM-FIXABLE items in parallel. Re-dispatch reviewer (Cycle 2).
   1. Purpose, Scope, Problem Statement & Exclusions
   2. Glossary & User Personas
   3. Functional Requirements
-  4. Non-Functional Requirements
-  5. Constraints, Assumptions & Interfaces
+  4. Constraints, Assumptions & Interfaces
 
 Present each section. Wait for user feedback. Incorporate changes before moving to the next.
 
@@ -544,7 +521,7 @@ If a deferred backlog was generated in Step 11, save alongside: `docs/plans/YYYY
 
 | Tier | Signals | Typical FR Count | Elicitation Depth | Approval |
 |---|---|---|---|---|
-| **Lite** | <3 Expert signals | 1–10 | L1-L3 (flat rounds, merged NFR) | Combined single step |
+| **Lite** | <3 Expert signals | 1–10 | L1-L3 (flat rounds, hidden requirements) | Combined single step |
 | **Expert (Small)** | ≥3 Expert signals | 5–15 | E1-E5 (1–2 walkthroughs, grouped hypothesis) | 2–3 sections |
 | **Expert (Medium)** | ≥3 Expert signals | 15–50 | E1-E5 (2–3 walkthroughs, per-FR hypothesis) | Per-section |
 | **Expert (Large)** | ≥3 Expert signals | 50–200+ | E1-E5 (3–5 walkthroughs, batched hypothesis) | Per-section |
@@ -556,7 +533,6 @@ If a deferred backlog was generated in Step 11, save alongside: `docs/plans/YYYY
 | "This is too simple for an SRS" | Lite track IS the simple path. It produces a short SRS in 3–5 rounds. |
 | "The user already described what they want" | User descriptions are raw input; SRS adds structure, completeness, testability |
 | "I can figure out the requirements during design" | Requirements define WHAT; discovering them during HOW causes rework |
-| "NFRs don't apply to this project" | Every project has at least implicit performance/reliability needs — make them explicit |
 | "The glossary is obvious" | Obvious to whom? Define every term the user and developer might interpret differently |
 | "I'll just start with the happy path" | Error cases, boundaries, and negatives must be captured NOW |
 | "This FR is fine as one big requirement" | Apply the 6 over-size heuristics (G1-G6) — hidden complexity creates oversized features |

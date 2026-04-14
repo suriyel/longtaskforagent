@@ -515,7 +515,7 @@ def test_valid_srs_trace():
                 "id": 1, "category": "core", "title": "Feature",
                 "description": "A feature", "priority": "high", "status": "failing",
                 "dependencies": [],
-                "srs_trace": ["FR-001", "NFR-002", "IFR-003"]
+                "srs_trace": ["FR-001", "IFR-003"]
             }
         ]
     }
@@ -889,69 +889,6 @@ def test_short_step_with_chaining_no_warning():
     assert "simple assertion" not in stdout.lower()
 
 
-def test_build_system_valid():
-    """Valid build_system should pass."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "build_system": {"build_command": "make build"},
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0
-    assert "Build: make build" in stdout
-
-
-def test_build_system_invalid_type():
-    """build_system must be an object."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "build_system": "not an object",
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 1
-    assert "build_system must be an object" in stdout
-
-
-def test_build_system_invalid_build_command():
-    """build_system.build_command must be a string."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "build_system": {"build_command": 123},
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 1
-    assert "build_system.build_command must be a string" in stdout
-
-
-def test_no_build_system_ok():
-    """Omitting build_system should be fine (backward compat)."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0
-    assert "Build:" not in stdout
-
-
 def test_single_round_true_valid():
     """single_round: true should pass validation."""
     data = {
@@ -1057,10 +994,6 @@ if __name__ == "__main__":
         test_simple_verification_step_warning,
         test_rich_verification_step_no_warning,
         test_short_step_with_chaining_no_warning,
-        test_build_system_valid,
-        test_build_system_invalid_type,
-        test_build_system_invalid_build_command,
-        test_no_build_system_ok,
         test_single_round_true_valid,
         test_single_round_false_valid,
         test_single_round_invalid_type,

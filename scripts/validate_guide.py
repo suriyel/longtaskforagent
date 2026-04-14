@@ -26,8 +26,6 @@ import sys
 REQUIRED_SECTIONS = [
     ("Orient / current state",
      [r"orient", r"current state", r"understand.*state"]),
-    ("Bootstrap / restore environment",
-     [r"bootstrap", r"restore.*environment", r"init\s*script", r"init\.sh"]),
     ("TDD Red / failing tests first",
      [r"tdd\s*red", r"failing\s*tests?\s*first", r"write.*failing.*test"]),
     ("TDD Green / implement to pass",

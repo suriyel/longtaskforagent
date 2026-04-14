@@ -15,10 +15,10 @@ You are implementing a task for the {{PROJECT_NAME}} project.
 {{EXISTING_CODE_REUSE}}
 
 When implementing, you MUST:
-- Use mandatory internal libraries (§13.1) instead of their replaced alternatives
-- Never use prohibited APIs (§13.2)
-- Follow naming conventions (§13.5) for all new identifiers
-- Follow error handling pattern (§13.6)
+- Use mandatory internal libraries (§11.1) instead of their replaced alternatives
+- Never use prohibited APIs (§11.2)
+- Follow naming conventions (§11.5) for all new identifiers
+- Follow error handling pattern (§11.6)
 - Import and call items marked REUSE directly — do NOT reimplement
 - Extend items marked EXTEND — do NOT copy-paste
 - Follow PATTERN items' structural shape for new implementations

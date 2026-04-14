@@ -23,7 +23,7 @@ import sys
 
 
 REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status"}
-SRS_TRACE_PATTERN = re.compile(r"^(?:FR|NFR|IFR)-\d{3}$")
+SRS_TRACE_PATTERN = re.compile(r"^(?:FR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
@@ -82,18 +82,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
         errors.append(
             f"single_round must be a boolean, got {type(single_round).__name__}"
         )
-
-    # Validate build_system if present
-    build_system = data.get("build_system")
-    if build_system is not None:
-        if not isinstance(build_system, dict):
-            errors.append("build_system must be an object")
-        else:
-            bc = build_system.get("build_command")
-            if bc is not None and not isinstance(bc, str):
-                errors.append(
-                    f"build_system.build_command must be a string, got {type(bc).__name__}"
-                )
 
     # Validate waves if present
     waves = data.get("waves")
@@ -257,7 +245,7 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                     if not isinstance(trace_id, str) or not SRS_TRACE_PATTERN.match(trace_id):
                         errors.append(
                             f"{prefix} (id={fid}): srs_trace[{ti}] must match "
-                            f"FR-xxx/NFR-xxx/IFR-xxx format, got {trace_id!r}"
+                            f"FR-xxx/IFR-xxx format, got {trace_id!r}"
                         )
 
         # Check dependencies
@@ -356,13 +344,6 @@ def main():
             lang = ts.get("language", "N/A")
             if lang != "TODO":
                 summary += f" | Language: {lang}"
-
-        # Show build system if configured
-        bs = data.get("build_system")
-        if bs and isinstance(bs, dict):
-            bc = bs.get("build_command")
-            if bc:
-                summary += f" | Build: {bc}"
 
         if warnings:
             summary += f" | {len(warnings)} warning(s)"

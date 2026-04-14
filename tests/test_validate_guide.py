@@ -35,11 +35,7 @@ COMPLETE_GUIDE = """# My Project — Long-Task Worker Guide
 1. Read `task-progress.md` to understand what happened before
 2. Read `feature-list.json` to find next priority failing feature
 
-### Step 2: Bootstrap — restore environment
-1. Run `bash init.sh`
-2. Quick smoke test
-
-### Step 3: TDD Red — write failing tests first
+### Step 2: TDD Red — write failing tests first
 1. Write unit tests covering verification_steps — they MUST fail
 
 ### Step 4: TDD Green — implement to pass tests
@@ -164,9 +160,6 @@ def test_alternative_wording_passes():
 
 ### Understand current state
 Read task-progress.md and feature-list.json.
-
-### Restore environment
-Run init.sh to bootstrap.
 
 ### Write failing tests first
 Write unit tests that MUST fail before implementation.

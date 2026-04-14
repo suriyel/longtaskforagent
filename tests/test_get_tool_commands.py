@@ -252,55 +252,6 @@ def test_cli_invalid_json():
         os.unlink(tmp.name)
 
 
-def test_build_command_present():
-    """build_system.build_command should appear in output."""
-    data = make_feature_list()
-    data["build_system"] = {"build_command": "make build"}
-    cmds = get_commands(data)
-    assert cmds["build"] == "make build"
-
-
-def test_build_command_absent():
-    """Missing build_system should return None for build."""
-    data = make_feature_list()
-    cmds = get_commands(data)
-    assert cmds["build"] is None
-
-
-def test_build_command_in_text_output():
-    """format_text should include [build] section when build_command is set."""
-    data = make_feature_list()
-    data["build_system"] = {"build_command": "cargo build"}
-    cmds = get_commands(data)
-    text = format_text(cmds)
-    assert "[build]" in text
-    assert "cargo build" in text
-
-
-def test_build_command_absent_in_text_output():
-    """format_text should not include [build] section when build_command is absent."""
-    data = make_feature_list()
-    cmds = get_commands(data)
-    text = format_text(cmds)
-    assert "[build]" not in text
-
-
-def test_build_command_in_json_output():
-    """CLI JSON output should include build key."""
-    data = make_feature_list()
-    data["build_system"] = {"build_command": "npm run build"}
-    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
-    try:
-        json.dump(data, tmp, indent=2)
-        tmp.close()
-        code, stdout, _ = run_script(tmp.name, extra_args=["--json"])
-        assert code == 0
-        result = json.loads(stdout)
-        assert result["build"] == "npm run build"
-    finally:
-        os.unlink(tmp.name)
-
-
 if __name__ == "__main__":
     tests = [
         test_python_commands,
@@ -323,11 +274,6 @@ if __name__ == "__main__":
         test_cli_json_output,
         test_cli_missing_file,
         test_cli_invalid_json,
-        test_build_command_present,
-        test_build_command_absent,
-        test_build_command_in_text_output,
-        test_build_command_absent_in_text_output,
-        test_build_command_in_json_output,
     ]
     passed = 0
     failed = 0

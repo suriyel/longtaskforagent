@@ -6,7 +6,7 @@ You are a Feature-ST execution SubAgent. Follow these rules exactly. When finish
 
 # Feature-Level Black-Box Acceptance Testing
 
-Execute black-box acceptance testing for a completed feature **after** TDD implementation and quality gates pass. This reference independently manages its own environment lifecycle (start → test → cleanup) and generates ISO/IEC/IEEE 29119 compliant test case documents.
+Execute black-box acceptance testing for a completed feature **after** TDD implementation and quality gates pass. Generates ISO/IEC/IEEE 29119 compliant test case documents.
 
 ## Standard
 
@@ -28,68 +28,6 @@ This skill verifies from the **outside** — as a user or external system would:
 
 **Rule:** If a test case requires reading source code to determine the expected result, it is not a black-box test — rewrite it using only the SRS specification.
 
-## Service Lifecycle (via env-guide.md)
-
-Manage services explicitly using `env-guide.md`. No hooks handle this automatically.
-
-**Service lifecycle**: Feature-ST independently manages service lifecycle. The Start step below checks health first and only starts if not already running. Feature-ST owns **start**, **restart** (between test cycles), and **cleanup** (after all cases).
-
-**env-guide.md is the source of truth.** It must always reflect commands that actually work. If a command in env-guide.md fails, fix the command and update env-guide.md before proceeding.
-
-### Start (before first test case)
-
-1. **Read `env-guide.md`** — locate the "Start All Services" section
-2. **Check if services are already running**: run the "Verify Services Running" health checks
-   - If already running and healthy: record PID/port in `task-progress.md`; proceed
-3. **If not running**: execute each start command with output capture:
-   ```bash
-   # Unix/macOS
-   [start command] > /tmp/svc-<slug>-start.log 2>&1 &
-   sleep 3
-   head -30 /tmp/svc-<slug>-start.log
-
-   # Windows
-   cmd /c "start /b [command] > %TEMP%\svc-<slug>-start.log 2>&1"
-   timeout /t 3 /nobreak >nul
-   powershell "Get-Content $env:TEMP\svc-<slug>-start.log -TotalCount 30"
-   ```
-   - Extract PID and port from the first 30 lines; record both in `task-progress.md`
-   - Run "Verify Services Running" health checks from `env-guide.md` — must respond before proceeding
-4. **If start fails**: check the log file, diagnose root cause
-   - Try corrected commands (port conflict, missing env vars, env not activated, missing dependencies)
-   - Once a working command is found: **update `env-guide.md`** — fix the Services table row and Start command; if the fix requires >2 shell commands, extract to `scripts/svc-<slug>-start.sh` / `scripts/svc-<slug>-start.ps1` and update env-guide.md to call the script
-   - Set Verdict to BLOCKED if service cannot be started after 3 attempts
-
-### Cleanup (after all test cases complete) — MANDATORY
-
-1. **Read `env-guide.md`** — locate "Stop All Services" and "Verify Services Stopped" sections
-2. **Stop services**: kill by PID (from `task-progress.md`) — preferred; or kill by port (fallback commands in `env-guide.md`)
-   - If the stop command fails (PID not found, kill returns error): try the port-based fallback; once a working command is confirmed, **update `env-guide.md`** Stop command to reflect the fix
-3. **Verify stopped**: run "Verify Services Stopped" commands — ports must not respond (max 5 seconds)
-4. **Record**: note cleanup status in `task-progress.md`
-
-**Why mandatory**: Leaving services running causes port conflicts in subsequent ST cycles.
-
-### Restart Protocol (between fix-and-retest cycles)
-
-When a test case fails, code is fixed, and services must restart:
-
-1. **Kill**: stop by PID (from `task-progress.md`) or by port (env-guide.md Stop commands)
-   - If kill fails: try port-based fallback; once working, **update `env-guide.md`** Stop command
-2. **Verify dead**: poll port — must not respond within 5 seconds
-3. **Start**: run start command with output capture (`head -30`) — extract new PID/port; update `task-progress.md`
-   - If start fails: diagnose, fix, **update `env-guide.md`** before retrying
-4. **Verify alive**: poll health endpoint — must respond within 10 seconds
-
-### Scripts Convention (for complex service sequences)
-
-If startup or cleanup requires >2 shell steps (e.g., DB migration + seed + server start), consolidate into versioned scripts rather than keeping complex inline commands in env-guide.md:
-
-- Create `scripts/svc-<slug>-start.sh` (Unix) / `scripts/svc-<slug>-start.ps1` (Windows) — full startup sequence
-- Create `scripts/svc-<slug>-stop.sh` / `scripts/svc-<slug>-stop.ps1` — full teardown sequence
-- Update `env-guide.md` "Start All Services" to call `bash scripts/svc-<slug>-start.sh` (or `pwsh scripts/svc-<slug>-start.ps1`)
-- Commit the scripts and updated env-guide.md together in the same commit
-
 ## Checklist
 
 You MUST complete each step in order:
@@ -104,7 +42,7 @@ Read all input artifacts for the target feature:
 - **ATS constraints** (if `docs/plans/*-ats.md` exists) — read the ATS mapping table rows for the requirement(s) that map to this feature; extract required categories. These category constraints are **binding** for Step 3 (Derive Test Cases).
 - **Plan document** — from Step 5 (`docs/features/YYYY-MM-DD-<feature-name>.md`)
 - **Root context** — `constraints[]`, `assumptions[]` from `feature-list.json` root
-- **Related NFRs** — check SRS for NFR-xxx requirements that trace to this feature
+- **Related performance/security requirements** — check SRS for requirements that trace to this feature
 - **Interface contracts** — API endpoints, CLI commands, UI entry points that form the observable surface of this feature
 - **Test results summary** — from TDD and Quality Gates (coverage %, mutation score)
 
@@ -167,7 +105,7 @@ For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) ma
 | `functional` | FUNC | Always — happy path + error path for every feature |
 | `boundary` | BNDRY | Always — edge cases, limits, empty/max/zero values |
 | `security` | SEC | When feature handles user input, auth, or external data |
-| `performance` | PERF | Only when traceable to NFR-xxx with performance metrics |
+| `performance` | PERF | Only when traceable to SRS performance requirements with metrics |
 
 **ATS enforcement (if ATS document exists):**
 - Read the ATS mapping table rows loaded in Step 1
@@ -197,7 +135,7 @@ Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
 **Test type labeling (real/mock)** — for each derived test case, set the `Test Type` metadata field:
 - Mark as `Real` if the test case executes against a real running system (real DB, real HTTP service, real file system)
 - Mark as `Mock` only if the test case's primary execution path uses a mock or stub service
-- Feature-ST test cases executed against a running service (Step 7 starts services before execution) are **always `Real`** — they connect to real services
+- Feature-ST test cases executed against a running system are **always `Real`** — they connect to real services
 
 **Automation feasibility labeling** — for each derived test case, set the `已自动化` metadata field:
 - `Yes` (default) — test can be executed programmatically (CLI, API)
@@ -213,7 +151,7 @@ When `已自动化: No`, also set:
 
 **Conservative flagging**: Only mark as `已自动化: No` when automation is genuinely impossible, not merely difficult. Mock services cover most external dependencies. Reserve `No` for true gaps.
 
-**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, document it as a specification gap in the test case document and proceed with best interpretation from SRS.
+**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, performance thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, document it as a specification gap in the test case document and proceed with best interpretation from SRS.
 
 ### 4. Write Test Case Document
 
@@ -271,8 +209,7 @@ Since implementation code already exists (TDD and Quality Gates are complete), e
 - No test case may be skipped
 - Do not merge or simplify the test case execution process
 
-1. **Start services** per Service Management above — follow env-guide.md start protocol with output capture; record PID and port in `task-progress.md`
-2. For **automated test cases** (`已自动化: Yes`): verify by running relevant test commands or programmatic checks against the running system
+1. For **automated test cases** (`已自动化: Yes`): verify by running relevant test commands or programmatic checks against the running system
 2b. For **manual test cases** (`已自动化: No`): do NOT attempt to execute.
    - Record `PENDING-MANUAL` in the traceability matrix `结果` column
    - These cases will be presented to the human AFTER the SubAgent returns (via the dispatcher's Step 4b)
@@ -286,7 +223,6 @@ Since implementation code already exists (TDD and Quality Gates are complete), e
    - Any `Real` FAIL is a blocking failure — same consequence as any other test case failure
 3c. If manual test cases exist, update the **Manual Test Case Summary** table:
    - Count all manual cases (all should be `PENDING-MANUAL` at this point)
-4. **Stop services** per Service Management cleanup above after all test cases are executed.
 
 **If any automated test case FAILS:**
 - Include failure details in the Issues table of the Structured Return Contract
@@ -300,14 +236,6 @@ Traceability between ST cases and automated tests is maintained in the ST case
 document's traceability matrix (not via code comments). See Step 4b.
 
 ## Execution Rules (Hard Gates)
-
-### Environment Gate
-
-Always start from a known-clean state. Do not assume services are already running.
-
-- Start services per Service Management above; verify health endpoint before running any test cases
-- If service fails to start after diagnosis: **BLOCKED** — set Verdict to BLOCKED with service details
-- After start: verify app is responding before running any test cases
 
 ### Failure Is Not Bypassable
 
@@ -376,7 +304,6 @@ When all test cases are executed (or if blocked), return your result in EXACTLY 
 - st_case_path: docs/test-cases/feature-{id}-{slug}.md
 - st_case_count: [total number of test cases]
 - manual_case_count: [number of manual test cases, 0 if none]
-- environment_cleaned: true/false
 ```
 
 **IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report the results.

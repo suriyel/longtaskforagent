@@ -20,7 +20,7 @@ If you haven't run the verification command in this message, you cannot claim it
 **On tool/environment errors**:
 1. **Read** error output — identify the specific tool or environment issue
 2. **Diagnose** root cause (tool not installed, env not activated, wrong path, missing config)
-3. **Attempt fix** — run `init.sh` if needed, or install the missing tool
+3. **Attempt fix** — install the missing tool or fix the environment issue
 4. **Re-run** once
 5. **If still fails** → set Verdict to BLOCKED with error details
 6. **NEVER skip** — testing is a hard gate; no bypass allowed

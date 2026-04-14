@@ -175,7 +175,7 @@ These thoughts mean STOP — you're rationalizing:
 | "ATS is overkill for this project" | Check Scaling Guide — tiny projects auto-skip ATS. |
 | "The SRS already implies the design" | SRS = WHAT, design = HOW. Both are needed. |
 | "All features pass, we can ship" | Feature tests ≠ system tests. Run ST phase first. |
-| "System testing is overkill" | Integration bugs, NFR failures, and workflow gaps hide until ST. |
+| "System testing is overkill" | Integration bugs and workflow gaps hide until ST. |
 | "I'll just add features to the JSON directly" | Invoke the `long-task-increment` skill for tracked, audited changes. |
 | "The requirement change is small, no need for impact analysis" | Increment skill catches hidden dependencies. |
 | "I'll just fix this quick bug directly" | Invoke `long-task-hotfix` — bug gets tracked in feature-list.json as category=bugfix and fixed via the full Worker pipeline. |

@@ -106,38 +106,32 @@ flowchart TD
 [Add additional #### Flow sections for each distinct functional area]
 [Omit this section if all requirements are single-step with no branching]
 
-## 5. Non-Functional Requirements
-| ID | Category (ISO 25010) | Requirement | Measurable Criterion | Measurement Method |
-|----|---------------------|-------------|---------------------|-------------------|
-| NFR-001 | Performance | Response time | p95 < 200ms | Load test with k6 |
-[If none apply, write "None identified" and state why]
-
-## 6. Interface Requirements
+## 5. Interface Requirements
 | ID | External System | Direction | Protocol | Data Format |
 |----|----------------|-----------|----------|-------------|
 | IFR-001 | Payment Gateway | Outbound | REST/HTTPS | JSON |
 [Omit if no external interfaces]
 
-## 7. Constraints
+## 6. Constraints
 | ID | Constraint | Rationale |
 |----|-----------|-----------|
 | CON-001 | Must run on Python 3.8+ | Corporate standard |
 [If none, write "None identified"]
 
-## 8. Assumptions & Dependencies
+## 7. Assumptions & Dependencies
 | ID | Assumption | Impact if Invalid |
 |----|-----------|------------------|
 | ASM-001 | JWT validation handled by API Gateway | Business layer must add validation |
 [If none, write "None identified"]
 
-## 9. Acceptance Criteria Summary
-[Consolidated table or list linking each FR/NFR to its pass/fail criteria]
+## 8. Acceptance Criteria Summary
+[Consolidated table or list linking each FR to its pass/fail criteria]
 
-## 10. Traceability Matrix
+## 9. Traceability Matrix
 | Requirement ID | Source (stakeholder need) | Pain Point Addressed | Verification Method |
 |---------------|-------------------------|---------------------|-------------------|
 | FR-001 | User story: "As a user, I want to..." | [Pain Map row label or "None — new capability"] | Automated test |
 [Every requirement must appear in this matrix]
 
-## 11. Open Questions
+## 10. Open Questions
 [Any items that need resolution during the design phase. If none, write "None".]

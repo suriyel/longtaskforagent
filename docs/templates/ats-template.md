@@ -32,7 +32,6 @@
 
 - 每个 FR 至少覆盖 FUNC + BNDRY 类别
 - 处理用户输入/认证的 FR 必须覆盖 SEC 类别
-- NFR 必须有明确的测试工具和通过标准
 - 跨 feature 集成路径必须在 ST 阶段验证
 
 ### 1.3 测试级别定义
@@ -41,7 +40,7 @@
 |------|------|---------|
 | 单元测试 | TDD Red-Green-Refactor | Worker (long-task-tdd) |
 | 特性验收测试 | 黑盒 ST 测试用例 | Worker (long-task-feature-st) |
-| 系统测试 | 跨特性集成 + NFR 验证 | ST (long-task-st) |
+| 系统测试 | 跨特性集成验证 | ST (long-task-st) |
 ```
 
 ## Section 2: Requirement → Acceptance Scenario Mapping (Core)
@@ -56,28 +55,20 @@
 | FR-001 | {摘要} | {场景1/场景2/...} | FUNC,BNDRY,{+其他} | Critical/High/Medium/Low | {选择理由} |
 | ... | ... | ... | ... | ... | ... |
 
-### 2.2 非功能需求 (NFR)
-
-| Req ID | 需求摘要 | 验收场景 | 必须类别 | 优先级 | 备注 |
-|--------|---------|---------|---------|--------|------|
-| NFR-001 | {摘要} | {场景} | PERF | {优先级} | {阈值说明} |
-| ... | ... | ... | ... | ... | ... |
-
-### 2.3 接口需求 (IFR)
+### 2.2 接口需求 (IFR)
 
 | Req ID | 需求摘要 | 验收场景 | 必须类别 | 优先级 | 备注 |
 |--------|---------|---------|---------|--------|------|
 | IFR-001 | {摘要} | {场景} | FUNC,BNDRY | {优先级} | {协议/格式说明} |
 | ... | ... | ... | ... | ... | ... |
 
-### 2.4 覆盖统计
+### 2.3 覆盖统计
 
 | 类别 | 需求数 |
 |------|--------|
 | FUNC | N |
 | BNDRY | N |
 | SEC | N |
-| PERF | N |
 | **合计** | **N** |
 ```
 
@@ -99,27 +90,12 @@
 - 认证/授权: {绕过测试, 权限提升}
 - 数据泄露: {敏感数据暴露检测}
 
-### 3.4 性能测试 (PERF)
-- 测试工具: {k6/locust/ab/JMeter等}
-- 负载模型: {并发数, 持续时间, 渐进策略}
-
 ```
 
-## Section 4: NFR Test Method Matrix
+## Section 4: Cross-Feature Integration Scenarios
 
 ```markdown
-## 4. NFR 测试方法矩阵
-
-| NFR ID | 测试方法 | 工具 | 通过标准 | 负载参数 | 关联 Feature |
-|--------|---------|------|---------|---------|-------------|
-| NFR-001 | {方法} | {工具} | {标准} | {参数} | Feature N, M |
-| ... | ... | ... | ... | ... | ... |
-```
-
-## Section 5: Cross-Feature Integration Scenarios
-
-```markdown
-## 5. 跨 Feature 集成场景
+## 4. 跨 Feature 集成场景
 
 | 场景 ID | 场景描述 | 涉及 Features | 数据流路径 | 验证要点 | ST 阶段覆盖 |
 |---------|---------|--------------|-----------|---------|------------|
@@ -127,10 +103,10 @@
 | ... | ... | ... | ... | ... | ... |
 ```
 
-## Section 6: Risk-Driven Test Priority
+## Section 5: Risk-Driven Test Priority
 
 ```markdown
-## 6. 风险驱动测试优先级
+## 5. 风险驱动测试优先级
 
 ### 6.1 风险评估矩阵
 
@@ -165,7 +141,7 @@
 | `functional` | FUNC | Happy-path and error-path verification | Always — every FR |
 | `boundary` | BNDRY | Edge cases, limits, empty/max/zero values | Always — every FR |
 | `security` | SEC | Injection, authorization, data validation | FR handles user input, auth, or external data |
-| `performance` | PERF | Response time, throughput, resource usage | NFR-xxx with performance metrics |
+| `performance` | PERF | Response time, throughput, resource usage | SRS specifies response time / throughput targets |
 
 ## Minimum Case Count Heuristics (Reference)
 
@@ -174,4 +150,3 @@
 | Simple | 1-2 | 3-5 |
 | Medium | 3-4 | 5-8 |
 | Complex | 5+ | 8-15 |
-| NFR with metrics | Any | 3-5 |

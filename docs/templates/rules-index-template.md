@@ -10,7 +10,7 @@
 |----------|-------------|
 | [coding-style.md](coding-style.md) | Naming conventions, formatting rules, file & directory organization |
 | [coding-constraints.md](coding-constraints.md) | 2nd/3rd-party library constraints, static analysis tools, error handling, import organization |
-| [build-and-compilation.md](build-and-compilation.md) | Build system, CI/CD pipeline, packaging, environment management |
+| [build-and-compilation.md](build-and-compilation.md) | Build system, packaging, environment management |
 
 ## Key Findings Summary
 
@@ -19,13 +19,12 @@
 - **Prohibited APIs**: {{prohibited_count}} detected
 - **Static Analysis Tools**: {{static_tools}}
 - **Build System**: {{build_system}}
-- **CI/CD**: {{ci_platform}}
 
 ## Usage
 
 These rules are consumed at two points in the pipeline:
 
-1. **Design phase** — merged into Design document §13 (Codebase Conventions & Constraints) as a binding reference for all new code
-2. **Worker phase** — referenced via Design §13 during Orient, TDD, and Inline Check steps
+1. **Design phase** — merged into Design document §11 (Codebase Conventions & Constraints) as a binding reference for all new code
+2. **Worker phase** — referenced via Design §11 during Orient, TDD, and Inline Check steps
 
 To re-scan: delete `docs/rules/` and start a new session. The router will re-trigger the codebase scanner.

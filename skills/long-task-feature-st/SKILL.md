@@ -1,6 +1,6 @@
 ---
 name: long-task-feature-st
-description: "Use after quality gates pass in a long-task project — independently manages test environment lifecycle (start/cleanup), executes black-box acceptance testing per feature, generates ISO/IEC/IEEE 29119 compliant test case documents"
+description: "Use after quality gates pass in a long-task project — executes black-box acceptance testing per feature, generates ISO/IEC/IEEE 29119 compliant test case documents"
 ---
 
 # Feature-ST — SubAgent Dispatch
@@ -19,7 +19,6 @@ Collect file paths from the current session state (do NOT read the file contents
 - `srs_doc_path` — path to `docs/plans/*-srs.md`
 - `ats_doc_path` — path to `docs/plans/*-ats.md` (if exists; omit otherwise)
 - `plan_doc_path` — path to `docs/features/YYYY-MM-DD-<feature-name>.md` (from Feature Design step)
-- `env_guide_path` — `env-guide.md` (if exists)
 - `quality_gates_json` — quality_gates thresholds from feature-list.json
 - `tech_stack_json` — tech_stack from feature-list.json
 - `working_dir` — project working directory
@@ -48,7 +47,6 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 - SRS doc: {srs_doc_path}
 - ATS doc: {ats_doc_path} (omit if not present)
 - Feature design plan: {plan_doc_path}
-- Environment guide: {env_guide_path}
 
 ## Template/Example (optional)
 - ST case template: {st_case_template_path} (omit if not set)
@@ -56,8 +54,6 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 
 ## Key Constraints
 - Do NOT mark the feature as "passing" in feature-list.json — only report results
-- You MUST manage service lifecycle: start before tests, cleanup after all tests
-- If environment cannot start after 3 attempts, set Verdict to BLOCKED
 - ALL automated test cases must be executed one by one — no skipping
 - Manual test cases (已自动化: No) must NOT be executed by SubAgent — mark as PENDING-MANUAL in the traceability matrix and include full case details in the Manual Test Cases section of the return contract
 ```
@@ -79,16 +75,15 @@ Agent(
 Read the SubAgent's returned text and locate the `### Verdict:` line:
 
 - **`### Verdict: PASS`**
-  1. Extract Next Step Inputs: `st_case_path`, `st_case_count`, `environment_cleaned`
+  1. Extract Next Step Inputs: `st_case_path`, `st_case_count`
   2. Record in `task-progress.md`: "Feature-ST: PASS ({N} cases, all passed)"
-  4. If `environment_cleaned` is false, run cleanup per `env-guide.md` yourself
-  5. Proceed to next step (Inline Check + Persist)
+  3. Proceed to next step (Inline Check + Persist)
 
 - **`### Verdict: FAIL`** or **`### Verdict: BLOCKED`**
   1. Read the Issues table — identify failure details
   2. **Main Agent classifies each issue** into one of two categories:
      - **Human manual testing** (escalate immediately via `AskUserQuestion`): missing secrets or credentials the AI cannot provide, external human action required (third-party approval, manual account setup, hardware interaction)
-     - **AI self-fix** (everything else): code bugs causing test failures, environment startup issues, port conflicts, dependency errors, external service errors, test execution failures due to implementation issues
+     - **AI self-fix** (everything else): code bugs causing test failures, dependency errors, external service errors, test execution failures due to implementation issues
   3. For AI self-fix issues: record in `task-progress.md`, fix code or environment, re-dispatch SubAgent. **No retry limit** — AI must keep fixing until resolved.
   4. For human manual testing issues: escalate via `AskUserQuestion` with issue details. Feature stays BLOCKED until human responds.
   5. **No bypass allowed** — every failure must be resolved (by AI or human) before proceeding to Persist.

@@ -14,12 +14,11 @@
 
 **Checks:**
 - Every FR-xxx from SRS appears in ATS mapping table
-- Every NFR-xxx from SRS appears in ATS mapping table
 - Every IFR-xxx from SRS appears in ATS mapping table
 - No orphan rows (ATS rows referencing non-existent SRS requirements)
 
 **Defect severity:**
-- FR/NFR/IFR missing from ATS → **Major**
+- FR/IFR missing from ATS → **Major**
 - Orphan ATS row (no matching SRS requirement) → **Minor**
 
 ---
@@ -33,12 +32,10 @@
 |-----------|-------------------|
 | All FR-xxx | FUNC + BNDRY (minimum) |
 | FR handles user input, authentication, or authorization | + SEC |
-| NFR-xxx with performance metrics | PERF |
 
 **Checks:**
 - All FRs have at least FUNC + BNDRY
 - FRs handling user input/auth have SEC
-- NFRs with performance metrics have PERF
 - No FR has only a single category assigned
 
 **Defect severity:**
@@ -74,30 +71,12 @@
 - No weasel words: "reasonable", "appropriate", "correctly", "properly", "quickly", "合理", "正确", "适当"
 
 **Defect severity:**
-- Non-measurable pass criterion for NFR → **Critical**
-- Non-measurable pass criterion for FR → **Major**
+- Non-measurable pass criterion → **Major**
 - Weasel word in scenario description → **Minor**
 
 ---
 
-### R5: NFR Testability
-
-**Purpose**: Ensure non-functional requirements have concrete, executable test methods.
-
-**Checks:**
-- Each NFR has an explicit test tool specified
-- Each NFR has quantified thresholds (not just "fast" or "scalable")
-- Load parameters are defined (concurrency, duration, data volume)
-- NFR test methods are feasible with the project's stated tech stack
-
-**Defect severity:**
-- NFR without test tool or threshold → **Major**
-- Missing load parameters → **Minor**
-- Infeasible tool choice for tech stack → **Major**
-
----
-
-### R6: Cross-Feature Integration
+### R5: Cross-Feature Integration
 
 **Purpose**: Ensure critical multi-feature data flows are identified and planned for verification.
 
@@ -114,7 +93,7 @@
 
 ---
 
-### R7: Risk Consistency
+### R6: Risk Consistency
 
 **Purpose**: Ensure test depth aligns with requirement priority and architectural risk.
 
@@ -135,7 +114,7 @@
 
 | Level | Definition | Blocking? |
 |-------|-----------|-----------|
-| **Critical** | Requirement completely missing from ATS; NFR with unmeasurable criterion | Yes — blocks approval |
+| **Critical** | Requirement completely missing from ATS | Yes — blocks approval |
 | **Major** | Category gap, missing scenarios, non-verifiable criteria, risk inconsistency | Yes — must fix before approval |
 | **Minor** | Style issue, single-category FR, weak wording, missing integration detail | No — fix recommended |
 
@@ -152,7 +131,7 @@
 When creating a custom review template, you may:
 
 1. **Add dimensions** — e.g., R8 for GDPR data testing coverage, R9 for compliance-specific checks
-2. **Remove dimensions** — e.g., remove R6 for single-feature projects
+2. **Remove dimensions** — e.g., remove R5 for single-feature projects
 3. **Modify severity rules** — e.g., make single-category FR a Major instead of Minor
 4. **Modify pass criteria** — e.g., require 0 Minor for PASS
 5. **Add category rules** — e.g., add GDPR as a mandatory category for data-processing FRs

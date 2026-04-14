@@ -101,7 +101,7 @@ Most AI coding assistants lose context after one conversation. Long-Task Agent s
 | AI generates thin acceptance tests | ATS (Acceptance Test Strategy) pre-plans test categories per requirement after design, with independent subagent review ensuring no coverage blind spots |
 | AI drifts from the approved design | Design interface coverage gate + inline compliance check after every feature |
 | No way to add features to an existing project safely | Increment skill performs impact analysis, updates SRS/Design in place, tracks changes with waves |
-| "Works on my machine" syndrome | System Testing phase (IEEE 829) with regression, integration, E2E, and NFR verification |
+| "Works on my machine" syndrome | System Testing phase (IEEE 829) with regression, integration, E2E verification |
 
 ![Problem vs Solution](images/2.png)
 
@@ -165,11 +165,10 @@ Each worker session focuses on exactly one feature. This prevents context exhaus
 
 ### Phase 0c: Acceptance Test Strategy (ATS)
 
-- Maps every FR/NFR/IFR to acceptance scenarios with required test categories (FUNC, BNDRY, SEC, PERF, UI)
-- NFR test method matrix (tools + thresholds + load parameters)
+- Maps every FR/IFR to acceptance scenarios with required test categories (FUNC, BNDRY, SEC, UI)
 - Cross-feature integration scenario pre-planning
 - Risk-driven test priority ordering
-- Independent ATS reviewer subagent (7 dimensions: coverage completeness, category diversity, scenario adequacy, verifiability, NFR testability, integration coverage, risk consistency), with custom review template support
+- Independent ATS reviewer subagent (6 dimensions: coverage completeness, category diversity, scenario adequacy, verifiability, integration coverage, risk consistency), with custom review template support
 - Auto-skip for tiny projects (≤5 FR), embedded in design doc for tiny projects
 - Produces an approved **ATS** (`docs/plans/*-ats.md`)
 - Constrains downstream Init (verification_steps) and feature-st (test case derivation)
@@ -178,7 +177,6 @@ Each worker session focuses on exactly one feature. This prevents context exhaus
 
 - Reads SRS + Design + ATS, scaffolds project skeleton
 - Bidirectional granularity analysis at requirements phase (G1-G6 split + S1-S4 merge) ensures each FR fits a single-session context budget
-- Generates environment bootstrap scripts (`init.sh` / `init.ps1`)
 - Scaffolds initial project files
 
 ### Phase 2: Worker Cycles
@@ -197,7 +195,7 @@ Orient → Bootstrap → DevTools Gate → Plan
 
 - Per-feature ST (ISO/IEC/IEEE 29119) — black-box acceptance testing
 - IEEE 829-aligned system-level test planning with Requirements Traceability Matrix
-- Regression, integration, E2E, NFR verification, exploratory testing
+- Regression, integration, E2E, exploratory testing
 - Go/No-Go verdict — defects loop back to Worker for fixes
 
 ### Phase 1.5: Increment (Post-Launch Changes)

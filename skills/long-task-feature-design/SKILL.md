@@ -31,7 +31,7 @@ Collect these from the current session state. Do NOT read document contents your
 - `ats_doc_path` — path to ATS doc (`docs/plans/*-ats.md`), if it exists; omit otherwise
 - `constraints` — constraints[] from feature-list.json root
 - `assumptions` — assumptions[] from feature-list.json root
-- `constraints_section` — line range of §13 (Codebase Conventions & Constraints) in the design doc — §13 is always present
+- `constraints_section` — line range of §11 (Codebase Conventions & Constraints) in the design doc — §11 is always present
 - `output_path` — target file: `docs/features/YYYY-MM-DD-<feature-name>.md`
 - `working_dir` — project working directory
 
@@ -47,8 +47,8 @@ You are a Feature Design execution SubAgent.
 4. Read SRS section: Read {srs_doc_path} lines {srs_start} to {srs_end}
 5. Read ATS mapping table: Read {ats_doc_path} (only if ATS doc exists) — locate the mapping rows for the feature's requirement ID(s) (from srs_trace); extract required categories
 5c. Read internal API contracts: Read {design_doc_path} Section 6.2 — locate rows where this feature appears as Provider or Consumer. These define the exact schemas this feature must produce or consume.
-5d. Read §13 (Codebase Conventions): Read {design_doc_path} §13 section — always present
-5e. Discover existing code: For each passing dependency feature in the feature object's dependencies[], read implementation files to discover reusable utilities, API clients, data access patterns, error helpers, §13.1 library usage examples
+5d. Read §11 (Codebase Conventions): Read {design_doc_path} §11 section — always present
+5e. Discover existing code: For each passing dependency feature in the feature object's dependencies[], read implementation files to discover reusable utilities, API clients, data access patterns, error helpers, §11.1 library usage examples
 6. Follow the execution rules to produce the detailed design document
 7. Write the document to: {output_path}
 8. Return your result using the Structured Return Contract in the execution rules
@@ -68,13 +68,13 @@ You are a Feature Design execution SubAgent.
 - Test Inventory negative ratio must be >= 40%
 - Test Inventory main categories (FUNC/BNDRY/SEC/PERF/INTG) must cover all ATS-required categories for this feature's requirement(s)
 - Features with external dependencies must have ≥1 INTG row per dependency type; pure-computation features: "INTG: N/A"
-- **Codebase constraints enforcement** (§13 always present):
-  - Read {design_doc_path} §13 for codebase conventions (empty tables = no constraints)
-  - Step 1c: scan passing dependency implementations for §13.1 usage patterns and reusable code
-  - Step 1b: check for CONSTRAINT-CONFLICT (§13 vs. feature requirements)
-  - §3 Interface Contract: names follow §13.5; operations use §13.1 libraries; reuse existing code per Existing Code Reuse section
-  - §5 Algorithm: pseudocode uses §13.1 libraries; error handling follows §13.6; §13 library mapping table is mandatory
-  - Verification Checklist: §13 compliance items 9-11 are mandatory
+- **Codebase constraints enforcement** (§11 always present):
+  - Read {design_doc_path} §11 for codebase conventions (empty tables = no constraints)
+  - Step 1c: scan passing dependency implementations for §11.1 usage patterns and reusable code
+  - Step 1b: check for CONSTRAINT-CONFLICT (§11 vs. feature requirements)
+  - §3 Interface Contract: names follow §11.5; operations use §11.1 libraries; reuse existing code per Existing Code Reuse section
+  - §5 Algorithm: pseudocode uses §11.1 libraries; error handling follows §11.6; §11 library mapping table is mandatory
+  - Verification Checklist: §11 compliance items 9-11 are mandatory
 - Do NOT start TDD — only produce the design document
 ```
 

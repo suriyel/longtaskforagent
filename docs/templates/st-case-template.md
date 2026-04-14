@@ -13,7 +13,7 @@
 # 测试用例集: {feature_title}
 
 **Feature ID**: {feature_id}
-**关联需求**: {requirement_ids}  (e.g., FR-001, FR-002, NFR-003)
+**关联需求**: {requirement_ids}  (e.g., FR-001, FR-002, IFR-003)
 **日期**: {YYYY-MM-DD}
 **测试标准**: ISO/IEC/IEEE 29119-3
 **模板版本**: 1.0
@@ -46,7 +46,7 @@ ST-{CATEGORY}-{FEATURE_ID}-{SEQ}
 
 ### 关联需求
 
-{FR-xxx / NFR-xxx}（{需求标题}）
+{FR-xxx / IFR-xxx}（{需求标题}）
 
 ### 测试目标
 
@@ -125,7 +125,7 @@ ST-{CATEGORY}-{FEATURE_ID}-{SEQ}
 | `functional` | FUNC | Happy-path and error-path verification | Always — every feature needs functional tests |
 | `boundary` | BNDRY | Edge cases, limits, empty/max/zero values | Always — test boundaries of inputs and states |
 | `security` | SEC | Injection, authorization, data validation | When feature handles user input, auth, or external data |
-| `performance` | PERF | Response time, throughput, resource usage | Only when traceable to NFR-xxx performance requirements |
+| `performance` | PERF | Response time, throughput, resource usage | Only when traceable to SRS performance requirements |
 
 ## Case ID Format
 
@@ -163,6 +163,6 @@ When generating test cases from a feature's SRS acceptance criteria (via `srs_tr
 1. Each `srs_trace` requirement must be covered by **at least one** test case
 2. Every feature gets at least one `functional` and one `boundary` test case
 4. If the feature handles user input → add `security` test cases
-5. If the feature traces to an NFR-xxx with performance metrics → add `performance` test cases
+5. If the feature traces to SRS performance requirements with metrics → add `performance` test cases
 8. Test case steps must be concrete and executable (no vague "verify it works")
 9. Expected results must be specific and assertable (no "should look correct")

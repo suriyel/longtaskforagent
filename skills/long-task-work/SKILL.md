@@ -17,9 +17,9 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
 ### 1. Orient
 - Read `task-progress.md` — **only the `## Current State` section** (use Read with offset/limit from `## Current State` heading to the next `##` heading or log separator `---`)
-- Grep `feature-list.json` to extract: `quality_gates`, `tech_stack`, `build_system`, `constraints[]`, `assumptions[]`. Then grep for features with `"status": "failing"` to identify the next candidate. Do NOT read the full file.
+- Grep `feature-list.json` to extract: `quality_gates`, `tech_stack`, `constraints[]`, `assumptions[]`. Then grep for features with `"status": "failing"` to identify the next candidate. Do NOT read the full file.
 - Grep `long-task-guide.md` for the environment activation command, test command, coverage command, and mutation command. Do NOT read the full file.
-- Read design doc **§13** (Codebase Conventions & Constraints, `docs/plans/*-design.md`) — note §13.1 mandatory libraries, §13.2 prohibited APIs, §13.4 static analysis tools, §13.5 naming conventions, §13.6 error handling pattern. Store as `{section_13_text}` — this is the single canonical copy for the entire session; do NOT re-read §13 in subsequent steps.
+- Read design doc **§11** (Codebase Conventions & Constraints, `docs/plans/*-design.md`) — note §11.1 mandatory libraries, §11.2 prohibited APIs, §11.4 static analysis tools, §11.5 naming conventions, §11.6 error handling pattern. Store as `{section_11_text}` — this is the single canonical copy for the entire session; do NOT re-read §11 in subsequent steps.
 - Run `git log --oneline -10` — recent commit context
 - Pick next `"status": "failing"` feature by priority, then by array position in `features[]` (first eligible wins) — **skip features with `"deprecated": true`**
 - **Dependency satisfaction check**: After selecting a candidate feature, verify that ALL feature IDs in its `dependencies[]` have `"status": "passing"` in `feature-list.json`. If any dependency is still `"failing"`:
@@ -101,12 +101,12 @@ Dispatch a SubAgent to execute coverage and mutation gates. Main Agent only pars
 ### 7. ST Acceptance Test Cases
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-st` and follow it exactly.
 
-Execute black-box acceptance testing for the feature **after** TDD and quality gates pass. The skill dispatches a SubAgent that reads SRS/Design/ATS documents in its own fresh context, generates ISO/IEC/IEEE 29119 compliant test case documents, executes test cases, and manages service lifecycle. The main Agent does NOT read document sections, test case content, or execution output — only the structured summary.
+Execute black-box acceptance testing for the feature **after** TDD and quality gates pass. The skill dispatches a SubAgent that reads SRS/Design/ATS documents in its own fresh context, generates ISO/IEC/IEEE 29119 compliant test case documents, and executes test cases. The main Agent does NOT read document sections, test case content, or execution output — only the structured summary.
 
 Context to carry forward (paths only — SubAgent reads file contents itself):
 - Feature ID and feature object (compact JSON)
 - `quality_gates` and `tech_stack` (compact JSON)
-- File paths: design doc, SRS doc, ATS doc (if exists), plan doc (from Step 2), env-guide.md
+- File paths: design doc, SRS doc, ATS doc (if exists), plan doc (from Step 2)
 - Working directory path
 - `st_case_template_path` and `st_case_example_path` from feature-list.json root (if set)
 
@@ -123,26 +123,26 @@ Run these mechanical checks directly — no SubAgent dispatch needed.
 **a) Dependency versions (D3):**
 If feature design §3 or §5 specifies third-party library versions, spot-check that `requirements.txt` / `package.json` / `pom.xml` matches. Flag mismatches.
 
-**b) Codebase convention compliance (blocking for §13.1/§13.2):**
+**b) Codebase convention compliance (blocking for §11.1/§11.2):**
 
 Check new/modified files (`git diff --name-only` of feature changes) against `{section_13_text}` (from Orient):
 
-- §13.1: For each non-empty "Replaces" entry, grep new/modified source files for the replaced import pattern. Match → violation → fix before proceeding.
-- §13.2: For each non-empty "Prohibited" entry, grep new/modified source files. Match → violation → fix.
+- §11.1: For each non-empty "Replaces" entry, grep new/modified source files for the replaced import pattern. Match → violation → fix before proceeding.
+- §11.2: For each non-empty "Prohibited" entry, grep new/modified source files. Match → violation → fix.
 
-§13.5/§13.6 advisory checks: already enforced by TDD Refactor static analysis gate — log "covered by TDD Refactor" without re-running.
+§11.5/§11.6 advisory checks: already enforced by TDD Refactor static analysis gate — log "covered by TDD Refactor" without re-running.
 
 **c) Existing code reuse verification (blocking):**
 Read feature design "Existing Code Reuse" section. For each REUSE item: grep implementation files for the expected import. If the REUSE item is NOT imported but equivalent functionality is reimplemented → violation → replace with REUSE import.
 
-On blocking violation: log file:line + what was used vs. what §13 requires; fix the violation; re-run tests to confirm no regression; re-check.
+On blocking violation: log file:line + what was used vs. what §11 requires; fix the violation; re-run tests to confirm no regression; re-check.
 
 If all checks pass → proceed to Persist.
 If any check fails → fix inline, re-verify. No SubAgent dispatch.
 
 Record in `task-progress.md`:
 ```
-- Inline Check: PASS (D3: OK, §13: N violations fixed / M checked, Reuse: R items verified)
+- Inline Check: PASS (D3: OK, §11: N violations fixed / M checked, Reuse: R items verified)
 ```
 
 ### 9. Persist
@@ -229,6 +229,6 @@ Follow the systematic debugging process — **never guess-and-fix**:
 **Invokes (in strict order):**
 1. `long-task:long-task-tdd` (Steps 3-5) — TDD Red-Green-Refactor
 2. Quality Gates SubAgent (Step 6) — Coverage + Mutation (inline dispatch, reads `long-task-quality/references/quality-execution.md`)
-3. `long-task:long-task-feature-st` (Step 7) — Black-Box Feature Acceptance Testing (ISO/IEC/IEEE 29119, self-managed lifecycle)
+3. `long-task:long-task-feature-st` (Step 7) — Black-Box Feature Acceptance Testing (ISO/IEC/IEEE 29119)
 **Reads/Writes:** feature-list.json, task-progress.md (including `## Current State`), RELEASE_NOTES.md
 **Read on-demand (via Read tool, NOT Skill tool):** `references/systematic-debugging.md`

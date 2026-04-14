@@ -59,7 +59,7 @@ If both exist: check both for Checkstyle configuration and use whichever has it.
 
 ### 2c: Pipeline Integration Check
 
-If `docs/plans/*-design.md` exists and contains a §13.4 section listing Checkstyle with a run command, use that command as authoritative (user-approved in the pipeline). This prevents drift between pipeline and standalone execution.
+If `docs/plans/*-design.md` exists and contains a §11.4 section listing Checkstyle with a run command, use that command as authoritative (user-approved in the pipeline). This prevents drift between pipeline and standalone execution.
 
 ### 2d: Quality Command Detection
 
@@ -331,7 +331,7 @@ If `task-progress.md` exists in the project, append a one-line entry:
 | Max iterations reached with violations remaining | Report remaining violations with classification. |
 | Stuck (2 consecutive iterations with no progress) | Break early, report remaining as oscillating/unfixable. |
 | Multi-module project | Run at project root; violations across all modules tracked together. |
-| Design doc §13.4 exists with Checkstyle | Use §13.4 run command as authoritative. |
+| Design doc §11.4 exists with Checkstyle | Use §11.4 run command as authoritative. |
 | `long-task-guide.md` exists | Use its test/coverage/mutation commands for quality gates. |
 | No mutation tool configured | Skip Gate 3 (mutation) with warning; other gates still enforced. |
 | No test framework detected | Skip Gate 2 (UT) and Gate 3 (mutation) with warning; compile + scan still enforced. |
@@ -344,7 +344,7 @@ If `task-progress.md` exists in the project, append a one-line entry:
 - **No new dependencies** — fixes must not add imports or dependencies that did not previously exist (expanding star imports is allowed).
 - **Git-safe** — do NOT commit changes. The user reviews and commits after the skill completes.
 - **Idempotent** — re-running the skill on an already-clean codebase produces zero-iteration clean summary.
-- **Pipeline-compatible** — when used alongside the long-task pipeline, respects Design §13.4 and `long-task-guide.md` as authoritative sources for commands and thresholds.
+- **Pipeline-compatible** — when used alongside the long-task pipeline, respects Design §11.4 and `long-task-guide.md` as authoritative sources for commands and thresholds.
 
 ## Integration
 

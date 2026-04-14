@@ -22,9 +22,9 @@ The SRS describes WHAT the system must do. The design document describes HOW. Ev
 You MUST create a TodoWrite task for each of these items and complete them in order:
 
 1. **Read the approved SRS** — from `docs/plans/*-srs.md`
-2. **Explore technical context** — existing code, frameworks, deployment environment
+2. **Explore technical context** — existing code, frameworks, runtime environment
 3. **Propose 2-3 approaches** — with trade-offs and your recommendation
-4. **Section-by-section design approval** — architecture, data model, API, UI, testing, deployment
+4. **Section-by-section design approval** — architecture, data model, API, UI, testing
 5. **Write design document** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
 6. **Transition to ATS** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ats`
 
@@ -35,7 +35,6 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 1. Read the approved SRS document from `docs/plans/*-srs.md`
 2. Extract key design drivers:
    - **Functional scope** — FR count, priority distribution, dependency chains
-   - **NFR thresholds** — performance targets, reliability, scalability that affect architecture
    - **Constraints** — hard limits that restrict technology/approach choices
    - **Interface requirements** — external systems, protocols, data formats to integrate with
    - **User personas** — technical levels that affect API design decisions
@@ -45,7 +44,7 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 ## Step 2: Explore Technical Context
 
 1. Explore existing code / repos the project will build on
-2. Identify technical constraints not in the SRS (e.g., monorepo structure, CI/CD pipeline, existing libraries)
+2. Identify technical constraints not in the SRS (e.g., monorepo structure, existing libraries)
 3. Check for a design document template:
    - If the user specified a template path → read and validate it
    - Else → read `docs/templates/design-template.md` (the default template shipped with this skill)
@@ -61,17 +60,16 @@ Present **2-3 implementation approaches** with explicit trade-offs:
 **Pros**: [bullet list]
 **Cons**: [bullet list]
 **Best when**: [conditions]
-**NFR impact**: [how this approach affects the SRS NFR thresholds]
 **Third-party dependencies**: [key libraries/frameworks this approach requires, with versions]
 
 ## Approach B: [Name]
 ...
 
 ## Recommendation: Approach [X]
-**Reason**: [why this fits best given the SRS constraints and NFRs]
+**Reason**: [why this fits best given the SRS constraints]
 ```
 
-**Key**: Each approach must be evaluated against the SRS constraints and NFR thresholds. An approach that cannot meet a "Must" NFR is disqualified.
+**Key**: Each approach must be evaluated against the SRS constraints.
 
 ## Step 4: Section-by-Section Approval
 
@@ -84,7 +82,6 @@ For non-trivial projects, break the design into sections and get approval per se
    - Must include a **Logical View** (Mermaid `graph`) showing layers/packages/modules and dependency directions
    - Must include a **Component Diagram** (Mermaid `graph`) showing runtime components and interactions
    - Must justify tech stack choices against SRS constraints
-   - Must show how NFR thresholds will be met
 2. **Key feature designs** — one chapter per key feature or feature group
    - Each feature chapter MUST include at least:
      - **Class diagram** (Mermaid `classDiagram`) — classes/modules, attributes, methods, relationships
@@ -106,49 +103,45 @@ For non-trivial projects, break the design into sections and get approval per se
    - Test philosophy: TDD with quality gates (Red → Green → Refactor → Coverage → Mutation)
    - Tool selections: test framework, coverage tool, mutation tool (with versions — these are design decisions)
    - Coverage thresholds: line >= X%, branch >= Y%, mutation >= Z%
-   - **Boundary**: "Detailed requirement-to-test-category mapping, NFR test methods, and cross-feature integration scenarios are defined in the ATS phase — not here."
-7. **Deployment / infrastructure** (if applicable) — hosting, CI/CD, environments
-8. **Development plan** — milestones, task decomposition, priority ordering
+   - **Boundary**: "Detailed requirement-to-test-category mapping and cross-feature integration scenarios are defined in the ATS phase — not here."
+7. **Development plan** — milestones, task decomposition, priority ordering
    - Must define milestones with clear exit criteria
-   - Must decompose into context-budget-sized features (P0-P3) — each row in §10.2 becomes one feature in `feature-list.json`; group related right-sized FRs (already validated by SRS G+S heuristics) into vertical slices; include `Mapped FRs` column for traceability
+   - Must decompose into context-budget-sized features (P0-P3) — each row in §9.2 becomes one feature in `feature-list.json`; group related right-sized FRs (already validated by SRS G+S heuristics) into vertical slices; include `Mapped FRs` column for traceability
    - Must show dependency chain (Mermaid `graph`) identifying the critical path
    - Must include risk assessment with mitigation strategies
 
-> **Feature sizing is upstream**: FRs are right-sized at the Requirements phase via bidirectional granularity analysis (G1-G6 split + S1-S4 merge). §10.2 groups these right-sized FRs into implementation features. Each row should map 1+ related FRs into a vertical slice that productively fills one Worker session (~50% of context window, targeting ~1,000 lines implementation code excluding UT per FR). Feature counts in the scaling table below refer to the final §10.2 row count.
+> **Feature sizing is upstream**: FRs are right-sized at the Requirements phase via bidirectional granularity analysis (G1-G6 split + S1-S4 merge). §9.2 groups these right-sized FRs into implementation features. Each row should map 1+ related FRs into a vertical slice that productively fills one Worker session (~50% of context window, targeting ~1,000 lines implementation code excluding UT per FR). Feature counts in the scaling table below refer to the final §9.2 row count.
 
 Present each section. Wait for user feedback. Incorporate changes before moving to the next.
 
 **For simple projects** (< 5 features): Combine all sections into a single approval step, but still include the required diagrams and dependency versions.
 
-## Step 4b: Populate §13 — Codebase Conventions & Constraints
+## Step 4b: Populate §11 — Codebase Conventions & Constraints
 
-**Always execute this step** — for both brownfield and greenfield projects. §13 must be present in every design document so downstream skills (feature-design, TDD, Worker) can read it unconditionally.
+**Always execute this step** — for both brownfield and greenfield projects. §11 must be present in every design document so downstream skills (feature-design, TDD, Worker) can read it unconditionally.
 
 **Brownfield** (if `docs/rules/` exists and is populated with convention scan results from Phase 0-pre):
 
 1. **Read all `docs/rules/*.md` files** — `coding-style.md`, `coding-constraints.md`, `build-and-compilation.md`
-2. **Populate §13 of the design document** (Codebase Conventions & Constraints) using the design template's §13 structure:
-   - §13.1: Extract "Mandatory Internal Libraries" table from `coding-constraints.md`
-   - §13.2: Extract "Prohibited APIs / Libraries" table from `coding-constraints.md`
-   - §13.3: Extract "Approved 3rd-Party Libraries" table from `coding-constraints.md`
-   - §13.4: Extract "Static Analysis Tools" table from `coding-constraints.md` (tool name + config path + run command only — do not read config contents)
-   - §13.5: Extract key naming and formatting rules from `coding-style.md` (summary table)
-   - §13.6: Extract error handling pattern from `coding-constraints.md`
-   - §13.7: Extract build system and CI/CD summary from `build-and-compilation.md`
+2. **Populate §11 of the design document** (Codebase Conventions & Constraints) using the design template's §11 structure:
+   - §11.1: Extract "Mandatory Internal Libraries" table from `coding-constraints.md`
+   - §11.2: Extract "Prohibited APIs / Libraries" table from `coding-constraints.md`
+   - §11.3: Extract "Approved 3rd-Party Libraries" table from `coding-constraints.md`
+   - §11.4: Extract "Static Analysis Tools" table from `coding-constraints.md` (tool name + config path + run command only — do not read config contents)
+   - §11.5: Extract key naming and formatting rules from `coding-style.md` (summary table)
+   - §11.6: Extract error handling pattern from `coding-constraints.md`
 3. **Cross-verify** — check for conflicts between scanned conventions and design decisions:
-   - §8 (Third-Party Dependencies): new dependencies must not conflict with §13.2 prohibited list
-   - §6.2 (Internal API Contracts): libraries used must comply with §13.1 internal library mandates
+   - §8 (Third-Party Dependencies): new dependencies must not conflict with §11.2 prohibited list
+   - §6.2 (Internal API Contracts): libraries used must comply with §11.1 internal library mandates
    - If conflicts exist: mark with "⚠ Design Override: [reason]" and present to user for confirmation
-4. **Present §13 to user** for review (same approval flow as other sections)
+4. **Present §11 to user** for review (same approval flow as other sections)
 
 **Greenfield** (if `docs/rules/` does not exist or is empty):
 
-1. **Populate §13 with empty tables** (column headers + zero rows) for each subsection §13.1–§13.7, using the design template's §13 structure
-2. **Present to user**: "§13 created with empty convention tables. Add constraints now if known, or leave empty — downstream skills read §13 unconditionally."
+1. **Populate §11 with empty tables** (column headers + zero rows) for each subsection §11.1–§11.6, using the design template's §11 structure
+2. **Present to user**: "§11 created with empty convention tables. Add constraints now if known, or leave empty — downstream skills read §11 unconditionally."
 3. If user adds constraints: incorporate and re-present for approval
 4. If user leaves empty: proceed — empty tables signal "no constraints" to downstream skills
-
-> **Note**: §13.7 (Build & CI/CD) content will be synced to `feature-list.json` field `build_system` during the Init phase, with user confirmation.
 
 ## Step 5: Write Design Document
 
@@ -169,7 +162,7 @@ Before transitioning to ATS, mechanically verify cross-feature integration coher
 
 1. **Contract completeness**: For each edge in §3.3 component diagram, verify a corresponding row exists in §6.2 Internal API Contracts. Flag missing rows.
 2. **Schema consistency**: For each §6.2 row, verify that Provider feature's §4.N class diagram includes the Response Schema type, and Consumer feature's §4.N references the Request Schema. Flag mismatches.
-3. **Dependency completeness**: For each feature that appears in a §6.2 "Consumer" column, verify it lists the Provider feature ID in §11.3 dependency chain. Flag missing dependency edges.
+3. **Dependency completeness**: For each feature that appears in a §6.2 "Consumer" column, verify it lists the Provider feature ID in §9.3 dependency chain. Flag missing dependency edges.
 
 Present any flagged issues to the user. Resolve before proceeding to ATS.
 
@@ -178,7 +171,7 @@ Present any flagged issues to the user. Resolve before proceeding to ATS.
 Once the design document is saved and committed:
 
 1. Summarize key inputs the ATS skill will need:
-   - **From SRS**: all FR/NFR/IFR requirements with acceptance criteria
+   - **From SRS**: all FR/IFR requirements with acceptance criteria
    - **From Design**: testing strategy, tech stack, architecture risk areas
 2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ats` to generate the Acceptance Test Strategy
 
@@ -270,7 +263,7 @@ The development plan section bridges the design document to the Init phase. It M
 
 1. **Milestones** — time-boxed phases with clear scope and exit criteria
    - M1 is always "Foundation" (project skeleton, CI, core abstractions)
-   - Final milestone is always "Polish & Release" (NFR verification, docs, examples)
+   - Final milestone is always "Polish & Release" (docs, examples)
 2. **Task decomposition** — features mapped to priorities (P0-P3) with rationale
    - P0: Foundation — required by all other features
    - P1: Core value — the minimum viable feature set
@@ -287,4 +280,4 @@ The Init phase uses this plan to populate `feature-list.json` with correct prior
 **Called by:** using-long-task (when SRS exists, no design doc, no feature-list.json)
 **Requires:** Approved SRS at `docs/plans/*-srs.md`; optionally `docs/rules/*.md` (codebase conventions from Phase 0-pre scan)
 **Chains to:** long-task-ats (after design approval)
-**Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md` (always includes §13 Codebase Conventions — populated from `docs/rules/` for brownfield, empty tables for greenfield)
+**Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md` (always includes §11 Codebase Conventions — populated from `docs/rules/` for brownfield, empty tables for greenfield)

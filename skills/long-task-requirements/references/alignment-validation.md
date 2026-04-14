@@ -54,12 +54,12 @@ LLM self-assessment (no user interaction unless findings are non-trivial):
 Check against:
 - Workaround probe answers from E2 — was every frustrating step in the current workaround addressed by at least one FR?
 - Scenario walkthrough narratives from E3 — were all extracted flow gaps resolved in the final FR list?
-- Hidden requirements from E5 — did every YES answer become an explicit NFR?
+- Hidden requirements from E5 — did every YES answer become an explicit constraint or FR?
 - Pain Map items — are any only partially addressed (workaround eliminated but root cause remains)?
 
 For each pre-mortem finding:
 - Should be an FR → add it (return to E9 for classification)
-- Should be an NFR → add it
+- Should be a constraint → add it
 - Known risk but not actionable now → add to Section 11 Open Questions
 
 ## E10d. Orphan FR Detection (Gold-Plating Check)

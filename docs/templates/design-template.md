@@ -47,7 +47,7 @@ project-root/
 [Replace the example above with the actual project directory tree. Include only directories and files that are architecturally significant — omit generated files, caches, and IDE configs. For brownfield projects, focus on areas touched by this design.]
 
 ## 1. Design Drivers
-[Key SRS inputs: NFR thresholds, constraints, interface requirements that shaped this design]
+[Key SRS inputs: constraints, interface requirements that shaped this design]
 
 ## 2. Approach Selection
 [Selected approach with justification. Brief mention of alternatives considered.]
@@ -97,8 +97,7 @@ graph LR
 [Replace the example above with actual components and interactions. An edge without a Contract ID label is a design defect — add a §6.2 row or justify as a framework-level dependency with no runtime data exchange.]
 
 ### 3.4 Tech Stack Decisions
-[Justify against SRS constraints and NFRs]
-[Explain how NFR thresholds will be met by this architecture]
+[Justify against SRS constraints]
 
 ## 4. Key Feature Designs
 
@@ -262,22 +261,18 @@ graph LR
 [Test types, coverage approach, tooling]
 [How SRS acceptance criteria map to test suites]
 
-## 9. Deployment / Infrastructure
-[If applicable. Hosting, CI/CD, environments.]
-[Omit for library/CLI projects]
+## 9. Development Plan
 
-## 10. Development Plan
-
-### 10.1 Milestones
+### 9.1 Milestones
 
 | Milestone | Target | Scope | Exit Criteria |
 |---|---|---|---|
-| M1: Foundation | [date/sprint] | Core infrastructure, project skeleton, CI setup | Build passes, dev environment reproducible |
+| M1: Foundation | [date/sprint] | Core infrastructure, project skeleton | Build passes, dev environment reproducible |
 | M2: Core Features | [date/sprint] | [list high-priority features] | All high-priority features passing |
 | M3: Extended Features | [date/sprint] | [list medium-priority features] | All medium-priority features passing |
-| M4: Polish & Release | [date/sprint] | NFR verification, documentation, examples | All quality gates met, release-ready |
+| M4: Polish & Release | [date/sprint] | Quality verification, documentation, examples | All quality gates met, release-ready |
 
-### 10.2 Task Decomposition & Priority
+### 9.2 Task Decomposition & Priority
 
 > **Instructions**: Each row becomes one feature in `feature-list.json`. Group related right-sized FRs (already validated by SRS G1-G6 + S1-S4 bidirectional sizing) into vertical slices. Include Mapped FRs for traceability. Each feature should productively fill one Worker session (~50% of model context window, target ~1,000 lines implementation code excluding UT per FR).
 
@@ -288,7 +283,7 @@ graph LR
 | P2 - Medium | [Feature C] | FR-008, FR-009 | B | M3 | Extended functionality |
 | P3 - Low | [Feature D] | FR-012 | None | M4 | Nice-to-have |
 
-### 10.3 Dependency Chain
+### 9.3 Dependency Chain
 [Show the critical path and feature dependency ordering]
 
 ```mermaid
@@ -301,21 +296,21 @@ graph LR
     D --> F
 ```
 
-### 10.4 Risk & Mitigation
+### 9.4 Risk & Mitigation
 
 | Risk | Impact | Likelihood | Mitigation |
 |---|---|---|---|
 | [risk description] | High/Med/Low | High/Med/Low | [mitigation strategy] |
 
-## 11. Open Questions / Risks
+## 10. Open Questions / Risks
 [Any remaining items to resolve during implementation]
 
-## 13. Codebase Conventions & Constraints
+## 11. Codebase Conventions & Constraints
 
-> *This section is auto-populated from `docs/rules/` during design if the project has an existing codebase (brownfield). For greenfield projects, keep each subsection with empty tables — do NOT mark the entire section "N/A". Downstream skills always read §13; empty tables signal "no constraints" without requiring conditional logic.*
+> *This section is auto-populated from `docs/rules/` during design if the project has an existing codebase (brownfield). For greenfield projects, keep each subsection with empty tables — do NOT mark the entire section "N/A". Downstream skills always read §11; empty tables signal "no constraints" without requiring conditional logic.*
 > *These conventions are binding for all new code unless explicitly overridden elsewhere in this design document. Design overrides are marked with "⚠ Design Override" annotations.*
 
-### 13.1 2nd-Party Library Constraints
+### 11.1 2nd-Party Library Constraints
 
 > Mandatory internal libraries that replace standard library or 3rd-party alternatives. All new code MUST use these — do not use the replaced APIs directly.
 
@@ -323,19 +318,19 @@ graph LR
 |--------|-----------------|----------|---------------|-------|
 | [e.g., HTTP Client] | [e.g., `@company/http`] | [e.g., axios, fetch] | [e.g., `import { get } from '@company/http'`] | [e.g., All external HTTP calls] |
 
-### 13.2 Prohibited APIs
+### 11.2 Prohibited APIs
 
 | Prohibited | Reason | Use Instead |
 |------------|--------|-------------|
 | [e.g., `console.log`] | [e.g., Structured logging required] | [e.g., `internal.logger`] |
 
-### 13.3 Approved 3rd-Party Libraries
+### 11.3 Approved 3rd-Party Libraries
 
 | Purpose | Library | Version | Pinning Strategy |
 |---------|---------|---------|-----------------|
 | [e.g., Testing] | [e.g., pytest] | [e.g., ^7.4] | [e.g., Range-pinned] |
 
-### 13.4 Static Analysis Tools
+### 11.4 Static Analysis Tools
 
 > Downstream TDD/Quality skills run these tools directly — the tools read their own config files.
 
@@ -343,23 +338,15 @@ graph LR
 |------|------------|-------------|
 | [e.g., eslint] | [e.g., `.eslintrc.json`] | [e.g., `npx eslint .`] |
 
-### 13.5 Coding Style Summary
+### 11.5 Coding Style Summary
 
 | Rule | Convention | Source |
 |------|-----------|--------|
 | [e.g., Variable naming] | [e.g., camelCase] | [e.g., Observed 95% consistency] |
 | [e.g., Indentation] | [e.g., 2 spaces] | [e.g., .editorconfig] |
 
-### 13.6 Error Handling Pattern
+### 11.6 Error Handling Pattern
 
 [Dominant error handling approach: try/catch, Result types, custom Error classes, centralized middleware, etc.]
 
-### 13.7 Build & CI/CD Summary
-
-| Aspect | Value |
-|--------|-------|
-| Build System | [e.g., npm scripts] |
-| CI/CD Platform | [e.g., GitHub Actions] |
-| Pre-commit Hooks | [e.g., husky + lint-staged] |
-| Code Generation | [e.g., protobuf → src/generated/ (exclude from convention checks)] |
 

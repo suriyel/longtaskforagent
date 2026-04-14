@@ -19,7 +19,7 @@ Dispatched as a subagent during the ATS generation phase (long-task-ats Step 9).
 ### Step 0: Find Issues First (MANDATORY — minimum 3)
 
 Before starting the formal review, list **at least 3 potential coverage issues** across all applicable dimensions. For each:
-- **Dimension**: R1-R7 (see rubric below)
+- **Dimension**: R1-R6 (see rubric below)
 - What was expected vs what was found
 - Severity: Critical / Major / Minor
 - Evidence: requirement ID, ATS row, or section reference
@@ -43,11 +43,10 @@ Read the review template provided (default or custom). Execute each dimension:
 | Check | YES/NO | Evidence |
 |-------|--------|----------|
 | Every FR-xxx from SRS appears in ATS mapping table? | | |
-| Every NFR-xxx from SRS appears in ATS mapping table? | | |
 | Every IFR-xxx from SRS appears in ATS mapping table? | | |
 | No orphan rows (ATS rows without valid SRS requirement)? | | |
 
-**Verdict rule**: Any FR/NFR/IFR missing from ATS → Major defect.
+**Verdict rule**: Any FR/IFR missing from ATS → Major defect.
 
 #### R2: Category Diversity
 
@@ -55,7 +54,6 @@ Read the review template provided (default or custom). Execute each dimension:
 |-------|--------|----------|
 | All FRs have at least FUNC + BNDRY? | | |
 | FRs handling user input/auth have SEC? | | |
-| NFRs with performance metrics have PERF? | | |
 | No requirement has only a single category? | | |
 
 **Verdict rule**: Missing mandatory category → Major defect. Single-category FR → Minor defect.
@@ -81,18 +79,7 @@ Read the review template provided (default or custom). Execute each dimension:
 
 **Verdict rule**: Non-measurable pass criterion → Major. Weasel word → Minor.
 
-#### R5: NFR Testability
-
-| Check | YES/NO | Evidence |
-|-------|--------|----------|
-| Each NFR has an explicit test tool specified? | | |
-| Each NFR has quantified thresholds (not just "fast")? | | |
-| Load parameters are defined (concurrency, duration, data volume)? | | |
-| NFR test methods are feasible with the project's tech stack? | | |
-
-**Verdict rule**: NFR without tool/threshold → Major. Missing load params → Minor.
-
-#### R6: Cross-Feature Integration
+#### R5: Cross-Feature Integration
 
 | Check | YES/NO | Evidence |
 |-------|--------|----------|
@@ -103,7 +90,7 @@ Read the review template provided (default or custom). Execute each dimension:
 
 **Verdict rule**: Missing critical data flow → Major. Missing feature ID reference → Minor.
 
-#### R7: Risk Consistency
+#### R6: Risk Consistency
 
 | Check | YES/NO | Evidence |
 |-------|--------|----------|
@@ -153,9 +140,8 @@ Read the review template provided (default or custom). Execute each dimension:
 | R2 | Category Diversity | PASS/FAIL | N |
 | R3 | Scenario Adequacy | PASS/FAIL | N |
 | R4 | Verifiability | PASS/FAIL | N |
-| R5 | NFR Testability | PASS/FAIL | N |
-| R6 | Cross-Feature Integration | PASS/FAIL | N |
-| R7 | Risk Consistency | PASS/FAIL | N |
+| R5 | Cross-Feature Integration | PASS/FAIL | N |
+| R6 | Risk Consistency | PASS/FAIL | N |
 
 ### Defect List
 | # | Dimension | Severity | Description | Affected Reqs | Suggested Fix |

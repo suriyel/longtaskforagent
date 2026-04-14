@@ -65,7 +65,7 @@ Cite the specific failing requirement ID in the Evidence column.
 | R5 | Ranked | Every requirement has a MoSCoW priority (Must/Should/Could/Won't) — not everything can be "Must" without justification | | | |
 | R6 | Verifiable | Every requirement can be tested with a binary pass/fail outcome — no requirement whose compliance depends on subjective judgment | | | |
 | R7 | Modifiable | Every requirement is stated in exactly one place — no duplication across sections | | | |
-| R8 | Traceable | Every requirement has a unique ID (FR-xxx/NFR-xxx/CON-xxx/ASM-xxx format) and a documented source stakeholder need | | | |
+| R8 | Traceable | Every requirement has a unique ID (FR-xxx/CON-xxx/ASM-xxx format) and a documented source stakeholder need | | | |
 
 **Verdict rule**: ALL R1-R8 must be YES to PASS this group.
 
@@ -84,17 +84,16 @@ Scan the full SRS text. Each anti-pattern found anywhere = NO for that check.
 
 **Verdict rule**: ALL A1-A6 must be YES to PASS this group.
 
-### Group C: Completeness Checks (C1-C5)
+### Group C: Completeness Checks (C1-C4)
 
 | # | Check | YES/NO | Evidence |
 |---|-------|--------|----------|
 | C1 | Every FR has at least one error/boundary acceptance criterion (Given <error context>, when <action>, then <error handling>) | | |
 | C2 | All external interfaces in Section 6 specify both data format AND protocol for every external system referenced in FRs — or Section 6 is explicitly "[Not applicable]" because no interfaces exist | | |
-| C3 | All NFRs in Section 5 have a measurement method (e.g., "measured via load test with k6"), not just a target value — or Section 5 is "[Not applicable]" with justification | | |
-| C4 | Section 2 Glossary covers every domain-specific or potentially ambiguous term used in Sections 4 and 5 | | |
-| C5 | Section 1.2 Out-of-Scope explicitly lists at least one excluded or deferred feature — not left as a placeholder or "None" without explanation | | |
+| C3 | Section 2 Glossary covers every domain-specific or potentially ambiguous term used in Section 4 | | |
+| C4 | Section 1.2 Out-of-Scope explicitly lists at least one excluded or deferred feature — not left as a placeholder or "None" without explanation | | |
 
-**Verdict rule**: ALL C1-C5 must be YES to PASS this group.
+**Verdict rule**: ALL C1-C4 must be YES to PASS this group.
 
 ### Group S: Structural Compliance Checks (S1-S4)
 
@@ -102,7 +101,7 @@ Scan the full SRS text. Each anti-pattern found anywhere = NO for that check.
 |---|-------|--------|----------|
 | S1 | Document has required metadata at top: Date, Status (must be "Approved" or "Draft — pending approval"), Standard reference (ISO/IEC/IEEE 29148) | | |
 | S2 | All 11 template sections are present (1. Purpose & Scope through 11. Open Questions); sections marked "[Not applicable]" are acceptable if a reason is given | | |
-| S3 | Section 10 Traceability Matrix includes every FR-xxx and NFR-xxx requirement ID defined in the document — no requirement can be absent | | |
+| S3 | Section 10 Traceability Matrix includes every FR-xxx requirement ID defined in the document — no requirement can be absent | | |
 | S4 | Section 11 Open Questions is present; if no open questions exist it explicitly states "None" | | |
 
 **Verdict rule**: ALL S1-S4 must be YES to PASS this group.
@@ -174,7 +173,7 @@ Apply only if Section 1.3 (Problem Statement) is present in the SRS. This sectio
 |-------|--------|-----------|----------------|
 | R: Per-Requirement Quality | R1-R8 | | |
 | A: Anti-Pattern Scan | A1-A6 | | |
-| C: Completeness | C1-C5 | | |
+| C: Completeness | C1-C4 | | |
 | S: Structural Compliance | S1-S4 | | |
 | D: Diagram Presence & Validity | D1-D4 | | |
 | G: Granularity | G1-G3 | | |
@@ -258,7 +257,6 @@ Use these rules to assign `Resolution-Type` to every issue in Steps 1-2.
 - Section structure: auto-populate missing sections with "[Not applicable]" (S2-S4)
 - Traceability matrix: auto-populate from the requirement ID list (S3)
 - Diagram generation (D1-D4): generate from existing actor and FR lists in the SRS
-- NFR measurement method addition (C3): add "measured via [standard tool]" only when the threshold is already user-specified
 - Multiple actors in single FR (G1): mechanically split by actor — each actor's distinct actions become separate FRs
 - CRUD bundle (G2): mechanically split into individual operations (Create, Read, Update, Delete) as separate FRs
 

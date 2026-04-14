@@ -43,9 +43,9 @@ Write tests for ALL rows in the Feature Design Test Inventory (§7). Tests MUST 
 Read these sections from the feature design document (`docs/features/YYYY-MM-DD-<feature-name>.md`) in order:
 
 1. **§7 Test Inventory** — PRIMARY input. Each row maps to one or more test cases.
-2. **§3 Interface Contract** — method signatures, pre/postconditions, §13.1 library annotations ("Uses: ..."). Tests assert postconditions.
-3. **Existing Code Reuse** — utilities, API clients, data access patterns, §13.1 library usage examples. Tests MUST use the same imports/patterns; implementation MUST REUSE/EXTEND items as marked.
-4. **§5 Algorithm / Core Logic** — boundary matrix (§5c), error table (§5d), §13 library usage mapping (§5e). Tests cover boundaries and errors.
+2. **§3 Interface Contract** — method signatures, pre/postconditions, §11.1 library annotations ("Uses: ..."). Tests assert postconditions.
+3. **Existing Code Reuse** — utilities, API clients, data access patterns, §11.1 library usage examples. Tests MUST use the same imports/patterns; implementation MUST REUSE/EXTEND items as marked.
+4. **§5 Algorithm / Core Logic** — boundary matrix (§5c), error table (§5d), §11 library usage mapping (§5e). Tests cover boundaries and errors.
 5. **Clarification Addendum** (if present) — user-approved resolutions that override default interpretations.
 
 Sections to SKIP (not needed for TDD):
@@ -54,7 +54,7 @@ Sections to SKIP (not needed for TDD):
 - SRS Requirement (already embedded in Test Inventory scenarios)
 - Verification Checklist (SubAgent internal quality gate)
 
-When a test exercises a method annotated "Uses: [§13.1 library]" in the Interface Contract, the test setup should verify the correct library is used (e.g., mock/stub the §13.1 library, NOT the replaced alternative).
+When a test exercises a method annotated "Uses: [§11.1 library]" in the Interface Contract, the test setup should verify the correct library is used (e.g., mock/stub the §11.1 library, NOT the replaced alternative).
 
 TDD rules (Rule 1–6) extend and refine the Test Inventory set. ST test case documents are generated *after* TDD as acceptance verification (Worker Step 9).
 
@@ -160,11 +160,11 @@ Write ONLY enough code to make tests pass.
 For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-prompt.md` template:
 - Provide FULL task text (don't make subagent read files)
 - Include tech_stack, test command, coverage command, mutation command
-- Include `CODEBASE_CONSTRAINTS` — extract from the feature design document (already embeds §13 in feature-specific form):
-  - §3 Interface Contract §13.1 annotations ("Uses: ...")
-  - §5e §13 library usage mapping table
-  - Existing Code Reuse §13.1 Library Usage Examples table
-  Do NOT re-read raw Design doc §13.
+- Include `CODEBASE_CONSTRAINTS` — extract from the feature design document (already embeds §11 in feature-specific form):
+  - §3 Interface Contract §11.1 annotations ("Uses: ...")
+  - §5e §11 library usage mapping table
+  - Existing Code Reuse §11.1 Library Usage Examples table
+  Do NOT re-read raw Design doc §11.
 - Include `EXISTING_CODE_REUSE` — from feature design "Existing Code Reuse" section:
   - All items with their Action (REUSE/EXTEND/PATTERN), file paths, and signatures
 - Exit criteria: all tests pass, no regressions
@@ -173,18 +173,16 @@ For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-promp
 - Implement fresh from tests — never reference pre-existing code that was "deleted" in the Iron Law
 - One test at a time: make the simplest failing test pass first, then the next
 - No premature optimization or extra features
-- **Codebase constraints** (from Design doc §13):
-  - §13.1: Use mandatory internal libraries — do NOT use replaced standard/3rd-party APIs
-  - §13.2: Do not use prohibited APIs
-  - §13.5: Follow documented naming conventions
-  - §13.6: Follow documented error handling pattern
+- **Codebase constraints** (from Design doc §11):
+  - §11.1: Use mandatory internal libraries — do NOT use replaced standard/3rd-party APIs
+  - §11.2: Do not use prohibited APIs
+  - §11.5: Follow documented naming conventions
+  - §11.6: Follow documented error handling pattern
 - **Existing code reuse** (from feature design "Existing Code Reuse" section):
   - Items marked **REUSE**: import and call directly — do NOT reimplement
   - Items marked **EXTEND**: subclass or extend — do NOT copy-paste
   - Items marked **PATTERN**: follow same structural pattern, create new implementation
-  - §13.1 Library Usage Examples: use the exact import statement and call pattern from passing features
-
-Write a TDD Red test that verifies the startup output contains these values before implementing the server binding. This enables reliable port/PID extraction via `head -30` of the startup log.
+  - §11.1 Library Usage Examples: use the exact import statement and call pattern from passing features
 
 ## Step 3: TDD Refactor
 
@@ -192,7 +190,7 @@ Clean up while keeping tests green:
 - Extract duplication, improve naming, simplify
 - Run tests after EVERY change (activate environment → run test command directly)
 - No new functionality in this step
-- **Static analysis gate** (if Design §13.4 lists tools): after refactoring is complete, run each tool's command (e.g., `npx eslint .`, `mvn checkstyle:check`, `mypy src/`). Fix all violations before exiting Refactor — violations are **blocking**. Tools read their own config; do not parse configs manually.
+- **Static analysis gate** (if Design §11.4 lists tools): after refactoring is complete, run each tool's command (e.g., `npx eslint .`, `mvn checkstyle:check`, `mypy src/`). Fix all violations before exiting Refactor — violations are **blocking**. Tools read their own config; do not parse configs manually.
 
 ## Testing Anti-Patterns (Top 5)
 

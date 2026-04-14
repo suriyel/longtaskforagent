@@ -33,7 +33,6 @@ MINIMAL_ATS = """\
 |--------|---------|---------|---------|--------|
 | FR-001 | 用户登录 | 正常登录/错误密码 | FUNC,BNDRY,SEC | High |
 | FR-002 | 用户注册 | 正常注册/重复邮箱 | FUNC,BNDRY | Medium |
-| NFR-001 | 响应时间 | P95延迟 | PERF | High |
 
 ## 3. 测试类别策略
 
@@ -50,10 +49,6 @@ MINIMAL_SRS = """\
 ### FR-002 用户注册
 
 ### FR-003 密码重置
-
-## 5. Non-Functional Requirements
-
-### NFR-001 响应时间
 """
 
 

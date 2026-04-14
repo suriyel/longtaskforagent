@@ -45,8 +45,8 @@ Collect new/changed requirements using structured elicitation (same rigor as Pha
 4. Write Given/When/Then acceptance criteria for each
 5. Validate against 8 quality attributes: Correct, Unambiguous, Complete, Consistent, Ranked, Verifiable, Modifiable, Traceable
 6. Classify changes into three buckets:
-   - **New**: entirely new FR/NFR requirements
-   - **Modified**: changes to existing FR/NFR (note the original ID being modified)
+   - **New**: entirely new FR requirements
+   - **Modified**: changes to existing FR (note the original ID being modified)
    - **Deprecated**: existing requirements no longer needed (note the ID being removed)
 
 **Output**: A structured list of new/modified/deprecated requirements with IDs, EARS statements, and acceptance criteria.
@@ -146,7 +146,7 @@ Update the existing design document **in place** for affected sections:
 4. For **deprecated** requirements:
    - Add `[DEPRECATED - Wave N]` marker to the corresponding design section
    - Do NOT delete the section (preserve history context)
-5. **§13 Codebase Conventions** (if exists): carry forward as-is unless new constraints surface. If the increment introduces new internal libraries, prohibits additional APIs, or adds static analysis tools, update the corresponding §13 subsections. If codebase conventions have materially changed since the original scan, consider re-scanning (delete `docs/rules/` and re-run in a new session).
+5. **§11 Codebase Conventions** (if exists): carry forward as-is unless new constraints surface. If the increment introduces new internal libraries, prohibits additional APIs, or adds static analysis tools, update the corresponding §11 subsections. If codebase conventions have materially changed since the original scan, consider re-scanning (delete `docs/rules/` and re-run in a new session).
 5b. **Apply Visual Change Tracking to Diagrams** — mark new/modified elements in every Mermaid diagram touched by this wave. **First**, remove any change markers from previous waves so each diagram shows only current-wave markers.
 
    **Standard classDef block** (add after diagram declaration in `graph`/`flowchart`/`stateDiagram-v2`):
@@ -168,7 +168,7 @@ Update the existing design document **in place** for affected sections:
    **Scope — apply markers to:**
    - All diagrams in **new** §4.N+1 sections (all elements green)
    - Changed elements in **modified** §4.N sections (changed elements amber, unchanged elements unmarked)
-   - New/modified elements in **architectural diagrams** updated by this wave: §3.2 Logical View, §3.3 Component Diagram, §5 Data Model, §7.2 Dependency Graph, §10.3 Dependency Chain
+   - New/modified elements in **architectural diagrams** updated by this wave: §3.2 Logical View, §3.3 Component Diagram, §5 Data Model, §7.2 Dependency Graph, §9.3 Dependency Chain
 
    **Legend** — add a Markdown note before each diagram containing change markers:
    `> **Change Legend (Wave N):** 🟢 = NEW | 🟡 = MODIFIED`
@@ -192,13 +192,11 @@ Update the existing ATS document **in place** for affected requirements:
 1. Read `docs/plans/*-ats.md`
 2. For **new** requirements:
    - Add mapping table rows with requirement ID, scenarios, required categories
-   - Apply category assignment rules (FUNC+BNDRY for all FRs; +SEC for input/auth; +PERF for NFRs with metrics)
+   - Apply category assignment rules (FUNC+BNDRY for all FRs; +SEC for input/auth)
    - Update the coverage statistics table (Section 2.4)
-   - If new NFRs: add rows to the NFR Test Method Matrix (Section 4)
    - If new cross-feature interactions: add rows to Integration Scenarios (Section 5)
 3. For **modified** requirements:
    - Update the corresponding mapping table row in place (scenarios, categories)
-   - Adjust NFR test methods if thresholds changed
    - Update integration scenarios if data flows changed
 4. For **deprecated** requirements:
    - Add `[DEPRECATED - Wave N]` marker to the corresponding mapping table row
@@ -225,7 +223,7 @@ Update the SRS and decompose into features:
 
 1. Read `docs/plans/*-srs.md`
 2. For **new** requirements:
-   - Append to the appropriate section (Functional Requirements, NFRs, etc.)
+   - Append to the appropriate section (Functional Requirements, Constraints, etc.)
    - Maintain ID continuity
 3. For **modified** requirements:
    - Update the requirement text in place
@@ -288,7 +286,6 @@ Update the SRS and decompose into features:
 Update supporting files as needed:
 
 - **`long-task-guide.md`**: If new tools, frameworks, or patterns were introduced → regenerate or update relevant sections; re-validate with `python scripts/validate_guide.py long-task-guide.md --feature-list feature-list.json`
-- **`init.sh` / `init.ps1`**: If new dependencies were added → update bootstrap scripts (keep idempotent)
 
 ### 7. Finalize
 

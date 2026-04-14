@@ -39,8 +39,7 @@ Read these files in order:
 1. `bugfix-request.json` — understand title, description, severity, feature_id, reproduction steps
 2. `feature-list.json` — find the linked feature (if `feature_id` non-null), read `tech_stack`, `quality_gates`; determine next available feature `id`
 3. `long-task-guide.md` — environment activation commands
-4. `env-guide.md` (if exists) — service start/stop commands
-5. `task-progress.md` `## Current State` section — recent session history
+4. `task-progress.md` `## Current State` section — recent session history
 6. `git log --oneline -10` — recent commit context
 
 If `feature_id` is non-null: read the linked feature's entry from `feature-list.json` to understand context (existing `srs_trace`, `st_case_path`).
@@ -52,15 +51,13 @@ If `feature_id` is non-null: read the linked feature's entry from `feature-list.
 **Goal**: Confirm the bug is reproducible before any analysis.
 
 1. Activate environment per `long-task-guide.md`
-2. If services are needed (determined from `env-guide.md` or `long-task-guide.md`): start them using `env-guide.md` Start commands; capture first 30 lines of startup output; record PIDs in `task-progress.md`
-3. Follow `reproduction_steps` from `bugfix-request.json` exactly
-4. Run the existing test suite; note any currently failing tests
-5. Record: exact command run, exact output observed, confirmation that bug manifests
+2. Follow `reproduction_steps` from `bugfix-request.json` exactly
+3. Run the existing test suite; note any currently failing tests
+4. Record: exact command run, exact output observed, confirmation that bug manifests
 
 **HARD GATE — Cannot Reproduce:**
 If the bug cannot be reproduced:
 - Record the attempt in `task-progress.md`
-- Stop all services started in this step (use `env-guide.md` Stop commands)
 - Do NOT delete `bugfix-request.json`
 - `AskUserQuestion` asking for clarification (more detailed steps, specific environment, sample data)
 - **Stop here until reproduction is confirmed**
@@ -144,8 +141,7 @@ Also update the `## Current State` header to reflect the new failing feature.
 
 ## Step 8: Finalize
 
-1. Stop any services started in Step 4 using `env-guide.md` Stop commands; verify stopped
-2. Delete `bugfix-request.json` (this is the final irreversible action — only after Steps 6 and 7 are complete and `validate_features.py` has passed)
+1. Delete `bugfix-request.json` (this is the final irreversible action — only after Steps 6 and 7 are complete and `validate_features.py` has passed)
 3. Print:
    ```
    Bug #<id> enqueued as category=bugfix feature.
@@ -165,7 +161,6 @@ Also update the `## Current State` header to reflect the new failing feature.
 - **Root cause confirmed before enqueuing** — systematic debugging 4-phase process is mandatory; no guess-and-enqueue
 - **Signal file deleted LAST** — deletion is the final irreversible action; `validate_features.py` must pass first
 - **If both `bugfix-request.json` AND `increment-request.json` exist**: process this hotfix fully first; do NOT delete `increment-request.json`; it will be processed in the next session
-- **Stop all services before chaining to Worker** — services started during reproduction must be stopped; Worker manages its own service lifecycle
 - **This skill does NOT implement the fix** — Worker owns TDD/Quality/ST/Review; this skill only validates, diagnoses, and enqueues
 - **No ad-hoc code edits here** — do not write tests or fix code during this skill; that is Worker's job
 
