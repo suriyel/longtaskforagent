@@ -5,7 +5,7 @@ description: "Use when feature-list.json exists - orchestrate features through t
 
 # Worker — One Feature Per Cycle
 
-Pure flow controller. Each step = SubAgent + Skill. Input to each SubAgent: `feature_id`.
+Pure flow controller. Each step dispatches a SubAgent via `Agent()`, the SubAgent loads the discipline skill via `Skill()` and executes inline.
 
 **Announce at start:** "I'm using the long-task-work skill. Let me orient myself."
 
@@ -21,34 +21,96 @@ Pure flow controller. Each step = SubAgent + Skill. Input to each SubAgent: `fea
 
 ## Step 2: Feature Design
 
-Invoke `long-task:long-task-feature-design` with `feature_id`.
-After success → ask user to approve design doc via `AskUserQuestion`. If corrections → re-dispatch once.
-Update pipeline marker.
+Dispatch SubAgent:
+```
+Agent(
+  description="Feature Design for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-feature-design', args='{id}'). Follow the loaded instructions exactly."
+)
+```
+
+**Parse:** Read result summary.
+- Success → ask user to approve design doc via `AskUserQuestion`. If corrections → re-dispatch once.
+- Failure → escalate to user.
+
+Update pipeline marker: `Feature #{id} → Step 2 (Feature Design)`
 
 ## Step 3: TDD Red
 
-Invoke `long-task:long-task-tdd-red` with `feature_id`.
-All tests must fail. Update pipeline marker.
+Dispatch SubAgent:
+```
+Agent(
+  description="TDD Red for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-tdd-red', args='{id}'). Follow the loaded instructions exactly."
+)
+```
+
+**Parse:** All tests must fail → proceed to Step 4. Failure → escalate.
+Update pipeline marker: `Feature #{id} → Step 3 (TDD Red)`
 
 ## Step 4: TDD Green
 
-Invoke `long-task:long-task-tdd-green` with `feature_id`.
-All tests must pass, zero regressions. Update pipeline marker.
+Dispatch SubAgent:
+```
+Agent(
+  description="TDD Green for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-tdd-green', args='{id}'). Follow the loaded instructions exactly."
+)
+```
+
+**Parse:** All tests pass with zero regressions → proceed to Step 5. Failure → escalate.
+Update pipeline marker: `Feature #{id} → Step 4 (TDD Green)`
 
 ## Step 5: TDD Refactor
 
-Invoke `long-task:long-task-tdd-refactor` with `feature_id`.
-Static analysis clean, §11 compliant. Update pipeline marker.
+Dispatch SubAgent:
+```
+Agent(
+  description="TDD Refactor for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-tdd-refactor', args='{id}'). Follow the loaded instructions exactly."
+)
+```
+
+**Parse:** Clean (zero violations, §11 compliant) → proceed to Step 6. Failure → escalate.
+Update pipeline marker: `Feature #{id} → Step 5 (TDD Refactor)`
 
 ## Step 6: Quality Gates
 
-Invoke `long-task:long-task-quality-gates` with `feature_id`.
-Coverage + mutation must meet thresholds. Update pipeline marker.
+Dispatch SubAgent:
+```
+Agent(
+  description="Quality Gates for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-quality-gates', args='{id}'). Follow the loaded instructions exactly."
+)
+```
+
+**Parse:** All gates pass → proceed to Step 7. Failure → escalate.
+Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates)`
 
 ## Step 7: Feature-ST
 
-Invoke `long-task:long-task-feature-st` with `feature_id`.
-All test cases must pass. Update pipeline marker.
+Dispatch SubAgent:
+```
+Agent(
+  description="Feature-ST for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-feature-st', args='{id}'). Follow the loaded instructions exactly."
+)
+```
+
+**Parse:** Read result summary.
+- Success → extract st_case_path, st_case_count. Proceed to Step 8.
+- Failure with AI-fixable issues (code bugs, env issues) → fix and re-dispatch (no retry limit).
+- Failure requiring human manual testing (credentials, hardware) → escalate via `AskUserQuestion`.
+
+### Manual Test Review Gate
+
+If result reports manual test cases:
+1. For each manual case, call `AskUserQuestion` with test objective, steps, and verification points
+2. Parse response: PASS / FAIL / SKIP
+3. Update test case document with results
+4. Re-evaluate: all MANUAL-PASS → proceed. Any MANUAL-FAIL → final FAIL. Any BLOCKED → final BLOCKED.
+
+Update pipeline marker: `Feature #{id} → Step 7 (Feature-ST)`
 
 ## Step 8: Persist (inline)
 
@@ -77,7 +139,7 @@ All test cases must pass. Update pipeline marker.
 
 - **One feature per session** — external `scripts/auto_loop.py` handles multi-feature
 - **Strict step order** — no skipping, no reordering
-- **Each step = SubAgent + Skill** — always invoke via Skill tool
+- **Each step = Agent() dispatches SubAgent → SubAgent calls Skill() → executes inline**
 - **Never mark "passing" without fresh evidence**
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause
 - **Update progress before ending session**
@@ -95,7 +157,7 @@ All test cases must pass. Update pipeline marker.
 ## Integration
 
 **Called by:** using-long-task (when feature-list.json exists)
-**Invokes (in strict order):**
+**Dispatches SubAgents (in strict order):**
 1. `long-task:long-task-feature-design` (Step 2)
 2. `long-task:long-task-tdd-red` (Step 3)
 3. `long-task:long-task-tdd-green` (Step 4)
