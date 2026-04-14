@@ -111,14 +111,6 @@ END
 |-----------|-----|-----|------------|-------------|
 | [param]   | [val] | [val] | [behavior] | [behavior] |
 
-#### Error Handling
-
-| Condition | Detection | Response | Recovery |
-|-----------|-----------|----------|----------|
-| [condition] | [how detected] | [exception or default] | [caller action] |
-
-> N/A — [reason, e.g., "pure CRUD, no algorithm" or "Delegates to [X] — see Feature #N"]
-
 ## State Diagram
 
 [Mermaid `stateDiagram-v2` showing all valid states, transitions, triggers, and guard conditions]
