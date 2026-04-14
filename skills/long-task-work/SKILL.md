@@ -87,38 +87,11 @@ Context to carry forward:
 
 ### 6. Quality Gates — SubAgent Dispatch
 
-Delegate quality gate execution to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads coverage reports, mutation output, or test runner output directly.
+Dispatch a SubAgent to execute coverage and mutation gates. Main Agent only parses the structured result.
 
-**Construct SubAgent Prompt:**
+**SubAgent Prompt:** "Read `{skills_root}/long-task-quality/references/quality-execution.md` and `long-task-guide.md`, then execute all gates. Feature ID: {feature_id}, Feature: {feature_json}, quality_gates: {quality_gates_json}, tech_stack: {tech_stack_json}, Working directory: {working_dir}, Feature test files: {feature_test_files}, Active feature count: {active_feature_count}. Do NOT mark feature as passing — only report results."
 
-```
-You are a Quality Gates execution SubAgent.
-
-## Your Task
-1. Read the execution rules: Read {skills_root}/long-task-quality/references/quality-execution.md
-2. Read long-task-guide.md in the project root for test/coverage/mutation commands and environment activation
-3. Execute both gates in order (Gate 1: Coverage → Gate 2: Mutation + Final Test Run)
-   - **Note**: Static analysis tools (Design §13.4) are enforced during TDD Refactor, not here. If Design doc §13.7 documents code generation directories, exclude them from coverage measurement in Gate 1.
-4. If a gate fails, fix and retry per the rules (max 3 attempts per gate)
-5. Return your result using the Structured Return Contract at the end of the execution rules
-
-## Input Parameters
-- Feature ID: {feature_id}
-- Feature: {feature_json}
-- quality_gates thresholds: {quality_gates_json}
-- tech_stack: {tech_stack_json}
-- Working directory: {working_dir}
-- Feature test files: {feature_test_files}
-- Active feature count: {active_feature_count}
-
-## Key Constraint
-- Do NOT mark the feature as "passing" in feature-list.json — only report results
-- If a tool/environment error cannot be resolved after 1 retry, set Verdict to BLOCKED
-```
-
-Replace `{skills_root}` with the path to the skills directory.
-
-**Dispatch:** Use the `Agent` tool with description "Quality Gates for feature #{feature_id}".
+**Dispatch:** `Agent(description="Quality Gates for feature #{feature_id}")`
 
 **Parse Result:**
 - **`PASS`** → Record metrics in `task-progress.md`, proceed to Feature-ST
