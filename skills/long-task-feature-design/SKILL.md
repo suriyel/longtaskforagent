@@ -11,7 +11,7 @@ Delegate feature detailed design production to a SubAgent with fresh context. Th
 
 ## When to Run
 
-- Worker Step 4, before TDD (Steps 5-7)
+- Worker Step 2, before TDD (Steps 3-5)
 - For every feature (condensed version for `category: "bugfix"` features)
 - Invoked by `long-task-work` as a sub-skill (not directly by router)
 
@@ -99,7 +99,7 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
   2. Extract Next Step Inputs: `feature_design_doc`, `test_inventory_count`, `tdd_task_count`
   4. Record in `task-progress.md`: "Feature Design: PASS ({N} test scenarios, {M} TDD tasks)"
   5. If `assumption_count > 0`: append to `task-progress.md`: "({K} assumptions documented in Clarification Addendum)"
-  6. Proceed to TDD (Steps 5-7)
+  6. Proceed to TDD (Steps 3-5)
 
 - **`### Verdict: CLARIFY`**
   1. Read the Ambiguities table — extract all categorized questions
@@ -164,4 +164,4 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
 **Called by:** long-task-work (Step 4)
 **Requires:** System design doc, SRS, feature-list.json
 **Produces:** `docs/features/YYYY-MM-DD-<feature-name>.md` (written by SubAgent)
-**Chains to:** long-task-tdd (via Work Steps 5-7)
+**Chains to:** long-task-tdd (via Work Steps 3-5)

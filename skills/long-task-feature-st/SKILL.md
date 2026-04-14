@@ -196,7 +196,7 @@ If **manual test cases exist**:
 
 ## Integration
 
-**Called by:** `long-task-work` (Step 9)
-**Requires:** Quality Gates passed (Work Step 8 complete)
+**Called by:** `long-task-work` (Step 7)
+**Requires:** Quality Gates passed (Work Step 6 complete)
 **Produces:** `docs/test-cases/feature-{id}-{slug}.md` with executed results + structured summary
-**Chains to:** Inline Check + Persist (Worker Step 10 + 11)
+**Chains to:** Inline Check + Persist (Worker Step 8 + 9)

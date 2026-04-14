@@ -40,17 +40,19 @@ Write tests for ALL rows in the Feature Design Test Inventory (§7). Tests MUST 
 
 ### Specification Input
 
-**Read the COMPLETE feature design document** (`docs/features/YYYY-MM-DD-<feature-name>.md`) cover to cover before writing any test. Do NOT selectively read sections — the document is an integrated whole where later sections depend on earlier context.
+Read these sections from the feature design document (`docs/features/YYYY-MM-DD-<feature-name>.md`) in order:
 
-Key sections and their TDD role:
-- **Existing Code Reuse** — utilities, API clients, data access patterns, §13.1 library usage examples from passing dependencies. Tests MUST use the same imports/patterns; implementation MUST REUSE/EXTEND items as marked.
-- **Interface Contract (§3)** — method signatures, pre/postconditions, §13.1 library annotations ("Uses: ..."). Tests assert postconditions; implementation follows signatures exactly including library annotations.
-- **Algorithm / Core Logic (§5)** — pseudocode, boundary matrix, error table, §13 library usage mapping. Tests cover boundaries (§5c) and errors (§5d); implementation follows pseudocode using §13-compliant libraries per §5e mapping.
-- **Test Inventory (§7)** — PRIMARY test source. Each row maps to one or more test cases.
+1. **§7 Test Inventory** — PRIMARY input. Each row maps to one or more test cases.
+2. **§3 Interface Contract** — method signatures, pre/postconditions, §13.1 library annotations ("Uses: ..."). Tests assert postconditions.
+3. **Existing Code Reuse** — utilities, API clients, data access patterns, §13.1 library usage examples. Tests MUST use the same imports/patterns; implementation MUST REUSE/EXTEND items as marked.
+4. **§5 Algorithm / Core Logic** — boundary matrix (§5c), error table (§5d), §13 library usage mapping (§5e). Tests cover boundaries and errors.
+5. **Clarification Addendum** (if present) — user-approved resolutions that override default interpretations.
 
-Supplementary (also mandatory):
-- **SRS requirement section** (`{srs_section}`) — full FR-xxx with Given/When/Then acceptance criteria
-- **Design doc §13** — test file naming per §13.5
+Sections to SKIP (not needed for TDD):
+- §2 Component Data-Flow Diagram, §4 Internal Sequence Diagram, §6 State Diagram (unless a Test Inventory row's "Traces To" references them — read on demand in that case)
+- Design Alignment (already distilled into §3 and §5)
+- SRS Requirement (already embedded in Test Inventory scenarios)
+- Verification Checklist (SubAgent internal quality gate)
 
 When a test exercises a method annotated "Uses: [§13.1 library]" in the Interface Contract, the test setup should verify the correct library is used (e.g., mock/stub the §13.1 library, NOT the replaced alternative).
 
@@ -149,7 +151,7 @@ Reference: `testing-anti-patterns.md` Anti-Pattern #1 (mock only external servic
 
 Run the test suite. **All tests must FAIL.** If any test passes → it tests nothing useful, rewrite it.
 
-**Running tests**: Activate environment per `long-task-guide.md` → run test command directly. If tool is missing or environment not activated: diagnose root cause, run `init.sh` if needed, escalate to user if still failing. **Never skip.**
+**Running tests**: Activate environment per `long-task-guide.md` → run test command directly. If tool is missing or environment not activated: diagnose root cause, escalate to user if still failing. **Never skip.**
 
 ## Step 2: TDD Green — Minimal Implementation
 
@@ -158,15 +160,13 @@ Write ONLY enough code to make tests pass.
 For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-prompt.md` template:
 - Provide FULL task text (don't make subagent read files)
 - Include tech_stack, test command, coverage command, mutation command
-- Include `CODEBASE_CONSTRAINTS` — populated from Design doc §13:
-  - §13.1 table (mandatory internal libraries with import patterns)
-  - §13.2 table (prohibited APIs with replacements)
-  - §13.5 summary (naming conventions)
-  - §13.6 summary (error handling pattern)
-  Empty tables = "No constraints for this category."
-- Include `EXISTING_CODE_REUSE` — populated from feature design "Existing Code Reuse" section:
+- Include `CODEBASE_CONSTRAINTS` — extract from the feature design document (already embeds §13 in feature-specific form):
+  - §3 Interface Contract §13.1 annotations ("Uses: ...")
+  - §5e §13 library usage mapping table
+  - Existing Code Reuse §13.1 Library Usage Examples table
+  Do NOT re-read raw Design doc §13.
+- Include `EXISTING_CODE_REUSE` — from feature design "Existing Code Reuse" section:
   - All items with their Action (REUSE/EXTEND/PATTERN), file paths, and signatures
-  - §13.1 Library Usage Examples table
 - Exit criteria: all tests pass, no regressions
 
 **Rules:**

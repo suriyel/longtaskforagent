@@ -32,7 +32,7 @@ This skill verifies from the **outside** — as a user or external system would:
 
 Manage services explicitly using `env-guide.md`. No hooks handle this automatically.
 
-**Pre-existing services**: If Worker Bootstrap already started services (because the feature has service dependencies for TDD), they may still be running when Feature-ST begins. The Start step below checks health first and only starts if not already running. Feature-ST owns **restart** (between test cycles) and **cleanup** (after all cases) — it does NOT assume sole responsibility for first start.
+**Service lifecycle**: Feature-ST independently manages service lifecycle. The Start step below checks health first and only starts if not already running. Feature-ST owns **start**, **restart** (between test cycles), and **cleanup** (after all cases).
 
 **env-guide.md is the source of truth.** It must always reflect commands that actually work. If a command in env-guide.md fails, fix the command and update env-guide.md before proceeding.
 

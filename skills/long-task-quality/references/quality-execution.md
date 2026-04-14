@@ -6,7 +6,7 @@ You are a Quality Gates execution SubAgent. Follow these rules exactly. When fin
 
 # Quality Gates & Verification
 
-Three sequential gates that MUST pass before a feature can be marked "passing". No shortcuts, no exceptions.
+Two sequential gates that MUST pass before a feature can be marked "passing". No shortcuts, no exceptions.
 
 ## The Iron Law
 
@@ -74,7 +74,7 @@ Check `quality_gates.mutation_full_threshold` (default 100) against total active
   - **Equivalent mutant** (code change has no observable effect) → document and skip
   - **Real gap** (test doesn't catch the mutation) → add/strengthen test, re-run
   - **Unreachable code** → remove dead code
-- **If PASS** → proceed to Verify & Mark
+- **If PASS** → proceed to Final Verification below
 
 **Evidence required:**
 ```
@@ -91,33 +91,9 @@ Check `quality_gates.mutation_full_threshold` (default 100) against total active
 | Per feature (Gate 2, small project) | `mutation_full` | All source files | Full test suite |
 | System Testing (ST Step 3b) | `mutation_full` | All source files | Full test suite |
 
-## Gate 3: Verify & Mark
+### Final Verification
 
-The final gate before marking a feature as "passing".
-
-```
-
-1. IDENTIFY → Get test, coverage, and mutation commands from `long-task-guide.md` (use the same mutation mode as Gate 2 — `mutation_feature` or `mutation_full` based on the threshold decision)
-
-
-2. RUN → Execute each command (fresh, in this message — not cached from earlier)
-
-3. READ → Output for each command:
-   - Check exit codes (PASS/FAIL)
-   - Count test pass/fail/skip from output
-   - Read coverage percentages from output
-   - Read mutation score from output
-
-4. VERIFY → Does ALL output confirm the claim?
-   - All tests pass (0 failures)?
-   - Coverage >= thresholds?
-   - Mutation >= threshold?
-
-5. THEN CLAIM → Only now:
-   - Report results with evidence
-
-If ANY step fails → STOP. Do NOT claim passing. Fix the issue first.
-```
+After Gate 2 passes, run the test command one final time to confirm all tests still pass (catches mutation tool cleanup residue). Record the test count and pass/fail status as final evidence. If any test fails → fix and re-run. Do NOT report PASS without this final test run.
 
 ## Red Flag Words
 
@@ -147,8 +123,7 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 | After TDD Green | Full test suite output |
 | After Coverage Gate | Coverage report (line% + branch%) |
 | After TDD Refactor | Full test suite (still passing) |
-| After Mutation Gate | Mutation report (score%) |
-| Before marking "passing" | ALL of the above + SRS acceptance criteria (via srs_trace) |
+| After Mutation Gate | Mutation report (score%) + final test run |
 | Before git commit | Full test suite (no broken code committed) |
 
 ## Anti-Patterns
@@ -171,35 +146,15 @@ When all gates are complete (or if blocked), return your result in EXACTLY this 
 ## SubAgent Result: Quality Gates
 ### Verdict: PASS | FAIL | BLOCKED
 ### Summary
-[1-3 sentences — what gates were run, key outcomes]
-### Artifacts
-- [any files created or modified during gate execution]
+[1-2 sentences — gates run, key outcomes]
 ### Metrics
-| Metric | Value | Threshold | Status |
-|--------|-------|-----------|--------|
-| Line Coverage | N% | ≥X% | PASS/FAIL |
-| Branch Coverage | N% | ≥X% | PASS/FAIL |
-| Mutation Score | N% | ≥X% | PASS/FAIL |
+line_coverage=N% (≥X%, PASS/FAIL), branch_coverage=N% (≥X%, PASS/FAIL), mutation_score=N% (≥X%, PASS/FAIL), test_count=N, all_tests_pass=true/false
+### Artifacts
+[files created or modified, one per line]
 ### Risks
-<!-- Output even on PASS. Omit this section only if the list is empty. -->
-| # | Category | Location | Description |
-|---|----------|----------|-------------|
-| 1 | Mutant \| Coverage \| Dependency | file:line or metric name | [one-sentence explanation] |
-
-<!-- Category rules:
-  Mutant   — surviving mutants judged equivalent or known gap (file:line + reason)
-  Coverage — any metric within +5% of its threshold, or known uncovered boundary
-  Dependency — third-party library with a known security patch or breaking change not yet applied -->
-### Issues (only if FAIL or BLOCKED)
-| # | Severity | Description |
-|---|----------|-------------|
-| 1 | Critical/Major/Minor | [what failed, what was attempted] |
-### Next Step Inputs
-- coverage_line: [actual line coverage %]
-- coverage_branch: [actual branch coverage %]
-- mutation_score: [actual mutation score %]
-- all_tests_pass: true/false
-- test_count: [total test count]
+[Omit section if empty. One line per risk: category (Mutant|Coverage|Dependency) | location | description]
+### Issues
+[Omit if PASS. One line per issue: severity (Critical/Major/Minor) | description]
 ```
 
 **IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report the results.
