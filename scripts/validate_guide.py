@@ -46,6 +46,9 @@ REQUIRED_SECTIONS = [
      [r"persist", r"save.*state", r"task-progress"]),
     ("Critical Rules",
      [r"critical\s*rule", r"iron\s*rule", r"must\s*never"]),
+    ("Output optimization / quiet commands",
+     [r"quiet", r"output\s*optim", r"progressive\s*disclosure",
+      r"test-quiet", r"tail\s*-\d+"]),
 ]
 
 

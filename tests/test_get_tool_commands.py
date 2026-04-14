@@ -15,7 +15,11 @@ SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "get_tool
 
 # Also import get_commands directly for unit tests
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
-from get_tool_commands import get_commands, format_text, MUTATION_COMMANDS
+from get_tool_commands import (get_commands, format_text, MUTATION_COMMANDS,
+                               TEST_COMMANDS_QUIET, TEST_COMMANDS_DETAIL,
+                               COVERAGE_COMMANDS_QUIET, COVERAGE_COMMANDS_DETAIL,
+                               MUTATION_COMMANDS_QUIET, MUTATION_COMMANDS_DETAIL,
+                               _BUILD_LOG)
 
 
 def make_feature_list(language="python", test_fw="pytest", cov_tool="pytest-cov",
@@ -195,8 +199,82 @@ def test_format_text_contains_sections():
     assert "[mutation-feature]" in text
     assert "[mutation-full]" in text
     assert "[mutation-results]" in text
+    assert "[build-log]" in text
+    assert "[test-quiet]" in text
+    assert "[test-detail]" in text
+    assert "[coverage-quiet]" in text
+    assert "[coverage-detail]" in text
+    assert "[mutation-full-quiet]" in text
+    assert "[mutation-full-detail]" in text
+    assert "[mutation-results-quiet]" in text
     assert "[thresholds]" in text
     assert "mutation_full_threshold" in text
+
+
+# --- Quiet pipe recipe tests ---
+
+def test_java_quiet_captures_to_temp_file():
+    """Java quiet commands should capture to temp file, then extract summary."""
+    cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
+    # Test quiet: captures to file, greps summary
+    assert f'>"{_BUILD_LOG}"' in cmds["test_quiet"]
+    assert "EXIT:$?" in cmds["test_quiet"]
+    assert "Tests run:" in cmds["test_quiet"]
+    assert "BUILD " in cmds["test_quiet"]
+    # Coverage quiet: captures + awk on CSV
+    assert f'>"{_BUILD_LOG}"' in cmds["coverage_quiet"]
+    assert "jacoco.csv" in cmds["coverage_quiet"]
+    # Mutation quiet: captures + grep PIT summary
+    assert f'>"{_BUILD_LOG}"' in cmds["mutation_full_quiet"]
+    assert "^>>" in cmds["mutation_full_quiet"]
+
+
+def test_java_detail_extracts_from_temp_file():
+    """Java detail commands should grep errors from temp file."""
+    cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
+    assert _BUILD_LOG in cmds["test_detail"]
+    assert "\\[ERROR\\]" in cmds["test_detail"]
+    assert "head -30" in cmds["test_detail"]
+    assert _BUILD_LOG in cmds["coverage_detail"]
+    assert _BUILD_LOG in cmds["mutation_full_detail"]
+
+
+def test_python_quiet_captures_to_temp_file():
+    """Python quiet should capture to temp file."""
+    cmds = get_commands(make_feature_list("python", "pytest", "pytest-cov", "mutmut"))
+    assert f'>"{_BUILD_LOG}"' in cmds["test_quiet"]
+    assert "-q --tb=line" in cmds["test_quiet"]
+    assert "EXIT:$?" in cmds["test_quiet"]
+
+
+def test_quiet_fallback_to_verbose():
+    """Unknown tools should fall back to the verbose command for quiet variant."""
+    cmds = get_commands(make_feature_list("rust", "cargo-test", "tarpaulin", "cargo-mutants"))
+    assert cmds["test_quiet"] == cmds["test"]
+    assert cmds["coverage_quiet"] == cmds["coverage"]
+    assert cmds["mutation_full_quiet"] == cmds["mutation_full"]
+
+
+def test_quiet_keys_in_json_output():
+    """JSON output should include quiet, detail, and build_log keys."""
+    cmds = get_commands(make_feature_list())
+    for key in ["test_quiet", "test_detail", "coverage_quiet", "coverage_detail",
+                "mutation_full_quiet", "mutation_full_detail", "mutation_results_quiet",
+                "build_log"]:
+        assert key in cmds, f"Missing key: {key}"
+
+
+def test_pitest_results_quiet_uses_xml():
+    """PIT results-quiet should parse XML report."""
+    cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
+    assert "SURVIVED" in cmds["mutation_results_quiet"]
+    assert "KILLED" in cmds["mutation_results_quiet"]
+
+
+def test_build_log_path():
+    """build_log should point to temp file."""
+    cmds = get_commands(make_feature_list())
+    assert cmds["build_log"] == _BUILD_LOG
 
 
 # --- CLI integration tests ---

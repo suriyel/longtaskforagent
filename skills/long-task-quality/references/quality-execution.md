@@ -17,6 +17,18 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 If you haven't run the verification command in this message, you cannot claim it passes.
 
 
+## Output Optimization
+
+All verification commands have `[*-quiet]` and `[*-detail]` variants in `long-task-guide.md`. Full output is captured to `[build-log]` temp file.
+
+**Protocol — capture once, extract on demand:**
+1. Run `[*-quiet]` → output is EXIT code + summary (2-5 lines)
+2. **If PASS** → sufficient evidence. Done.
+3. **If FAIL** → run `[*-detail]` → extracts errors/failures from temp file (up to 30 lines)
+4. **If still unclear** → read `[build-log]` file directly for full output
+
+For coverage metrics, prefer structured report files (`awk` on JaCoCo CSV, `grep -c` on PIT XML).
+
 **On tool/environment errors**:
 1. **Read** error output — identify the specific tool or environment issue
 2. **Diagnose** root cause (tool not installed, env not activated, wrong path, missing config)
@@ -29,10 +41,10 @@ If you haven't run the verification command in this message, you cannot claim it
 
 After TDD Green (all tests pass), run the coverage tool.
 
-1. **Run** the coverage tool (activate env per `long-task-guide.md`)
+1. **Run** the **quiet** coverage command `[coverage-quiet]` (activate env per `long-task-guide.md`)
 2. **Read** the output — verify line%/branch% numbers are visible
 3. **Verify**: line coverage >= `[thresholds] line_coverage`, branch coverage >= `[thresholds] branch_coverage`
-4. **If FAIL**: identify uncovered lines/branches from the output → add tests → re-run TDD cycle for those paths
+4. **If FAIL**: run `[coverage-detail]` to identify uncovered lines/branches → add tests → re-run TDD cycle for those paths
 5. **If PASS**: proceed to Mutation Gate
 
 **Evidence required:**
@@ -57,7 +69,7 @@ Check `quality_gates.mutation_full_threshold` (default 100) against total active
 
 1. **Identify** changed source files for this feature (from git diff or TDD artifacts)
 2. **Identify** test files written/modified during TDD for this feature
-3. **Run** the `mutation_feature` command from `long-task-guide.md`, filling placeholders:
+3. **Run** the **quiet** `mutation_feature` command (or `[mutation-full-quiet]`) from `long-task-guide.md`, filling placeholders:
    - `{changed_files}` → changed source file paths
    - `{test_files}` → feature's test file paths (or test pattern/marker)
    - Other tool-specific placeholders as needed per tech stack (see `coverage-recipes.md` Per-Feature Mutation Test Scoping section)
@@ -65,7 +77,7 @@ Check `quality_gates.mutation_full_threshold` (default 100) against total active
 
 ### Running mutation_full (small project)
 
-1. **Run** the `mutation_full` command from `long-task-guide.md` (no placeholders needed)
+1. **Run** the `[mutation-full-quiet]` command from `long-task-guide.md` (no placeholders needed)
 2. **Read** the output, **verify** mutation score >= `[thresholds] mutation_score`.
 
 ### Common steps (both modes)
@@ -93,7 +105,7 @@ Check `quality_gates.mutation_full_threshold` (default 100) against total active
 
 ### Final Verification
 
-After Gate 2 passes, run the test command one final time to confirm all tests still pass (catches mutation tool cleanup residue). Record the test count and pass/fail status as final evidence. If any test fails → fix and re-run. Do NOT report PASS without this final test run.
+After Gate 2 passes, run `[test-quiet]` one final time to confirm all tests still pass (catches mutation tool cleanup residue). Record the test count and pass/fail status as final evidence. If any test fails → run `[test-detail]` for errors → fix and re-run. Do NOT report PASS without this final test run.
 
 ## Red Flag Words
 
@@ -132,7 +144,7 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 |---|---|
 | Mark "passing" after writing code without running tests | Run tests, read output, then mark |
 | Trust that refactoring didn't break anything | Re-run full suite after every refactor |
-| Read only the summary line of test output | Read complete output |
+| Read only the summary line of test output | Use `[*-quiet]` (summary); on FAIL run `[*-detail]` (errors); if still unclear read `[build-log]` |
 | Run mutation on uncovered code | Pass coverage gate FIRST; mutation on uncovered code is wasteful |
 | Skip re-verification at session start | Always re-verify passing features |
 

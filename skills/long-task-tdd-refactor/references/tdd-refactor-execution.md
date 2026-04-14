@@ -12,7 +12,7 @@ You are a TDD Refactor SubAgent. Clean up code, pass static analysis, verify §1
 ## Step 2: Refactor
 
 - Extract duplication, improve naming, simplify
-- Run tests after EVERY change
+- Run `[test-quiet]` after EVERY change; on FAIL run `[test-detail]` for errors
 - No new functionality in this step
 
 ## Step 3: Static Analysis Gate
@@ -43,7 +43,7 @@ On any violation: fix, re-run tests to confirm no regression, re-check.
 
 ## Step 5: Final Verify
 
-All tests pass, zero static analysis violations, §11 compliance clean.
+Run `[test-quiet]` — all tests pass, zero static analysis violations, §11 compliance clean.
 
 ## Summary
 

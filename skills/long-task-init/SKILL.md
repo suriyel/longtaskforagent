@@ -53,12 +53,13 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - `skills/long-task-quality/coverage-recipes.md` — coverage/mutation tool setup
      - `skills/using-long-task/references/architecture.md` — TDD workflow details
    - Include ONLY the project's language-specific coverage/mutation commands (get from `python scripts/get_tool_commands.py feature-list.json`)
-   - **Must include all required sections**: Orient, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, ST Test Cases, Inline Compliance Check, Persist, Critical Rules
+   - **Must include all required sections**: Orient, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, ST Test Cases, Inline Compliance Check, Persist, Critical Rules, Output Optimization
    - **Must include `Environment Commands` section** with:
      - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate myenv`, `nvm use 20`)
      - Direct test execution command (e.g., `pytest --cov=src tests/`)
      - Direct mutation testing command (e.g., `mutmut run`)
      - Direct coverage report command
+     - **Quiet pipe recipes** (`[test-quiet]`, `[coverage-quiet]`, `[mutation-full-quiet]`) from `get_tool_commands.py` output — use `sed` noise-exclusion + `| tail` for compact output; on FAIL re-run standard command
      - These replace the now-removed test.sh/mutate.sh wrappers — Claude runs these directly
    - Validate:
      ```bash

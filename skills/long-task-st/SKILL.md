@@ -84,9 +84,9 @@ Must exit 0. Any ATS category gap = finding to resolve before proceeding.
 
 ### 3. Regression Testing
 
-1. Run full project test suite using commands from `long-task-guide.md`
+1. Run full project test suite using `[test-quiet]` from `long-task-guide.md`
 
-2. Verify ALL tests pass — zero failures, zero errors
+2. Verify ALL tests pass — zero failures, zero errors; on FAIL run `[test-detail]` for errors
 3. Verify line and branch coverage thresholds met project-wide
 4. Check for new warnings, deprecation notices, dependency conflicts
 5. Any failure → **STOP** — this is a regression. Diagnose before proceeding.
@@ -97,8 +97,8 @@ Must exit 0. Any ATS category gap = finding to resolve before proceeding.
 
 Run full-codebase mutation testing. Per-feature mutation during Worker cycles may have only scoped feature tests (when active features > `mutation_full_threshold`); this step verifies mutation score holds project-wide with the full test suite.
 
-1. Get the `mutation_full` command from `long-task-guide.md`
-2. Run full mutation testing (all source files, all tests)
+1. Get the `[mutation-full-quiet]` command from `long-task-guide.md` (falls back to `[mutation-full]`)
+2. Run full mutation testing (all source files, all tests); on FAIL run `[mutation-full-detail]` for errors
 3. Verify: mutation score >= `quality_gates.mutation_score_min` from `feature-list.json`
 4. If surviving mutants found:
    - Analyze: equivalent mutant (document + skip) vs real gap (add test → Major severity defect)

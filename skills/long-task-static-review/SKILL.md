@@ -162,11 +162,11 @@ After fixing files in this iteration, run all 4 gates sequentially. Every gate m
 **Gate 1 — Compile**
 
 ```bash
-# Maven
-mvn compile -q 2>&1
+# Maven (3-stage: sed clean → grep keep → tail cap)
+mvn compile -B -q 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|BUILD ' | tail -20
 
 # Gradle
-gradle compileJava -q 2>&1
+gradle compileJava -q 2>&1 | tail -20
 ```
 
 If compilation fails: the fix introduced a compile error. Diagnose which fix caused it, revert or correct that fix, and re-run compile. Do not proceed until compile passes.
@@ -176,11 +176,11 @@ If compilation fails: the fix introduced a compile error. Diagnose which fix cau
 Run only tests affected by the files modified in this iteration:
 
 ```bash
-# Maven (specific test classes for affected source files)
-mvn test -Dtest={AffectedTest1,AffectedTest2,...} 2>&1
+# Maven (3-stage: sed clean → grep keep → tail cap)
+mvn test -B -q -Dsurefire.redirectTestOutputToFile=true -Dtest={AffectedTest1,AffectedTest2,...} 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|Tests run:|BUILD |<<<' | tail -30
 
 # Gradle
-gradle test --tests "{AffectedTestPattern}" 2>&1
+gradle test --tests "{AffectedTestPattern}" -q 2>&1 | tail -30
 ```
 
 Determine affected tests by: matching source file name to test file name convention (e.g., `Foo.java` → `FooTest.java`), or running module-scoped tests for the modified module.
@@ -192,11 +192,11 @@ If tests fail: diagnose whether the fix changed behavior (naming change broke re
 Run mutation testing scoped to the files modified in this iteration:
 
 ```bash
-# Maven (pitest, scoped to changed classes)
-mvn org.pitest:pitest-maven:mutationCoverage -DtargetClasses={changed.package.ClassName,...} 2>&1
+# Maven (3-stage: sed clean → grep keep → tail cap; ^>> for PIT summary lines)
+mvn org.pitest:pitest-maven:mutationCoverage -B -q -DtargetClasses={changed.package.ClassName,...} 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|Tests run:|BUILD |<<<|^>>' | tail -30
 
 # Gradle (pitest, scoped)
-gradle pitest -DtargetClasses={changed.package.ClassName,...} 2>&1
+gradle pitest -DtargetClasses={changed.package.ClassName,...} -q 2>&1 | tail -30
 
 # Or use the mutation_feature command from long-task-guide.md with changed files substituted
 ```
@@ -231,22 +231,22 @@ Run full-scope quality verification (not incremental) to confirm overall project
 ### 5a: Full Compile
 
 ```bash
-mvn compile  # or gradle compileJava
+mvn compile -B -q 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|BUILD ' | tail -20
 ```
 
 ### 5b: Full Unit Tests
 
 ```bash
-mvn test  # or gradle test
+mvn test -B -q -Dsurefire.redirectTestOutputToFile=true 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|Tests run:|BUILD |<<<' | tail -30
 ```
 
-Run the complete test suite, not just affected tests.
+Run the complete test suite, not just affected tests. On FAIL re-run without pipe for full details.
 
 ### 5c: Full Mutation Testing
 
 ```bash
-# Use mutation_full command from long-task-guide.md, or:
-mvn org.pitest:pitest-maven:mutationCoverage  # or gradle pitest
+# Use mutation_full_quiet command from long-task-guide.md, or:
+mvn org.pitest:pitest-maven:mutationCoverage -B -q 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|Tests run:|BUILD |<<<|^>>' | tail -30
 ```
 
 Full project-scope mutation. Score must meet threshold.

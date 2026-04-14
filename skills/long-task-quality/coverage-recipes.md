@@ -64,6 +64,13 @@ mutmut results
 mutmut show <mutant-id>
 ```
 
+**Quiet Pipe Recipes** (compact output — use first; on FAIL re-run verbose):
+```bash
+pytest -q --tb=line 2>&1 | tail -30
+pytest --cov=src --cov-branch --cov-report=term-missing -q --tb=line 2>&1 | tail -30
+mutmut run 2>&1 | tail -30
+```
+
 ---
 
 ## Java
@@ -190,6 +197,29 @@ gradle pitest -PtargetClasses=com.example.ChangedClass
 mvn pitest:mutationCoverage
 ```
 
+**Quiet Commands** (capture to temp file → extract summary; on FAIL run detail command):
+```bash
+_LOG="/tmp/_build.log"
+
+# Test: run + summary (2-3 lines)
+mvn test -B -q -Dsurefire.redirectTestOutputToFile=true >"$_LOG" 2>&1; echo "EXIT:$?"; grep -E "Tests run:|BUILD " "$_LOG"
+# Test: detail (on failure, up to 30 lines)
+grep -E "\[ERROR\]|\[WARNING\]|<<<" "$_LOG" | head -30
+
+# Coverage: run + summary (3-4 lines)
+mvn test jacoco:report -B -q -Dsurefire.redirectTestOutputToFile=true >"$_LOG" 2>&1; echo "EXIT:$?"; grep -E "Tests run:|BUILD " "$_LOG"
+awk -F',' 'NR>1{mi+=$4;ci+=$5;mb+=$6;cb+=$7} END{printf "Line: %.1f%%, Branch: %.1f%%\n", 100*ci/(mi+ci+0.001), 100*cb/(mb+cb+0.001)}' target/site/jacoco/jacoco.csv
+# Coverage: detail (on failure — per-class missed lines/branches)
+awk -F',' 'NR>1 && ($4>0) {printf "%s: missed %d/%d lines, %d/%d branches\n",$3,$4,$4+$5,$6,$6+$7}' target/site/jacoco/jacoco.csv
+
+# Mutation: run + summary (3-5 lines)
+mvn pitest:mutationCoverage -B -q >"$_LOG" 2>&1; echo "EXIT:$?"; grep -E "^>>|BUILD " "$_LOG"
+# Mutation: detail (on failure)
+grep -E "\[ERROR\]|\[WARNING\]|<<<" "$_LOG" | head -30
+# Mutation: surviving mutant counts from XML report
+grep -c 'status="SURVIVED"' target/pit-reports/*/mutations.xml; grep -c 'status="KILLED"' target/pit-reports/*/mutations.xml
+```
+
 ---
 
 ## JavaScript
@@ -258,6 +288,13 @@ npx stryker run --mutate='src/changed-module.js'
 npx stryker run
 ```
 
+**Quiet Pipe Recipes** (compact output — use first; on FAIL re-run verbose):
+```bash
+npx jest --verbose=false 2>&1 | tail -30
+npx c8 --branches 80 --lines 90 --reporter=text npx jest --verbose=false 2>&1 | tail -20
+npx stryker run --logLevel info 2>&1 | tail -30
+```
+
 ---
 
 ## TypeScript
@@ -322,6 +359,13 @@ npx stryker run --mutate='src/changed-module.ts'
 
 # Mutation (full)
 npx stryker run
+```
+
+**Quiet Pipe Recipes** (compact output — use first; on FAIL re-run verbose):
+```bash
+npx vitest run --reporter=dot 2>&1 | tail -30
+npx vitest run --coverage --reporter=dot 2>&1 | tail -20
+npx stryker run --logLevel info 2>&1 | tail -30
 ```
 
 ---

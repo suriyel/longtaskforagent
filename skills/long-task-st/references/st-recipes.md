@@ -260,6 +260,19 @@ python -c "import platform; print(platform.system())"
 | Java | `mvn test` (Surefire report) |
 | C/C++ | `ctest --test-dir build -V` |
 
+### Quiet Pipe Recipes (Progressive Disclosure)
+
+Use quiet variants for regression runs. On FAIL re-run standard command for details.
+
+| Language | Test (quiet) | Coverage (quiet) | Mutation (quiet) |
+|----------|-------------|------------------|-----------------|
+| Python | `pytest -q --tb=line 2>&1 \| tail -30` | `pytest --cov=... -q --tb=line 2>&1 \| tail -30` | `mutmut run 2>&1 \| tail -30` |
+| Java | `mvn test -B -q 2>&1 \| sed '...' \| tail -30` | `mvn test jacoco:report -B -q 2>&1 \| sed '...' \| tail -15` + `awk` on CSV | `mvn pitest:... -B -q 2>&1 \| sed '...' \| tail -30` |
+| JS/TS | `npx vitest run --reporter=dot 2>&1 \| tail -30` | `npx vitest run --coverage --reporter=dot 2>&1 \| tail -20` | `npx stryker run --logLevel info 2>&1 \| tail -30` |
+| C/C++ | `ctest --output-on-failure 2>&1 \| tail -30` | `lcov --summary coverage.info 2>&1 \| tail -15` | `mull-runner ./test-binary 2>&1 \| tail -30` |
+
+The `sed '...'` for Java is: `sed '/^\[INFO\]/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d'`
+
 ---
 
 ## 7. Full Mutation Regression

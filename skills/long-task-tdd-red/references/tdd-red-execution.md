@@ -40,9 +40,9 @@ Sections to SKIP: §2 Data-Flow, §4 Sequence, §6 State (read on demand only if
 
 ## Step 4: Verify All FAIL
 
-Run test suite. **ALL tests MUST FAIL.** If any test passes → it tests nothing useful, rewrite it.
+Run `[test-quiet]` from `long-task-guide.md`. **ALL tests MUST FAIL.** If any test passes → run `[test-detail]` to identify which test → rewrite it.
 
-Activate environment per `long-task-guide.md` → run test command directly. If tool missing: diagnose, escalate. Never skip.
+Activate environment per `long-task-guide.md`. If tool missing: diagnose, escalate. Never skip.
 
 ## Summary
 

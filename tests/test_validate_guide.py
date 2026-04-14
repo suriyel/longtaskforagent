@@ -67,6 +67,10 @@ NEVER mark "passing" without fresh evidence — run tests, read output
 1. git commit
 2. Update task-progress.md
 
+## Output Optimization
+Use quiet pipe recipes (`[test-quiet]`, `[coverage-quiet]`) for compact output.
+On failure, re-run standard command with `tail -30` for details.
+
 ## Critical Rules
 - NEVER write implementation before tests
 - NEVER mark passing without evidence
@@ -187,6 +191,9 @@ Spec compliance and design compliance checks.
 
 ### Save state
 git commit, update task-progress.md.
+
+## Output Optimization
+Use quiet commands with tail -30 for compact output.
 
 ## Critical Rules
 - Must never skip TDD
