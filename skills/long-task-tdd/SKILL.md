@@ -184,12 +184,6 @@ For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-promp
   - Items marked **PATTERN**: follow same structural pattern, create new implementation
   - §13.1 Library Usage Examples: use the exact import statement and call pattern from passing features
 
-**Startup output requirement** — for any feature that implements a server process or background service:
-The implementation MUST log at startup:
-- Bound port: e.g., `Starting server on port 8080`
-- PID: e.g., `PID: 12345`
-- Ready signal: e.g., `Server ready`
-
 Write a TDD Red test that verifies the startup output contains these values before implementing the server binding. This enables reliable port/PID extraction via `head -30` of the startup log.
 
 **env-guide.md sync rule** — after implementing or modifying a server/background service:
