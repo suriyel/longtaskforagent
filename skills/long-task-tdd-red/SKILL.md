@@ -13,12 +13,6 @@ Write failing tests for all Test Inventory rows. Read all documents yourself.
 2. Read shared rules: `skills/long-task-tdd-shared/references/iron-law.md`
 3. Read anti-patterns: `skills/long-task-tdd-shared/references/testing-anti-patterns.md`
 
-## Context Discovery (do this yourself)
-
-1. Read `feature-list.json` → extract feature object by id, `quality_gates`, `tech_stack`
-2. Glob `docs/features/*` → find the feature design document matching this feature
-3. Read `long-task-guide.md` → extract test command and environment activation
-
 ## Specification Input (from feature design doc)
 
 Read these sections in order:
@@ -37,7 +31,8 @@ Read these sections in order:
 - Rule 4: "Wrong Implementation" challenge for each test
 - Rule 5: Both UT + Integration layers mandatory (unless pure computation)
 - Label tests by layer: # [unit] or # [integration]
-- ALL tests MUST FAIL — if any passes, rewrite it
+- ALL tests MUST FAIL (exit code != 0 is SUCCESS). Exit 0 means tests are wrong — rewrite
+- Test output protocol: `[test-quiet]` first → on PASS (wrong!) rewrite; on all-FAIL (correct!) done. If unclear → `[test-detail]`
 
 Report summary: success/fail, test file paths, test count, negative ratio.
 
@@ -48,8 +43,8 @@ Report summary: success/fail, test file paths, test count, negative ratio.
 > Worker解析返回值的指引。SubAgent执行时忽略此段。
 
 **Parse:** Read result summary.
-- All tests fail → proceed to TDD Green.
-- Failure → escalate to user.
+- All tests fail (RED PASS) → proceed to TDD Green.
+- Any test passes, or framework error → escalate to user.
 
 ## Integration
 

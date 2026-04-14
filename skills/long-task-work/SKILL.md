@@ -45,7 +45,7 @@ Agent(
 )
 ```
 
-**Parse:** All tests must fail → proceed to Step 4. Failure → escalate.
+**Parse:** All tests fail (RED PASS) → proceed to Step 4. Any test passes or framework error → escalate.
 Update pipeline marker: `Feature #{id} → Step 3 (TDD Red)`
 
 ## Step 4: TDD Green
@@ -87,32 +87,7 @@ Agent(
 **Parse:** All gates pass → proceed to Step 7. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates)`
 
-## Step 7: Feature-ST
-
-Dispatch SubAgent:
-```
-Agent(
-  description="Feature-ST for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-feature-st', args='{id}'). Follow the loaded instructions exactly."
-)
-```
-
-**Parse:** Read result summary.
-- Success → extract st_case_path, st_case_count. Proceed to Step 8.
-- Failure with AI-fixable issues (code bugs, env issues) → fix and re-dispatch (no retry limit).
-- Failure requiring human manual testing (credentials, hardware) → escalate via `AskUserQuestion`.
-
-### Manual Test Review Gate
-
-If result reports manual test cases:
-1. For each manual case, call `AskUserQuestion` with test objective, steps, and verification points
-2. Parse response: PASS / FAIL / SKIP
-3. Update test case document with results
-4. Re-evaluate: all MANUAL-PASS → proceed. Any MANUAL-FAIL → final FAIL. Any BLOCKED → final BLOCKED.
-
-Update pipeline marker: `Feature #{id} → Step 7 (Feature-ST)`
-
-## Step 8: Persist (inline)
+## Step 7: Persist (inline)
 
 - Update `RELEASE_NOTES.md` (Keep a Changelog format; bugfix → `### Fixed`)
 - Update `task-progress.md`:
@@ -123,13 +98,11 @@ Update pipeline marker: `Feature #{id} → Step 7 (Feature-ST)`
     - Completed: YYYY-MM-DD
     - TDD: green ✓
     - Quality Gates: N% line, N% branch, N% mutation
-    - Feature-ST: N cases, all PASS
     ```
 - Mark feature `"status": "passing"` in `feature-list.json`
-- Set `"st_case_path"` and `"st_case_count"` on feature
 - Validate: `python scripts/validate_features.py feature-list.json`
 
-## Step 9: End Session
+## Step 8: End Session
 
 - Output: **Feature #\<id\> (\<title\>) — DONE.** Next: Feature #\<next_id\> (\<next_title\>)
 - If no failing non-deprecated features remain: "All active features passing — next session begins System Testing."
@@ -163,5 +136,4 @@ Update pipeline marker: `Feature #{id} → Step 7 (Feature-ST)`
 3. `long-task:long-task-tdd-green` (Step 4)
 4. `long-task:long-task-tdd-refactor` (Step 5)
 5. `long-task:long-task-quality-gates` (Step 6)
-6. `long-task:long-task-feature-st` (Step 7)
 **Reads/Writes:** feature-list.json, task-progress.md, RELEASE_NOTES.md

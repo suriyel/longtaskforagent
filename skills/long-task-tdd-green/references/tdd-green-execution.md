@@ -35,10 +35,9 @@ From the feature design document:
 
 ## Step 4: Verify
 
-1. Run `[test-quiet]` → ALL tests pass
-2. Run `[test-quiet]` full test → zero regressions
-
-If any test fails: run `[test-detail]` for errors → diagnose root cause, fix. If still failing after 3 attempts → escalate.
+1. Run `[test-quiet]` → if PASS (exit 0) → proceed to step 2. If FAIL → run `[test-detail]` for errors → fix → re-run `[test-quiet]`
+2. Run `[test-quiet]` full suite → zero regressions. If FAIL → run `[test-detail]` → fix → re-run
+3. After 3 failed fix attempts → escalate
 
 ## Summary
 

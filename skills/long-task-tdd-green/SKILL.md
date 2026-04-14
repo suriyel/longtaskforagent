@@ -12,13 +12,6 @@ Write minimal code to make all tests pass. Read all documents yourself.
 1. Read execution rules: `skills/long-task-tdd-green/references/tdd-green-execution.md`
 2. Read shared rules: `skills/long-task-tdd-shared/references/iron-law.md`
 
-## Context Discovery (do this yourself)
-
-1. Read `feature-list.json` → extract feature object, `quality_gates`, `tech_stack`
-2. Glob `docs/features/*` → find the feature design document
-3. Read `long-task-guide.md` → extract test command, full test command
-4. Find the test files created by TDD Red (look for recent test files matching the feature)
-
 ## Implementation Constraints (from feature design doc)
 
 Read these sections:
@@ -39,6 +32,7 @@ Read these sections:
 - EXTEND items: subclass or extend — do NOT copy-paste
 - PATTERN items: follow same structural pattern
 - ALL tests must pass, zero regressions
+- Test output protocol: `[test-quiet]` first → on PASS done; on FAIL → `[test-detail]` for errors
 
 Report summary: success/fail, implementation file paths, test pass count.
 
