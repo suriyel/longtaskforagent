@@ -21,6 +21,7 @@ Read these sections in order:
 3. Existing Code Reuse — utilities, API clients, §11.1 library usage examples.
 4. §5 Algorithm / Core Logic — boundary matrix (§5c), error table (§5d).
 5. Clarification Addendum (if present) — user-approved resolutions.
+6. Related existing tests (Step 1b) — explore dependency features' test files for assertion style, fixtures, imports, mock patterns.
 
 ## Key Constraints
 
@@ -32,6 +33,7 @@ Read these sections in order:
 - Rule 5: Both UT + Integration layers mandatory (unless pure computation)
 - Label tests by layer: # [unit] or # [integration]
 - ALL tests MUST FAIL (exit code != 0 is SUCCESS). Exit 0 means tests are wrong — rewrite
+- Follow related existing test conventions (Step 1b) for consistency. §11.5 and Test Inventory take precedence.
 - Test output protocol: `[test-quiet]` first → on PASS (wrong!) rewrite; on all-FAIL (correct!) done. If unclear → `[test-detail]`
 
 Report summary: success/fail, test file paths, test count, negative ratio.

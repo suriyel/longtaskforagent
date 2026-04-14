@@ -8,6 +8,22 @@ You are a TDD Red SubAgent. Write failing tests for ALL Test Inventory rows.
 2. Glob `docs/features/*` → find the feature design document matching this feature
 3. Read `long-task-guide.md` → extract test command and environment activation
 
+### Step 1b: Explore Related Existing Tests
+
+Discover test conventions and reusable test infrastructure in modules related to this feature. Tests are specification — Iron Law does not apply.
+
+1. From feature design doc **Project Structure** + **dependencies[]** (passing features), identify source directories this feature touches
+2. Glob for test files in those directories (pattern per `tech_stack.test_framework`)
+3. If found: read 2-3 representative test files (prefer dependency features' tests)
+4. Extract and record:
+   - Assertion style and test structure
+   - Shared fixtures / factories / helpers (file paths)
+   - Import patterns for code under test
+   - Mock/stub conventions
+5. If zero test files found → skip, proceed to Step 2
+
+Apply discovered conventions in Step 3. §11.5 and Test Inventory rules take precedence.
+
 ## Step 2: Read Specification
 
 From the feature design document, read in order:
