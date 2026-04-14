@@ -363,10 +363,3 @@ graph LR
 | Pre-commit Hooks | [e.g., husky + lint-staged] |
 | Code Generation | [e.g., protobuf → src/generated/ (exclude from convention checks)] |
 
-### 13.8 Commit Conventions
-
-| Element | Convention |
-|---------|-----------|
-| Format | [e.g., Conventional Commits: `feat:`, `fix:`, `chore:`] |
-| Subject Length | [e.g., ≤ 72 chars] |
-| Branch Naming | [e.g., `feature/<name>`, `fix/<name>`] |

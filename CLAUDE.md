@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 15 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration. Standalone `/static-review` skill for pre-push static analysis (iterative scan-fix to zero violations). Independent `long-task-multi-repo` skill for multi-repo projects.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 16 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration. Standalone `/static-review` skill for pre-push static analysis (iterative scan-fix to zero violations). Independent `long-task-multi-repo` skill for multi-repo projects.
 
 ## Key Commands
 
@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 15-Skill System
+### 16-Skill System
 
 #### Phase Skills
 
@@ -41,7 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-multi-repo` | Multi-repo | `repos-manifest.json` exists — exploration, global SRS, split, dependency distribution |
 | `long-task-hotfix` | Hotfix | `bugfix-request.json` exists (HIGHEST priority) |
 | `long-task-increment` | Phase 1.5 | `increment-request.json` exists |
-| `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS/rules docs, >3 source files — brownfield scan |
+| `long-task-codebase-scanner` | Phase 0-pre | No SRS/rules docs, >3 source files — brownfield scan |
 | `long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json (single-repo only) |
 | `long-task-design` | Phase 0b | SRS exists, no design doc, no feature-list.json |
 | `long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
@@ -69,7 +69,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 using-long-task (router)
    ├─→ long-task-multi-repo (repos-manifest.json exists — exploration, global SRS, split, dep distribution, handoff)
-   ├─→ codebase-scanner SubAgent (brownfield, no docs/rules/) ──→ long-task-requirements (rule 7b) OR long-task-design (rule 5b)
+   ├─→ long-task-codebase-scanner (brownfield, no docs/rules/) ──→ long-task-requirements (rule 7b) OR long-task-design (rule 5b)
    ├─→ long-task-requirements ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ long-task-work
    │                                                  (auto-skip: ≤5 FR)
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
@@ -98,14 +98,14 @@ long-task-static-review (standalone — no pipeline dependency)
 
 | Phase | Skill | Key Output |
 |-------|-------|------------|
-| 0-pre: Codebase Scan (brownfield) | `codebase-scanner` SubAgent | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns, commit conventions |
+| 0-pre: Codebase Scan (brownfield) | `long-task-codebase-scanner` | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns |
 | 0-multi: Multi-Repo | `long-task-multi-repo` | Global SRS + per-repo SRS split + dependency distribution; session ends with handoff |
 | 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds; Step 10c: single-round mode confirmation) |
 | 0b: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §13 if brownfield) |
 | 0d: ATS | `long-task-ats` | `docs/plans/*-ats.md` (req→scenario mapping; independent reviewer subagent; auto-skips ≤5 FR) |
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design updated in place; new features appended with `wave` metadata |
-| 1: Init | `long-task-init` | `feature-list.json`, `long-task-guide.md`, project skeleton, initial git commit |
+| 1: Init | `long-task-init` | `feature-list.json`, `long-task-guide.md`, project skeleton |
 | 2: Worker | `long-task-work` | TDD → Quality → Feature-ST → Inline Check per feature |
 | 3: System Testing | `long-task-st` | ST plan/report; Go/No-Go verdict; chains to Finalize |
 
@@ -129,10 +129,9 @@ long-task-static-review (standalone — no pipeline dependency)
 - **Service lifecycle via env-guide.md**: All start/stop/restart use `env-guide.md` commands. Follow 4-step Restart Protocol between test cycles. Capture first 30 lines of startup output for PID/port.
 - **Startup output in code**: Servers must print bound port, PID, and ready signal at startup.
 - **2/3方件 constraints binding**: Design §13.1 mandatory internal libraries and §13.2 prohibited APIs are binding for all new code.
-- **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → run codebase-scanner first (rule 7b: before requirements; rule 5b: before design in brownfield repos).
+- **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → invoke `long-task-codebase-scanner` skill (rule 7b: before requirements; rule 5b: before design in brownfield repos).
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
-- **Commit convention compliance via LLM**: Worker Step 11 reads `commit_conventions` from `feature-list.json` (profile, prefix whitelist, subject length, branch naming, strip_trailers). No git hook — LLM is responsible for formatting commits correctly.
 - **Multi-repo: fully handled by independent `long-task-multi-repo` skill**: Hook detects topology → router invokes skill → skill does exploration, global SRS, split, dependency distribution, handoff. User then independently cd's into each repo for single-repo pipeline.
 
 ### Multi-Repo Support
@@ -166,7 +165,6 @@ Key files:
 | `docs/plans/*-ats.md` | 0d | Approved ATS (req→scenario mapping; reviewed by ats-reviewer) |
 | `bugfix-request.json` | Hotfix | Signal file (deleted after processing) |
 | `increment-request.json` | Increment | Signal file (deleted after processing) |
-| ~~`.commit-conventions.json`~~ | ~~1~~ | Deprecated — replaced by `commit_conventions` field in `feature-list.json` |
 | `feature-list.json` | 1 | Task inventory with status, constraints, assumptions, waves |
 | `long-task-guide.md` | 1 | Worker session guide (env activation, test/coverage/mutation commands) |
 | `env-guide.md` | 1 | Service lifecycle commands (start/stop/restart/verify) |
@@ -192,13 +190,6 @@ Key files:
   "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80, "mutation_score_min": 80, "mutation_full_threshold": 100 },
   "single_round": false,
   "build_system": { "build_command": "make build (from Design §13.7, user-confirmed)" },
-  "commit_conventions": {
-    "profile": "conventional-commits|angular|ticket-prefixed|gitmoji|freeform|custom",
-    "prefix_whitelist": ["feat", "fix", "chore", "..."],
-    "subject_max_length": 72, "subject_min_length": 10, "custom_pattern": null,
-    "branch_naming": "feature/<name>, fix/<name>",
-    "strip_trailers": true
-  },
   "waves": [{ "id": 0, "date": "2025-01-15", "description": "Initial release" }],
   "constraints": ["Hard limit"],
   "assumptions": ["Implicit belief"],
@@ -217,7 +208,6 @@ Each feature:
   "dependencies": [],
   "deprecated": false, "deprecated_reason": null, "supersedes": null,
   "st_case_path": "optional", "st_case_count": 8,
-  "git_sha": "abc1234 (optional — set by Worker Step 11)",
   "bug_severity": "Critical|Major|Minor|Cosmetic (bugfix only)",
   "bug_source": "manual-testing (bugfix only)",
   "fixed_feature_id": null, "root_cause": "confirmed root cause (bugfix only)"
@@ -226,12 +216,10 @@ Each feature:
 
 Key field notes:
 - `srs_trace`: required; maps feature to SRS requirements for ATS lookup and ST traceability
-- `git_sha`: 7–40 char hex; validated by `validate_features.py`
 - `deprecated: true` → `deprecated_reason` required; excluded from Worker/ST/routing
 - `waves[]`: increment batch tracking; `wave` on feature = which wave introduced/modified it
 - `single_round`: optional boolean; set to `true` by Init when SRS contains `Single-Round: Yes` metadata (user-confirmed at Requirements Step 10c); informational flag — all Worker steps execute their full standard flow regardless
 - `build_system`: optional; populated from `docs/rules/build-and-compilation.md` → Design §13.7 during Init (user-confirmed)
-- `commit_conventions`: optional; populated from `docs/rules/commit-conventions.md` → Design §13.8 during Init (user-confirmed); replaces `.commit-conventions.json`; `strip_trailers: true` prohibits Co-Authored-By/Signed-off-by trailers
 
 ## File Structure
 
@@ -254,7 +242,8 @@ long-task-agent/
 │   ├── long-task-quality/{references/quality-execution.md,coverage-recipes.md}
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
 │   ├── long-task-static-review/SKILL.md + references/tool-profiles.md (standalone)
-├── agents/{codebase-scanner,ats-reviewer,example-generator,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
+│   ├── long-task-codebase-scanner/SKILL.md (standalone + pipeline Phase 0-pre)
+├── agents/{ats-reviewer,example-generator,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
 ├── scripts/{get_tool_commands,validate_features,validate_guide,
@@ -268,7 +257,7 @@ long-task-agent/
 
 - [ReadMe.md](ReadMe.md) — Overview and design rationale
 - [skills/using-long-task/references/architecture.md](skills/using-long-task/references/architecture.md) — TDD workflow, testing patterns
-- [agents/codebase-scanner.md](agents/codebase-scanner.md) — Brownfield codebase scanner
+- [skills/long-task-codebase-scanner/SKILL.md](skills/long-task-codebase-scanner/SKILL.md) — Brownfield codebase scanner
 - [agents/ats-reviewer.md](agents/ats-reviewer.md) — ATS reviewer (7 dimensions)
 - [skills/long-task-work/references/systematic-debugging.md](skills/long-task-work/references/systematic-debugging.md) — Systematic debugging
 - [skills/long-task-work/references/subagent-development.md](skills/long-task-work/references/subagent-development.md) — Subagent-driven development
@@ -285,11 +274,11 @@ long-task-agent/
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 15 skills loaded on-demand.
+This project uses a multi-session agent workflow with 16 skills loaded on-demand.
 The `using-long-task` skill is injected at session start and routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS in place → new features appended → Worker cycles → ST.
 
-Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory with `build_system` and `commit_conventions` from rules→Design→user confirmation), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
+Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory with `build_system` from rules→Design→user confirmation), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
 Multi-repo support: session-start hook detects sub-directory git repos → `repos-manifest.json`. Independent `long-task-multi-repo` skill handles exploration, global SRS, per-repo split, and dependency distribution. User then independently cd's into each repo to run the single-repo pipeline.
 <!-- /long-task-agent -->

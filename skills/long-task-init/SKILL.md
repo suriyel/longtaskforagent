@@ -167,24 +167,13 @@ You MUST create a TodoWrite task for each step and complete them in order:
     python scripts/validate_features.py feature-list.json
     ```
 10. **Scaffold project skeleton** (dirs, configs, dependency manifests) — based on **design doc** architecture
-11. **Git init + build/commit conventions + initial commit**
-    > **Existing repo**: If the current directory already contains a `.git/` directory, **skip `git init`** — only stage and commit the newly scaffolded files. If the directory is not a git repo, run `git init` first.
-    
-    a. **Populate `feature-list.json` `build_system` field** (from rules → Design):
-       - Read `docs/rules/build-and-compilation.md` (if exists) → extract build tool and key commands
-       - Read Design doc §13.7 (Build & CI/CD Summary) → extract Build System value
-       - Map to `build_system.build_command`
-    b. **Populate `feature-list.json` `commit_conventions` field** (from rules → Design):
-       - Read `docs/rules/commit-conventions.md` (if exists, brownfield) → extract commit format, subject length, branch pattern
-       - Read Design doc §13.8 (Commit Conventions) → extract Format, Subject Length, Branch Naming
-       - Map to `commit_conventions` sub-fields: `profile`, `prefix_whitelist`, `subject_max_length`, `subject_min_length`, `branch_naming`
-       - Convention mapping: "Conventional Commits" → profile `conventional-commits`; "Angular" → `angular`; ticket prefix (e.g., `JIRA-xxx:`) → `ticket-prefixed` + `custom_pattern`; gitmoji → `gitmoji`; no convention → `freeform`
-       - If greenfield with no specific convention, default to `conventional-commits`
-       - Default `strip_trailers: true` (禁止 Co-Authored-By, Signed-off-by 等尾缀签名)
-    c. **Present extracted values to user for confirmation** (AskUserQuestion):
-       - Show the auto-extracted `build_system` and `commit_conventions` values
-       - User confirms or modifies before writing to `feature-list.json`
-    d. Commit the updated `feature-list.json` in the initial commit
+11. **Populate `feature-list.json` `build_system` field** (from rules → Design):
+    - Read `docs/rules/build-and-compilation.md` (if exists) → extract build tool and key commands
+    - Read Design doc §13.7 (Build & CI/CD Summary) → extract Build System value
+    - Map to `build_system.build_command`
+    - **Present extracted values to user for confirmation** (AskUserQuestion):
+      - Show the auto-extracted `build_system` values
+      - User confirms or modifies before writing to `feature-list.json`
 12. **Run init script and verify environment**:
     - Run `init.sh` (or `init.ps1`), verify environment setup completes without errors
     - Verify test execution works: activate env → run test command from `long-task-guide.md` → confirm tests execute (may all fail at this point — that's expected)
@@ -200,7 +189,7 @@ When a Worker cycle introduces a new backend service, changes a service port, or
 - Add/update the Services table row (service name, port, start/stop/verify commands)
 - Add/update corresponding Start, Verify, Stop, and Restart commands
 - If the startup or stop sequence requires >2 shell steps: extract to `scripts/svc-<slug>-start.sh` / `scripts/svc-<slug>-stop.sh` and update env-guide.md to reference the script
-- Include env-guide.md and any `scripts/svc-*` changes in the same git commit as the feature
+- Include env-guide.md and any `scripts/svc-*` changes alongside the feature updates
 
 **env-guide.md must always reflect commands that actually work.** Any time a command is proven correct (during TDD Green or after fixing a failure), env-guide.md must be updated to match.
 

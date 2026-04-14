@@ -124,7 +124,7 @@ If coverage or mutation tools are not yet configured for this project's tech sta
 | After Coverage Gate | Coverage report (line% + branch%) |
 | After TDD Refactor | Full test suite (still passing) |
 | After Mutation Gate | Mutation report (score%) + final test run |
-| Before git commit | Full test suite (no broken code committed) |
+| Before ending session | Full test suite (no broken code in working tree) |
 
 ## Anti-Patterns
 

@@ -17,7 +17,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
 ### 1. Orient
 - Read `task-progress.md` — **only the `## Current State` section** (use Read with offset/limit from `## Current State` heading to the next `##` heading or log separator `---`)
-- Grep `feature-list.json` to extract: `quality_gates`, `tech_stack`, `build_system`, `commit_conventions`, `constraints[]`, `assumptions[]`. Then grep for features with `"status": "failing"` to identify the next candidate. Do NOT read the full file.
+- Grep `feature-list.json` to extract: `quality_gates`, `tech_stack`, `build_system`, `constraints[]`, `assumptions[]`. Then grep for features with `"status": "failing"` to identify the next candidate. Do NOT read the full file.
 - Grep `long-task-guide.md` for the environment activation command, test command, coverage command, and mutation command. Do NOT read the full file.
 - Read design doc **§13** (Codebase Conventions & Constraints, `docs/plans/*-design.md`) — note §13.1 mandatory libraries, §13.2 prohibited APIs, §13.4 static analysis tools, §13.5 naming conventions, §13.6 error handling pattern. Store as `{section_13_text}` — this is the single canonical copy for the entire session; do NOT re-read §13 in subsequent steps.
 - Run `git log --oneline -10` — recent commit context
@@ -146,16 +146,6 @@ Record in `task-progress.md`:
 ```
 
 ### 9. Persist
-- Git commit (include implementation, tests, **test case document**)
-  > **Commit format**: If Design §13.8 documents commit conventions, follow that format. Otherwise use defaults below.
-  > **For `category: "bugfix"` features**: use commit prefix `"fix:"` instead of `"feat:"`.
-  > Format: `fix: <feature title without the "Fix: " prefix> (#<fixed_feature_id>)`
-  > **Commit convention compliance**: Read `commit_conventions` from `feature-list.json` (if present) or Design §13.8 to determine the required format (profile, prefix whitelist, subject length limits, branch naming). Format your commit message to match BEFORE running `git commit`. If `strip_trailers` is true, do NOT add Co-Authored-By, Signed-off-by, or any other trailer lines.
-- Capture the commit SHA immediately after the commit:
-  ```bash
-  git rev-parse --short HEAD
-  ```
-  Store this value as `{commit_sha}` — it is used in the next two steps.
 - Update `RELEASE_NOTES.md` (Keep a Changelog format)
   > **For `category: "bugfix"` features**: add entry under `### Fixed` (not `### Added`):
   > `- [<bug_severity>] <title without "Fix: "> (fixes #<fixed_feature_id>) — <root_cause one-line>`
@@ -169,24 +159,17 @@ Record in `task-progress.md`:
     - Quality Gates: N% line, N% branch, N% mutation
     - Feature-ST: N cases, all PASS
     - Inline Check: PASS
-    - Git: {commit_sha} feat: title
     #### Risks                        ← include only if any risks were reported
     - ⚠ [Mutant] file:line — reason
     - ⚠ [Coverage] metric N% — thin margin / uncovered boundary
     - ⚠ [Dependency] lib==ver — known patch / breaking change pending
     ```
-  - **`{commit_sha}` must be the actual captured value** — never a placeholder. This ensures `task-progress.md` and `feature-list.json` carry the same verified SHA.
   - **Collecting risks**: after Step 6 (Quality) and Step 7 (Feature-ST) complete, extract every row from their `### Risks` tables; merge into a single list; append as `#### Risks` bullets only if the list is non-empty
 - Mark feature `"status": "passing"` in `feature-list.json`
-- Set `"st_case_path"`, `"st_case_count"`, and `"git_sha": "{commit_sha}"` on the feature object in `feature-list.json`
+- Set `"st_case_path"` and `"st_case_count"` on the feature object in `feature-list.json`
 - Validate:
   ```bash
   python scripts/validate_features.py feature-list.json
-  ```
-- Git commit (progress files):
-  ```bash
-  git add feature-list.json task-progress.md RELEASE_NOTES.md
-  git commit -m "chore: update progress — feature #{id} passing"
   ```
 
 ### 10. End Session
@@ -207,8 +190,8 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 - **Sub-skills are non-negotiable** — ST Test Cases, TDD, Quality MUST be invoked via Skill tool
 - **Never mark "passing" without fresh evidence** — run tests, read output, then mark
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause, never guess-and-fix
-- **Update RELEASE_NOTES.md after every git commit**
-- **Always commit + update progress before ending session** — bridges context gap
+- **Update RELEASE_NOTES.md after every feature completion**
+- **Always update progress before ending session** — bridges context gap
 - **Never leave broken code** — revert incomplete work
 
 ## Red Flags
@@ -221,7 +204,7 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "Coverage looks close enough" | Thresholds are hard gates. Run the tool. |
 | "Let me just try this quick fix" | Systematic debugging first. |
 | "I'll generate examples during Worker" | Examples are post-ST (ST Step 13). |
-| "I'll update release notes at the end" | Update after every commit. |
+| "I'll update release notes at the end" | Update after every feature completion. |
 | "Mutation score is probably OK" | Run mutation tests and read the report. |
 | "ST test case failed but the code is fine" | No bypass. AI must fix code and re-dispatch — no retry limit. If test spec is wrong, use `long-task-increment` to modify. Only escalate if issue genuinely requires human manual testing. |
 | "Environment is down, skip ST cases" | BLOCKED, not skipped. Fix environment or ask user. |

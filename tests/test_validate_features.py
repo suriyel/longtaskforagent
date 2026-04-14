@@ -937,99 +937,8 @@ def test_build_system_invalid_build_command():
     assert "build_system.build_command must be a string" in stdout
 
 
-def test_commit_conventions_valid():
-    """Valid commit_conventions should pass."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "commit_conventions": {
-            "profile": "conventional-commits",
-            "prefix_whitelist": ["feat", "fix", "chore"],
-            "subject_max_length": 72,
-            "subject_min_length": 10,
-            "branch_naming": "feature/<name>, fix/<name>",
-            "strip_trailers": True
-        },
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0
-    assert "Commit: conventional-commits" in stdout
-
-
-def test_commit_conventions_invalid_profile():
-    """Invalid profile must fail."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "commit_conventions": {"profile": "invalid-profile"},
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 1
-    assert "commit_conventions.profile must be one of" in stdout
-
-
-def test_commit_conventions_min_gt_max():
-    """subject_min_length >= subject_max_length must fail."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "commit_conventions": {
-            "profile": "freeform",
-            "subject_max_length": 10,
-            "subject_min_length": 50
-        },
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 1
-    assert "subject_min_length" in stdout and "less than" in stdout
-
-
-def test_commit_conventions_invalid_strip_trailers():
-    """strip_trailers must be boolean."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "commit_conventions": {"strip_trailers": "yes"},
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 1
-    assert "strip_trailers must be a boolean" in stdout
-
-
-def test_commit_conventions_not_object():
-    """commit_conventions must be an object."""
-    data = {
-        "project": "test",
-        "created": "2025-01-01",
-        "commit_conventions": "not an object",
-        "features": [
-            {"id": 1, "category": "core", "title": "A", "description": "A",
-             "priority": "high", "status": "failing", "dependencies": []}
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 1
-    assert "commit_conventions must be an object" in stdout
-
-
-def test_no_build_system_or_commit_conventions_ok():
-    """Omitting build_system and commit_conventions should be fine (backward compat)."""
+def test_no_build_system_ok():
+    """Omitting build_system should be fine (backward compat)."""
     data = {
         "project": "test",
         "created": "2025-01-01",
@@ -1041,7 +950,6 @@ def test_no_build_system_or_commit_conventions_ok():
     code, stdout, _ = run_validator(data)
     assert code == 0
     assert "Build:" not in stdout
-    assert "Commit:" not in stdout
 
 
 def test_single_round_true_valid():
@@ -1152,12 +1060,7 @@ if __name__ == "__main__":
         test_build_system_valid,
         test_build_system_invalid_type,
         test_build_system_invalid_build_command,
-        test_commit_conventions_valid,
-        test_commit_conventions_invalid_profile,
-        test_commit_conventions_min_gt_max,
-        test_commit_conventions_invalid_strip_trailers,
-        test_commit_conventions_not_object,
-        test_no_build_system_or_commit_conventions_ok,
+        test_no_build_system_ok,
         test_single_round_true_valid,
         test_single_round_false_valid,
         test_single_round_invalid_type,

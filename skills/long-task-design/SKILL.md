@@ -126,7 +126,7 @@ Present each section. Wait for user feedback. Incorporate changes before moving 
 
 **Brownfield** (if `docs/rules/` exists and is populated with convention scan results from Phase 0-pre):
 
-1. **Read all `docs/rules/*.md` files** — `coding-style.md`, `coding-constraints.md`, `build-and-compilation.md`, `commit-conventions.md`
+1. **Read all `docs/rules/*.md` files** — `coding-style.md`, `coding-constraints.md`, `build-and-compilation.md`
 2. **Populate §13 of the design document** (Codebase Conventions & Constraints) using the design template's §13 structure:
    - §13.1: Extract "Mandatory Internal Libraries" table from `coding-constraints.md`
    - §13.2: Extract "Prohibited APIs / Libraries" table from `coding-constraints.md`
@@ -135,7 +135,6 @@ Present each section. Wait for user feedback. Incorporate changes before moving 
    - §13.5: Extract key naming and formatting rules from `coding-style.md` (summary table)
    - §13.6: Extract error handling pattern from `coding-constraints.md`
    - §13.7: Extract build system and CI/CD summary from `build-and-compilation.md`
-   - §13.8: Extract commit format and branch naming from `commit-conventions.md`
 3. **Cross-verify** — check for conflicts between scanned conventions and design decisions:
    - §8 (Third-Party Dependencies): new dependencies must not conflict with §13.2 prohibited list
    - §6.2 (Internal API Contracts): libraries used must comply with §13.1 internal library mandates
@@ -144,12 +143,12 @@ Present each section. Wait for user feedback. Incorporate changes before moving 
 
 **Greenfield** (if `docs/rules/` does not exist or is empty):
 
-1. **Populate §13 with empty tables** (column headers + zero rows) for each subsection §13.1–§13.8, using the design template's §13 structure
+1. **Populate §13 with empty tables** (column headers + zero rows) for each subsection §13.1–§13.7, using the design template's §13 structure
 2. **Present to user**: "§13 created with empty convention tables. Add constraints now if known, or leave empty — downstream skills read §13 unconditionally."
 3. If user adds constraints: incorporate and re-present for approval
 4. If user leaves empty: proceed — empty tables signal "no constraints" to downstream skills
 
-> **Note**: §13.7 (Build & CI/CD) and §13.8 (Commit Conventions) content will be synced to `feature-list.json` fields `build_system` and `commit_conventions` during the Init phase (Step 13), with user confirmation.
+> **Note**: §13.7 (Build & CI/CD) content will be synced to `feature-list.json` field `build_system` during the Init phase, with user confirmation.
 
 ## Step 5: Write Design Document
 

@@ -116,7 +116,6 @@ def create_feature_list(
             "mutation_full_threshold": mutation_full_threshold
         },
         "build_system": None,
-        "commit_conventions": None,
         "constraints": [],
         "assumptions": [],
         "features": []
@@ -192,7 +191,7 @@ def create_release_notes(project_name: str) -> str:
 
 ---
 
-_Format: [Keep a Changelog](https://keepachangelog.com/) — Updated after every git commit._
+_Format: [Keep a Changelog](https://keepachangelog.com/) — Updated after every feature completion._
 """
 
 

@@ -295,7 +295,6 @@ Generate `docs/plans/YYYY-MM-DD-st-report.md` with these sections:
 
 ### 11. Persist
 
-- Git commit ST artifacts (`docs/plans/*-st-plan.md`, `docs/plans/*-st-report.md`, test files)
 - Validate: `python scripts/validate_features.py feature-list.json`
 - **Cleanup (MANDATORY)**: Stop services started in Step 1
   - Read `env-guide.md` "Stop All Services" section — kill by PID (from `task-progress.md`, preferred) or by port (fallback)
@@ -341,7 +340,7 @@ Dispatch via `Agent` tool. Parse return: PASS/PARTIAL/FAIL (examples are non-blo
 
 **13c. Update task-progress.md** — Add ST session summary (categories, pass/fail, defects, mutation score, example results).
 
-**13d. Persist** — `git add examples/ RELEASE_NOTES.md task-progress.md && git commit -m "docs: finalize release"`, then run `python scripts/validate_features.py feature-list.json`.
+**13d. Validate** — run `python scripts/validate_features.py feature-list.json`.
 
 **13e. Summary** — Output: examples count, RELEASE_NOTES updated, task-progress updated.
 

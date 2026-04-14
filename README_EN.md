@@ -179,7 +179,7 @@ Each worker session focuses on exactly one feature. This prevents context exhaus
 - Reads SRS + Design + ATS, scaffolds project skeleton
 - Bidirectional granularity analysis at requirements phase (G1-G6 split + S1-S4 merge) ensures each FR fits a single-session context budget
 - Generates environment bootstrap scripts (`init.sh` / `init.ps1`)
-- Creates initial git commit
+- Scaffolds initial project files
 
 ### Phase 2: Worker Cycles
 

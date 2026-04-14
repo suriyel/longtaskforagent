@@ -18,7 +18,7 @@ This skill can be invoked **standalone** OR **from within pipeline phases** (req
 
 In both modes:
 - Do NOT modify any source code, tests, or configuration files
-- If `docs/rules/` exists (from codebase-scanner), reference it but do not depend on it
+- If `docs/rules/` exists (from long-task-codebase-scanner), reference it but do not depend on it
 
 ## CRITICAL: DOCUMENT WHAT IS, NOT WHAT SHOULD BE
 

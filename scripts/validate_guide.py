@@ -44,8 +44,8 @@ REQUIRED_SECTIONS = [
      [r"st\s*test\s*case", r"test\s*case\s*generat", r"29119", r"st-case", r"long-task-st-case"]),
     ("Inline Compliance Check",
      [r"inline.*compliance", r"compliance.*check", r"spec.*coverage", r"design.*compliance"]),
-    ("Persist / save state / commit",
-     [r"persist", r"save.*state", r"git.*commit", r"task-progress"]),
+    ("Persist / save state",
+     [r"persist", r"save.*state", r"task-progress"]),
     ("Critical Rules",
      [r"critical\s*rule", r"iron\s*rule", r"must\s*never"]),
 ]

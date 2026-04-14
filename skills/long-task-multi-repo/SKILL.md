@@ -647,8 +647,8 @@ If a deferred backlog was generated in Step 13, save alongside: `docs/plans/YYYY
       - If global SRS metadata contains `Single-Round: Yes`, propagate to per-repo SRS metadata header: `Single-Round: Yes`
    c. If deferred backlog exists, copy applicable items to `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-deferred.md`
 
-3. **Per-repo codebase rules**: Do NOT dispatch `codebase-scanner` here.
-   When the user later starts a session in a sub-repo, the router's brownfield detection will trigger `codebase-scanner` for that repo if `<repo_path>/docs/rules/` does not exist yet. This avoids duplicate scanning.
+3. **Per-repo codebase rules**: Do NOT invoke `long-task-codebase-scanner` here.
+   When the user later starts a session in a sub-repo, the router's brownfield detection will invoke `long-task-codebase-scanner` for that repo if `<repo_path>/docs/rules/` does not exist yet. This avoids duplicate scanning.
 
 4. **Update `repos-manifest.json`**:
    ```json

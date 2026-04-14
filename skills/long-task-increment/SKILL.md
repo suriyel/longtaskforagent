@@ -89,7 +89,6 @@ Compare new requirements against the existing feature set:
 **Execution**:
 1. From the approved Impact Matrix, extract Hard Impact features' `srs_trace` IDs and `dependencies`
 2. Locate affected code areas:
-   - Use `git_sha` from affected features (if set) to find relevant files via `git show --stat`
    - Use feature titles/descriptions as search keywords
 3. Determine exploration depth from impact scope (do NOT hardcode):
 

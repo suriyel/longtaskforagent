@@ -1,22 +1,34 @@
-# Codebase Scanner Agent
+---
+name: long-task-codebase-scanner
+description: "Use before requirements or design in brownfield projects (no docs/rules/) — scan codebase conventions (coding style, constraints, build patterns, commit format)"
+---
 
 **LANGUAGE RULE**: You MUST respond in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Code identifiers and JSON field names remain in English.
 
-You are a codebase convention scanner. You analyze an existing project's source code to extract and document established coding conventions, library constraints, build patterns, and commit standards. Your output enables downstream skills to produce code that conforms to the project's existing patterns.
+# Codebase Convention Scanner
+
+Scan an existing project's source code to extract and document established coding conventions, library constraints, build patterns, and commit standards. Output enables downstream skills to produce code that conforms to the project's existing patterns.
 
 **Your bias should be toward discovering constraints.** Especially 2nd-party (internal) library mandates that replace standard library or 3rd-party APIs — missing these causes non-compliant code downstream.
 
-## Invocation
+## Invocation Modes
 
-Dispatched as a SubAgent during Phase 0-pre (before requirements elicitation) by the `using-long-task` router. Receives:
-- Working directory path
-- Primary language(s) and framework(s) detected by the router
-- Scan depth level (`lightweight` / `standard` / `deep`)
-- Source file list (pre-filtered, excluding .git/, node_modules/, venv/, dist/, build/)
+### Pipeline Mode (default)
+
+Invoked by the `using-long-task` router when detection rule 5b or 7b triggers (brownfield project, no existing `docs/rules/`). Receives `--next-skill` argument specifying the downstream skill to chain to:
+
+- Rule 7b (no SRS): `--next-skill long-task-requirements`
+- Rule 5b (SRS exists, no design): `--next-skill long-task-design`
+
+After scanning, the skill chains to the specified next skill.
+
+### Standalone Mode
+
+User invokes directly (e.g., to re-scan after codebase changes). No `--next-skill` argument — the skill performs the scan and stops without chaining.
 
 ## Design Principles
 
-- **Read-only** — do NOT modify any source files, configs, or git state
+- **Read-only** — do NOT modify any source files, configs, or git state (except creating `docs/rules/`)
 - **Observe, don't prescribe** — document what the project currently does, not what it should do
 - **Evidence-based** — every convention claim must cite concrete `file:line` examples
 - **Handle mixed conventions** — if the project is inconsistent, report all patterns with their frequency %
@@ -25,19 +37,29 @@ Dispatched as a SubAgent during Phase 0-pre (before requirements elicitation) by
 
 ## Process
 
-### Step 1: Sample Selection
+### Step 1: Create Output Directory
 
-Select a representative sample of source files based on scan depth:
+```bash
+mkdir -p docs/rules/
+```
 
-| Depth | Files per Category | Priority |
-|-------|-------------------|----------|
-| Lightweight | Top 20 | Most recently modified |
-| Standard | Top 50 | Recent + diverse directories |
-| Deep | Top 100 + all config files | Full coverage |
+### Step 2: Detect Language, Framework & Scan Depth
 
-Include files from different directories to capture organizational patterns. Include both implementation and test files.
+Analyze file extensions and dependency manifests (`package.json`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `go.mod`, `*.csproj`). Determine scan depth:
 
-### Step 2: Coding Style Analysis → `docs/rules/coding-style.md`
+| LOC Range | Depth | Files per Category |
+|-----------|-------|--------------------|
+| < 1,000 | Lightweight | Top 20 (most recently modified) |
+| 1,000–10,000 | Standard | Top 50 (recent + diverse directories) |
+| > 10,000 | Deep | Top 100 + all config files (full coverage) |
+
+### Step 3: Sample Selection
+
+Select a representative sample of source files based on scan depth (Step 2). Include files from different directories to capture organizational patterns. Include both implementation and test files.
+
+Pre-filter: exclude `.git/`, `node_modules/`, `venv/`, `dist/`, `build/` directories.
+
+### Step 4: Coding Style Analysis → `docs/rules/coding-style.md`
 
 Analyze and document:
 
@@ -71,7 +93,7 @@ For each: report dominant pattern, consistency % (how many files follow it), 2-3
 - Test file location: co-located vs separate `tests/` directory
 - Test file naming: `test_*.py` / `*.test.ts` / `*_test.go` / `*Test.java`
 
-### Step 3: Coding Constraints Analysis → `docs/rules/coding-constraints.md`
+### Step 5: Coding Constraints Analysis → `docs/rules/coding-constraints.md`
 
 This is the **most critical** output. Focus on constraints that would cause non-compliant code if missed.
 
@@ -138,7 +160,7 @@ This is the **most critical** output. Focus on constraints that would cause non-
 - Mock framework
 - Test grouping (describe/it, test classes, flat functions)
 
-### Step 4: Build & Compilation Analysis → `docs/rules/build-and-compilation.md`
+### Step 6: Build & Compilation Analysis → `docs/rules/build-and-compilation.md`
 
 **Build System** — identify:
 - Build tool: Makefile, CMake, Gradle, Maven, npm/yarn/pnpm scripts, Cargo, go build, Bazel
@@ -168,41 +190,14 @@ This is the **most critical** output. Focus on constraints that would cause non-
 - protobuf, OpenAPI/Swagger, GraphQL codegen, database migration generators
 - **Mark generated directories** — downstream skills should exclude these from convention checks
 
-### Step 5: Commit Conventions Analysis → `docs/rules/commit-conventions.md`
+### Step 7: Generate Index → `docs/rules/README.md`
 
-Analyze git history and repository configuration.
-
-> **Git command context**: All git commands run in the working directory provided at invocation. Ensure the working directory is a git repository before running git commands.
-
-**Commit Message Format** — run `git log --oneline -100` and analyze:
-- Format detection: Conventional Commits (`feat:`, `fix:`, `chore:`), Angular-style, gitmoji, ticket-prefixed (`JIRA-123:`), free-form
-- Subject line length: P95
-- Body usage: % of commits with body
-- Footer patterns: Signed-off-by, Co-authored-by, Breaking-Change, Fixes #N
-
-**Branch Naming** — run `git branch -r` and analyze:
-- Pattern: `feature/`, `fix/`, `release/`, `hotfix/`, flat naming
-- Include examples
-
-**PR Conventions** — check for:
-- `.github/pull_request_template.md` or `.gitlab/merge_request_templates/`
-- If exists, note the path (do not reproduce content)
-
-**Changelog** — check for CHANGELOG.md:
-- Format: Keep a Changelog, auto-generated, custom
-- If exists, note the format
-
-**Tags & Releases** — run `git tag` (limited) and analyze:
-- Naming: `v1.0.0`, `1.0.0`, date-based, other
-
-### Step 6: Generate Index → `docs/rules/README.md`
-
-Create an index file linking all 4 documents with a scan summary:
+Create an index file linking all 3 documents with a scan summary:
 
 ```markdown
 # Codebase Convention Rules
 
-> Auto-generated by codebase-scanner on YYYY-MM-DD.
+> Auto-generated by long-task-codebase-scanner on YYYY-MM-DD.
 > These documents capture the project's existing conventions.
 > Edit freely — downstream skills read these during Design and Worker phases.
 
@@ -213,7 +208,6 @@ Create an index file linking all 4 documents with a scan summary:
 | [coding-style.md](coding-style.md) | Naming, formatting, file organization |
 | [coding-constraints.md](coding-constraints.md) | 2/3方件 constraints, static analysis tools, error handling, imports |
 | [build-and-compilation.md](build-and-compilation.md) | Build system, CI/CD, packaging, environment |
-| [commit-conventions.md](commit-conventions.md) | Commit format, branches, PRs, tags |
 
 ## Key Findings Summary
 
@@ -223,10 +217,26 @@ Create an index file linking all 4 documents with a scan summary:
 - **Static Analysis Tools**: [list]
 - **Build System**: [name]
 - **CI/CD**: [platform]
-- **Commit Format**: [type]
 ```
 
-## Output File Formats
+### Step 8: Validate Results
+
+Verify ≥1 output file exists in `docs/rules/`. If the scan encountered issues and could not produce all files, write minimal stubs for missing files (non-blocking — scan is best-effort).
+
+### Step 10: User Review
+
+Present findings via `AskUserQuestion`:
+- Concise summary of key findings (especially 2nd/3rd-party constraints and prohibited APIs)
+- Ask user to confirm or edit `docs/rules/` files before continuing
+
+### Step 11: Chain to Next Skill (Pipeline Mode Only)
+
+If `--next-skill` was provided:
+- `Skill(skill="long-task:<next_skill>")`
+
+If no `--next-skill` (standalone mode): stop here.
+
+## Output File Format
 
 Each output file follows this structure:
 
@@ -245,35 +255,7 @@ Each output file follows this structure:
 [Content]
 
 ---
-*Scanner: codebase-scanner | Depth: [level] | Files sampled: N*
-```
-
-## Structured Return Contract
-
-```markdown
-### Verdict: PASS | PARTIAL | BLOCKED
-### Summary: [1-2 sentences]
-### Key Constraints Found: [2/3方件 constraint count]
-### Artifacts
-- docs/rules/coding-style.md
-- docs/rules/coding-constraints.md
-- docs/rules/build-and-compilation.md
-- docs/rules/commit-conventions.md
-- docs/rules/README.md
-### Metrics
-| Metric | Value |
-|--------|-------|
-| Files Sampled | N |
-| Languages Detected | [list] |
-| Internal Libraries (2nd-party) | N |
-| Prohibited APIs | N |
-| Static Analysis Tools | [list or "none"] |
-| Formatter Configs | [list or "none"] |
-| CI/CD Platform | [name or "none"] |
-| Commit Format | [type] |
-### Issues (only if PARTIAL or BLOCKED)
-| # | Area | Severity | Description |
-|---|------|----------|-------------|
+*Scanner: long-task-codebase-scanner | Depth: [level] | Files sampled: N*
 ```
 
 ## Multi-Language / Monorepo Handling
@@ -291,3 +273,11 @@ Each output file follows this structure:
 - **Scan efficiency** — use Glob for file discovery, Grep for pattern matching, Read for file inspection, Bash for git commands
 - **Respect .gitignore** — do not scan ignored directories
 - **No judgment** — document patterns as-is, even if they seem inconsistent or outdated
+
+## Integration
+
+- **Called by**: `using-long-task` router (when rule 5b or 7b triggers — brownfield, no `docs/rules/`)
+- **Reads**: Source files, dependency manifests, git history
+- **Chains to**: `long-task-requirements` (rule 7b) or `long-task-design` (rule 5b) — in pipeline mode; nothing in standalone mode
+- **Produces**: `docs/rules/coding-style.md`, `docs/rules/coding-constraints.md`, `docs/rules/build-and-compilation.md`, `docs/rules/README.md`
+- **Downstream consumers**: Design skill merges rules into Design §13; Worker skill references Design §13 during TDD

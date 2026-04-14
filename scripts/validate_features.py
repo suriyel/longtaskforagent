@@ -12,8 +12,6 @@ Checks:
 - srs_trace is a valid array of requirement IDs (if present)
 - tech_stack.language is a supported value (if present)
 - quality_gates values are numbers between 0 and 100 (if present)
-- git_sha field is a valid hex string 7–40 chars (if present)
-
 Usage:
     python validate_features.py <path/to/feature-list.json>
 """
@@ -30,11 +28,6 @@ VALID_STATUSES = {"failing", "passing"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
 QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min", "mutation_score_min"}
-VALID_COMMIT_PROFILES = {
-    "conventional-commits", "angular", "ticket-prefixed",
-    "gitmoji", "freeform", "custom",
-}
-
 
 def validate(path: str) -> tuple[list[str], list[str]]:
     """Validate feature-list.json. Returns (errors, warnings)."""
@@ -100,54 +93,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
             if bc is not None and not isinstance(bc, str):
                 errors.append(
                     f"build_system.build_command must be a string, got {type(bc).__name__}"
-                )
-
-    # Validate commit_conventions if present
-    commit_conventions = data.get("commit_conventions")
-    if commit_conventions is not None:
-        if not isinstance(commit_conventions, dict):
-            errors.append("commit_conventions must be an object")
-        else:
-            cc_profile = commit_conventions.get("profile")
-            if cc_profile is not None:
-                if not isinstance(cc_profile, str) or cc_profile not in VALID_COMMIT_PROFILES:
-                    errors.append(
-                        f"commit_conventions.profile must be one of {sorted(VALID_COMMIT_PROFILES)}, "
-                        f"got {cc_profile!r}"
-                    )
-            cc_max = commit_conventions.get("subject_max_length")
-            cc_min = commit_conventions.get("subject_min_length")
-            if cc_max is not None:
-                if not isinstance(cc_max, int) or cc_max < 1:
-                    errors.append(
-                        f"commit_conventions.subject_max_length must be a positive integer, got {cc_max!r}"
-                    )
-            if cc_min is not None:
-                if not isinstance(cc_min, int) or cc_min < 1:
-                    errors.append(
-                        f"commit_conventions.subject_min_length must be a positive integer, got {cc_min!r}"
-                    )
-            if (isinstance(cc_min, int) and cc_min >= 1 and
-                    isinstance(cc_max, int) and cc_max >= 1 and cc_min >= cc_max):
-                errors.append(
-                    f"commit_conventions.subject_min_length ({cc_min}) must be less than "
-                    f"subject_max_length ({cc_max})"
-                )
-            cc_prefixes = commit_conventions.get("prefix_whitelist")
-            if cc_prefixes is not None:
-                if not isinstance(cc_prefixes, list):
-                    errors.append("commit_conventions.prefix_whitelist must be an array")
-                elif not all(isinstance(p, str) for p in cc_prefixes):
-                    errors.append("commit_conventions.prefix_whitelist must contain only strings")
-            cc_strip = commit_conventions.get("strip_trailers")
-            if cc_strip is not None and not isinstance(cc_strip, bool):
-                errors.append(
-                    f"commit_conventions.strip_trailers must be a boolean, got {type(cc_strip).__name__}"
-                )
-            cc_branch = commit_conventions.get("branch_naming")
-            if cc_branch is not None and not isinstance(cc_branch, str):
-                errors.append(
-                    f"commit_conventions.branch_naming must be a string, got {type(cc_branch).__name__}"
                 )
 
     # Validate waves if present
@@ -302,14 +247,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
             if not isinstance(st_case_count, int) or st_case_count < 0:
                 errors.append(f"{prefix} (id={fid}): 'st_case_count' must be a non-negative integer, got {st_case_count!r}")
 
-        # Check git_sha field type (optional — set by Worker Step 11 after feature commit)
-        git_sha = feat.get("git_sha")
-        if git_sha is not None:
-            if not isinstance(git_sha, str) or not re.match(r"^[0-9a-f]{7,40}$", git_sha):
-                errors.append(
-                    f"{prefix} (id={fid}): 'git_sha' must be a hex string of 7–40 characters, got {git_sha!r}"
-                )
-
         # Check srs_trace field (optional, array of requirement IDs)
         srs_trace = feat.get("srs_trace")
         if srs_trace is not None:
@@ -426,13 +363,6 @@ def main():
             bc = bs.get("build_command")
             if bc:
                 summary += f" | Build: {bc}"
-
-        # Show commit conventions if configured
-        cc = data.get("commit_conventions")
-        if cc and isinstance(cc, dict):
-            cp = cc.get("profile")
-            if cp:
-                summary += f" | Commit: {cp}"
 
         if warnings:
             summary += f" | {len(warnings)} warning(s)"

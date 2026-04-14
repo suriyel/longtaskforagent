@@ -149,7 +149,7 @@ echo "Environment ready. Run: source .venv/bin/activate"
 
 ### 4. `RELEASE_NOTES.md`
 
-Living document that tracks all user-visible changes. Updated after **every git commit** to ensure release notes stay in sync with code.
+Living document that tracks all user-visible changes. Updated after **every feature completion** to ensure release notes stay in sync with code.
 
 ```markdown
 # Release Notes
@@ -177,7 +177,7 @@ Living document that tracks all user-visible changes. Updated after **every git 
 - Use [Keep a Changelog](https://keepachangelog.com/) format: Added, Changed, Deprecated, Removed, Fixed, Security
 - Reference feature IDs from `feature-list.json` in each entry
 - Move entries from `[Unreleased]` to a versioned section when milestones are reached
-- Update immediately after each git commit — never defer to end of session
+- Update after every feature completion — never defer to end of session
 
 ### 5. `examples/` Directory
 
@@ -251,7 +251,7 @@ Its job:
 4. **LLM generates `init.sh`/`init.ps1`** — real, runnable bootstrap scripts based on the design doc's tech stack; must support the project's environment manager (conda/miniconda/mamba, venv, poetry, uv, nvm, fnm, sdkman, docker, etc.); see `skills/long-task-init/references/init-script-recipes.md` for per-tool templates; must be idempotent and cross-platform
 5. **Populate `feature-list.json`** — from SRS: `constraints[]` (CON-xxx), `assumptions[]` (ASM-xxx), NFR-xxx → non-functional features, FR-xxx → functional features with `srs_trace` (requirement IDs) and optional `verification_steps`
 7. **Set up project skeleton** — directory structure, config files, package.json / pyproject.toml etc. (based on design doc architecture)
-8. **Initial git commit** — establish baseline
+8. **Scaffold project skeleton** — establish baseline
 9. **Verify environment** — run init script, confirm basic setup works
 
 ### Artifact Generation: Script vs LLM
@@ -319,11 +319,9 @@ Each worker cycle follows this exact sequence.
 17. Fix any findings inline — no SubAgent dispatch
 
 ### Phase 6: Persist (save state for next session)
-15. `git add` + `git commit` with descriptive message
-16. Update `RELEASE_NOTES.md` — add entry under `[Unreleased]` with feature title, ID, and change type
-17. Append session entry to `task-progress.md`
-18. Validate: `python scripts/validate_features.py feature-list.json`
-19. Commit updated `task-progress.md`, `feature-list.json`, and `RELEASE_NOTES.md`
+15. Update `RELEASE_NOTES.md` — add entry under `[Unreleased]` with feature title, ID, and change type
+16. Append session entry to `task-progress.md`
+17. Validate: `python scripts/validate_features.py feature-list.json`
 
 ### Phase 7: Continue
 20. If ALL features are `"passing"` → announce project completion and stop
@@ -356,14 +354,14 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | Attempting multiple features in parallel | Context exhaustion mid-implementation, cascading failures | One feature per cycle |
 | Declaring victory without testing | Features appear done but break in practice | Verify every feature through actual tests |
 | Writing code before tests (skipping TDD Red) | Tests end up testing implementation rather than behavior; missed edge cases | Always write failing tests first, then implement |
-| Not updating RELEASE_NOTES.md | Release notes drift from actual state; costly catch-up later | Update after every git commit |
+| Not updating RELEASE_NOTES.md | Release notes drift from actual state; costly catch-up later | Update after every feature completion |
 | Skipping examples for user-facing features | Users can't understand how to use new features; reduces project value | Add runnable example for every user-facing feature |
 | Removing srs_trace entries | Breaks ATS category traceability | srs_trace maps features to SRS requirements — keep intact |
 | Skipping coverage check | Tests may miss entire code paths | Run coverage after every TDD Green |
 | Skipping mutation testing | Tests may pass without catching real bugs | Run mutation after every TDD Refactor |
 | Gaming coverage with assert-free tests | High coverage but useless tests | Mutation testing catches this; strengthen assertions |
 | Skipping progress file update | Next session wastes tokens rediscovering state | Always update before ending session |
-| Not committing at session end | Work may be lost, next session can't diff | Always commit working code |
+| Not updating progress at session end | Next session can't diff what changed | Always update progress files |
 | Using markdown for feature list | Models tend to corrupt/reformat markdown lists | Use JSON for structured data |
 | Skipping requirements phase | Incomplete/ambiguous requirements cause rework | Run requirements elicitation, produce approved SRS first |
 | Skipping design phase | Ad-hoc design causes inconsistency and rework | Run design phase after SRS, get approval first |
@@ -398,7 +396,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
 ## Release Notes Maintenance
 
 ### When to update `RELEASE_NOTES.md`:
-- After **every** git commit that changes functionality
+- After **every** feature completion
 - Before ending session (as part of Persist phase)
 
 ### Format (Keep a Changelog):

@@ -40,8 +40,8 @@ digraph phase_detection {
     "Invoke long-task:long-task-hotfix" [shape=box style=filled fillcolor=orange];
     "Invoke long-task:long-task-increment" [shape=box style=filled fillcolor=plum];
     "Invoke long-task:long-task-requirements" [shape=box style=filled fillcolor=lightyellow];
-    "Run codebase-scanner then long-task:long-task-requirements" [shape=box style=filled fillcolor=wheat];
-    "Run codebase-scanner then long-task:long-task-design" [shape=box style=filled fillcolor=wheat];
+    "Invoke long-task:long-task-codebase-scanner (→ requirements)" [shape=box style=filled fillcolor=lightyellow];
+    "Invoke long-task:long-task-codebase-scanner (→ design)" [shape=box style=filled fillcolor=lightyellow];
     "Invoke long-task:long-task-design" [shape=box style=filled fillcolor=lightblue];
     "Invoke long-task:long-task-ats" [shape=box style=filled fillcolor=lightskyblue];
     "Invoke long-task:long-task-init" [shape=box style=filled fillcolor=lightyellow];
@@ -67,12 +67,12 @@ digraph phase_detection {
     "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated? (pre-design)" [label="yes"];
     "docs/rules/ populated? (pre-design)" -> "Invoke long-task:long-task-design" [label="yes"];
     "docs/rules/ populated? (pre-design)" -> "Brownfield? (pre-design)" [label="no"];
-    "Brownfield? (pre-design)" -> "Run codebase-scanner then long-task:long-task-design" [label="yes (brownfield)"];
+    "Brownfield? (pre-design)" -> "Invoke long-task:long-task-codebase-scanner (→ design)" [label="yes (brownfield)"];
     "Brownfield? (pre-design)" -> "Invoke long-task:long-task-design" [label="no (greenfield)"];
     "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated?" [label="no"];
     "docs/rules/ populated?" -> "Invoke long-task:long-task-requirements" [label="yes"];
     "docs/rules/ populated?" -> "Source files > 3 AND commits >= 5?" [label="no"];
-    "Source files > 3 AND commits >= 5?" -> "Run codebase-scanner then long-task:long-task-requirements" [label="yes (brownfield)"];
+    "Source files > 3 AND commits >= 5?" -> "Invoke long-task:long-task-codebase-scanner (→ requirements)" [label="yes (brownfield)"];
     "Source files > 3 AND commits >= 5?" -> "Invoke long-task:long-task-requirements" [label="no (greenfield)"];
 }
 ```
@@ -100,14 +100,14 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 5. Check `docs/plans/*-srs.md` → if any match:
    a. Check `docs/rules/` — if exists AND contains ≥1 `.md` file (beyond a greenfield stub) → `long-task-design` (rules present, proceed to design)
    b. Check for existing source files (brownfield heuristic — same logic as rule 7b): count source files excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`; and check `git rev-list --count HEAD 2>/dev/null || echo 0`
-      - If source files > 3 AND git commits ≥ 5 → **run codebase-scanner** (see Phase 0-pre below) → then `long-task-design`
-      - If source files > 3 AND git unavailable (no `.git` in cwd) → still treat as brownfield → **run codebase-scanner** → then `long-task-design`
+      - If source files > 3 AND git commits ≥ 5 → **invoke `long-task:long-task-codebase-scanner`** (see Phase 0-pre below) with `--next-skill long-task-design`
+      - If source files > 3 AND git unavailable (no `.git` in cwd) → still treat as brownfield → **invoke `long-task:long-task-codebase-scanner`** with `--next-skill long-task-design`
    c. Else (greenfield or no source files) → create `docs/rules/README.md` stub ("Greenfield — no conventions to extract") if missing → `long-task-design`
 7. Otherwise → check codebase conventions:
    a. Check `docs/rules/` — if exists AND contains ≥1 `.md` file (beyond a greenfield stub) → `long-task-requirements` (rules already scanned)
    b. Check for existing source files (brownfield heuristic): count source files (`*.py`, `*.js`, `*.ts`, `*.java`, `*.c`, `*.cpp`, `*.go`, `*.rs`, etc.) excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`; and check `git rev-list --count HEAD 2>/dev/null || echo 0`
-      - If source files > 3 AND git commits ≥ 5 → **run codebase-scanner** (see Phase 0-pre below) → then `long-task-requirements`
-      - If source files > 3 AND git unavailable (no `.git` in cwd) → still treat as brownfield → **run codebase-scanner** → then `long-task-requirements`
+      - If source files > 3 AND git commits ≥ 5 → **invoke `long-task:long-task-codebase-scanner`** (see Phase 0-pre below) with `--next-skill long-task-requirements`
+      - If source files > 3 AND git unavailable (no `.git` in cwd) → still treat as brownfield → **invoke `long-task:long-task-codebase-scanner`** with `--next-skill long-task-requirements`
       - Else (greenfield) → create `docs/rules/README.md` stub ("Greenfield — no conventions to extract") → `long-task-requirements`
 
 ## Skill Catalog
@@ -118,7 +118,7 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 | `long-task:long-task-multi-repo` | Multi-repo | repos-manifest.json exists — handles exploration, global SRS, split, dependency distribution |
 | `long-task:long-task-hotfix` | Hotfix | bugfix-request.json exists (HIGHEST priority) |
 | `long-task:long-task-increment` | Phase 1.5 | increment-request.json exists |
-| `codebase-scanner` (SubAgent) | Phase 0-pre | No rules docs AND existing source files > 3 — scan codebase before requirements (rule 7b) or before design (rule 5b) |
+| `long-task:long-task-codebase-scanner` | Phase 0-pre | No rules docs AND existing source files > 3 — scan codebase before requirements (rule 7b) or before design (rule 5b) |
 | `long-task:long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json |
 | `long-task:long-task-design` | Phase 0b | SRS exists, no design doc, no feature-list.json |
 | `long-task:long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
@@ -154,7 +154,7 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 | `docs/plans/*-st-report.md` | System testing report — Go/No-Go verdict |
 | `bugfix-request.json` | Signal file — triggers hotfix session (deleted after processing) |
 | `increment-request.json` | Signal file — triggers incremental requirements (deleted after processing) |
-| `docs/rules/*.md` | Codebase conventions — coding style, 2/3方件 constraints, build patterns, commit conventions (brownfield only) |
+| `docs/rules/*.md` | Codebase conventions — coding style, 2/3方件 constraints, build patterns (brownfield only) |
 | `repos-manifest.json` | Multi-repo topology — generated by hook, used by `long-task-multi-repo` skill (absent in single-repo projects) |
 
 ## Red Flags
@@ -180,8 +180,8 @@ These thoughts mean STOP — you're rationalizing:
 | "The requirement change is small, no need for impact analysis" | Increment skill catches hidden dependencies. |
 | "I'll just fix this quick bug directly" | Invoke `long-task-hotfix` — bug gets tracked in feature-list.json as category=bugfix and fixed via the full Worker pipeline. |
 | "I'll generate examples during Worker" | Examples are post-ST (ST Step 13). |
-| "I already know the project's conventions" | Run codebase-scanner. Implicit knowledge doesn't persist across sessions. 2/3方件 constraints are easy to miss. |
-| "This brownfield project is small, no need to scan" | Auto-skip handles greenfield (≤3 files). Let the scanner decide. |
+| "I already know the project's conventions" | Invoke `long-task-codebase-scanner`. Implicit knowledge doesn't persist across sessions. 2/3方件 constraints are easy to miss. |
+| "This brownfield project is small, no need to scan" | Auto-skip handles greenfield (≤3 files). Let the codebase-scanner skill decide. |
 
 ## Skill Priority
 
@@ -191,45 +191,9 @@ These thoughts mean STOP — you're rationalizing:
 
 ## Phase 0-pre: Codebase Convention Scan (Brownfield Only)
 
-When detection rule 5b or 7b triggers (brownfield project, no existing `docs/rules/`), execute these steps **before** invoking the next phase skill (`long-task-design` for rule 5b, `long-task-requirements` for rule 7b):
+When detection rule 5b or 7b triggers (brownfield project, no existing `docs/rules/`):
 
-1. **Create output directory**: `mkdir -p docs/rules/`
+- Rule 7b (no SRS): `Skill(skill="long-task:long-task-codebase-scanner", args="--next-skill long-task-requirements")`
+- Rule 5b (SRS exists, no design): `Skill(skill="long-task:long-task-codebase-scanner", args="--next-skill long-task-design")`
 
-2. **Detect language & framework**: analyze file extensions and dependency manifests (`package.json`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `go.mod`, `*.csproj`). Determine scan depth:
-   | LOC Range | Depth |
-   |-----------|-------|
-   | < 1,000 | Lightweight (top 20 files) |
-   | 1,000–10,000 | Standard (top 50 files) |
-   | > 10,000 | Deep (top 100 + all configs) |
-
-3. **Dispatch `codebase-scanner` SubAgent**:
-
-   ```
-   Agent(
-     subagent_type="general-purpose",
-     description="Scan codebase conventions for [project]",
-     prompt="""
-     Read the agent definition at: {plugin_root}/agents/codebase-scanner.md
-
-     ## Scan Parameters
-     - Working directory: {working_directory}
-     - Primary language(s): {languages}
-     - Primary framework(s): {frameworks}
-     - Scan depth: {scan_depth}
-     - Source file list: {file_list}
-
-     Execute the full codebase scanner process per the agent definition.
-     Return structured output per the Structured Return Contract.
-     """
-   )
-   ```
-
-4. **Validate results**: verify ≥1 output file exists in `docs/rules/`. If SubAgent returns BLOCKED, write minimal stubs (non-blocking — scan is best-effort).
-
-5. **User review** via `AskUserQuestion`:
-   - Present concise summary of key findings (especially 2/3方件 constraints and prohibited APIs)
-   - Ask user to confirm or edit `docs/rules/` files before continuing
-
-6. **Git commit**: `docs: add codebase convention rules`
-
-7. **Invoke `long-task:long-task-requirements`**
+The codebase-scanner skill handles all orchestration (directory creation, language detection, convention scanning, validation, user review) and chains to the next skill.
