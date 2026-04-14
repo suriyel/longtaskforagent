@@ -141,40 +141,6 @@ Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, PERF, INT
 If the feature has no external dependencies (pure computation, no IO, no DB, no network), add an explicit note:
 > INTG: N/A — pure function, no external I/O
 
-## Tasks
-
-### Task 1: Write failing tests
-**Files**: [exact paths]
-**Steps**:
-1. Create test file with imports
-2. Write test code for each row in Test Inventory:
-   - Test A: [matching table row A]
-   - Test B: [matching table row B]
-3. Run: `[test command]`
-4. **Expected**: All tests FAIL for the right reason
-
-### Task 2: Implement minimal code
-**Files**: [exact paths]
-**Steps**:
-1. [Exact change referencing Algorithm pseudocode]
-2. [Exact change referencing Interface Contract]
-3. Run: `[test command]`
-4. **Expected**: All tests PASS
-
-### Task 3: Coverage Gate
-1. Run: `[coverage command]`
-2. Check thresholds. If below: return to Task 1.
-3. Record coverage output as evidence.
-
-### Task 4: Refactor
-1. [Specific refactoring actions]
-2. Run full test suite. All tests PASS.
-
-### Task 5: Mutation Gate
-1. Run: `[mutation command] --paths-to-mutate=<changed-files>`
-2. Check threshold. If below: improve assertions.
-3. Record mutation output as evidence.
-
 ## Verification Checklist
 - [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
 - [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
