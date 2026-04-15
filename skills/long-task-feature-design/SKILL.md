@@ -1,6 +1,6 @@
 ---
 name: long-task-feature-design
-description: "Use before TDD in a long-task project — produce feature-level detailed design with interface contracts, algorithm pseudocode, diagrams, and test inventory"
+description: "Use before TDD in a long-task project — produce feature-level detailed design with interface contracts, algorithm pseudocode, diagrams, test inventory, and existing behavior analysis"
 ---
 
 # Feature-Level Detailed Design
@@ -21,7 +21,8 @@ Produce the feature detailed design document. Read all documents yourself.
 - Test Inventory negative ratio >= 40%
 - Test Inventory categories should cover FUNC, BNDRY, SEC as appropriate based on SRS acceptance criteria
 - §11 compliance: names follow §11.5, operations use §11.1 libraries, error handling per §11.6
-- **Maximize reuse**: Step 1c explores the codebase before design — prefer importing existing code over writing new
+- **Maximize reuse**: Step 1c explores the codebase before design — understand existing behavior related to requirements, prefer reusing existing logic over writing new
+- No TDD Task Decomposition in design output — TDD execution handled by dedicated sub-skills
 - Do NOT start TDD
 
 Report summary using Structured Return Contract from `feature-design-execution.md`.

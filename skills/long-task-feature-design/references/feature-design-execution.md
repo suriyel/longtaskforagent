@@ -9,7 +9,7 @@ You are a Feature Design execution SubAgent. Follow these rules exactly. When fi
 Produce a detailed design for a single feature, bridging system-level design (§4.N) and TDD implementation.
 
 System design answers "WHAT classes exist and HOW they interact."
-This skill answers "WHAT each method does internally, WHAT can go wrong, and HOW to test it."
+This skill answers "WHAT each method does internally, WHAT can go wrong, and WHAT existing behavior to leverage."
 
 ## Inputs
 
@@ -129,7 +129,39 @@ After loading context and BEFORE writing design content, discover ALL reusable c
 
 5. Record discoveries in "## Existing Code Reuse" with REUSE/EXTEND/PATTERN labels.
 
-**Non-blocking** — if BLOCKED or no findings, proceed to Phase B normally.
+**Non-blocking** — if BLOCKED or no findings, proceed to Phase A-2 normally.
+
+#### Phase A-2: Requirement-Related Behavior Discovery
+
+**Principle — maximize reuse of existing related logic**: Beyond finding reusable code modules, understand existing codebase behavior that relates to this feature's SRS acceptance criteria. Duplicating existing behavior (even with different code structure) is a design defect.
+
+**Trigger**: Same as Phase A (brownfield). If Phase A was skipped (greenfield), skip this too.
+
+1. Extract behavioral keywords from the feature's SRS acceptance criteria:
+   - Parse each Given/When/Then from srs_trace requirements
+   - Identify action verbs (e.g., "validate", "calculate", "transform", "authenticate")
+   - Identify domain nouns (e.g., "user", "order", "permission", "score")
+   - Combine into search patterns: `{verb}_{noun}`, `{noun}_{verb}`, domain-specific terms
+
+2. Search for existing behavior in source code:
+   - Grep for behavioral keywords in source files (exclude test files, configs, docs)
+   - Limit to top 10 file matches to control token budget
+   - For each match: read the surrounding function/class to understand what behavior exists
+   - Focus on: What does this code DO? What business rules does it enforce? What edge cases does it handle?
+
+3. Cross-reference with feature requirements:
+   - For each SRS acceptance criterion, check if existing code already handles it (fully or partially)
+   - **Full overlap**: existing code satisfies the criterion → mark as REUSE (may already be in Phase A findings — deduplicate)
+   - **Partial overlap**: existing code handles part of the criterion → mark as EXTEND with gap analysis
+   - **Adjacent behavior**: existing code handles a similar but different scenario → mark as PATTERN (informs design for consistency, prevents contradictory behavior)
+
+4. Record findings in the "Existing Code Reuse" section under "Requirement-Related Existing Behavior" subsection:
+
+   | # | SRS Criterion | Existing Behavior | Source File | Overlap | Design Impact |
+   |---|---------------|-------------------|-------------|---------|---------------|
+   | 1 | [AC reference] | [what existing code does] | [file:line] | [full/partial/adjacent] | [reuse/extend/pattern — specific recommendation] |
+
+**Non-blocking** — if no overlapping behavior found, note: "No existing behavior overlaps with this feature's requirements." and proceed.
 
 #### Phase B: Dependency Feature Scanning
 
@@ -300,7 +332,7 @@ Rules:
 
 **Relationship with TDD**: This table is the PRIMARY INPUT for TDD Red (long-task-tdd Step 1). TDD Red uses this table as its starting point and may add tests per its own Rule 1-5 (category coverage, assertion quality, real test requirements). The Test Inventory provides the design-driven scenarios; TDD adds implementation-driven scenarios discovered during coding.
 
-**Design Interface Coverage Gate (mandatory — execute before proceeding to §8):**
+**Design Interface Coverage Gate (mandatory — execute as the final design quality check):**
 
 1. Re-read §4.N of the system design document
 2. Extract ALL named functions, methods, endpoints, middleware, validators,
@@ -316,47 +348,6 @@ This is the PRIMARY defense against spec drift. If the design says "check_repo_a
 enforces ACL" and no test row covers it, the TDD phase will silently skip it —
 causing a late-stage finding that triggers cascading mock-setup costs.
 
-### 8. TDD Task Decomposition
-
-After the design is complete, decompose into TDD tasks.
-
-**Task granularity**: Each task should be 2-5 minutes of work. If a task would take longer, split it.
-
-**Task structure**:
-
-#### Task 1: Write failing tests
-**Files**: [exact paths]
-**Steps**:
-1. Create test file with imports
-2. Write test code for each row in Test Inventory (§7):
-   - Include mock setup, specific input values, concrete assertions
-   - Test A: [matching table row A]
-   - Test B: [matching table row B]
-3. Run: `[test command]`
-4. **Expected**: All tests FAIL for the right reason
-
-#### Task 2: Implement minimal code
-**Files**: [exact paths]
-**Steps**:
-1. [Exact change referencing Algorithm §5 pseudocode]
-2. [Exact change referencing Interface Contract §3]
-3. Run: `[test command]`
-4. **Expected**: All tests PASS
-
-#### Task 3: Coverage Gate
-1. Run: `[coverage command]`
-2. Check thresholds. If below: return to Task 1.
-3. Record coverage output as evidence.
-
-#### Task 4: Refactor
-1. [Specific refactoring actions]
-2. Run full test suite. All tests PASS.
-
-#### Task 5: Mutation Gate
-1. Run: `[mutation command] --paths-to-mutate=<changed-files>`
-2. Check threshold. If below: improve assertions.
-3. Record mutation output as evidence.
-
 ### Verification Checklist
 - [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
 - [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
@@ -369,6 +360,7 @@ After the design is complete, decompose into TDD tasks.
 - [ ] All method/class/parameter names comply with §11.5 naming conventions
 - [ ] All operations covered by §11.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
 - [ ] Existing Code Reuse section documents all discoverable reusable code from codebase exploration and passing dependencies
+- [ ] Requirement-related behavior scan complete — overlapping existing behavior documented or explicitly noted as absent
 
 ## Diagram Quality Rules
 
@@ -404,10 +396,10 @@ When the design document is complete, return your result in EXACTLY this format:
 ### Metrics
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| Sections Complete | N/9 | 9/9 (or N/A justified) | PASS/FAIL |
+| Sections Complete | N/8 | 8/8 (or N/A justified) | PASS/FAIL |
 | Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
-| Verification Checklist | N/11 | 11/11 | PASS/FAIL |
+| Verification Checklist | N/12 | 12/12 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
 | §11 Compliance | N checked / M total | All checked | PASS/FAIL |
 | Existing Code Reuse Items | N | ≥ 0 | INFO |
@@ -425,11 +417,11 @@ When the design document is complete, return your result in EXACTLY this format:
 ### Next Step Inputs
 - feature_design_doc: [path to the design document]
 - test_inventory_count: [number of test inventory rows]
-- tdd_task_count: [number of TDD tasks]
 - ambiguity_count: [number of unresolved ambiguities, 0 if PASS]
 - assumption_count: [number of assumptions made, 0 if none]
 - constraint_compliance: [PASS/FAIL]
 - reuse_items_count: [number of REUSE/EXTEND/PATTERN items]
+- requirement_behavior_items: [number of requirement-related behavior discoveries]
 ```
 
 **IMPORTANT**: Write the design document to disk at the specified output path. The orchestrator expects the file to exist after this SubAgent completes.

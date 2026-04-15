@@ -54,6 +54,14 @@ tests/
 
 > If zero passing dependencies AND codebase exploration returned no reusable items: "No reusable code discovered — all library usage follows §11.1 import patterns directly."
 
+**Requirement-Related Existing Behavior** (from codebase behavior discovery):
+
+| # | SRS Criterion | Existing Behavior | Source File | Overlap | Design Impact |
+|---|---------------|-------------------|-------------|---------|---------------|
+| 1 | [AC from srs_trace] | [what this code does] | [file:line] | [full/partial/adjacent] | [reuse/extend/pattern — specific recommendation] |
+
+> If no requirement-related existing behavior found: "No existing behavior overlaps with this feature's requirements — new implementation required."
+
 ## SRS Requirement
 
 [Copy the FULL FR-xxx section from SRS — EARS statement, acceptance criteria, Given/When/Then scenarios]
@@ -120,6 +128,7 @@ If the feature has no external dependencies (pure computation, no IO, no DB, no 
 - [ ] All method/class/parameter names comply with §11.5 naming conventions
 - [ ] All operations covered by §11.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
 - [ ] Existing Code Reuse section documents all discoverable reusable code from codebase exploration and passing dependencies
+- [ ] Requirement-related behavior scan complete — overlapping existing behavior documented or explicitly noted as absent
 
 ## Clarification Addendum
 
