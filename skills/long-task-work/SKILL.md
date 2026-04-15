@@ -105,7 +105,7 @@ Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates)`
 ## Step 8: End Session
 
 - Output: **Feature #\<id\> (\<title\>) — DONE.** Next: Feature #\<next_id\> (\<next_title\>)
-- If no failing non-deprecated features remain: "All active features passing — next session begins System Testing."
+- If no failing non-deprecated features remain: "All active features passing — development complete."
 - End session — **never loop back to Step 1**
 
 ## Critical Rules

@@ -12,13 +12,6 @@ Refactor code, run static analysis, and verify codebase compliance. Read all doc
 1. Read execution rules: `skills/long-task-tdd-refactor/references/tdd-refactor-execution.md`
 2. Read shared rules: `skills/long-task-tdd-shared/references/iron-law.md`
 
-## Context Discovery (do this yourself)
-
-1. Read `feature-list.json` → extract feature object, `tech_stack`
-2. Glob `docs/plans/*-design.md` → read §11 (Codebase Conventions & Constraints)
-3. Glob `docs/features/*` → find the feature design document, read "Existing Code Reuse" section
-4. Read `long-task-guide.md` → extract test command
-
 ## Key Constraints
 
 - **Phase 1: Refactor** — extract duplication, improve naming, simplify. Run tests after EVERY change. No new functionality.

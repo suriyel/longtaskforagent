@@ -95,7 +95,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 系统将自动进入**需求阶段**，通过结构化提问帮助您完善需求，最终生成标准化的 SRS 文档。后续工作流程完全自动化：
 
 ```
-需求 → 设计 → ATS (验收测试策略) → 初始化 → 工作循环 → 系统测试
+需求 → 设计 → 初始化 → 工作循环
 ```
 
 [点击查看样例项目](https://github.com/suriyel/githubtrends)
@@ -108,7 +108,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 
 **一款 Claude Code 技能插件，将单会话 AI 编码转变为严谨的多会话软件工程工作流。**
 
-大多数 AI 编程助手在一次对话后会丢失上下文。Long-Task Agent 通过实现七阶段架构和持久状态桥接解决了这个问题——使 Claude Code 能够以专业工程团队的纪律，跨无限会话构建复杂项目。
+大多数 AI 编程助手在一次对话后会丢失上下文。Long-Task Agent 通过实现五阶段架构和持久状态桥接解决了这个问题——使 Claude Code 能够以专业工程团队的纪律，跨无限会话构建复杂项目。
 ![Hero Banner](images/1.png)
 
 ## 为什么选择 Long-Task Agent？
@@ -118,10 +118,9 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 | AI 在 `/clear` 后忘记所有内容 | 持久化产物（`feature-list.json`、`task-progress.md`、git 历史）自动桥接会话 |
 | AI 不理解需求就生成代码 | 符合 ISO/IEC/IEEE 29148 的需求收集在编写任何代码前产生经批准的 SRS |
 | AI 跳过测试或编写浅层测试 | 严格的 TDD（红→绿→重构）配合覆盖率门禁（≥90% 行覆盖，≥80% 分支覆盖）和变异测试（≥80% 得分） |
-| AI 验收测试覆盖不全 | ATS（验收测试策略）在设计后前置规划每个需求的测试类别，独立 subagent 审核确保无覆盖盲区 |
 | AI 偏离批准的设计 | 设计接口覆盖门 + 每个功能后内联合规检查 |
 | 无法安全地向现有项目添加功能 | 增量技能执行影响分析，就地更新 SRS/设计，用波次跟踪变更 |
-| "在我机器上能跑"综合症 | 系统测试阶段（IEEE 829）包含回归、集成、端到端验证 |
+| "在我机器上能跑"综合症 | 严格 TDD + 覆盖率门禁 + 变异测试确保代码质量 |
 
 ![Problem vs Solution](images/2.png)
 
@@ -141,11 +140,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 | `task-progress.md` | 逐会话日志，带当前状态标题 |
 | `docs/plans/*-srs.md` | 已批准的软件需求规格说明书 |
 | `docs/plans/*-design.md` | 已批准的技术设计文档 |
-| `docs/plans/*-ats.md` | 已批准的验收测试策略（需求→场景映射，独立 subagent 审核） |
 | `long-task-guide.md` | 工作会话指南，含环境激活 + 工具命令 |
-| `docs/test-cases/feature-*.md` | 每功能的 ST 测试用例文档（ISO/IEC/IEEE 29119） |
-| `docs/plans/*-st-plan.md` | 带 RTM 的系统测试计划 |
-| `docs/plans/*-st-report.md` | 带 Go/No-Go 结论的系统测试报告 |
 | `RELEASE_NOTES.md` | Keep a Changelog 格式的活态变更日志 |
 | Git 历史 | 带描述性提交的完整变更历史 |
 
@@ -164,7 +159,7 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 
 ![Quality Gates](images/3.png)
 
-## 七阶段架构
+## 五阶段架构
 
 
 ![Architecture](images/4.png)
@@ -183,19 +178,9 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 - 第三方依赖版本及兼容性验证
 - 产出一份已批准的 **设计文档**（`docs/plans/*-design.md`）
 
-### 阶段 0c：验收测试策略（ATS）
-
-- 将每个 FR/IFR 映射到验收场景，标注必须的测试类别（FUNC、BNDRY、SEC、UI）
-- 跨功能集成场景预规划
-- 风险驱动测试优先级排序
-- 独立 ATS 审核 subagent（6 维度：覆盖完整性、类别多样性、场景充分性、可验证性、集成覆盖、风险一致性），支持自定义审核模板
-- 小项目（≤5 FR）自动跳过，Tiny 项目嵌入设计文档
-- 产出一份已批准的 **ATS**（`docs/plans/*-ats.md`）
-- 约束下游 Init（verification_steps）和 feature-st（用例派生）
-
 ### 阶段 1：初始化
 
-- 读取 SRS + 设计 + ATS，脚手架项目骨架
+- 读取 SRS + 设计，脚手架项目骨架
 - 需求阶段双向粒度分析（G1-G6拆分 + S1-S4合并），确保每个FR适配单次会话上下文预算
 - 创建初始 git 提交
 
@@ -207,44 +192,35 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps
 定位 → 引导 → 开发工具门禁 → 计划
   → TDD 红 → TDD 绿 → 覆盖率门禁
     → TDD 重构 → 变异门禁
-      → 功能 ST（黑盒） → 内联合规检查
+      → 内联合规检查
         → 持久化 → 下一个功能
 ```
-
-### 阶段 3：系统测试
-
-- 每功能 ST（ISO/IEC/IEEE 29119）—— 黑盒验收测试
-- 符合 IEEE 829 的系统级测试计划，带需求追溯矩阵
-- 回归、集成、端到端、探索性测试
-- Go/No-Go 结论——缺陷循环回工作会话进行修复
 
 ### 阶段 1.5：增量（发布后变更）
 
 - 放置 `increment-request.json` 信号文件 → 技能自动检测
 - 对现有功能的影响分析
-- 就地更新 SRS、设计、ATS（git 跟踪历史）
+- 就地更新 SRS、设计（git 跟踪历史）
 - 带波次元数据追加新功能以实现可追溯性
   ![Worker Cycle](images/5.png)
 
-## 11 技能超能力架构
+## 8 技能超能力架构
 
 Long-Task Agent 使用**按需技能加载**模式——只有引导路由器在会话开始时加载；阶段技能按需加载，保持上下文精简。
 
 ```
 using-long-task (引导路由器 — 始终加载)
    │
-   ├─→ long-task-requirements ──→ long-task-design ──→ long-task-ats ──→ long-task-init
-   │                                                  (≤5FR自动跳过)       │
-   │                                                                       ↓
+   ├─→ long-task-requirements ──→ long-task-design ──→ long-task-init
+   │                                                       │
+   │                                                       ↓
    ├─→ long-task-increment (如果 increment-request.json 存在)       long-task-work
-   │                                                                  │  │  │  │
-   │                                                           ┌──────┘  │  └──────┴─────┐
-   │                                                           ↓         ↓                ↓
-   │                                                      long-task  long-task       long-task
-   │                                                        -tdd     -quality       -feature-st
-   │                                                           │          │
-   │
-   └─→ long-task-st (当所有功能通过时)
+   │                                                                  │  │
+   │                                                           ┌──────┘  └──────┐
+   │                                                           ↓                ↓
+   │                                                      long-task        long-task
+   │                                                        -tdd           -quality
+   │                                                           │                │
 ```
 
 | 技能 | 角色 |
@@ -252,14 +228,11 @@ using-long-task (引导路由器 — 始终加载)
 | `using-long-task` | 引导路由器——检测项目状态，调用正确阶段 |
 | `long-task-requirements` | ISO 29148 需求收集 → SRS |
 | `long-task-design` | 带权衡分析的技术设计 |
-| `long-task-ats` | 验收测试策略 — 需求→场景映射 + 独立 subagent 审核 |
 | `long-task-init` | 项目脚手架和功能分解 |
 | `long-task-work` | 工作编排器（每周期一个功能） |
 | `long-task-tdd` | TDD 红→绿→重构纪律 |
 | *(quality gates)* | 覆盖率门禁 + 变异门禁（内联于 Worker Step 8） |
-| `long-task-feature-st` | 每功能黑盒验收测试（ISO/IEC/IEEE 29119） |
 | `long-task-increment` | 带影响分析的发布后功能添加 |
-| `long-task-st` | 带 Go/No-Go 结论的 IEEE 829 系统测试 |
 
 ---
 
@@ -330,18 +303,14 @@ python scripts/auto_loop.py feature-list.json --prompt "继续"
 |------|------|
 | `validate_features.py` | 验证 `feature-list.json` 模式和数据完整性 |
 | `validate_guide.py` | 验证 `long-task-guide.md` 结构完整性 |
-| `check_st_readiness.py` | 在系统测试前确认所有功能通过 |
 | `validate_increment_request.py` | 验证增量请求信号文件 |
-| `validate_st_cases.py` | 验证 ST 测试用例文档（ISO/IEC/IEEE 29119） |
 | `get_tool_commands.py` | 将技术栈映射到 CLI 命令 |
-| `validate_ats.py` | 验证 ATS 文档结构完整性 + SRS 交叉验证 |
-| `check_ats_coverage.py` | ATS↔功能列表↔ST 用例覆盖率检查 |
 
 ---
 
 ## 模板自定义指南
 
-Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行业标准的需求、设计、测试策略和测试文档。
+Long-Task Agent 提供可自定义的文档模板，用于生成符合行业标准的需求和设计文档。
 
 ### 内置模板
 
@@ -349,9 +318,6 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 |------|------|------|------|
 | SRS 模板 | `docs/templates/srs-template.md` | 软件需求规格说明书 | ISO/IEC/IEEE 29148 |
 | 设计模板 | `docs/templates/design-template.md` | 技术设计文档 | - |
-| ATS 模板 | `docs/templates/ats-template.md` | 验收测试策略文档 | - |
-| ATS 审核模板 | `docs/templates/ats-review-template.md` | ATS 审核规范（7 维度） | - |
-| ST 测试用例模板 | `docs/templates/st-case-template.md` | 系统测试用例文档 | ISO/IEC/IEEE 29119-3 |
 
 ### 自定义方式
 
@@ -375,51 +341,6 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 
 **要求**：模板必须是 `.md` 文件，且包含至少一个 `## ` 级别的标题。
 
-#### ATS 模板自定义
-
-通过 `feature-list.json` 根级别字段配置（或在 ATS 阶段通过对话指定）：
-
-```json
-{
-  "ats_template_path": "docs/templates/custom-ats-template.md",
-  "ats_review_template_path": "docs/templates/custom-ats-review-template.md",
-  "ats_example_path": "docs/templates/ats-example.md"
-}
-```
-
-| 字段 | 说明 |
-|------|------|
-| `ats_template_path` | 自定义 ATS 文档模板路径（定义文档结构） |
-| `ats_review_template_path` | 自定义审核规范模板路径（定义维度、严重级别、通过条件） |
-| `ats_example_path` | 示例文件路径（定义风格、语言、详细程度） |
-
-审核模板可自定义：增删维度（如添加 GDPR 数据测试覆盖）、修改严重级别定义、调整通过条件。
-
-#### ST 测试用例模板自定义
-
-通过 `feature-list.json` 根级别字段配置：
-
-```json
-{
-  "st_case_template_path": "docs/templates/custom-st-template.md",
-  "st_case_example_path": "docs/templates/st-case-example.md"
-}
-```
-
-| 字段 | 说明 |
-|------|------|
-| `st_case_template_path` | 自定义模板路径（定义文档结构） |
-| `st_case_example_path` | 示例文件路径（定义风格、语言、详细程度） |
-
-**配置组合效果**：
-
-| 配置 | 效果 |
-|------|------|
-| 两者都提供 | 使用模板的**结构** + 示例的**风格** |
-| 仅提供模板 | 使用模板结构 + 默认风格 |
-| 仅提供示例 | 从示例推断结构 + 使用示例风格 |
-| 都不提供 | 使用内置默认模板（ISO/IEC/IEEE 29119-3） |
-
 ### 模板优先级规则
 
 1. **用户指定路径** > **内置默认模板**
@@ -429,9 +350,8 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 ### 最佳实践
 
 1. **复制内置模板作为起点**：保留原有的章节结构，只修改指导文字
-2. **保持标准合规性**：SRS 模板建议保留 ISO 29148 核心章节；ST 模板建议保留 29119-3 必需字段
+2. **保持标准合规性**：SRS 模板建议保留 ISO 29148 核心章节
 3. **版本控制**：将自定义模板提交到 git，便于团队协作
-4. **ST 示例文件**：提供一个已填写的 ST 测试用例文档作为示例，可统一团队的风格和详细程度
 
 ---
 
@@ -444,9 +364,7 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 | 设计流程 | 临时性 | 2-3 种方案带权衡，逐节批准 |
 | TDD 纪律 | 可选，经常跳过 | 每个功能强制 红→绿→重构 |
 | 测试质量验证 | 仅行覆盖（如果有） | 覆盖率 + 变异测试，可配置阈值 |
-| 验收测试规划 | 临时性，类别偏向功能测试 | ATS 前置规划每个需求的测试类别，独立 subagent 审核 |
 | 实现后验证 | 无 | 设计接口覆盖门 + 内联合规检查 |
-| 系统测试 | 手动 QA | 符合 IEEE 829，带 RTM、Go/No-Go 结论 |
 | 发布后添加功能 | 直接编辑代码 | 影响分析、跟踪波次、文档更新 |
 | 项目状态可见性 | 读代码 | `task-progress.md` + `feature-list.json` |
 
@@ -456,19 +374,15 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 
 ```
 long-task-agent/
-├── skills/                          # 11 个技能（按需加载）
+├── skills/                          # 8 个技能（按需加载）
 │   ├── using-long-task/             # 引导路由器
 │   ├── long-task-requirements/      # 阶段 0a：需求和 SRS
 │   ├── long-task-design/            # 阶段 0b：设计
-│   ├── long-task-ats/               # 阶段 0c：验收测试策略（含独立审核 subagent）
 │   ├── long-task-init/              # 阶段 1：初始化
 │   ├── long-task-work/              # 阶段 2：工作编排器
 │   ├── long-task-tdd/               # TDD 纪律
 │   ├── long-task-quality/           # 覆盖率 + 变异门禁（引用文件，非独立技能）
-│   ├── long-task-feature-st/        # 每功能黑盒验收测试
-│   ├── long-task-increment/         # 增量开发
-│   ├── long-task-st/                # 系统测试
-│   └── long-task-st/                # 系统测试（含 Finalize 步骤）
+│   └── long-task-increment/         # 增量开发
 ├── scripts/                         # 验证和实用脚本
 ├── tests/                           # 所有脚本的测试套件
 ├── hooks/                           # SessionStart 钩子配置

@@ -292,6 +292,3 @@ Before marking a test as complete:
 - [ ] No low-value assertions (None checks, isinstance, import, len>0, key-in-dict, truthiness)
 - [ ] Low-value assertion ratio <= 20% of total assertions
 - [ ] Each assertion would fail for a plausible wrong implementation ("wrong implementation" test)
-- [ ] Coverage meets project thresholds (line >= 90%, branch >= 80%)
-- [ ] Mutation score meets threshold (>= 80%) for changed files
-- [ ] No surviving mutants without justification

@@ -131,7 +131,7 @@ Verify that functional requirements are appropriately granular for downstream fe
 
 ### Group Z: Sizing Checks (Z1-Z3)
 
-Verify no FR is under-sized for a dedicated implementation session. Each FR becomes a feature that runs through the full Worker pipeline (Feature Design → TDD → Quality Gates → Feature-ST), so trivially small FRs waste session overhead. The target implementation size per FR is approximately 1,000 lines of implementation code (excluding unit tests).
+Verify no FR is under-sized for a dedicated implementation session. Each FR becomes a feature that runs through the full Worker pipeline (Feature Design → TDD → Quality Gates), so trivially small FRs waste session overhead. The target implementation size per FR is approximately 1,000 lines of implementation code (excluding unit tests).
 
 | # | Check | YES/NO | Evidence |
 |---|-------|--------|----------|

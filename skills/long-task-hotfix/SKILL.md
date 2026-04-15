@@ -42,7 +42,7 @@ Read these files in order:
 4. `task-progress.md` `## Current State` section — recent session history
 6. `git log --oneline -10` — recent commit context
 
-If `feature_id` is non-null: read the linked feature's entry from `feature-list.json` to understand context (existing `srs_trace`, `st_case_path`).
+If `feature_id` is non-null: read the linked feature's entry from `feature-list.json` to understand context (existing `srs_trace`).
 
 ---
 
@@ -111,7 +111,7 @@ Add a new feature entry to `feature-list.json`. Determine the next available `id
 **Notes:**
 - `dependencies`: set to `[fixed_feature_id]` if non-null (ensures Worker processes the original feature before this fix); set to `[]` if null
 - `wave`: use the current maximum wave id from `feature-list.json`'s `waves` array
-- **ATS hint**: if `fixed_feature_id` is non-null and ATS doc exists (`docs/plans/*-ats.md`), look up the linked feature's requirement in the ATS mapping table. Set `srs_trace` to include the linked feature's requirement IDs so downstream feature-st can derive the required test cases from SRS acceptance criteria
+- If `fixed_feature_id` is non-null, set `srs_trace` to include the linked feature's requirement IDs for traceability
 
 After adding, validate:
 ```bash
@@ -148,7 +148,7 @@ Also update the `## Current State` header to reflect the new failing feature.
    Title: Fix: <title>
    Severity: <severity>
    Root cause: <one sentence>
-   Worker will handle: TDD → Quality → ST → Review
+   Worker will handle: TDD → Quality → Review
    ```
 4. Chain to: `long-task:long-task-work`
 
@@ -176,7 +176,7 @@ These thoughts mean STOP — you're rationalizing:
 | "I'll skip the feature-list.json entry, fix it directly" | Every fix must be traceable in feature-list.json as category=bugfix |
 | "Signal file has errors but the intent is clear" | Validator must pass; ask user to fix the file |
 | "I'll delete the signal file first, then clean up" | Signal file deletion is the LAST step after everything is verified |
-| "The fix is simple, Worker pipeline is overkill" | Worker ensures regression tests, coverage, ST cases, and review — all required |
+| "The fix is simple, Worker pipeline is overkill" | Worker ensures regression tests, coverage, and review — all required |
 
 ## Integration
 
@@ -184,4 +184,4 @@ This skill is invoked by the `using-long-task` router when `bugfix-request.json`
 - `bugfix-request.json` is deleted
 - A new `category: "bugfix"` feature is in `feature-list.json` with `status: "failing"`
 - The router's next detection: `feature-list.json` exists with failing features → `long-task-work`
-- Worker picks up the bugfix feature and runs the full TDD → Quality → ST → Review pipeline
+- Worker picks up the bugfix feature and runs the full TDD → Quality → Review pipeline

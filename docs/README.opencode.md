@@ -195,7 +195,7 @@ After installation, launch OpenCode in your project directory and describe what 
 The system automatically enters the **Requirements** phase and guides you through the full workflow:
 
 ```
-Requirements -> Design -> Init -> Worker cycles -> System Testing
+Requirements -> Design -> Init -> Worker cycles
 ```
 
 ### Finding Skills
@@ -224,7 +224,6 @@ Invoke each phase skill directly in OpenCode:
 | Design (Phase 0b) | `use skill long-task/long-task-design` |
 | Init (Phase 1) | `use skill long-task/long-task-init` |
 | Worker (Phase 2) | `use skill long-task/long-task-work` |
-| System Testing (Phase 3) | `use skill long-task/long-task-st` |
 | Increment (Phase 1.5) | `use skill long-task/long-task-increment` |
 
 ## Auto-Loop (Unattended Development)
@@ -318,11 +317,9 @@ Skills written for Claude Code are automatically adapted via the bootstrap injec
 | `long-task-design` | Phase 0b | Design document |
 | `long-task-init` | Phase 1 | Project initialization |
 | `long-task-work` | Phase 2 | Worker orchestrator |
-| `long-task-st` | Phase 3 | System testing |
 | `long-task-increment` | Phase 1.5 | Incremental development |
 | `long-task-tdd` | Discipline | TDD Red-Green-Refactor |
-| *(quality gates)* | Inline | Coverage & mutation gates (Worker Step 8) |
-| `long-task-feature-st` | Discipline | Per-feature acceptance testing |
+| *(quality gates)* | Inline | Coverage & mutation gates (Worker Step 6) |
 
 
 ## Updating

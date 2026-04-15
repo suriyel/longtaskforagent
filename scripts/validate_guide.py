@@ -38,8 +38,6 @@ REQUIRED_SECTIONS = [
      [r"mutation\s*gate", r"mutation.*test", r"mutation.*score"]),
     ("Verification enforcement",
      [r"verification.*enforce", r"fresh.*evidence", r"never.*mark.*passing.*without"]),
-    ("ST Test Cases / test case generation",
-     [r"st\s*test\s*case", r"test\s*case\s*generat", r"29119", r"st-case", r"long-task-st-case"]),
     ("Inline Compliance Check",
      [r"inline.*compliance", r"compliance.*check", r"spec.*coverage", r"design.*compliance"]),
     ("Persist / save state",

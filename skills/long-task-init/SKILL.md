@@ -1,6 +1,6 @@
 ---
 name: long-task-init
-description: "Use when ATS doc exists (or auto-skipped) but feature-list.json not yet created - scaffold project artifacts and populate features from Design §9.2"
+description: "Use when design doc exists but feature-list.json not yet created - scaffold project artifacts and populate features from Design §9.2"
 ---
 
 **LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
@@ -13,22 +13,20 @@ Run once after both SRS and design are approved. Scaffolds all persistent artifa
 
 ## Input Documents
 
-This skill reads from **three** approved documents:
+This skill reads from **two** approved documents:
 
 | Document | Location | Provides |
 |----------|----------|----------|
 | **SRS** | `docs/plans/*-srs.md` | Functional requirements (FR-xxx), constraints (CON-xxx), assumptions (ASM-xxx), interface requirements (IFR-xxx), glossary, user personas, acceptance criteria |
 | **Design** | `docs/plans/*-design.md` | Tech stack, architecture, data model, API design, testing strategy |
-| **ATS** | `docs/plans/*-ats.md` | Requirement→scenario mapping, required test categories per requirement (constrains downstream feature-st via srs_trace lookup) |
 
 ## Checklist
 
 You MUST create a TodoWrite task for each step and complete them in order:
 
-1. **Read the approved SRS, design, and ATS documents** from `docs/plans/`
+1. **Read the approved SRS and design documents** from `docs/plans/`
    - SRS: `docs/plans/*-srs.md` — for requirements, constraints, assumptions, glossary, personas
    - Design: `docs/plans/*-design.md` — for tech stack, architecture decisions
-   - ATS: `docs/plans/*-ats.md` — for requirement→category mapping (constrains `ui` flag and downstream feature-st category requirements via srs_trace)
 2. **Run `scripts/init_project.py`** to scaffold deterministic artifacts:
    ```bash
    python scripts/init_project.py <project-name> --path . --lang <language>
@@ -37,7 +35,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - `<language>` — one of `python|java|typescript|c|cpp` from the design doc tech stack
    - Use `--line-cov`, `--branch-cov`, `--mutation-score` to override thresholds (defaults: 90/80/80)
    - Creates: `feature-list.json`, `CLAUDE.md` (appended), `task-progress.md`, `RELEASE_NOTES.md`, `examples/`, `docs/plans/`
-   - Auto-copies helper scripts (`validate_features.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_st_cases.py`, `validate_increment_request.py`, `validate_bugfix_request.py`, `check_st_readiness.py`, `check_ats_coverage.py`) into project `scripts/`
+   - Auto-copies helper scripts (`validate_features.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_increment_request.py`, `validate_bugfix_request.py`) into project `scripts/`
 
 3. **Verify `tech_stack` and `quality_gates`** in `feature-list.json`:
    - Confirm `language`, `test_framework`, `coverage_tool`, `mutation_tool` match the design doc
@@ -51,9 +49,9 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - `skills/long-task-work/SKILL.md` — Worker workflow
      - `skills/long-task-quality/references/quality-execution.md` — verification enforcement
      - `skills/long-task-quality/coverage-recipes.md` — coverage/mutation tool setup
-     - `skills/using-long-task/references/architecture.md` — TDD workflow details
+     - `skills/using-long-task/references/architecture.md` — Persistent artifact schemas
    - Include ONLY the project's language-specific coverage/mutation commands (get from `python scripts/get_tool_commands.py feature-list.json`)
-   - **Must include all required sections**: Orient, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, ST Test Cases, Inline Compliance Check, Persist, Critical Rules, Output Optimization
+   - **Must include all required sections**: Orient, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules, Output Optimization
    - **Must include `Environment Commands` section** with:
      - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate myenv`, `nvm use 20`)
      - Direct test execution command (e.g., `pytest --cov=src tests/`)
@@ -147,7 +145,7 @@ Each feature:
 
 ## Integration
 
-**Called by:** long-task-ats (Step 12) or using-long-task (when ATS doc exists, no feature-list.json)
-**Reads:** `docs/plans/*-srs.md` (requirements) + `docs/plans/*-design.md` (architecture) + `docs/plans/*-ats.md` (test strategy constraints)
+**Called by:** long-task-design (Step 6) or using-long-task (when design doc exists, no feature-list.json)
+**Reads:** `docs/plans/*-srs.md` (requirements) + `docs/plans/*-design.md` (architecture)
 **Chains to:** long-task-work (after initialization complete)
 **Produces:** feature-list.json + all scaffolded artifacts listed above

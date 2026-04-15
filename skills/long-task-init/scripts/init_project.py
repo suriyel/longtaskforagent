@@ -38,18 +38,15 @@ _LONG_TASK_REFERENCE_BODY = (
     "**语言规则（Language Rule）**：所有对用户的回复和生成的文档必须使用中文（简体）。技能名称、代码标识符、JSON 字段名保持英文不变。\n\n"
     "This project uses a multi-session agent workflow with 11 skills loaded on-demand.\n"
     "The `using-long-task` skill routes to the correct phase based on project state.\n"
-    "Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §11) → ATS → Init → Worker cycles → System Testing → Finalize.\n"
-    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles → ST.\n\n"
+    "Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §11) → Init → Worker cycles → Finalize.\n"
+    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles.\n\n"
     "Key files: `docs/rules/*.md` (codebase conventions — brownfield only), "
     "`docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), "
     "`docs/plans/*-design.md` (design, includes §11 codebase constraints), "
-    "`docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), "
     "`feature-list.json` (task inventory), "
     "`task-progress.md` (session log), "
     "`RELEASE_NOTES.md` (changelog), "
     "`docs/features/*.md` (per-feature detailed design), "
-    "`docs/test-cases/feature-*.md` (per-feature ST test cases), "
-    "`docs/plans/*-st-report.md` (ST report), "
     "`increment-request.json` (increment signal).\n"
     "<!-- /long-task-agent -->\n"
 )
@@ -196,7 +193,7 @@ _Format: [Keep a Changelog](https://keepachangelog.com/) — Updated after every
 def create_examples_readme(project_name: str) -> str:
     return f"""# {project_name} — Examples
 
-Usage examples for external developers and AI Code Agents. Generated after System Testing (ST Step 13).
+Optional usage examples for external developers and AI Code Agents.
 
 ## Prerequisites
 
@@ -206,7 +203,7 @@ Usage examples for external developers and AI Code Agents. Generated after Syste
 
 | # | Scenario | File | How to run |
 |---|----------|------|------------|
-| — | *(examples will be generated after System Testing)* | — | — |
+| — | *(no examples yet)* | — | — |
 """
 
 
@@ -315,11 +312,8 @@ def main():
         "validate_features.py",
         "validate_guide.py",
         "get_tool_commands.py",
-        "validate_st_cases.py",
         "validate_increment_request.py",
         "validate_bugfix_request.py",
-        "check_st_readiness.py",
-        "check_ats_coverage.py",
         "auto_loop.py",
         "auto_loop_opencode.py",
     ]
@@ -341,21 +335,6 @@ def main():
     os.makedirs(rules_dir, exist_ok=True)
     print(f"Created: {rules_dir}")
 
-    # docs/test-cases dir
-    test_cases_dir = os.path.join(out_dir, "docs", "test-cases")
-    os.makedirs(test_cases_dir, exist_ok=True)
-    print(f"Created: {test_cases_dir}")
-
-    # docs/templates dir — copy ST case template
-    templates_dir = os.path.join(out_dir, "docs", "templates")
-    os.makedirs(templates_dir, exist_ok=True)
-    plugin_templates_dir = os.path.join(_PLUGIN_ROOT, "docs", "templates")
-    st_template_src = os.path.join(plugin_templates_dir, "st-case-template.md")
-    st_template_dst = os.path.join(templates_dir, "st-case-template.md")
-    if os.path.exists(st_template_src) and os.path.abspath(st_template_src) != os.path.abspath(st_template_dst):
-        shutil.copy2(st_template_src, st_template_dst)
-        print(f"Copied: st-case-template.md -> {templates_dir}")
-
     # examples dir + README.md
     examples_dir = os.path.join(out_dir, "examples")
     os.makedirs(examples_dir, exist_ok=True)
@@ -365,7 +344,7 @@ def main():
     print(f"Created: {examples_readme}")
 
     print(f"\nProject '{args.project_name}' initialized at {out_dir}")
-    print("Created: feature-list.json, CLAUDE.md, AGENTS.md, task-progress.md, RELEASE_NOTES.md, examples/, scripts/ (with helper scripts), docs/plans/, docs/test-cases/, docs/templates/")
+    print("Created: feature-list.json, CLAUDE.md, AGENTS.md, task-progress.md, RELEASE_NOTES.md, examples/, scripts/ (with helper scripts), docs/plans/")
     print("TODO (LLM generates during Initializer phase):")
     print("  - long-task-guide.md         (tailored Worker guide from SKILL.md + references + design doc)")
 

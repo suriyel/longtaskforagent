@@ -57,7 +57,6 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 | `SRS-VAGUE` | Acceptance criterion contains vague language ("fast", "user-friendly", "appropriate", "should handle") without measurable thresholds or concrete behaviors |
 | `SRS-DESIGN-CONFLICT` | SRS requirement and Design §4.N contradict on interface type, data format, behavior, or error handling |
 | `SRS-MISSING` | Acceptance criterion has no Given/When/Then or the expected result is not specified |
-| `ATS-MISMATCH` | ATS requires a test category (e.g., SEC) but the feature's observable behavior has no surface for that category |
 | `DEP-AMBIGUOUS` | Cross-feature interface is unclear — missing or incomplete §6.2 entry for a dependency |
 | `CONSTRAINT-CONFLICT` | §11 codebase convention conflicts with feature requirement — e.g., §11.1 mandates an internal library that lacks capabilities the feature needs (streaming, specific protocol, batch size), or §11.2 prohibits an API the feature's SRS explicitly requires |
 
@@ -66,9 +65,8 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 1. For each SRS acceptance criterion (from srs_trace requirements): check if it contains measurable, specific, testable conditions. Flag vague language without numeric thresholds or concrete behaviors → `SRS-VAGUE`
 2. For each SRS requirement mapped to this feature: cross-reference against Design §4.N. Flag contradictions in interface type, data format, behavior, or error handling → `SRS-DESIGN-CONFLICT`
 3. For each SRS acceptance criterion: verify Given/When/Then exists with explicit expected results → `SRS-MISSING`
-4. For each ATS-required category (if ATS doc provided): check if the feature's observable behavior has a testable surface for that category → `ATS-MISMATCH`
-5. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
-6. For each non-empty §11.1 row: check if the feature's requirements demand capabilities beyond the mandatory library's known API. For each non-empty §11.2 row: check if the feature's SRS acceptance criteria explicitly require the prohibited API → `CONSTRAINT-CONFLICT`
+4. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
+5. For each non-empty §11.1 row: check if the feature's requirements demand capabilities beyond the mandatory library's known API. For each non-empty §11.2 row: check if the feature's SRS acceptance criteria explicitly require the prohibited API → `CONSTRAINT-CONFLICT`
 
 **For each detected ambiguity, produce a structured record:**
 ```
@@ -80,7 +78,7 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 - Question for user: [specific, actionable question that would resolve the ambiguity]
 ```
 
-**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria. Skip `ATS-MISMATCH` (bugfix features focus on root cause, not full specification coverage).
+**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria.
 
 **Decision gate:**
 - **Zero ambiguities detected** → proceed to Step 2 normally. No friction added.
@@ -252,8 +250,6 @@ Rules:
 - Negative tests (FUNC/error + BNDRY/*) >= 40% of total rows
 - "Traces To" references the design section the test derives from
 - "Kills Which Bug?" names a specific wrong implementation this test catches
-
-**ATS category alignment** (if ATS doc was provided): Every main category listed in the ATS mapping table for this feature's requirement(s) MUST appear as at least one row's Category prefix in this Test Inventory. For example, if ATS requires SEC for FR-005, at least one Test Inventory row must have Category = `SEC/*`. Missing ATS categories → add rows before proceeding to §8.
 
 **Integration test rows (INTG category):**
 - For features with external dependencies (DB, HTTP services, file system, third-party SDK): add ≥1 `INTG/*` row per dependency type

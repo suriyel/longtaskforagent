@@ -497,7 +497,7 @@ After FR granularity confirmation, present via `AskUserQuestion`:
 
 > "The finalized FR list contains {N} functional requirement(s).
 >
-> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD, quality gates, feature-ST) run normally — no steps are skipped.
+> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD, quality gates) run normally — no steps are skipped.
 >
 > **Multi-repo scope**: This decision applies at the global SRS level. When the global SRS is split into per-repo SRS documents (Step 18), each per-repo SRS inherits `Single-Round: Yes` — all per-repo pipelines will set `single_round: true` in their `feature-list.json` and skip deferral analysis.
 >
@@ -761,7 +761,7 @@ Present a structured handoff summary to the user:
 
 4. **Instructions**:
    "全局 SRS 已完成并拆分为各仓库独立 SRS。所有参考文档、全局 SRS、跨仓库依赖信息已复制到各子仓库的 docs/ 目录下。"
-   "请分别 cd 到各仓库目录，独立启动新 session 执行后续流程（Design → ATS → Init → Worker → ST）。"
+   "请分别 cd 到各仓库目录，独立启动新 session 执行后续流程（Design → Init → Worker → ST）。"
    If cross-repo deps exist: "存在跨仓库依赖，建议先完成接口提供方仓库，再处理接口消费方仓库。具体依赖关系见上方摘要。"
 
 5. **End session** — do NOT invoke any other skill.

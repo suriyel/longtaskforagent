@@ -48,28 +48,7 @@ tests_dir = "tests/"
 runner = "python -m pytest -x --tb=short"
 ```
 
-**Commands**:
-```bash
-# Coverage
-pytest --cov=src --cov-branch --cov-report=term-missing
-
-# Mutation (incremental — changed files only)
-mutmut run --paths-to-mutate=src/changed_module.py
-
-# Mutation (full)
-mutmut run
-
-# View surviving mutants
-mutmut results
-mutmut show <mutant-id>
-```
-
-**Quiet Pipe Recipes** (compact output — use first; on FAIL re-run verbose):
-```bash
-pytest -q --tb=line 2>&1 | tail -30
-pytest --cov=src --cov-branch --cov-report=term-missing -q --tb=line 2>&1 | tail -30
-mutmut run 2>&1 | tail -30
-```
+> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
@@ -181,44 +160,7 @@ pitest {
 }
 ```
 
-**Commands**:
-```bash
-# Coverage
-mvn test jacoco:report
-# or
-gradle test jacocoTestReport
-
-# Mutation (incremental — specific classes)
-mvn pitest:mutationCoverage -DtargetClasses=com.example.ChangedClass
-# or
-gradle pitest -PtargetClasses=com.example.ChangedClass
-
-# Mutation (full)
-mvn pitest:mutationCoverage
-```
-
-**Quiet Commands** (capture to temp file → extract summary; on FAIL run detail command):
-```bash
-_LOG="/tmp/_build.log"
-
-# Test: run + summary (2-3 lines)
-mvn test -B -q -Dsurefire.redirectTestOutputToFile=true >"$_LOG" 2>&1; echo "EXIT:$?"; grep -E "Tests run:|BUILD " "$_LOG"
-# Test: detail (on failure, up to 30 lines)
-grep -E "\[ERROR\]|\[WARNING\]|<<<" "$_LOG" | head -30
-
-# Coverage: run + summary (3-4 lines)
-mvn test jacoco:report -B -q -Dsurefire.redirectTestOutputToFile=true >"$_LOG" 2>&1; echo "EXIT:$?"; grep -E "Tests run:|BUILD " "$_LOG"
-awk -F',' 'NR>1{mi+=$4;ci+=$5;mb+=$6;cb+=$7} END{printf "Line: %.1f%%, Branch: %.1f%%\n", 100*ci/(mi+ci+0.001), 100*cb/(mb+cb+0.001)}' target/site/jacoco/jacoco.csv
-# Coverage: detail (on failure — per-class missed lines/branches)
-awk -F',' 'NR>1 && ($4>0) {printf "%s: missed %d/%d lines, %d/%d branches\n",$3,$4,$4+$5,$6,$6+$7}' target/site/jacoco/jacoco.csv
-
-# Mutation: run + summary (3-5 lines)
-mvn pitest:mutationCoverage -B -q >"$_LOG" 2>&1; echo "EXIT:$?"; grep -E "^>>|BUILD " "$_LOG"
-# Mutation: detail (on failure)
-grep -E "\[ERROR\]|\[WARNING\]|<<<" "$_LOG" | head -30
-# Mutation: surviving mutant counts from XML report
-grep -c 'status="SURVIVED"' target/pit-reports/*/mutations.xml; grep -c 'status="KILLED"' target/pit-reports/*/mutations.xml
-```
+> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
@@ -273,27 +215,7 @@ grep -c 'status="SURVIVED"' target/pit-reports/*/mutations.xml; grep -c 'status=
 }
 ```
 
-**Commands**:
-```bash
-# Coverage (c8)
-npx c8 --branches 80 --lines 90 --reporter=text npx jest
-
-# Coverage (Jest built-in)
-npx jest --coverage
-
-# Mutation (incremental — changed files only)
-npx stryker run --mutate='src/changed-module.js'
-
-# Mutation (full)
-npx stryker run
-```
-
-**Quiet Pipe Recipes** (compact output — use first; on FAIL re-run verbose):
-```bash
-npx jest --verbose=false 2>&1 | tail -30
-npx c8 --branches 80 --lines 90 --reporter=text npx jest --verbose=false 2>&1 | tail -20
-npx stryker run --logLevel info 2>&1 | tail -30
-```
+> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
@@ -347,26 +269,7 @@ npx stryker run --logLevel info 2>&1 | tail -30
 }
 ```
 
-**Commands**:
-```bash
-# Coverage
-npx c8 --branches --reporter=text npm test
-# or
-npx vitest run --coverage
-
-# Mutation (incremental — changed files only)
-npx stryker run --mutate='src/changed-module.ts'
-
-# Mutation (full)
-npx stryker run
-```
-
-**Quiet Pipe Recipes** (compact output — use first; on FAIL re-run verbose):
-```bash
-npx vitest run --reporter=dot 2>&1 | tail -30
-npx vitest run --coverage --reporter=dot 2>&1 | tail -20
-npx stryker run --logLevel info 2>&1 | tail -30
-```
+> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
@@ -420,20 +323,7 @@ reporters:
   - SQLite
 ```
 
-**Commands**:
-```bash
-# Coverage
-make clean-coverage
-make CFLAGS="--coverage" test
-gcov -b src/*.c
-lcov --capture -d . -o coverage.info
-lcov --summary coverage.info
-
-# Mutation
-clang -fexperimental-new-pass-manager -fpass-plugin=/path/to/mull-ir-frontend.so \
-      -g -O0 src/*.c tests/*.c -o test-binary
-mull-runner ./test-binary
-```
+> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
@@ -455,52 +345,9 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-**Commands**:
-```bash
-# GCC + gcov + lcov
-cmake -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..
-make && ctest
-gcov -b src/*.cpp
-lcov --capture -d . -o coverage.info
-lcov --remove coverage.info '/usr/*' '*/test/*' -o coverage.info
-lcov --summary coverage.info
-
-# Clang + llvm-cov
-cmake -DENABLE_COVERAGE=ON -DCMAKE_CXX_COMPILER=clang++ ..
-make && ctest
-llvm-profdata merge -sparse default.profraw -o coverage.profdata
-llvm-cov report ./test-binary -instr-profile=coverage.profdata
-llvm-cov show ./test-binary -instr-profile=coverage.profdata --format=html > cov-report.html
-
-# Mutation (Mull — same approach as C)
-clang++ -fexperimental-new-pass-manager -fpass-plugin=/path/to/mull-ir-frontend.so \
-        -g -O0 src/*.cpp tests/*.cpp -o test-binary
-mull-runner ./test-binary
-```
+> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
 
 ---
-
-## Language Presets
-
-When using `init_project.py --lang <language>`:
-
-| Language | Test Framework | Coverage Tool | Mutation Tool |
-|----------|---------------|---------------|---------------|
-| `python` | pytest | pytest-cov | mutmut |
-| `java` | junit | jacoco | pitest |
-| `javascript` | jest | c8-jest | stryker |
-| `typescript` | vitest | c8 | stryker |
-| `c` | ctest | gcov | mull |
-| `cpp` / `c++` | gtest | gcov | mull |
-
-## Default Thresholds
-
-| Metric | Default | Rationale |
-|--------|---------|-----------|
-| Line coverage | >= 90% | Most production code paths must be tested |
-| Branch coverage | >= 80% | Conditional logic must be exercised both ways |
-| Mutation score | >= 80% | Tests must catch 4 out of 5 injected bugs |
-| Mutation full threshold | 100 features | Projects with ≤ this many active features run full mutation per-feature |
 
 ---
 
@@ -508,7 +355,7 @@ When using `init_project.py --lang <language>`:
 
 When the project's active feature count exceeds `mutation_full_threshold`, the Quality Gate scopes mutation testing to the current feature's changed files **and** tests. This avoids running the entire test suite per mutant, which becomes prohibitively slow in large projects.
 
-**Principle**: Mutate only changed source files, run only the feature's tests per mutant. Full mutation runs during ST phase (Step 3b) to catch project-wide regressions.
+**Principle**: Mutate only changed source files, run only the feature's tests per mutant. Full mutation runs when the project's active feature count is at or below the threshold.
 
 ### Identifying Feature Test Files
 

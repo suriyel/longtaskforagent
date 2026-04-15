@@ -95,12 +95,4 @@ def test_user_persisted_to_db():
     ...
 ```
 
-## Testing Anti-Patterns (Top 5)
-
-1. **Testing mock behavior** — Verify real code, not mock configuration.
-2. **Implementation detail testing** — Test behavior/output, not internal structure.
-3. **Tests that can't fail** — Every assertion must be falsifiable.
-4. **Gaming coverage** — Assert-free tests exercise code without verifying correctness.
-5. **Low-value assertions** — `assertNotNull` / `isinstance` / `len>0` without checking actual values. Max 20% of total.
-
-Full catalog: Read `testing-anti-patterns.md` in the same shared references directory.
+Full anti-pattern catalog (14 patterns with examples): `testing-anti-patterns.md` in the same directory.

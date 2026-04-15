@@ -2,17 +2,7 @@
 
 ## Core Concept
 
-Long-running tasks exceed a single context window. The solution: split work into a **Requirements Phase** (SRS), a **Design Phase**, an **ATS Phase** (Acceptance Test Strategy), an **Initializer Session** (runs once), and multiple **Worker Sessions** (run iteratively), connected by persistent artifacts on disk.
-
-### ATS Downstream Impact
-
-The ATS document (`docs/plans/*-ats.md`) maps every SRS requirement to acceptance scenarios with required test categories (`FUNC, BNDRY, SEC, UI, PERF`). It flows downstream:
-
-- **SRS → ATS**: Acceptance criteria written in the SRS (Given/When/Then) drive ATS scenario derivation. Well-structured acceptance criteria with explicit boundary conditions and error cases produce stronger ATS coverage.
-- **ATS → Init**: Init uses `srs_trace` → ATS category lookup to guide feature decomposition.
-- **ATS → Feature-Design**: Test Inventory (§7) must cover all ATS-required main categories for the feature's requirement(s).
-- **ATS → Feature-ST**: Hard gate — ST test cases must cover ATS-required categories.
-- **ATS → System-ST**: Hard gate — `check_ats_coverage.py --strict` must exit 0.
+Long-running tasks exceed a single context window. The solution: split work into a **Requirements Phase** (SRS), a **Design Phase**, an **Initializer Session** (runs once), and multiple **Worker Sessions** (run iteratively), connected by persistent artifacts on disk.
 
 ## Persistent Artifacts
 
@@ -92,7 +82,7 @@ Structured task inventory. JSON format prevents accidental model corruption. Als
 
 **Rules**:
 - Status is only `"failing"` or `"passing"` — never `"partial"` or `"in-progress"`
-- `srs_trace` is required per feature — maps to SRS requirement IDs for ATS category lookup
+- `srs_trace` is required per feature — maps to SRS requirement IDs for traceability
 - `verification_steps` is optional — if present, provides supplementary test context
 - Features marked `"passing"` must be re-verified at session start
 
@@ -130,17 +120,7 @@ Living document that tracks all user-visible changes. Updated after **every feat
 
 ### 4. `examples/` Directory
 
-Scenario-based usage examples for external developers and AI Code Agents. Generated in a single batch after System Testing Go verdict (ST Step 13a) via the `example-generator` SubAgent.
-
-```
-examples/
-├── README.md                    # Index of all examples with descriptions
-├── 01-user-login.py             # Feature #1: login flow demo
-├── 02-user-registration.py      # Feature #2: registration demo
-├── 05-password-reset.sh         # Feature #5: curl commands for password reset API
-└── ui/
-    └── 03-dashboard-tour.md     # Feature #3: step-by-step UI walkthrough
-```
+Optional directory for scenario-based usage examples. Created during Init; examples can be added manually as the project matures.
 
 **Rules**:
 - Scenario-oriented, not feature-oriented — one example may span multiple features
@@ -148,7 +128,6 @@ examples/
 - Name pattern: `<NN>-<scenario-name>.<ext>` (e.g., `01-quick-start.py`)
 - `examples/README.md` index lists all examples with prerequisites and run commands
 - Skip non-externalizable features (infrastructure, internal logic, config scaffolding)
-- See `agents/example-generator.md` for full generation rules
 
 ### 5. Git History
 
@@ -213,152 +192,18 @@ Its job:
 | `constraints[]` content | **LLM** | **SRS** | Extracted from SRS "Constraints" section (CON-xxx) |
 | `assumptions[]` content | **LLM** | **SRS** | Extracted from SRS "Assumptions" section (ASM-xxx) |
 
-## Worker Session Workflow (Context Cycle)
+## Worker Session Workflow
 
-Each worker cycle follows this exact sequence.
-
-### Phase 1: Orient (understand current state)
-1. `pwd` — confirm working directory
-2. Read `task-progress.md` — understand what happened before
-3. Read `feature-list.json` — find next priority failing feature; note `constraints[]` and `assumptions[]` at root level
-4. `git log --oneline -20` — see recent commits
-5. `git diff HEAD~3` — check recent changes if needed
-6. Read design doc **Section 1** (Project Overview) — architecture snapshot for global context
-
-### Phase 2: TDD Red — write failing tests first
-8. Pick the highest-priority `"failing"` feature whose dependencies are all `"passing"`
-9. Write unit tests that cover the Feature Design Test Inventory (§7) — tests MUST fail (no implementation yet)
-   - Follow test scenario rules (see [test-scenario-rules.md](test-scenario-rules.md)):
-     - Include happy path, error handling, boundary, and security scenarios
-     - Ensure negative test ratio >= 40%
-     - Ensure low-value assertion ratio <= 20%
-     - Apply the "wrong implementation" challenge to each test
-
-### Phase 3: TDD Green — implement to pass tests
-11. Write minimal code to make ALL tests pass
-12. Run full test suite — confirm all new tests green, no regressions
-
-### Phase 3.5: Coverage Gate — verify test coverage
-12a. Run coverage tool for the project's language (see [coverage-and-mutation.md](coverage-and-mutation.md))
-12b. Check: line coverage >= `quality_gates.line_coverage_min` (default 90%), branch coverage >= `quality_gates.branch_coverage_min` (default 80%)
-12c. If BELOW threshold: write additional tests (return to Phase 3 for new test cases)
-12d. Record coverage report output as evidence
-
-### Phase 4: TDD Refactor — clean up
-13. Refactor code while keeping all tests green
-14. Run verification again — mark feature as `"passing"` in `feature-list.json` ONLY after ALL tests pass
-15. **Verification enforcement**: Execute each `verification_step`, read FULL output, confirm all green. If you catch yourself thinking "should pass" or "probably works" — STOP and re-run. See [verification-enforcement.md](verification-enforcement.md).
-
-### Phase 4.5m: Mutation Gate — verify test effectiveness
-15a. **Scope decision**: If active features ≤ `quality_gates.mutation_full_threshold` (default 100) → run `mutation_full`; otherwise → run `mutation_feature` (changed files + feature's tests only)
-15b. Check: mutation score >= `quality_gates.mutation_score_min` (default 80%)
-15c. If BELOW threshold: improve test assertions to kill surviving mutants (return to Phase 3)
-15d. Record mutation report output as evidence
-15e. Full mutation testing (all source files, all tests) runs during ST phase (Step 3b) — no per-feature milestone runs needed
-
-### Phase 4.5: Inline Compliance Check
-16. Run mechanical compliance checks (interface contract verification, test inventory cross-check, dependency version spot-check)
-17. Fix any findings inline — no SubAgent dispatch
-
-### Phase 5: Persist (save state for next session)
-15. Update `RELEASE_NOTES.md` — add entry under `[Unreleased]` with feature title, ID, and change type
-16. Append session entry to `task-progress.md`
-17. Validate: `python scripts/validate_features.py feature-list.json`
-
-### Phase 6: Continue
-20. If ALL features are `"passing"` → announce project completion and stop
-21. Otherwise, tell user which feature is done and which is next
-22. If context budget remains, proceed to Phase 1 for the next feature
-23. If context is exhausted, end the session
-
-**Critical rule**: One feature per cycle. If context remains after one feature, pick the next. Never leave code in a broken state.
-
-## Context Continuity Flow
-
-```
-Requirements → SRS approved → Design → design approved → Initializer → scaffold → populate features → commit → begin first Worker cycle
-                                                                                                                        ↓
-                                                                                                                ┌─── Worker Cycle ───┐
-                                                                                                                │ Orient             │
-                                                                                                                │ Implement (1 feat) │
-                                                                                                                │ Persist + commit   │
-                                                                                                                │ Continue / End     │
-                                                                                                                └────────┬───────────┘
-                                                                                                                         │
-                                                                                                                (repeat until all passing)
-```
+> Authoritative workflow definition: `skills/long-task-work/SKILL.md`. Cycle: Orient → Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gates → Persist → End Session. One feature per cycle; external `scripts/auto_loop.py` handles multi-feature automation.
 
 ## Anti-Patterns to Avoid
 
 | Anti-Pattern | Why It Fails | Correct Approach |
 |---|---|---|
-| Attempting multiple features in parallel | Context exhaustion mid-implementation, cascading failures | One feature per cycle |
-| Declaring victory without testing | Features appear done but break in practice | Verify every feature through actual tests |
-| Writing code before tests (skipping TDD Red) | Tests end up testing implementation rather than behavior; missed edge cases | Always write failing tests first, then implement |
-| Not updating RELEASE_NOTES.md | Release notes drift from actual state; costly catch-up later | Update after every feature completion |
-| Skipping examples for user-facing features | Users can't understand how to use new features; reduces project value | Add runnable example for every user-facing feature |
-| Removing srs_trace entries | Breaks ATS category traceability | srs_trace maps features to SRS requirements — keep intact |
-| Skipping coverage check | Tests may miss entire code paths | Run coverage after every TDD Green |
-| Skipping mutation testing | Tests may pass without catching real bugs | Run mutation after every TDD Refactor |
-| Gaming coverage with assert-free tests | High coverage but useless tests | Mutation testing catches this; strengthen assertions |
+| Attempting multiple features in parallel | Context exhaustion, cascading failures | One feature per cycle |
+| Using markdown for feature list | Models tend to corrupt/reformat markdown | Use JSON for structured data |
+| Skipping requirements phase | Incomplete requirements cause rework | Run requirements elicitation, produce approved SRS first |
+| Skipping design phase | Ad-hoc design causes inconsistency | Run design phase after SRS, get approval first |
 | Skipping progress file update | Next session wastes tokens rediscovering state | Always update before ending session |
-| Not updating progress at session end | Next session can't diff what changed | Always update progress files |
-| Using markdown for feature list | Models tend to corrupt/reformat markdown lists | Use JSON for structured data |
-| Skipping requirements phase | Incomplete/ambiguous requirements cause rework | Run requirements elicitation, produce approved SRS first |
-| Skipping design phase | Ad-hoc design causes inconsistency and rework | Run design phase after SRS, get approval first |
-| Guess-and-fix debugging | Random fixes waste time and may introduce new bugs | Follow systematic debugging — trace root cause. See [systematic-debugging.md](../../long-task-work/references/systematic-debugging.md) |
-| Claiming "it works" without evidence | Unverified claims lead to false confidence | Show actual test output before marking passing. See [verification-enforcement.md](verification-enforcement.md) |
-| Accepting low-value assertions | Tests with None/isinstance/import checks provide zero bug-finding ability | Enforce <= 20% low-value assertion ratio. See [testing-anti-patterns.md](../../long-task-tdd/testing-anti-patterns.md) #14 |
-
-## Verification Strategy
-
-### For ALL features (TDD mandatory):
-1. **Red**: Write failing tests first — tests define the expected behavior
-   - Follow test scenario rules: category coverage, negative ratio >= 40%, low-value assertions <= 20%
-2. **Green**: Write minimal implementation to pass tests
-3. **Refactor**: Clean up while keeping tests green
-4. **Quality gates**: Coverage gate (line ≥90%, branch ≥80%) + Mutation gate (score ≥80%) objectively verify test quality
-
-### For API / backend features:
-- Unit tests for business logic (pytest, jest, etc.)
-- Integration tests: make actual HTTP requests and check responses
-- Verify database state when applicable
-
-### For ALL features (Coverage & Mutation mandatory):
-- **Coverage**: Run language-specific coverage tool, verify line/branch thresholds met
-- **Mutation**: Run feature-scoped mutation (large projects) or full mutation (small projects ≤ `mutation_full_threshold`), verify mutation score threshold met
-- See [coverage-and-mutation.md](coverage-and-mutation.md) for per-language tool setup and commands
-
-### For data / pipeline features:
-- Run with sample data and verify output
-- Check edge cases explicitly
-- Compare output against expected results
-
-## Release Notes Maintenance
-
-### When to update `RELEASE_NOTES.md`:
-- After **every** feature completion
-- Before ending session (as part of Persist phase)
-
-### Format (Keep a Changelog):
-```markdown
-## [Unreleased]
-
-### Added
-- Feature description (feature #ID)
-
-### Changed
-- What changed and why (feature #ID)
-
-### Fixed
-- Bug description (feature #ID)
-```
-
-### Categories:
-- **Added**: new features
-- **Changed**: changes to existing functionality
-- **Deprecated**: soon-to-be removed features
-- **Removed**: removed features
-- **Fixed**: bug fixes
-- **Security**: vulnerability fixes
+| Guess-and-fix debugging | Random fixes waste time, may introduce new bugs | Follow systematic debugging — trace root cause |
 

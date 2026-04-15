@@ -26,9 +26,9 @@ You MUST create a TodoWrite task for each of these items and complete them in or
 3. **Propose 2-3 approaches** — with trade-offs and your recommendation
 4. **Section-by-section design approval** — architecture, data model, API, UI, testing
 5. **Write design document** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
-6. **Transition to ATS** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ats`
+6. **Transition to Init** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-init`
 
-**The terminal state is invoking long-task-ats.** Do NOT invoke any other implementation skill.
+**The terminal state is invoking long-task-init.** Do NOT invoke any other implementation skill.
 
 ## Step 1: Read SRS & Extract Design Inputs
 
@@ -103,7 +103,7 @@ For non-trivial projects, break the design into sections and get approval per se
    - Test philosophy: TDD with quality gates (Red → Green → Refactor → Coverage → Mutation)
    - Tool selections: test framework, coverage tool, mutation tool (with versions — these are design decisions)
    - Coverage thresholds: line >= X%, branch >= Y%, mutation >= Z%
-   - **Boundary**: "Detailed requirement-to-test-category mapping and cross-feature integration scenarios are defined in the ATS phase — not here."
+   - **Boundary**: "Detailed test scenarios are defined during feature design and TDD phases — not here."
 7. **Development plan** — milestones, task decomposition, priority ordering
    - Must define milestones with clear exit criteria
    - Must decompose into context-budget-sized features (P0-P3) — each row in §9.2 becomes one feature in `feature-list.json`; group related right-sized FRs (already validated by SRS G+S heuristics) into vertical slices; include `Mapped FRs` column for traceability
@@ -158,22 +158,22 @@ Read the template found in Step 2 (user-specified or default `docs/templates/des
 
 ## Step 5b: Design Integration Coherence Check
 
-Before transitioning to ATS, mechanically verify cross-feature integration coherence:
+Before transitioning to Init, mechanically verify cross-feature integration coherence:
 
 1. **Contract completeness**: For each edge in §3.3 component diagram, verify a corresponding row exists in §6.2 Internal API Contracts. Flag missing rows.
 2. **Schema consistency**: For each §6.2 row, verify that Provider feature's §4.N class diagram includes the Response Schema type, and Consumer feature's §4.N references the Request Schema. Flag mismatches.
 3. **Dependency completeness**: For each feature that appears in a §6.2 "Consumer" column, verify it lists the Provider feature ID in §9.3 dependency chain. Flag missing dependency edges.
 
-Present any flagged issues to the user. Resolve before proceeding to ATS.
+Present any flagged issues to the user. Resolve before proceeding to Init.
 
-## Step 6: Transition to ATS
+## Step 6: Transition to Init
 
 Once the design document is saved and committed:
 
-1. Summarize key inputs the ATS skill will need:
-   - **From SRS**: all FR/IFR requirements with acceptance criteria
-   - **From Design**: testing strategy, tech stack, architecture risk areas
-2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ats` to generate the Acceptance Test Strategy
+1. Summarize key inputs the Init skill will need:
+   - **From SRS**: requirements, acceptance criteria → features
+   - **From Design**: tech stack, architecture → project skeleton
+2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-init` to scaffold the project
 
 ## Scaling the Design Phase
 
@@ -279,5 +279,5 @@ The Init phase uses this plan to populate `feature-list.json` with correct prior
 
 **Called by:** using-long-task (when SRS exists, no design doc, no feature-list.json)
 **Requires:** Approved SRS at `docs/plans/*-srs.md`; optionally `docs/rules/*.md` (codebase conventions from Phase 0-pre scan)
-**Chains to:** long-task-ats (after design approval)
+**Chains to:** long-task-init (after design approval)
 **Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md` (always includes §11 Codebase Conventions — populated from `docs/rules/` for brownfield, empty tables for greenfield)

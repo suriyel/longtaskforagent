@@ -101,7 +101,6 @@ Check `quality_gates.mutation_full_threshold` (default 100) against total active
 |-------|------|---------------|-----------|
 | Per feature (Gate 2, large project) | `mutation_feature` | Changed source files | Feature's tests only |
 | Per feature (Gate 2, small project) | `mutation_full` | All source files | Full test suite |
-| System Testing (ST Step 3b) | `mutation_full` | All source files | Full test suite |
 
 ### Final Verification
 

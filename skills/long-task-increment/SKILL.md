@@ -24,7 +24,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
 - Read `feature-list.json` — note all features, their statuses, wave history, constraints, assumptions
 - Read approved SRS (`docs/plans/*-srs.md`) — current requirements baseline
 - Read approved design (`docs/plans/*-design.md`) — current architecture
-- If exists: read ATS document (`docs/plans/*-ats.md`) — current test strategy baseline
 - If exists: read deferred backlog (`docs/plans/*-deferred.md`) — pre-elicited requirements available for pickup (skip re-elicitation for items with complete EARS + acceptance criteria)
 - Read `task-progress.md` — session history
 - Run `git log --oneline -10` — recent context
@@ -183,38 +182,6 @@ Update the existing design document **in place** for affected sections:
    Deprecated: FR-012 (reason)
    ```
 
-### 4b. ATS Revision
-
-**Skip this step** if no ATS document exists (`docs/plans/*-ats.md`).
-
-Update the existing ATS document **in place** for affected requirements:
-
-1. Read `docs/plans/*-ats.md`
-2. For **new** requirements:
-   - Add mapping table rows with requirement ID, scenarios, required categories
-   - Apply category assignment rules (FUNC+BNDRY for all FRs; +SEC for input/auth)
-   - Update the coverage statistics table (Section 2.4)
-   - If new cross-feature interactions: add rows to Integration Scenarios (Section 5)
-3. For **modified** requirements:
-   - Update the corresponding mapping table row in place (scenarios, categories)
-   - Update integration scenarios if data flows changed
-4. For **deprecated** requirements:
-   - Add `[DEPRECATED - Wave N]` marker to the corresponding mapping table row
-   - Do NOT delete the row (preserve traceability)
-   - Update coverage statistics (exclude deprecated rows from totals)
-5. For **new** §6.2 contracts: add integration scenarios per the §6.2-driven derivation rule (at least one happy-path + one error scenario per contract row). For **modified** §6.2 contracts: update corresponding integration scenarios.
-6. Update the Risk-Driven Test Priority section if risk profile changed
-6. Get user approval for ATS changes
-7. Git commit:
-   ```
-   docs: update ATS for wave N — <brief scope>
-
-   New: <req_ids added>
-   Modified: <req_ids changed>
-   Deprecated: <req_ids deprecated>
-   ```
-8. **ATS re-review check**: if ATS changes affect >3 mapping table rows OR introduce a new test category not previously present, ask the user whether a re-review is needed before proceeding. If yes, describe the changes and rationale for the user to approve.
-
 ### 5. SRS Update & Feature Decomposition
 
 Update the SRS and decompose into features:
@@ -345,6 +312,6 @@ The router will now detect failing features in `feature-list.json` and route to 
 ## Integration
 
 **Called by:** using-long-task (when increment-request.json exists)
-**Reads:** SRS, Design, ATS, feature-list.json, increment-request.json
-**Writes:** SRS (in place), Design (in place), ATS (in place), feature-list.json (append/modify)
+**Reads:** SRS, Design, feature-list.json, increment-request.json
+**Writes:** SRS (in place), Design (in place), feature-list.json (append/modify)
 **Chains to:** long-task-work (after increment complete, via router detecting failing features)
