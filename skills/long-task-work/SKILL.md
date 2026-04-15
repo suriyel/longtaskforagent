@@ -21,7 +21,7 @@ Pure flow controller. Each step launches an independent SubAgent to load and exe
 
 ## Step 2: Feature Design
 
-> **DISPATCH** independent SubAgent — load and execute `long-task:long-task-feature-design` args=`{id}`
+> **DISPATCH** independent SubAgent args=`{id}` — load then execute skill `long-task:long-task-feature-design`
 
 **Parse:** Parse SubAgent return text (Structured Return Contract).
 - Verdict PASS → ask user to approve design doc via `AskUserQuestion`. If corrections → re-dispatch once.
@@ -31,21 +31,21 @@ Update pipeline marker: `Feature #{id} → Step 2 (Feature Design)`
 
 ## Step 3: TDD Red
 
-> **DISPATCH** independent SubAgent — load and execute `long-task:long-task-tdd-red` args=`{id}`
+> **DISPATCH** independent SubAgent args=`{id}` — load then execute skill `long-task:long-task-tdd-red`
 
 **Parse:** All tests fail (RED PASS) → proceed to Step 4. Any test passes or framework error → escalate.
 Update pipeline marker: `Feature #{id} → Step 3 (TDD Red)`
 
 ## Step 4: TDD Green
 
-> **DISPATCH** independent SubAgent — load and execute `long-task:long-task-tdd-green` args=`{id}`
+> **DISPATCH** independent SubAgent args=`{id}` — load then execute skill `long-task:long-task-tdd-green` 
 
 **Parse:** All tests pass with zero regressions → proceed to Step 5. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 4 (TDD Green)`
 
 ## Step 5: TDD Refactor
 
-> **DISPATCH** independent SubAgent — load and execute `long-task:long-task-tdd-refactor` args=`{id}`
+> **DISPATCH** independent SubAgent args=`{id}`— load then execute skill `long-task:long-task-tdd-refactor` 
 
 **Parse:** Clean (zero violations, §11 compliant) → proceed to Step 6. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 5 (TDD Refactor)`
@@ -56,7 +56,7 @@ Initialize: `retry_count = 0`
 
 ### Step 6a: Quality Check (hard gate — measurement only)
 
-> **DISPATCH** independent SubAgent — load and execute `long-task:long-task-quality-check` args=`{id}`
+> **DISPATCH** independent SubAgent args=`{id}`— load then execute skill `long-task:long-task-quality-check`
 
 **Parse:** Parse SubAgent return text (Structured Return Contract).
 - Verdict PASS → proceed to Step 7.
@@ -66,7 +66,7 @@ Initialize: `retry_count = 0`
 ### Step 6b: Coverage Fix (MUST run before mutation fix)
 
 **Skip if coverage PASS.** Otherwise:
-> **DISPATCH** independent SubAgent — load and execute `long-task:long-task-coverage-fix` args=`{id}`
+> **DISPATCH** independent SubAgent args=`{id}`— load then execute skill `long-task:long-task-coverage-fix`
 > Append to prompt: Coverage Gaps section from Quality Check result
 
 **Parse:** Verdict PASS → proceed to Step 6c. Verdict FAIL / BLOCKED → escalate to user.
@@ -76,7 +76,7 @@ Initialize: `retry_count = 0`
 ### Step 6c: Mutation Fix
 
 **Skip if mutation PASS.** Otherwise:
-> **DISPATCH** independent SubAgent — load and execute `long-task:long-task-mutation-fix` args=`{id}`
+> **DISPATCH** independent SubAgent  args=`{id}` — load then execute skill `long-task:long-task-mutation-fix`
 > Append to prompt: Surviving Mutants section from Quality Check result
 
 **Parse:** Verdict PASS → proceed to Step 6d. Verdict FAIL / BLOCKED → escalate to user.
