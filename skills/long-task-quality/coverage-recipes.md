@@ -351,6 +351,30 @@ endif()
 
 ---
 
+## Per-Feature Coverage Scoping
+
+When the scope decision selects **feature scope**, the Quality Gate measures coverage only on the current feature's changed source modules. This avoids measuring the entire project when you only changed 2-3 files.
+
+**Principle**: Scope what is *measured* (which source modules the coverage tool tracks), not what is *executed* (the test suite still runs normally).
+
+### Per-Tool Scoping Reference
+
+| Tool | Source Scoping Mechanism | Placeholder |
+|------|------------------------|-------------|
+| pytest-cov | `--cov={modules}` (replaces default `--cov=src`) | `{changed_modules}` |
+| JaCoCo | `-Djacoco.includes={classes}` (slash-separated patterns) | `{changed_classes_slash}` |
+| c8 | `--coverage.include={modules}` or `--include={modules}` | `{changed_modules}` |
+| gcov/lcov | `lcov --include '{pattern}'` | `{changed_modules}` |
+
+### Tool-Specific Notes
+
+- **pytest-cov**: `{changed_modules}` is a comma-separated list of module paths relative to project root (e.g., `src/auth,src/utils`). Each maps to a `--cov=` argument.
+- **JaCoCo**: `{changed_classes_slash}` uses `/` separators and wildcard patterns (e.g., `com/example/auth/*,com/example/utils/*`).
+- **c8/nyc**: `{changed_modules}` is a glob pattern (e.g., `src/auth/**,src/utils/**`).
+- **gcov/lcov**: `{changed_modules}` is passed to `lcov --include` as a quoted glob pattern.
+
+---
+
 ## Per-Feature Mutation Test Scoping
 
 When the project's active feature count exceeds `mutation_full_threshold`, the Quality Gate scopes mutation testing to the current feature's changed files **and** tests. This avoids running the entire test suite per mutant, which becomes prohibitively slow in large projects.

@@ -14,8 +14,9 @@ Run coverage and mutation gates. Report results with gap details. **You MUST NOT
 
 ## Key Constraints
 
-- Gate 1: Coverage — line >= threshold, branch >= threshold
-- Gate 2: Mutation — score >= threshold (scope: full if active features <= mutation_full_threshold, else feature-scoped)
+- Scope decision (unified): active features <= mutation_full_threshold → full scope; else feature-scoped (default)
+- Gate 1: Coverage — line >= threshold, branch >= threshold (scoped per unified decision)
+- Gate 2: Mutation — score >= threshold (scoped per unified decision)
 - Final test run: confirm all tests still pass
 - **NEVER modify source or test files** — only measure and report
 - Do NOT mark feature as "passing" in feature-list.json — only report results

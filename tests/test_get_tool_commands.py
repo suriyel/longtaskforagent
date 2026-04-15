@@ -174,11 +174,11 @@ def test_unknown_tool_mutation_feature_returns_unknown():
 
 
 def test_mutation_full_threshold_default():
-    """Default mutation_full_threshold should be 100."""
+    """Default mutation_full_threshold should be 5."""
     data = {"tech_stack": {"test_framework": "pytest", "coverage_tool": "pytest-cov",
                            "mutation_tool": "mutmut", "language": "python"}}
     cmds = get_commands(data)
-    assert cmds["thresholds"]["mutation_full_threshold"] == 100
+    assert cmds["thresholds"]["mutation_full_threshold"] == 5
 
 
 def test_mutation_full_threshold_custom():
@@ -195,6 +195,7 @@ def test_format_text_contains_sections():
     text = format_text(cmds)
     assert "[test]" in text
     assert "[coverage]" in text
+    assert "[coverage-feature]" in text
     assert "[mutation-incremental]" in text
     assert "[mutation-feature]" in text
     assert "[mutation-full]" in text
@@ -203,11 +204,59 @@ def test_format_text_contains_sections():
     assert "[test-detail]" in text
     assert "[coverage-quiet]" in text
     assert "[coverage-detail]" in text
+    assert "[coverage-feature-quiet]" in text
+    assert "[coverage-feature-detail]" in text
     assert "[mutation-full-quiet]" in text
     assert "[mutation-full-detail]" in text
+    assert "[mutation-feature-quiet]" in text
+    assert "[mutation-feature-detail]" in text
     assert "[mutation-results-quiet]" in text
     assert "[thresholds]" in text
     assert "mutation_full_threshold" in text
+
+
+# --- Feature-scoped command tests ---
+
+def test_coverage_feature_keys_present():
+    """get_commands should include coverage_feature, coverage_feature_quiet, coverage_feature_detail."""
+    for lang, fw, cov, mut in [
+        ("python", "pytest", "pytest-cov", "mutmut"),
+        ("java", "junit", "jacoco", "pitest"),
+        ("typescript", "vitest", "c8", "stryker"),
+    ]:
+        cmds = get_commands(make_feature_list(lang, fw, cov, mut))
+        assert "coverage_feature" in cmds, f"Missing coverage_feature for {lang}"
+        assert "coverage_feature_quiet" in cmds, f"Missing coverage_feature_quiet for {lang}"
+        assert "coverage_feature_detail" in cmds, f"Missing coverage_feature_detail for {lang}"
+        assert isinstance(cmds["coverage_feature_quiet"], dict)
+        assert "cmd" in cmds["coverage_feature_quiet"]
+        assert "{changed_modules}" in cmds["coverage_feature"] or "{changed_classes_slash}" in cmds["coverage_feature"]
+
+
+def test_mutation_feature_quiet_keys_present():
+    """get_commands should include mutation_feature_quiet and mutation_feature_detail."""
+    for lang, fw, cov, mut in [
+        ("python", "pytest", "pytest-cov", "mutmut"),
+        ("java", "junit", "jacoco", "pitest"),
+        ("typescript", "vitest", "c8", "stryker"),
+    ]:
+        cmds = get_commands(make_feature_list(lang, fw, cov, mut))
+        assert "mutation_feature_quiet" in cmds, f"Missing mutation_feature_quiet for {lang}"
+        assert "mutation_feature_detail" in cmds, f"Missing mutation_feature_detail for {lang}"
+        assert isinstance(cmds["mutation_feature_quiet"], dict)
+        assert "cmd" in cmds["mutation_feature_quiet"]
+
+
+def test_coverage_feature_quiet_has_placeholder():
+    """Coverage feature quiet commands should contain scoping placeholders."""
+    cmds = get_commands(make_feature_list("python", "pytest", "pytest-cov", "mutmut"))
+    assert "{changed_modules}" in cmds["coverage_feature_quiet"]["cmd"]
+
+
+def test_mutation_feature_quiet_has_placeholder():
+    """Mutation feature quiet commands should contain scoping placeholders."""
+    cmds = get_commands(make_feature_list("python", "pytest", "pytest-cov", "mutmut"))
+    assert "{changed_files}" in cmds["mutation_feature_quiet"]["cmd"]
 
 
 # --- Quiet recipe structure tests ---
@@ -222,6 +271,11 @@ def test_quiet_commands_are_tuples():
 
     for tool, entry in COVERAGE_COMMANDS_QUIET.items():
         assert isinstance(entry, tuple), f"COVERAGE_COMMANDS_QUIET['{tool}'] should be a tuple"
+        assert len(entry) == 2
+
+    from scripts.get_tool_commands import COVERAGE_FEATURE_COMMANDS_QUIET
+    for tool, entry in COVERAGE_FEATURE_COMMANDS_QUIET.items():
+        assert isinstance(entry, tuple), f"COVERAGE_FEATURE_COMMANDS_QUIET['{tool}'] should be a tuple"
         assert len(entry) == 2
 
     for tool, entries in MUTATION_COMMANDS_QUIET.items():
@@ -242,6 +296,10 @@ def test_detail_commands_are_strings():
 
     for tool, entry in COVERAGE_COMMANDS_DETAIL.items():
         assert isinstance(entry, str), f"COVERAGE_COMMANDS_DETAIL['{tool}'] should be a string"
+
+    from scripts.get_tool_commands import COVERAGE_FEATURE_COMMANDS_DETAIL
+    for tool, entry in COVERAGE_FEATURE_COMMANDS_DETAIL.items():
+        assert isinstance(entry, str), f"COVERAGE_FEATURE_COMMANDS_DETAIL['{tool}'] should be a string"
 
     for tool, entry in MUTATION_COMMANDS_DETAIL.items():
         assert isinstance(entry, str), f"MUTATION_COMMANDS_DETAIL['{tool}'] should be a string"
@@ -467,6 +525,10 @@ if __name__ == "__main__":
         test_mutation_full_threshold_default,
         test_mutation_full_threshold_custom,
         test_format_text_contains_sections,
+        test_coverage_feature_keys_present,
+        test_mutation_feature_quiet_keys_present,
+        test_coverage_feature_quiet_has_placeholder,
+        test_mutation_feature_quiet_has_placeholder,
         test_quiet_commands_are_tuples,
         test_detail_commands_are_strings,
         test_java_quiet_structured,

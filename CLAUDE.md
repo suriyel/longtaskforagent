@@ -110,7 +110,7 @@ long-task-static-review (standalone — no pipeline dependency)
 ### Critical Rules
 
 - **Gate order**: Requirements (SRS) → Design → Init → Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gates → Finalize. No skipping.
-- **Strict TDD**: Always Red→Green→Refactor (3 separate SubAgents). Coverage: line ≥90%, branch ≥80%. Mutation: score ≥80% (feature-scoped if >`mutation_full_threshold` active features; full otherwise).
+- **Strict TDD**: Always Red→Green→Refactor (3 separate SubAgents). Coverage: line ≥90%, branch ≥80%. Mutation: score ≥80%. Both coverage and mutation are feature-scoped by default (full only if active features ≤ `mutation_full_threshold`, default 5).
 - **Verification enforcement**: Never mark "passing" without fresh evidence.
 - **§11 compliance in TDD Refactor**: §11.1/§11.2 grep, dependency versions, code reuse verification — merged into TDD Refactor SubAgent.
 - **Systematic debugging**: Never guess-and-fix; trace root cause first.
@@ -173,7 +173,7 @@ Key files:
   "project": "name",
   "created": "2025-01-15",
   "tech_stack": { "language": "python|java|typescript|c|cpp", "test_framework": "...", "coverage_tool": "...", "mutation_tool": "..." },
-  "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80, "mutation_score_min": 80, "mutation_full_threshold": 100 },
+  "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80, "mutation_score_min": 80, "mutation_full_threshold": 5 },
   "single_round": false,
   "waves": [{ "id": 0, "date": "2025-01-15", "description": "Initial release" }],
   "constraints": ["Hard limit"],

@@ -106,6 +106,14 @@ COVERAGE_COMMANDS = {
     "gcov":       "make CFLAGS=\"--coverage\" test && gcov -b src/*.c && lcov --capture -d . -o coverage.info && lcov --summary coverage.info",
 }
 
+COVERAGE_FEATURE_COMMANDS = {
+    "pytest-cov": "pytest --cov={changed_modules} --cov-branch --cov-report=term-missing {test_files}",
+    "jacoco":     "mvn test jacoco:report -Djacoco.includes={changed_classes_slash}",
+    "c8":         "npx vitest run --coverage --coverage.include={changed_modules}",
+    "c8-jest":    "npx c8 --include={changed_modules} --branches 80 --lines 90 --reporter=text npx jest {test_files}",
+    "gcov":       "make CFLAGS=\"--coverage\" test && gcov -b {changed_files} && lcov --capture -d . -o coverage.info --include '{changed_modules}' && lcov --summary coverage.info",
+}
+
 COVERAGE_COMMANDS_QUIET = {
     "pytest-cov": (
         "pytest --cov=src --cov-branch --cov-report=term-missing -q --tb=line",
@@ -131,6 +139,43 @@ COVERAGE_COMMANDS_QUIET = {
         "make CFLAGS=\"--coverage\" test && lcov --capture -d . -o coverage.info && lcov --summary coverage.info",
         "capture output to temp file; print exit code; show last 10 lines of temp file",
     ),
+}
+
+COVERAGE_FEATURE_COMMANDS_QUIET = {
+    "pytest-cov": (
+        "pytest --cov={changed_modules} --cov-branch --cov-report=term-missing -q --tb=line {test_files}",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+    "jacoco": (
+        f"mvn test jacoco:report -B -q {_SUREFIRE_QUIET} -Djacoco.includes={{changed_classes_slash}}",
+        "capture output to temp file; print exit code; "
+        "extract lines containing 'Tests run:' or 'BUILD '; "
+        "then read target/site/jacoco/jacoco.csv — filter rows matching changed classes, "
+        "aggregate INSTRUCTION_MISSED, INSTRUCTION_COVERED, BRANCH_MISSED, BRANCH_COVERED, "
+        "print 'Line: X.X%, Branch: X.X%'",
+    ),
+    "c8": (
+        "npx vitest run --coverage --coverage.include={changed_modules} --reporter=dot",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+    "c8-jest": (
+        "npx c8 --include={changed_modules} --branches 80 --lines 90 --reporter=text npx jest --verbose=false {test_files}",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+    "gcov": (
+        "make CFLAGS=\"--coverage\" test && lcov --capture -d . -o coverage.info --include '{changed_modules}' && lcov --summary coverage.info",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+}
+
+COVERAGE_FEATURE_COMMANDS_DETAIL = {
+    "pytest-cov": "search temp file for 'FAILED', 'ERROR', or lines with 0% coverage; show first 30 matches",
+    "jacoco":     ("search temp file for '[ERROR]', '[WARNING]', or '<<<'; show first 30 matches; "
+                   "then read target/site/jacoco/jacoco.csv — list changed classes where INSTRUCTION_MISSED > 0, "
+                   "format: 'ClassName: missed X/Y lines, X/Y branches'"),
+    "c8":         "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
+    "c8-jest":    "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
+    "gcov":       "search temp file for 'error' or 'fail' (case-insensitive); show first 30 matches",
 }
 
 COVERAGE_COMMANDS_DETAIL = {
@@ -180,11 +225,20 @@ MUTATION_COMMANDS_QUIET = {
             "mutmut run",
             "capture output to temp file; print exit code; show last 5 lines of temp file",
         ),
+        "feature": (
+            "mutmut run --paths-to-mutate={changed_files} --runner='{test_runner} {test_files}'",
+            "capture output to temp file; print exit code; show last 5 lines of temp file",
+        ),
         "results": "mutmut results",
     },
     "pitest": {
         "full": (
             "mvn pitest:mutationCoverage -B -q",
+            "capture output to temp file; print exit code; "
+            "extract lines starting with '>>' or containing 'BUILD '",
+        ),
+        "feature": (
+            "mvn pitest:mutationCoverage -B -q -DtargetClasses={changed_classes} -DtargetTests={target_test_classes}",
             "capture output to temp file; print exit code; "
             "extract lines starting with '>>' or containing 'BUILD '",
         ),
@@ -196,11 +250,19 @@ MUTATION_COMMANDS_QUIET = {
             "npx stryker run --logLevel info",
             "capture output to temp file; print exit code; show last 10 lines of temp file",
         ),
+        "feature": (
+            "npx stryker run --mutate='{changed_files}' --coverageAnalysis perTest --logLevel info",
+            "capture output to temp file; print exit code; show last 10 lines of temp file",
+        ),
         "results": "read reports/mutation/mutation.json",
     },
     "mull": {
         "full": (
             "mull-runner ./test-binary",
+            "capture output to temp file; print exit code; show last 10 lines of temp file",
+        ),
+        "feature": (
+            "mull-runner ./{feature_test_binary} --filters={changed_files}",
             "capture output to temp file; print exit code; show last 10 lines of temp file",
         ),
         "results": "read mull-report.json",
@@ -316,6 +378,16 @@ def get_commands(feature_list: dict) -> dict:
 
     mut_detail = _pack_detail(MUTATION_COMMANDS_DETAIL.get(mut_tool, ""))
 
+    # Coverage feature-scoped variants
+    cov_feature_cmd = COVERAGE_FEATURE_COMMANDS.get(cov_tool, f"UNKNOWN: {cov_tool}")
+    cov_feature_quiet_raw = COVERAGE_FEATURE_COMMANDS_QUIET.get(cov_tool)
+    cov_feature_quiet = _pack_quiet(cov_feature_quiet_raw) if cov_feature_quiet_raw else {"cmd": cov_feature_cmd, "instruction": "run directly"}
+    cov_feature_detail = _pack_detail(COVERAGE_FEATURE_COMMANDS_DETAIL.get(cov_tool, ""))
+
+    # Mutation feature-scoped quiet variant
+    mut_feature_quiet_raw = mut_quiet_raw.get("feature") if isinstance(mut_quiet_raw, dict) else None
+    mut_feature_quiet = _pack_quiet(mut_feature_quiet_raw) if mut_feature_quiet_raw else {"cmd": mut_feature, "instruction": "run directly"}
+
     # Compile quiet/detail (keyed by build tool, derived from language)
     lang = ts.get("language", "")
     build_tool = "mvn" if lang == "java" else "gradle" if lang == "kotlin" else None
@@ -326,6 +398,7 @@ def get_commands(feature_list: dict) -> dict:
     return {
         "test": test_cmd,
         "coverage": cov_cmd,
+        "coverage_feature": cov_feature_cmd,
         "mutation_incremental": mut_inc,
         "mutation_feature": mut_feature,
         "mutation_full": mut_full,
@@ -335,8 +408,12 @@ def get_commands(feature_list: dict) -> dict:
         "test_detail": test_cmd_detail,
         "coverage_quiet": cov_cmd_quiet,
         "coverage_detail": cov_cmd_detail,
+        "coverage_feature_quiet": cov_feature_quiet,
+        "coverage_feature_detail": cov_feature_detail,
         "mutation_full_quiet": mut_full_quiet,
         "mutation_full_detail": mut_detail,
+        "mutation_feature_quiet": mut_feature_quiet,
+        "mutation_feature_detail": mut_detail,
         "mutation_results_quiet": mut_results_quiet,
         "compile_quiet": compile_quiet,
         "compile_detail": compile_detail,
@@ -344,7 +421,7 @@ def get_commands(feature_list: dict) -> dict:
             "line_coverage_min": qg.get("line_coverage_min", 90),
             "branch_coverage_min": qg.get("branch_coverage_min", 80),
             "mutation_score_min": qg.get("mutation_score_min", 80),
-            "mutation_full_threshold": qg.get("mutation_full_threshold", 100),
+            "mutation_full_threshold": qg.get("mutation_full_threshold", 5),
         },
         "tech_stack": {
             "language": ts.get("language", "TODO"),
@@ -388,6 +465,9 @@ def format_text(cmds: dict) -> str:
         "[coverage]",
         f"  {cmds['coverage']}",
         "",
+        "[coverage-feature]",
+        f"  {cmds['coverage_feature']}",
+        "",
         "[mutation-incremental]",
         f"  {cmds['mutation_incremental']}",
         "",
@@ -412,9 +492,17 @@ def format_text(cmds: dict) -> str:
     lines.append("")
     lines += _format_recipe("coverage-detail", cmds["coverage_detail"])
     lines.append("")
+    lines += _format_recipe("coverage-feature-quiet", cmds["coverage_feature_quiet"])
+    lines.append("")
+    lines += _format_recipe("coverage-feature-detail", cmds["coverage_feature_detail"])
+    lines.append("")
     lines += _format_recipe("mutation-full-quiet", cmds["mutation_full_quiet"])
     lines.append("")
     lines += _format_recipe("mutation-full-detail", cmds["mutation_full_detail"])
+    lines.append("")
+    lines += _format_recipe("mutation-feature-quiet", cmds["mutation_feature_quiet"])
+    lines.append("")
+    lines += _format_recipe("mutation-feature-detail", cmds["mutation_feature_detail"])
     lines.append("")
     lines += _format_recipe("mutation-results-quiet", cmds["mutation_results_quiet"])
     lines.append("")

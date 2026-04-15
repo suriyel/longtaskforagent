@@ -61,9 +61,9 @@ After TDD Refactor, run mutation testing scoped to this feature.
 
 ### Scope Decision
 
-Check `quality_gates.mutation_full_threshold` (default 100) against total active (non-deprecated) features in `feature-list.json`:
+Check `quality_gates.mutation_full_threshold` (default 5) against total active (non-deprecated) features in `feature-list.json`:
 - If active features ≤ threshold → use `mutation_full` command (small project — full suite is fast enough)
-- If active features > threshold → use `mutation_feature` command (large project — scope to feature's tests)
+- If active features > threshold → use `mutation_feature` command (default — scope to feature's changed files and tests)
 
 ### Running mutation_feature (large project)
 

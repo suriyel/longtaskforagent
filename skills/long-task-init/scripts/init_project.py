@@ -94,7 +94,7 @@ def create_feature_list(
     line_coverage_min: int = 90,
     branch_coverage_min: int = 80,
     mutation_score_min: int = 80,
-    mutation_full_threshold: int = 100,
+    mutation_full_threshold: int = 5,
 ) -> dict:
     return {
         "project": project_name,
