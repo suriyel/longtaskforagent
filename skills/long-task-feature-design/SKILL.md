@@ -21,6 +21,7 @@ Produce the feature detailed design document. Read all documents yourself.
 - Test Inventory negative ratio >= 40%
 - Test Inventory categories should cover FUNC, BNDRY, SEC as appropriate based on SRS acceptance criteria
 - §11 compliance: names follow §11.5, operations use §11.1 libraries, error handling per §11.6
+- **Maximize reuse**: Step 1c explores the codebase before design — prefer importing existing code over writing new
 - Do NOT start TDD
 
 Report summary using Structured Return Contract from `feature-design-execution.md`.

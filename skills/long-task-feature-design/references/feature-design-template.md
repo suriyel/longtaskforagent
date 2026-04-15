@@ -40,7 +40,7 @@ tests/
 
 ## Existing Code Reuse
 
-> Code discovered in passing dependency features that this feature should reuse, extend, or follow as a pattern. Populated during Step 1c (Existing Implementation Discovery).
+> Code discovered via codebase exploration and passing dependency features that this feature should reuse, extend, or follow as a pattern. Maximize reuse — prefer importing existing code over writing new.
 
 | # | Category | Source File | Name | Signature / Pattern | Action | Rationale |
 |---|----------|------------|------|---------------------|--------|-----------|
@@ -52,7 +52,7 @@ tests/
 |---------------|-------------------|-----------------|-------------|
 | [library name] | [file:line] | [import statement] | [how it's called in practice] |
 
-> If zero passing dependencies: "No passing dependencies — all library usage follows §11.1 import patterns directly."
+> If zero passing dependencies AND codebase exploration returned no reusable items: "No reusable code discovered — all library usage follows §11.1 import patterns directly."
 
 ## SRS Requirement
 
@@ -119,7 +119,7 @@ If the feature has no external dependencies (pure computation, no IO, no DB, no 
 - [ ] All functions/methods named in §4.N have at least one Test Inventory row
 - [ ] All method/class/parameter names comply with §11.5 naming conventions
 - [ ] All operations covered by §11.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
-- [ ] Existing Code Reuse section documents all discoverable reusable code from passing dependencies
+- [ ] Existing Code Reuse section documents all discoverable reusable code from codebase exploration and passing dependencies
 
 ## Clarification Addendum
 

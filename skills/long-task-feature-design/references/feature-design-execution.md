@@ -89,12 +89,52 @@ After reading all inputs and BEFORE writing any design content, scan for specifi
 
 ### 1c. Existing Implementation Discovery
 
-After loading context and BEFORE writing design content, discover reusable code in passing dependency features. This prevents duplicate implementations and ensures consistency with established patterns.
+**Principle — maximize reuse**: Prefer importing existing code over writing new. Duplicating existing functionality is a design defect.
 
-**Discovery procedure:**
+After loading context and BEFORE writing design content, discover ALL reusable code — first by broad codebase exploration, then by narrow dependency scanning. Results merge into a single "## Existing Code Reuse" section.
+
+#### Phase A: Codebase Exploration (brownfield only)
+
+**Trigger**: `docs/rules/` exists with ≥1 `.md`, OR source files > 3.
+**Skip if**: Greenfield. Note "Greenfield — no codebase to explore." and proceed to Phase B.
+
+1. Extract focus from feature inputs:
+   - Feature title/description + SRS text → domain keywords
+   - Design §4.N → architectural area
+   - Infer `--focus`: data features → `dataflow,architecture,deps`; API → `api,architecture,deps`; business logic → `domain,architecture,deps`; cross-cutting → `architecture,deps`
+   - Infer `--path` from §4.N if localized
+
+2. Determine depth (do NOT hardcode):
+
+   | Signal | Depth |
+   |--------|-------|
+   | ≤1 dependency, single-class scope | quick |
+   | 2+ dependencies or multiple SRS traces | standard |
+   | Cross-cutting concern (auth, logging, middleware) | standard |
+
+   When in doubt, omit and let LOC-based auto-detection decide.
+
+3. Dispatch:
+   > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore`
+   > Depth: {determined_depth or omit}
+   > Focus: {inferred_dimensions}
+   > Path: {inferred_path or "."}
+   > User question: "Find reusable code for feature: {feature_title}. SRS: {srs_summary}. Look for: utilities, API clients, data access, error helpers, base classes, middleware, factories relevant to this feature."
+
+4. Consume `docs/explore/codebase-research.md`:
+   - Architecture → base classes, factories, middleware → EXTEND/PATTERN
+   - Domain → validators, business logic → REUSE
+   - Dependencies → API clients, service connectors → REUSE
+   - Data Flow → models, pipelines → REUSE/EXTEND
+
+5. Record discoveries in "## Existing Code Reuse" with REUSE/EXTEND/PATTERN labels.
+
+**Non-blocking** — if BLOCKED or no findings, proceed to Phase B normally.
+
+#### Phase B: Dependency Feature Scanning
 
 1. From `dependencies[]` in the feature object, list all features with `"status": "passing"`
-2. For each passing dependency feature, read its implementation files (from its feature design Project Structure, or from source tree) and catalog:
+2. For each passing dependency feature, read its implementation files (from its feature design Project Structure, or from source tree) and catalog (skip items already discovered in Phase A):
 
    | Discovery Category | What to Find | Record |
    |-------------------|--------------|--------|
@@ -106,12 +146,12 @@ After loading context and BEFORE writing design content, discover reusable code 
 
 3. For each §11.1 mandatory library with non-empty rows: find at least one concrete usage example in passing features. Record the import pattern and typical call site. If no usage exists yet (first feature needing it), note: "First usage — implement per §11.1 import pattern."
 
-4. Record ALL discoveries in the "## Existing Code Reuse" section of the design document. For each item, assign one of:
-   - **REUSE**: This feature should import and call existing code directly
-   - **EXTEND**: This feature should extend/subclass existing code
-   - **PATTERN**: This feature should follow the same structural pattern but create own implementation
+4. Record ALL discoveries in the "## Existing Code Reuse" section. For each item, assign one of:
+   - **REUSE**: Import and call existing code directly
+   - **EXTEND**: Extend/subclass existing code
+   - **PATTERN**: Follow the same structural pattern but create own implementation
 
-**If zero passing dependencies**: Write "No passing dependencies — all §11.1 library usage follows import patterns directly." and proceed.
+**If zero passing dependencies AND Phase A returned no reusable items**: Write "No reusable code discovered — all §11.1 library usage follows import patterns directly." and proceed.
 
 ### 2. Component Data-Flow Diagram
 
@@ -142,7 +182,7 @@ Rules:
 - **§11.5 naming compliance**: All method, parameter, and class names MUST follow §11.5 naming conventions. If §11.5 documents `snake_case` and the design names a method `getUserData`, change to `get_user_data`.
 - **§11.1 library compliance**: For any method that performs HTTP calls, DB queries, file I/O, logging, or other operations covered by §11.1 mandatory libraries: annotate in a "Uses" note after the Raises column — e.g., "Uses: @company/http (§11.1)". The method signature MUST NOT assume direct use of replaced APIs (e.g., do not type-hint `axios.Response` when §11.1 replaces axios).
 - **§11.2 prohibited API check**: If any method's preconditions, postconditions, or Raises reference APIs from §11.2 prohibited list, this is a design defect. Replace with the §11.2-specified alternative before proceeding.
-- **Existing code reuse check**: For each method in the Interface Contract, cross-check the "Existing Code Reuse" section. If a passing dependency already provides equivalent functionality marked REUSE, do NOT create a new method — reference the existing one. If EXTEND, design the method as an override/extension of the existing class.
+- **Existing code reuse check**: For each method in the Interface Contract, cross-check the "Existing Code Reuse" section. If existing code provides equivalent functionality marked REUSE, do NOT create a new method — reference the existing one. If EXTEND, design the method as an override/extension of the existing class.
 
 ### Contract Deviation Protocol
 
@@ -206,7 +246,7 @@ END
 
 **e) §11 library usage mapping:**
 
-For each non-trivial method, identify which §11.1 mandatory libraries and "Existing Code Reuse" REUSE items it must use:
+For each non-trivial method, identify which §11.1 mandatory libraries and "Existing Code Reuse" REUSE items (from both codebase exploration and dependency scanning) it must use:
 
 | Method | Operation | Required Library/Reuse Item | Import Pattern | Replaces |
 |--------|-----------|---------------------------|----------------|----------|
@@ -328,7 +368,7 @@ After the design is complete, decompose into TDD tasks.
 - [ ] All functions/methods named in §4.N have at least one Test Inventory row
 - [ ] All method/class/parameter names comply with §11.5 naming conventions
 - [ ] All operations covered by §11.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
-- [ ] Existing Code Reuse section documents all discoverable reusable code from passing dependencies
+- [ ] Existing Code Reuse section documents all discoverable reusable code from codebase exploration and passing dependencies
 
 ## Diagram Quality Rules
 
@@ -370,7 +410,7 @@ When the design document is complete, return your result in EXACTLY this format:
 | Verification Checklist | N/11 | 11/11 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
 | §11 Compliance | N checked / M total | All checked | PASS/FAIL |
-| Existing Code Reuse Items | N | ≥ 0 (informational) | INFO |
+| Existing Code Reuse Items | N | ≥ 0 | INFO |
 ### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |
 |---|----------|-------------|
