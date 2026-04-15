@@ -5,7 +5,7 @@ description: "Use when feature-list.json exists - orchestrate features through t
 
 # Worker — One Feature Per Cycle
 
-Pure flow controller. Each step dispatches a discipline skill in isolated context (SubAgent when available, inline otherwise) and parses its Structured Return Contract.
+Pure flow controller. Each step launches an independent SubAgent to load and execute the corresponding discipline Skill, then parses its Structured Return Contract.
 
 **Announce at start:** "I'm using the long-task-work skill. Let me orient myself."
 
@@ -21,7 +21,7 @@ Pure flow controller. Each step dispatches a discipline skill in isolated contex
 
 ## Step 2: Feature Design
 
-> **DISPATCH** `long-task:long-task-feature-design` args=`{id}` — isolated context
+> **DISPATCH** `long-task:long-task-feature-design` args=`{id}` — launch independent SubAgent to load and execute this Skill
 
 **Parse:** Parse SubAgent return text (Structured Return Contract).
 - Verdict PASS → ask user to approve design doc via `AskUserQuestion`. If corrections → re-dispatch once.
@@ -31,21 +31,21 @@ Update pipeline marker: `Feature #{id} → Step 2 (Feature Design)`
 
 ## Step 3: TDD Red
 
-> **DISPATCH** `long-task:long-task-tdd-red` args=`{id}` — isolated context
+> **DISPATCH** `long-task:long-task-tdd-red` args=`{id}` — launch independent SubAgent to load and execute this Skill
 
 **Parse:** All tests fail (RED PASS) → proceed to Step 4. Any test passes or framework error → escalate.
 Update pipeline marker: `Feature #{id} → Step 3 (TDD Red)`
 
 ## Step 4: TDD Green
 
-> **DISPATCH** `long-task:long-task-tdd-green` args=`{id}` — isolated context
+> **DISPATCH** `long-task:long-task-tdd-green` args=`{id}` — launch independent SubAgent to load and execute this Skill
 
 **Parse:** All tests pass with zero regressions → proceed to Step 5. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 4 (TDD Green)`
 
 ## Step 5: TDD Refactor
 
-> **DISPATCH** `long-task:long-task-tdd-refactor` args=`{id}` — isolated context
+> **DISPATCH** `long-task:long-task-tdd-refactor` args=`{id}` — launch independent SubAgent to load and execute this Skill
 
 **Parse:** Clean (zero violations, §11 compliant) → proceed to Step 6. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 5 (TDD Refactor)`
@@ -56,7 +56,7 @@ Initialize: `retry_count = 0`
 
 ### Step 6a: Quality Check (hard gate — measurement only)
 
-> **DISPATCH** `long-task:long-task-quality-check` args=`{id}` — isolated context
+> **DISPATCH** `long-task:long-task-quality-check` args=`{id}` — launch independent SubAgent to load and execute this Skill
 
 **Parse:** Parse SubAgent return text (Structured Return Contract).
 - Verdict PASS → proceed to Step 7.
@@ -66,7 +66,7 @@ Initialize: `retry_count = 0`
 ### Step 6b: Coverage Fix (MUST run before mutation fix)
 
 **Skip if coverage PASS.** Otherwise:
-> **DISPATCH** `long-task:long-task-coverage-fix` args=`{id}` — isolated context
+> **DISPATCH** `long-task:long-task-coverage-fix` args=`{id}` — launch independent SubAgent to load and execute this Skill
 > Append to prompt: Coverage Gaps section from Quality Check result
 
 **Parse:** Verdict PASS → proceed to Step 6c. Verdict FAIL / BLOCKED → escalate to user.
@@ -76,7 +76,7 @@ Initialize: `retry_count = 0`
 ### Step 6c: Mutation Fix
 
 **Skip if mutation PASS.** Otherwise:
-> **DISPATCH** `long-task:long-task-mutation-fix` args=`{id}` — isolated context
+> **DISPATCH** `long-task:long-task-mutation-fix` args=`{id}` — launch independent SubAgent to load and execute this Skill
 > Append to prompt: Surviving Mutants section from Quality Check result
 
 **Parse:** Verdict PASS → proceed to Step 6d. Verdict FAIL / BLOCKED → escalate to user.
@@ -115,7 +115,7 @@ Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates) [round {retry_
 
 - **One feature per session** — external `scripts/auto_loop.py` handles multi-feature
 - **Strict step order** — no skipping, no reordering
-- **Each step = dispatch discipline skill (isolated context) → execute → return Structured Result**
+- **Each step = launch independent SubAgent → load discipline Skill → return Structured Result**
 - **Never mark "passing" without fresh evidence**
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause
 - **Update progress before ending session**

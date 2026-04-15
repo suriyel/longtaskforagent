@@ -114,7 +114,7 @@ On escalation: all Lite artifacts gathered so far become Expert input. Do NOT re
    When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide (<1K→quick, 1K-10K→standard, >10K→deep).
 
 3. Dispatch `long-task-explore`:
-   > **DISPATCH** `long-task:long-task-explore` — isolated context
+   > **DISPATCH** `long-task:long-task-explore` — launch independent SubAgent to load and execute this Skill
    > Depth: {determined_depth or omit for auto-detect}
    > Focus: {inferred_dimensions}
    > Path: {inferred_path or "."}

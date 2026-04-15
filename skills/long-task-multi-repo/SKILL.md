@@ -90,7 +90,7 @@ If no global SRS exists → proceed normally from Step 1.
 **Execution**:
 1. Read `repos-manifest.json` → get repo list (name, path)
 2. For each repo, dispatch `long-task-explore` to build context (all repos in parallel when possible):
-   > **DISPATCH** `long-task:long-task-explore` — isolated context
+   > **DISPATCH** `long-task:long-task-explore` — launch independent SubAgent to load and execute this Skill
    > Path: {repo_path}
    > Depth: (omit — let explore auto-detect based on LOC)
    > Focus: architecture,api,deps
@@ -138,7 +138,7 @@ The multi-repo topology informs all subsequent elicitation rounds: questions sho
 3. **Dedup with Step 2**: If Step 2 already explored a repo, reuse those findings instead of re-dispatching explore for the same repo. Only dispatch explore for repos where the inferred focus dimensions differ significantly from what Step 2 used (`architecture,api,deps`), or where Step 2 failed/returned no findings.
 
    For repos that need fresh exploration, dispatch in parallel:
-   > **DISPATCH** `long-task:long-task-explore` — isolated context (per repo not covered by Step 2)
+   > **DISPATCH** `long-task:long-task-explore` — launch independent SubAgent to load and execute this Skill (per repo not covered by Step 2)
    > Path: {repo_path}
    > Depth: {determined_depth or omit for auto-detect}
    > Focus: {inferred_dimensions}
