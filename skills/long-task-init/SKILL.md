@@ -48,15 +48,13 @@ You MUST create a TodoWrite task for each step and complete them in order:
 4. **Generate `long-task-guide.md`** — Tool command reference (NOT workflow guide):
    a. **Collect configuration sources** (priority order):
       - `docs/rules/build-and-compilation.md` (if exists) — extract build command, test command, package manager
-      - `docs/rules/coding-constraints.md` (if exists) — extract static analysis tool run commands (§11.4)
       - `python scripts/get_tool_commands.py feature-list.json` — get all `[*-quiet]`/`[*-detail]` recipes
       - `skills/long-task-quality/coverage-recipes.md` — tool setup reference (fallback only)
    b. **Guide content — ONLY these sections**:
       1. **Test Commands** — `[test-quiet]`, `[test-detail]`, full test command
       2. **Coverage Commands** — `[coverage-quiet]`, `[coverage-feature-quiet]`, `[coverage-feature-detail]`, full coverage command
       3. **Mutation Commands** — `[mutation-feature-quiet]`, `[mutation-feature-detail]`, `[mutation-full-quiet]`, full mutation command
-      4. **Static Analysis** (if §11.4 non-empty) — tool name + run command from scanned rules
-   c. **Do NOT include**: TDD workflow, quality gate process, verification rules, critical rules, persist steps — these exist in sub-skill files
+   c. **Do NOT include**: TDD workflow, quality gate process, verification rules, critical rules, static analysis, persist steps — these exist in sub-skill files
    d. **User preview** — present guide content to user; proceed only after approval
    e. **Validate**:
      ```bash
