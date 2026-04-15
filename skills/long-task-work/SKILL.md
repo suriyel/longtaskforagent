@@ -14,6 +14,7 @@ Pure flow controller. Each step launches an independent SubAgent to load and exe
 - Grep `feature-list.json` for features with `"status": "failing"` — skip `"deprecated": true`
 - Pick next by priority, then array position
 - **Dependency check**: verify all `dependencies[]` have `"status": "passing"`. If unsatisfied → skip, pick next. If none eligible → warn user via `AskUserQuestion`
+- **Resume check**: Read `task-progress.md` `## Current State` `Pipeline:` marker — if same Feature #{id} and step > 1, jump to that step; otherwise start at Step 2
 - Update `task-progress.md` `## Current State` with pipeline marker:
   ```
   Pipeline: Feature #{id} → Step 1 (Orient) → starting
