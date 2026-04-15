@@ -57,7 +57,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - Direct test execution command (e.g., `pytest --cov=src tests/`)
      - Direct mutation testing command (e.g., `mutmut run`)
      - Direct coverage report command
-     - **Quiet pipe recipes** (`[test-quiet]`, `[coverage-quiet]`, `[mutation-full-quiet]`) from `get_tool_commands.py` output — use `sed` noise-exclusion + `| tail` for compact output; on FAIL re-run standard command
+     - **Quiet recipes** (`[test-quiet]`, `[coverage-quiet]`, `[mutation-full-quiet]`) from `get_tool_commands.py` output — each has a `cmd` (the tool invocation) and an `instruction` (what to do with output: capture, extract, tail); the executing LLM composes the shell-appropriate command at runtime
      - These replace the now-removed test.sh/mutate.sh wrappers — Claude runs these directly
    - Validate:
      ```bash

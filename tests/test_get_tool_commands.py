@@ -19,7 +19,7 @@ from get_tool_commands import (get_commands, format_text, MUTATION_COMMANDS,
                                TEST_COMMANDS_QUIET, TEST_COMMANDS_DETAIL,
                                COVERAGE_COMMANDS_QUIET, COVERAGE_COMMANDS_DETAIL,
                                MUTATION_COMMANDS_QUIET, MUTATION_COMMANDS_DETAIL,
-                               _BUILD_LOG)
+                               COMPILE_COMMANDS_QUIET, COMPILE_COMMANDS_DETAIL)
 
 
 def make_feature_list(language="python", test_fw="pytest", cov_tool="pytest-cov",
@@ -199,7 +199,6 @@ def test_format_text_contains_sections():
     assert "[mutation-feature]" in text
     assert "[mutation-full]" in text
     assert "[mutation-results]" in text
-    assert "[build-log]" in text
     assert "[test-quiet]" in text
     assert "[test-detail]" in text
     assert "[coverage-quiet]" in text
@@ -211,70 +210,170 @@ def test_format_text_contains_sections():
     assert "mutation_full_threshold" in text
 
 
-# --- Quiet pipe recipe tests ---
+# --- Quiet recipe structure tests ---
 
-def test_java_quiet_captures_to_temp_file():
-    """Java quiet commands should capture to temp file, then extract summary."""
+def test_quiet_commands_are_tuples():
+    """All quiet command entries should be (cmd, instruction) tuples."""
+    for tool, entry in TEST_COMMANDS_QUIET.items():
+        assert isinstance(entry, tuple), f"TEST_COMMANDS_QUIET['{tool}'] should be a tuple"
+        assert len(entry) == 2, f"TEST_COMMANDS_QUIET['{tool}'] should have 2 elements"
+        assert isinstance(entry[0], str), f"TEST_COMMANDS_QUIET['{tool}'][0] (cmd) should be str"
+        assert isinstance(entry[1], str), f"TEST_COMMANDS_QUIET['{tool}'][1] (instruction) should be str"
+
+    for tool, entry in COVERAGE_COMMANDS_QUIET.items():
+        assert isinstance(entry, tuple), f"COVERAGE_COMMANDS_QUIET['{tool}'] should be a tuple"
+        assert len(entry) == 2
+
+    for tool, entries in MUTATION_COMMANDS_QUIET.items():
+        assert isinstance(entries, dict), f"MUTATION_COMMANDS_QUIET['{tool}'] should be a dict"
+        for key, entry in entries.items():
+            if isinstance(entry, tuple):
+                assert len(entry) == 2, f"MUTATION_COMMANDS_QUIET['{tool}']['{key}'] tuple should have 2 elements"
+
+    for tool, entry in COMPILE_COMMANDS_QUIET.items():
+        assert isinstance(entry, tuple), f"COMPILE_COMMANDS_QUIET['{tool}'] should be a tuple"
+        assert len(entry) == 2
+
+
+def test_detail_commands_are_strings():
+    """All detail command entries should be plain instruction strings."""
+    for tool, entry in TEST_COMMANDS_DETAIL.items():
+        assert isinstance(entry, str), f"TEST_COMMANDS_DETAIL['{tool}'] should be a string"
+
+    for tool, entry in COVERAGE_COMMANDS_DETAIL.items():
+        assert isinstance(entry, str), f"COVERAGE_COMMANDS_DETAIL['{tool}'] should be a string"
+
+    for tool, entry in MUTATION_COMMANDS_DETAIL.items():
+        assert isinstance(entry, str), f"MUTATION_COMMANDS_DETAIL['{tool}'] should be a string"
+
+    for tool, entry in COMPILE_COMMANDS_DETAIL.items():
+        assert isinstance(entry, str), f"COMPILE_COMMANDS_DETAIL['{tool}'] should be a string"
+
+
+def test_java_quiet_structured():
+    """Java quiet commands should return structured {cmd, instruction} dicts."""
     cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
-    # Test quiet: captures to file, greps summary
-    assert f'>"{_BUILD_LOG}"' in cmds["test_quiet"]
-    assert "EXIT:$?" in cmds["test_quiet"]
-    assert "Tests run:" in cmds["test_quiet"]
-    assert "BUILD " in cmds["test_quiet"]
-    # Coverage quiet: captures + awk on CSV
-    assert f'>"{_BUILD_LOG}"' in cmds["coverage_quiet"]
-    assert "jacoco.csv" in cmds["coverage_quiet"]
-    # Mutation quiet: captures + grep PIT summary
-    assert f'>"{_BUILD_LOG}"' in cmds["mutation_full_quiet"]
-    assert "^>>" in cmds["mutation_full_quiet"]
+    # test_quiet
+    assert isinstance(cmds["test_quiet"], dict)
+    assert "mvn test" in cmds["test_quiet"]["cmd"]
+    assert "capture" in cmds["test_quiet"]["instruction"]
+    assert "exit code" in cmds["test_quiet"]["instruction"]
+    assert "Tests run:" in cmds["test_quiet"]["instruction"]
+    # coverage_quiet
+    assert isinstance(cmds["coverage_quiet"], dict)
+    assert "jacoco" in cmds["coverage_quiet"]["cmd"]
+    assert "jacoco.csv" in cmds["coverage_quiet"]["instruction"]
+    assert "INSTRUCTION_MISSED" in cmds["coverage_quiet"]["instruction"]
+    # mutation_full_quiet
+    assert isinstance(cmds["mutation_full_quiet"], dict)
+    assert "pitest" in cmds["mutation_full_quiet"]["cmd"] or "mutationCoverage" in cmds["mutation_full_quiet"]["cmd"]
+    assert ">>" in cmds["mutation_full_quiet"]["instruction"]
 
 
-def test_java_detail_extracts_from_temp_file():
-    """Java detail commands should grep errors from temp file."""
+def test_java_detail_structured():
+    """Java detail commands should return structured {instruction} dicts."""
     cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
-    assert _BUILD_LOG in cmds["test_detail"]
-    assert "\\[ERROR\\]" in cmds["test_detail"]
-    assert "head -30" in cmds["test_detail"]
-    assert _BUILD_LOG in cmds["coverage_detail"]
-    assert _BUILD_LOG in cmds["mutation_full_detail"]
+    assert isinstance(cmds["test_detail"], dict)
+    assert "[ERROR]" in cmds["test_detail"]["instruction"]
+    assert "30" in cmds["test_detail"]["instruction"]
+    assert isinstance(cmds["coverage_detail"], dict)
+    assert "[ERROR]" in cmds["coverage_detail"]["instruction"]
+    assert "jacoco.csv" in cmds["coverage_detail"]["instruction"]
+    assert isinstance(cmds["mutation_full_detail"], dict)
+    assert "instruction" in cmds["mutation_full_detail"]
 
 
-def test_python_quiet_captures_to_temp_file():
-    """Python quiet should capture to temp file."""
+def test_python_quiet_structured():
+    """Python quiet should have cmd and instruction."""
     cmds = get_commands(make_feature_list("python", "pytest", "pytest-cov", "mutmut"))
-    assert f'>"{_BUILD_LOG}"' in cmds["test_quiet"]
-    assert "-q --tb=line" in cmds["test_quiet"]
-    assert "EXIT:$?" in cmds["test_quiet"]
+    assert isinstance(cmds["test_quiet"], dict)
+    assert "pytest" in cmds["test_quiet"]["cmd"]
+    assert "last 5 lines" in cmds["test_quiet"]["instruction"]
 
 
 def test_quiet_fallback_to_verbose():
-    """Unknown tools should fall back to the verbose command for quiet variant."""
+    """Unknown tools should fall back to verbose command with 'run directly' instruction."""
     cmds = get_commands(make_feature_list("rust", "cargo-test", "tarpaulin", "cargo-mutants"))
-    assert cmds["test_quiet"] == cmds["test"]
-    assert cmds["coverage_quiet"] == cmds["coverage"]
-    assert cmds["mutation_full_quiet"] == cmds["mutation_full"]
+    assert cmds["test_quiet"]["cmd"] == cmds["test"]
+    assert cmds["test_quiet"]["instruction"] == "run directly"
+    assert cmds["coverage_quiet"]["cmd"] == cmds["coverage"]
+    assert cmds["coverage_quiet"]["instruction"] == "run directly"
+    assert cmds["mutation_full_quiet"]["cmd"] == cmds["mutation_full"]
+    assert cmds["mutation_full_quiet"]["instruction"] == "run directly"
 
 
-def test_quiet_keys_in_json_output():
-    """JSON output should include quiet, detail, and build_log keys."""
+def test_quiet_keys_in_output():
+    """Output should include quiet, detail, and compile keys."""
     cmds = get_commands(make_feature_list())
     for key in ["test_quiet", "test_detail", "coverage_quiet", "coverage_detail",
-                "mutation_full_quiet", "mutation_full_detail", "mutation_results_quiet",
-                "build_log"]:
+                "mutation_full_quiet", "mutation_full_detail", "mutation_results_quiet"]:
         assert key in cmds, f"Missing key: {key}"
+        assert isinstance(cmds[key], dict), f"{key} should be a dict"
 
 
-def test_pitest_results_quiet_uses_xml():
-    """PIT results-quiet should parse XML report."""
+def test_pitest_results_quiet():
+    """PIT results-quiet should reference XML report with SURVIVED/KILLED."""
     cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
-    assert "SURVIVED" in cmds["mutation_results_quiet"]
-    assert "KILLED" in cmds["mutation_results_quiet"]
+    instr = cmds["mutation_results_quiet"]["instruction"]
+    assert "SURVIVED" in instr
+    assert "KILLED" in instr
 
 
-def test_build_log_path():
-    """build_log should point to temp file."""
-    cmds = get_commands(make_feature_list())
-    assert cmds["build_log"] == _BUILD_LOG
+def test_no_bash_specific_in_quiet():
+    """Quiet/detail commands should not contain bash-specific utilities."""
+    import re
+    # Use word-boundary patterns to avoid false positives (e.g. "missed" contains "sed")
+    bash_patterns = [
+        (re.compile(r'\bgrep\b'), "grep"),
+        (re.compile(r'\btail\b'), "tail"),
+        (re.compile(r'\bhead\b'), "head"),
+        (re.compile(r'\bawk\b'), "awk"),
+        (re.compile(r'\bsed\b'), "sed"),
+    ]
+    for lang, fw, cov, mut in [
+        ("python", "pytest", "pytest-cov", "mutmut"),
+        ("java", "junit", "jacoco", "pitest"),
+        ("typescript", "vitest", "c8", "stryker"),
+        ("c", "ctest", "gcov", "mull"),
+    ]:
+        cmds = get_commands(make_feature_list(lang, fw, cov, mut))
+        for key in ["test_quiet", "test_detail", "coverage_quiet", "coverage_detail",
+                     "mutation_full_quiet", "mutation_full_detail"]:
+            recipe = cmds[key]
+            if isinstance(recipe, dict):
+                for field in ["cmd", "instruction"]:
+                    val = recipe.get(field, "")
+                    for regex, name in bash_patterns:
+                        assert not regex.search(val), (
+                            f"{key}.{field} for {lang} contains bash-specific '{name}': {val}"
+                        )
+
+
+def test_compile_quiet_wired_for_java():
+    """Java projects should have compile_quiet/compile_detail in output."""
+    cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
+    assert cmds["compile_quiet"], "compile_quiet should be non-empty for Java"
+    assert "mvn compile" in cmds["compile_quiet"]["cmd"]
+    assert "capture" in cmds["compile_quiet"]["instruction"]
+    assert cmds["compile_detail"]["instruction"], "compile_detail should have instruction for Java"
+    assert "[ERROR]" in cmds["compile_detail"]["instruction"]
+
+
+def test_compile_quiet_empty_for_python():
+    """Python projects should have empty compile_quiet (no build step)."""
+    cmds = get_commands(make_feature_list("python", "pytest", "pytest-cov", "mutmut"))
+    assert cmds["compile_quiet"] == {}
+
+
+def test_format_text_shows_cmd_and_instruction():
+    """Text format should show cmd: and instruction: for quiet recipes."""
+    cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
+    text = format_text(cmds)
+    assert "cmd:" in text
+    assert "instruction:" in text
+    # compile section should appear for Java
+    assert "[compile-quiet]" in text
+    assert "[compile-detail]" in text
 
 
 # --- CLI integration tests ---
@@ -295,7 +394,7 @@ def test_cli_text_output():
 
 
 def test_cli_json_output():
-    """CLI --json should output valid JSON."""
+    """CLI --json should output valid JSON with structured quiet commands."""
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
     try:
         json.dump(make_feature_list(), tmp)
@@ -308,6 +407,26 @@ def test_cli_json_output():
         assert "mutation_feature" in data
         assert "thresholds" in data
         assert "mutation_full_threshold" in data["thresholds"]
+        # Verify quiet entries are structured dicts
+        assert isinstance(data["test_quiet"], dict)
+        assert "cmd" in data["test_quiet"]
+        assert "instruction" in data["test_quiet"]
+    finally:
+        os.unlink(tmp.name)
+
+
+def test_cli_json_java():
+    """CLI --json for Java should include compile_quiet with cmd."""
+    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
+    try:
+        json.dump(make_feature_list("java", "junit", "jacoco", "pitest"), tmp)
+        tmp.close()
+        code, stdout, stderr = run_script(tmp.name, ["--json"])
+        assert code == 0, f"Exit {code}: {stderr}"
+        data = json.loads(stdout)
+        assert "compile_quiet" in data
+        assert "cmd" in data["compile_quiet"]
+        assert "mvn compile" in data["compile_quiet"]["cmd"]
     finally:
         os.unlink(tmp.name)
 
@@ -348,8 +467,21 @@ if __name__ == "__main__":
         test_mutation_full_threshold_default,
         test_mutation_full_threshold_custom,
         test_format_text_contains_sections,
+        test_quiet_commands_are_tuples,
+        test_detail_commands_are_strings,
+        test_java_quiet_structured,
+        test_java_detail_structured,
+        test_python_quiet_structured,
+        test_quiet_fallback_to_verbose,
+        test_quiet_keys_in_output,
+        test_pitest_results_quiet,
+        test_no_bash_specific_in_quiet,
+        test_compile_quiet_wired_for_java,
+        test_compile_quiet_empty_for_python,
+        test_format_text_shows_cmd_and_instruction,
         test_cli_text_output,
         test_cli_json_output,
+        test_cli_json_java,
         test_cli_missing_file,
         test_cli_invalid_json,
     ]

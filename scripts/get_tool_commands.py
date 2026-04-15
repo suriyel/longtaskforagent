@@ -5,6 +5,11 @@ shell commands for test, coverage, and mutation tooling.
 
 Eliminates the need for the LLM to look up per-language command syntax.
 
+Quiet/detail commands use a declarative (cmd, instruction) format:
+  cmd         — the cross-platform tool invocation (mvn, pytest, npx …)
+  instruction — what to do with the output (capture, extract, tail …)
+The executing LLM composes the shell-appropriate pipeline at runtime.
+
 Usage:
     python get_tool_commands.py feature-list.json
     python get_tool_commands.py feature-list.json --json
@@ -32,65 +37,65 @@ TEST_COMMANDS = {
 }
 
 # ---------------------------------------------------------------------------
-# Quiet commands — capture to temp file, then extract summary on demand.
+# Quiet commands — (cmd, instruction) tuples.
 #
-# Architecture:  run → temp file → grep/tail to extract
-#   *_quiet   : run + capture + print summary   (2-5 lines, always used first)
-#   *_detail  : extract errors/failures from temp file (up to 30 lines, on failure)
-#   Full file : Read /tmp/_build.log directly    (last resort)
+# Architecture:  run → temp file → extract summary on demand
+#   *_quiet   : (cmd, instruction) — run + capture + print summary
+#   *_detail  : instruction string — extract errors/failures from temp file
+#   Full file : read the temp file directly (last resort)
+#
+# The executing LLM translates the instruction to the appropriate shell:
+#   bash:       grep -E "pattern" file | head -30
+#   powershell: Select-String -Path file -Pattern 'pattern' | Select-Object -First 30
 #
 # Why temp file beats piping:
 #   - Zero information loss — full output preserved
-#   - Repeatable extraction — grep the same file for different info
-#   - Exit code preserved — $? after command
-#   - On-demand detail — LLM decides what to read based on EXIT code
+#   - Repeatable extraction — search the same file for different info
+#   - Exit code preserved
+#   - On-demand detail — LLM decides what to read based on exit code
 # ---------------------------------------------------------------------------
-
-_BUILD_LOG = "/tmp/_build.log"
-
-# grep patterns use bracket-prefixed patterns (\[ERROR\]) not bare keywords
-# (error) — this distinguishes Maven diagnostics from application log content
-# even when application logs contain words like "error" or "fail".
-_MVN_GREP_SUMMARY = 'grep -E "Tests run:|BUILD " "{log}"'
-_MVN_GREP_ERRORS  = 'grep -E "\\[ERROR\\]|\\[WARNING\\]|<<<" "{log}" | head -30'
-_PIT_GREP_SUMMARY = 'grep -E "^>>|BUILD " "{log}"'
-
-# JaCoCo coverage metric extraction from CSV (structured, encoding-safe)
-_JACOCO_AWK = ("awk -F',' "
-               "'NR>1{mi+=$4;ci+=$5;mb+=$6;cb+=$7} "
-               "END{printf \"Line: %.1f%%, Branch: %.1f%%\\n\", "
-               "100*ci/(mi+ci+0.001), 100*cb/(mb+cb+0.001)}' "
-               "target/site/jacoco/jacoco.csv")
-_JACOCO_AWK_DETAIL = ("awk -F',' "
-                      "'NR>1 && ($4>0) "
-                      "{printf \"%s: missed %d/%d lines, %d/%d branches\\n\","
-                      "$3,$4,$4+$5,$6,$6+$7}' "
-                      "target/site/jacoco/jacoco.csv")
 
 _SUREFIRE_QUIET = "-Dsurefire.redirectTestOutputToFile=true"
 
-# --- Per-tool quiet commands (run + capture + summary) ---
+# --- Per-tool quiet commands (cmd + instruction) ---
 
 TEST_COMMANDS_QUIET = {
-    "pytest":  f'pytest -q --tb=line >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -5 "{_BUILD_LOG}"',
-    "junit":   (f'mvn test -B -q {_SUREFIRE_QUIET} >"{_BUILD_LOG}" 2>&1; '
-                f'echo "EXIT:$?"; '
-                + _MVN_GREP_SUMMARY.format(log=_BUILD_LOG)),
-    "jest":    f'npx jest --verbose=false >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -5 "{_BUILD_LOG}"',
-    "vitest":  f'npx vitest run --reporter=dot >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -5 "{_BUILD_LOG}"',
-    "ctest":   f'ctest --test-dir build --output-on-failure >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -5 "{_BUILD_LOG}"',
-    "gtest":   f'ctest --test-dir build --output-on-failure >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -5 "{_BUILD_LOG}"',
+    "pytest": (
+        "pytest -q --tb=line",
+        "capture output to temp file; print exit code; show last 5 lines of temp file",
+    ),
+    "junit": (
+        f"mvn test -B -q {_SUREFIRE_QUIET}",
+        "capture output to temp file; print exit code; "
+        "extract lines containing 'Tests run:' or 'BUILD '",
+    ),
+    "jest": (
+        "npx jest --verbose=false",
+        "capture output to temp file; print exit code; show last 5 lines of temp file",
+    ),
+    "vitest": (
+        "npx vitest run --reporter=dot",
+        "capture output to temp file; print exit code; show last 5 lines of temp file",
+    ),
+    "ctest": (
+        "ctest --test-dir build --output-on-failure",
+        "capture output to temp file; print exit code; show last 5 lines of temp file",
+    ),
+    "gtest": (
+        "ctest --test-dir build --output-on-failure",
+        "capture output to temp file; print exit code; show last 5 lines of temp file",
+    ),
 }
 
 # --- Per-tool detail commands (extract errors from temp file, on failure) ---
 
 TEST_COMMANDS_DETAIL = {
-    "pytest":  f'grep -iE "FAILED|ERROR|assert" "{_BUILD_LOG}" | head -30',
-    "junit":   _MVN_GREP_ERRORS.format(log=_BUILD_LOG),
-    "jest":    f'grep -iE "FAIL|Error|✕" "{_BUILD_LOG}" | head -30',
-    "vitest":  f'grep -iE "FAIL|Error|✕" "{_BUILD_LOG}" | head -30',
-    "ctest":   f'grep -iE "FAIL|Error" "{_BUILD_LOG}" | head -30',
-    "gtest":   f'grep -iE "FAIL|Error" "{_BUILD_LOG}" | head -30',
+    "pytest":  "search temp file for 'FAILED', 'ERROR', or 'assert' (case-insensitive); show first 30 matches",
+    "junit":   "search temp file for '[ERROR]', '[WARNING]', or '<<<'; show first 30 matches",
+    "jest":    "search temp file for 'FAIL', 'Error', or '\u2715' (case-insensitive); show first 30 matches",
+    "vitest":  "search temp file for 'FAIL', 'Error', or '\u2715' (case-insensitive); show first 30 matches",
+    "ctest":   "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
+    "gtest":   "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
 }
 
 COVERAGE_COMMANDS = {
@@ -102,26 +107,40 @@ COVERAGE_COMMANDS = {
 }
 
 COVERAGE_COMMANDS_QUIET = {
-    "pytest-cov": (f'pytest --cov=src --cov-branch --cov-report=term-missing -q --tb=line >"{_BUILD_LOG}" 2>&1; '
-                   f'echo "EXIT:$?"; tail -10 "{_BUILD_LOG}"'),
-    "jacoco":     (f'mvn test jacoco:report -B -q {_SUREFIRE_QUIET} >"{_BUILD_LOG}" 2>&1; '
-                   f'echo "EXIT:$?"; '
-                   + _MVN_GREP_SUMMARY.format(log=_BUILD_LOG) + "; "
-                   + _JACOCO_AWK),
-    "c8":         f'npx vitest run --coverage --reporter=dot >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -10 "{_BUILD_LOG}"',
-    "c8-jest":    f'npx c8 --branches 80 --lines 90 --reporter=text npx jest --verbose=false >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -10 "{_BUILD_LOG}"',
-    "gcov":       (f'make CFLAGS="--coverage" test >"{_BUILD_LOG}" 2>&1 && '
-                   f'lcov --capture -d . -o coverage.info >> "{_BUILD_LOG}" 2>&1 && '
-                   f'lcov --summary coverage.info >> "{_BUILD_LOG}" 2>&1; '
-                   f'echo "EXIT:$?"; tail -10 "{_BUILD_LOG}"'),
+    "pytest-cov": (
+        "pytest --cov=src --cov-branch --cov-report=term-missing -q --tb=line",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+    "jacoco": (
+        f"mvn test jacoco:report -B -q {_SUREFIRE_QUIET}",
+        "capture output to temp file; print exit code; "
+        "extract lines containing 'Tests run:' or 'BUILD '; "
+        "then read target/site/jacoco/jacoco.csv — aggregate "
+        "INSTRUCTION_MISSED, INSTRUCTION_COVERED, BRANCH_MISSED, BRANCH_COVERED columns, "
+        "print 'Line: X.X%, Branch: X.X%'",
+    ),
+    "c8": (
+        "npx vitest run --coverage --reporter=dot",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+    "c8-jest": (
+        "npx c8 --branches 80 --lines 90 --reporter=text npx jest --verbose=false",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+    "gcov": (
+        "make CFLAGS=\"--coverage\" test && lcov --capture -d . -o coverage.info && lcov --summary coverage.info",
+        "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
 }
 
 COVERAGE_COMMANDS_DETAIL = {
-    "pytest-cov": f'grep -iE "FAILED|ERROR|assert" "{_BUILD_LOG}" | head -30',
-    "jacoco":     (_MVN_GREP_ERRORS.format(log=_BUILD_LOG) + "; " + _JACOCO_AWK_DETAIL),
-    "c8":         f'grep -iE "FAIL|Error" "{_BUILD_LOG}" | head -30',
-    "c8-jest":    f'grep -iE "FAIL|Error" "{_BUILD_LOG}" | head -30',
-    "gcov":       f'grep -iE "error|fail" "{_BUILD_LOG}" | head -30',
+    "pytest-cov": "search temp file for 'FAILED', 'ERROR', or 'assert' (case-insensitive); show first 30 matches",
+    "jacoco":     ("search temp file for '[ERROR]', '[WARNING]', or '<<<'; show first 30 matches; "
+                   "then read target/site/jacoco/jacoco.csv — list classes where INSTRUCTION_MISSED > 0, "
+                   "format: 'ClassName: missed X/Y lines, X/Y branches'"),
+    "c8":         "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
+    "c8-jest":    "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
+    "gcov":       "search temp file for 'error' or 'fail' (case-insensitive); show first 30 matches",
 }
 
 MUTATION_COMMANDS = {
@@ -157,45 +176,95 @@ MUTATION_COMMANDS = {
 
 MUTATION_COMMANDS_QUIET = {
     "mutmut": {
-        "full":    f'mutmut run >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -5 "{_BUILD_LOG}"',
+        "full": (
+            "mutmut run",
+            "capture output to temp file; print exit code; show last 5 lines of temp file",
+        ),
         "results": "mutmut results",
     },
     "pitest": {
-        "full":    (f'mvn pitest:mutationCoverage -B -q >"{_BUILD_LOG}" 2>&1; '
-                    f'echo "EXIT:$?"; '
-                    + _PIT_GREP_SUMMARY.format(log=_BUILD_LOG)),
-        "results": ("grep -c 'status=\"SURVIVED\"' target/pit-reports/*/mutations.xml; "
-                    "grep -c 'status=\"KILLED\"' target/pit-reports/*/mutations.xml"),
+        "full": (
+            "mvn pitest:mutationCoverage -B -q",
+            "capture output to temp file; print exit code; "
+            "extract lines starting with '>>' or containing 'BUILD '",
+        ),
+        "results": ("in target/pit-reports/*/mutations.xml, "
+                    "count occurrences of status=\"SURVIVED\" and status=\"KILLED\""),
     },
     "stryker": {
-        "full":    f'npx stryker run --logLevel info >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -10 "{_BUILD_LOG}"',
-        "results": "cat reports/mutation/mutation.json",
+        "full": (
+            "npx stryker run --logLevel info",
+            "capture output to temp file; print exit code; show last 10 lines of temp file",
+        ),
+        "results": "read reports/mutation/mutation.json",
     },
     "mull": {
-        "full":    f'mull-runner ./test-binary >"{_BUILD_LOG}" 2>&1; echo "EXIT:$?"; tail -10 "{_BUILD_LOG}"',
-        "results": "cat mull-report.json",
+        "full": (
+            "mull-runner ./test-binary",
+            "capture output to temp file; print exit code; show last 10 lines of temp file",
+        ),
+        "results": "read mull-report.json",
     },
 }
 
 MUTATION_COMMANDS_DETAIL = {
-    "mutmut": f'grep -iE "kill|surviv|fail|error" "{_BUILD_LOG}" | head -30',
-    "pitest": _MVN_GREP_ERRORS.format(log=_BUILD_LOG),
-    "stryker": f'grep -iE "Mutation|kill|surviv|fail|error" "{_BUILD_LOG}" | head -30',
-    "mull":    f'grep -iE "kill|surviv|fail|error" "{_BUILD_LOG}" | head -30',
+    "mutmut":  "search temp file for 'kill', 'surviv', 'fail', or 'error' (case-insensitive); show first 30 matches",
+    "pitest":  "search temp file for '[ERROR]', '[WARNING]', or '<<<'; show first 30 matches",
+    "stryker": "search temp file for 'Mutation', 'kill', 'surviv', 'fail', or 'error' (case-insensitive); show first 30 matches",
+    "mull":    "search temp file for 'kill', 'surviv', 'fail', or 'error' (case-insensitive); show first 30 matches",
 }
 
 COMPILE_COMMANDS_QUIET = {
-    "mvn":    (f'mvn compile -B -q >"{_BUILD_LOG}" 2>&1; '
-               f'echo "EXIT:$?"; '
-               f'grep -E "\\[ERROR\\]|BUILD " "{_BUILD_LOG}" | tail -10'),
-    "gradle": (f'gradle compileJava -q >"{_BUILD_LOG}" 2>&1; '
-               f'echo "EXIT:$?"; tail -5 "{_BUILD_LOG}"'),
+    "mvn": (
+        "mvn compile -B -q",
+        "capture output to temp file; print exit code; "
+        "extract lines containing '[ERROR]' or 'BUILD '; show last 10",
+    ),
+    "gradle": (
+        "gradle compileJava -q",
+        "capture output to temp file; print exit code; show last 5 lines of temp file",
+    ),
 }
 
 COMPILE_COMMANDS_DETAIL = {
-    "mvn":    f'grep "\\[ERROR\\]" "{_BUILD_LOG}" | head -30',
-    "gradle": f'grep -iE "error|fail" "{_BUILD_LOG}" | head -30',
+    "mvn":    "search temp file for '[ERROR]'; show first 30 matches",
+    "gradle": "search temp file for 'error' or 'fail' (case-insensitive); show first 30 matches",
 }
+
+
+def _pack_quiet(raw):
+    """Normalize a quiet entry to {"cmd": ..., "instruction": ...} dict.
+
+    Accepts:
+      - (cmd, instruction) tuple → {"cmd": cmd, "instruction": instruction}
+      - plain string             → {"cmd": string, "instruction": "run directly"}
+    """
+    if isinstance(raw, tuple):
+        return {"cmd": raw[0], "instruction": raw[1]}
+    return {"cmd": raw, "instruction": "run directly"}
+
+
+def _pack_detail(raw):
+    """Normalize a detail entry to {"instruction": ...} dict.
+
+    Accepts:
+      - plain string → {"instruction": string}
+      - empty / None → {"instruction": ""}
+    """
+    return {"instruction": raw if raw else ""}
+
+
+def _pack_mutation_quiet(raw):
+    """Normalize a mutation quiet entry (may be tuple, string, or nested dict)."""
+    if isinstance(raw, dict):
+        result = {}
+        for k, v in raw.items():
+            if isinstance(v, tuple):
+                result[k] = {"cmd": v[0], "instruction": v[1]}
+            else:
+                result[k] = {"instruction": v}
+        return result
+    return _pack_quiet(raw)
 
 
 def get_commands(feature_list: dict) -> dict:
@@ -203,7 +272,8 @@ def get_commands(feature_list: dict) -> dict:
 
     Returns a dict with keys: test, coverage, mutation_incremental,
     mutation_full, mutation_results, mutation_show, thresholds, tech_stack.
-    Values are concrete command strings (or 'UNKNOWN: <tool>' if unmapped).
+    Quiet/detail values are structured {"cmd": ..., "instruction": ...} dicts.
+    Plain commands are concrete strings (or 'UNKNOWN: <tool>' if unmapped).
     """
     ts = feature_list.get("tech_stack", {})
     qg = feature_list.get("quality_gates", {})
@@ -222,16 +292,36 @@ def get_commands(feature_list: dict) -> dict:
     mut_results = mut_cmds.get("results", f"UNKNOWN: {mut_tool}")
     mut_show = mut_cmds.get("show", f"UNKNOWN: {mut_tool}")
 
-    # Quiet variants: capture to temp file + summary extraction
-    test_cmd_quiet = TEST_COMMANDS_QUIET.get(test_fw, test_cmd)
-    test_cmd_detail = TEST_COMMANDS_DETAIL.get(test_fw, "")
-    cov_cmd_quiet = COVERAGE_COMMANDS_QUIET.get(cov_tool, cov_cmd)
-    cov_cmd_detail = COVERAGE_COMMANDS_DETAIL.get(cov_tool, "")
+    # Quiet variants: (cmd, instruction) tuples → packed dicts
+    test_quiet_raw = TEST_COMMANDS_QUIET.get(test_fw)
+    test_cmd_quiet = _pack_quiet(test_quiet_raw) if test_quiet_raw else {"cmd": test_cmd, "instruction": "run directly"}
+    test_cmd_detail = _pack_detail(TEST_COMMANDS_DETAIL.get(test_fw, ""))
 
-    mut_quiet = MUTATION_COMMANDS_QUIET.get(mut_tool, {})
-    mut_full_quiet = mut_quiet.get("full", mut_full)
-    mut_results_quiet = mut_quiet.get("results", mut_results)
-    mut_detail = MUTATION_COMMANDS_DETAIL.get(mut_tool, "")
+    cov_quiet_raw = COVERAGE_COMMANDS_QUIET.get(cov_tool)
+    cov_cmd_quiet = _pack_quiet(cov_quiet_raw) if cov_quiet_raw else {"cmd": cov_cmd, "instruction": "run directly"}
+    cov_cmd_detail = _pack_detail(COVERAGE_COMMANDS_DETAIL.get(cov_tool, ""))
+
+    mut_quiet_raw = MUTATION_COMMANDS_QUIET.get(mut_tool, {})
+    mut_full_quiet_raw = mut_quiet_raw.get("full") if isinstance(mut_quiet_raw, dict) else None
+    mut_full_quiet = _pack_quiet(mut_full_quiet_raw) if mut_full_quiet_raw else {"cmd": mut_full, "instruction": "run directly"}
+
+    mut_results_quiet_raw = mut_quiet_raw.get("results") if isinstance(mut_quiet_raw, dict) else None
+    if mut_results_quiet_raw:
+        if isinstance(mut_results_quiet_raw, tuple):
+            mut_results_quiet = {"cmd": mut_results_quiet_raw[0], "instruction": mut_results_quiet_raw[1]}
+        else:
+            mut_results_quiet = {"instruction": mut_results_quiet_raw}
+    else:
+        mut_results_quiet = {"cmd": mut_results, "instruction": "run directly"}
+
+    mut_detail = _pack_detail(MUTATION_COMMANDS_DETAIL.get(mut_tool, ""))
+
+    # Compile quiet/detail (keyed by build tool, derived from language)
+    lang = ts.get("language", "")
+    build_tool = "mvn" if lang == "java" else "gradle" if lang == "kotlin" else None
+    compile_quiet_raw = COMPILE_COMMANDS_QUIET.get(build_tool) if build_tool else None
+    compile_quiet = _pack_quiet(compile_quiet_raw) if compile_quiet_raw else {}
+    compile_detail = _pack_detail(COMPILE_COMMANDS_DETAIL.get(build_tool, "")) if build_tool else {"instruction": ""}
 
     return {
         "test": test_cmd,
@@ -248,7 +338,8 @@ def get_commands(feature_list: dict) -> dict:
         "mutation_full_quiet": mut_full_quiet,
         "mutation_full_detail": mut_detail,
         "mutation_results_quiet": mut_results_quiet,
-        "build_log": _BUILD_LOG,
+        "compile_quiet": compile_quiet,
+        "compile_detail": compile_detail,
         "thresholds": {
             "line_coverage_min": qg.get("line_coverage_min", 90),
             "branch_coverage_min": qg.get("branch_coverage_min", 80),
@@ -264,6 +355,20 @@ def get_commands(feature_list: dict) -> dict:
     }
 
 
+def _format_recipe(label: str, recipe) -> list:
+    """Format a quiet/detail recipe for text output."""
+    lines = [f"[{label}]"]
+    if isinstance(recipe, dict):
+        if recipe.get("cmd"):
+            lines.append(f"  cmd: {recipe['cmd']}")
+        if recipe.get("instruction"):
+            lines.append(f"  instruction: {recipe['instruction']}")
+    elif isinstance(recipe, str):
+        lines.append(f"  {recipe}")
+    else:
+        lines.append(f"  {recipe}")
+    return lines
+
 
 def format_text(cmds: dict) -> str:
     """Format commands as human-readable text output."""
@@ -277,52 +382,49 @@ def format_text(cmds: dict) -> str:
         "",
     ]
     lines += [
-        f"[test]",
+        "[test]",
         f"  {cmds['test']}",
         "",
-        f"[coverage]",
+        "[coverage]",
         f"  {cmds['coverage']}",
         "",
-        f"[mutation-incremental]",
+        "[mutation-incremental]",
         f"  {cmds['mutation_incremental']}",
         "",
-        f"[mutation-feature]",
+        "[mutation-feature]",
         f"  {cmds['mutation_feature']}",
         "",
-        f"[mutation-full]",
+        "[mutation-full]",
         f"  {cmds['mutation_full']}",
         "",
-        f"[mutation-results]",
+        "[mutation-results]",
         f"  {cmds['mutation_results']}",
         "",
-        f"[mutation-show]",
+        "[mutation-show]",
         f"  {cmds['mutation_show']}",
         "",
-        f"[build-log]",
-        f"  {cmds['build_log']}",
-        "",
-        f"[test-quiet]",
-        f"  {cmds['test_quiet']}",
-        "",
-        f"[test-detail]",
-        f"  {cmds['test_detail']}",
-        "",
-        f"[coverage-quiet]",
-        f"  {cmds['coverage_quiet']}",
-        "",
-        f"[coverage-detail]",
-        f"  {cmds['coverage_detail']}",
-        "",
-        f"[mutation-full-quiet]",
-        f"  {cmds['mutation_full_quiet']}",
-        "",
-        f"[mutation-full-detail]",
-        f"  {cmds['mutation_full_detail']}",
-        "",
-        f"[mutation-results-quiet]",
-        f"  {cmds['mutation_results_quiet']}",
-        "",
-        f"[thresholds]",
+    ]
+    lines += _format_recipe("test-quiet", cmds["test_quiet"])
+    lines.append("")
+    lines += _format_recipe("test-detail", cmds["test_detail"])
+    lines.append("")
+    lines += _format_recipe("coverage-quiet", cmds["coverage_quiet"])
+    lines.append("")
+    lines += _format_recipe("coverage-detail", cmds["coverage_detail"])
+    lines.append("")
+    lines += _format_recipe("mutation-full-quiet", cmds["mutation_full_quiet"])
+    lines.append("")
+    lines += _format_recipe("mutation-full-detail", cmds["mutation_full_detail"])
+    lines.append("")
+    lines += _format_recipe("mutation-results-quiet", cmds["mutation_results_quiet"])
+    lines.append("")
+    if cmds.get("compile_quiet"):
+        lines += _format_recipe("compile-quiet", cmds["compile_quiet"])
+        lines.append("")
+        lines += _format_recipe("compile-detail", cmds["compile_detail"])
+        lines.append("")
+    lines += [
+        "[thresholds]",
         f"  line_coverage  >= {th['line_coverage_min']}%",
         f"  branch_coverage >= {th['branch_coverage_min']}%",
         f"  mutation_score  >= {th['mutation_score_min']}%",
