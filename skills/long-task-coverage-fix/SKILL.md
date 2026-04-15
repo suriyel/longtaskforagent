@@ -42,14 +42,6 @@ tests_added=N, gaps_addressed=N/M, all_tests_pass=true/false
 
 ---
 
-## Orchestrator Notes
-
-> Worker解析返回值的指引。SubAgent执行时忽略此段。
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → proceed to Mutation Fix (6c) or Recheck (6d).
-- Verdict FAIL / BLOCKED → escalate to user.
-
 ## Integration
 
 **Called by:** long-task-work (Step 6b) — Worker dispatches SubAgent with Coverage Gaps

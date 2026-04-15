@@ -50,15 +50,6 @@ line_coverage=N% (≥X%, PASS/FAIL), branch_coverage=N% (≥X%, PASS/FAIL), muta
 
 ---
 
-## Orchestrator Notes
-
-> Worker解析返回值的指引。SubAgent执行时忽略此段。
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → proceed to Persist.
-- Verdict BLOCKED → escalate to user.
-- Verdict FAIL → extract `Coverage Gaps` and/or `Surviving Mutants` → dispatch fix agents.
-
 ## Integration
 
 **Called by:** long-task-work (Step 6a) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline

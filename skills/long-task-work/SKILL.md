@@ -5,7 +5,7 @@ description: "Use when feature-list.json exists - orchestrate features through t
 
 # Worker — One Feature Per Cycle
 
-Pure flow controller. Each step dispatches a SubAgent via `Agent()`, the SubAgent loads the discipline skill via `Skill()` and executes inline.
+Pure flow controller. Each step dispatches a discipline skill in isolated context (SubAgent when available, inline otherwise) and parses its Structured Return Contract.
 
 **Announce at start:** "I'm using the long-task-work skill. Let me orient myself."
 
@@ -21,13 +21,7 @@ Pure flow controller. Each step dispatches a SubAgent via `Agent()`, the SubAgen
 
 ## Step 2: Feature Design
 
-Dispatch SubAgent:
-```
-Agent(
-  description="Feature Design for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-feature-design', args='{id}'). Follow the loaded instructions exactly."
-)
-```
+> **DISPATCH** `long-task:long-task-feature-design` args=`{id}` — isolated context
 
 **Parse:** Parse SubAgent return text (Structured Return Contract).
 - Verdict PASS → ask user to approve design doc via `AskUserQuestion`. If corrections → re-dispatch once.
@@ -37,39 +31,21 @@ Update pipeline marker: `Feature #{id} → Step 2 (Feature Design)`
 
 ## Step 3: TDD Red
 
-Dispatch SubAgent:
-```
-Agent(
-  description="TDD Red for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-tdd-red', args='{id}'). Follow the loaded instructions exactly."
-)
-```
+> **DISPATCH** `long-task:long-task-tdd-red` args=`{id}` — isolated context
 
 **Parse:** All tests fail (RED PASS) → proceed to Step 4. Any test passes or framework error → escalate.
 Update pipeline marker: `Feature #{id} → Step 3 (TDD Red)`
 
 ## Step 4: TDD Green
 
-Dispatch SubAgent:
-```
-Agent(
-  description="TDD Green for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-tdd-green', args='{id}'). Follow the loaded instructions exactly."
-)
-```
+> **DISPATCH** `long-task:long-task-tdd-green` args=`{id}` — isolated context
 
 **Parse:** All tests pass with zero regressions → proceed to Step 5. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 4 (TDD Green)`
 
 ## Step 5: TDD Refactor
 
-Dispatch SubAgent:
-```
-Agent(
-  description="TDD Refactor for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-tdd-refactor', args='{id}'). Follow the loaded instructions exactly."
-)
-```
+> **DISPATCH** `long-task:long-task-tdd-refactor` args=`{id}` — isolated context
 
 **Parse:** Clean (zero violations, §11 compliant) → proceed to Step 6. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 5 (TDD Refactor)`
@@ -80,13 +56,7 @@ Initialize: `retry_count = 0`
 
 ### Step 6a: Quality Check (hard gate — measurement only)
 
-Dispatch SubAgent:
-```
-Agent(
-  description="Quality Check for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-quality-check', args='{id}'). Follow the loaded instructions exactly."
-)
-```
+> **DISPATCH** `long-task:long-task-quality-check` args=`{id}` — isolated context
 
 **Parse:** Parse SubAgent return text (Structured Return Contract).
 - Verdict PASS → proceed to Step 7.
@@ -95,13 +65,9 @@ Agent(
 
 ### Step 6b: Coverage Fix (MUST run before mutation fix)
 
-**Skip if coverage PASS.** Otherwise dispatch SubAgent:
-```
-Agent(
-  description="Coverage Fix for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-coverage-fix', args='{id}').\n\nCoverage Gaps from Quality Check:\n{paste Coverage Gaps section here}\n\nFollow the loaded instructions exactly."
-)
-```
+**Skip if coverage PASS.** Otherwise:
+> **DISPATCH** `long-task:long-task-coverage-fix` args=`{id}` — isolated context
+> Append to prompt: Coverage Gaps section from Quality Check result
 
 **Parse:** Verdict PASS → proceed to Step 6c. Verdict FAIL / BLOCKED → escalate to user.
 
@@ -109,13 +75,9 @@ Agent(
 
 ### Step 6c: Mutation Fix
 
-**Skip if mutation PASS.** Otherwise dispatch SubAgent:
-```
-Agent(
-  description="Mutation Fix for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-mutation-fix', args='{id}').\n\nSurviving Mutants from Quality Check:\n{paste Surviving Mutants section here}\n\nFollow the loaded instructions exactly."
-)
-```
+**Skip if mutation PASS.** Otherwise:
+> **DISPATCH** `long-task:long-task-mutation-fix` args=`{id}` — isolated context
+> Append to prompt: Surviving Mutants section from Quality Check result
 
 **Parse:** Verdict PASS → proceed to Step 6d. Verdict FAIL / BLOCKED → escalate to user.
 
@@ -153,7 +115,7 @@ Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates) [round {retry_
 
 - **One feature per session** — external `scripts/auto_loop.py` handles multi-feature
 - **Strict step order** — no skipping, no reordering
-- **Each step = Agent() dispatches SubAgent → SubAgent calls Skill() → executes inline**
+- **Each step = dispatch discipline skill (isolated context) → execute → return Structured Result**
 - **Never mark "passing" without fresh evidence**
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause
 - **Update progress before ending session**

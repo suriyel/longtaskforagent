@@ -59,14 +59,6 @@ test_count=N, negative_ratio=N% (≥40%, PASS/FAIL), all_tests_fail=true/false
 
 ---
 
-## Orchestrator Notes
-
-> Worker解析返回值的指引。SubAgent执行时忽略此段。
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → all_tests_fail=true → proceed to TDD Green.
-- Verdict FAIL / any test passes / framework error → escalate to user.
-
 ## Integration
 
 **Called by:** long-task-work (Step 3) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline

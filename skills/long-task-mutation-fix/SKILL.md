@@ -42,14 +42,6 @@ mutants_addressed=N/M, equivalent_mutants=N, tests_strengthened=N, dead_code_rem
 
 ---
 
-## Orchestrator Notes
-
-> Worker解析返回值的指引。SubAgent执行时忽略此段。
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → proceed to Recheck (6d).
-- Verdict FAIL / BLOCKED → escalate to user.
-
 ## Integration
 
 **Called by:** long-task-work (Step 6c) — Worker dispatches SubAgent with Surviving Mutants

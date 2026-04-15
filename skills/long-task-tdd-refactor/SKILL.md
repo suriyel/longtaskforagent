@@ -46,14 +46,6 @@ static_analysis=CLEAN|N_violations, section11_compliance=CLEAN|N_violations, tes
 
 ---
 
-## Orchestrator Notes
-
-> Worker解析返回值的指引。SubAgent执行时忽略此段。
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → static_analysis=CLEAN, section11_compliance=CLEAN → proceed to Quality Gates.
-- Verdict FAIL / any violations → escalate to user.
-
 ## Integration
 
 **Called by:** long-task-work (Step 5) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline

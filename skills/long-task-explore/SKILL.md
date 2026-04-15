@@ -76,21 +76,10 @@ Build a **Project Profile** object:
 
 Dispatch the **codebase-locator** SubAgent to quickly identify key structural positions across the codebase.
 
-```
-Agent(
-  subagent_type="general-purpose",
-  description="Locate codebase structure for [project]",
-  prompt="""
-  Read the agent definition at: {plugin_root}/agents/codebase-locator.md
-
-  ## Project Profile
-  {project_profile}
-
-  Execute the full locator process per the agent definition.
-  Return the structured location inventory as specified in the Structured Return Contract.
-  """
-)
-```
+> **DISPATCH** subagent (general-purpose): Locate codebase structure for [project]
+> Definition: `{plugin_root}/agents/codebase-locator.md`
+> Input: Project Profile (from Step 2)
+> Execute the full locator process. Return structured location inventory.
 
 **Wait for locator to return** before proceeding. The location inventory is the input for Phase 2.
 
@@ -114,51 +103,19 @@ Determine which SubAgents to dispatch based on `--focus`:
 | `deps`, `health` (any) | Pattern-Finder |
 | `all` (default) | Both |
 
-```
-# Parallel Agent 1: Architecture Analyzer
-Agent(
-  subagent_type="general-purpose",
-  description="Analyze architecture of [project]",
-  prompt="""
-  Read the agent definition at: {plugin_root}/agents/codebase-analyzer.md
-  Read the dimension guide at: {plugin_root}/skills/long-task-explore/references/exploration-dimensions.md
+> **DISPATCH** subagent (general-purpose): Analyze architecture of [project]
+> Definition: `{plugin_root}/agents/codebase-analyzer.md`
+> References: `{plugin_root}/skills/long-task-explore/references/exploration-dimensions.md`
+> Input: Project Profile + Location Inventory (from Step 3)
+> Dimensions: {filtered per --focus: architecture, api, dataflow, domain}
+> Execute the full analysis process. Return structured analysis.
 
-  ## Project Profile
-  {project_profile}
-
-  ## Location Inventory (from Locator)
-  {locator_results}
-
-  ## Dimensions to Analyze
-  {filtered_dimensions: architecture, api, dataflow, domain — based on --focus}
-
-  Execute the full analysis process per the agent definition.
-  Return the structured analysis as specified in the Structured Return Contract.
-  """
-)
-
-# Parallel Agent 2: Pattern & Health Finder
-Agent(
-  subagent_type="general-purpose",
-  description="Find patterns and health metrics for [project]",
-  prompt="""
-  Read the agent definition at: {plugin_root}/agents/codebase-pattern-finder.md
-  Read the dimension guide at: {plugin_root}/skills/long-task-explore/references/exploration-dimensions.md
-
-  ## Project Profile
-  {project_profile}
-
-  ## Location Inventory (from Locator)
-  {locator_results}
-
-  ## Dimensions to Analyze
-  {filtered_dimensions: deps, health — based on --focus}
-
-  Execute the full analysis process per the agent definition.
-  Return the structured analysis as specified in the Structured Return Contract.
-  """
-)
-```
+> **DISPATCH** subagent (general-purpose): Find patterns and health metrics for [project]
+> Definition: `{plugin_root}/agents/codebase-pattern-finder.md`
+> References: `{plugin_root}/skills/long-task-explore/references/exploration-dimensions.md`
+> Input: Project Profile + Location Inventory (from Step 3)
+> Dimensions: {filtered per --focus: deps, health}
+> Execute the full analysis process. Return structured analysis.
 
 Wait for both SubAgents to complete.
 

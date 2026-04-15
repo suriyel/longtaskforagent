@@ -89,22 +89,11 @@ If no global SRS exists → proceed normally from Step 1.
 
 **Execution**:
 1. Read `repos-manifest.json` → get repo list (name, path)
-2. For each repo, dispatch `long-task-explore` to build context:
-   ```
-   Agent(
-     subagent_type="general-purpose",
-     description="Explore repo: {repo_name}",
-     prompt="""
-     Invoke the long-task:long-task-explore skill with these parameters:
-     - Path: {repo_path}
-     - Depth: (omit — let explore auto-detect based on LOC)
-     - Focus: architecture,api,deps
-     Execute the skill and return the exploration results.
-     """
-   )
-   ```
-   > Depth is NOT hardcoded — explore's Step 2 Project Detection auto-selects (quick/standard/deep) based on LOC.
-   > Dispatch all repos in parallel when possible.
+2. For each repo, dispatch `long-task-explore` to build context (all repos in parallel when possible):
+   > **DISPATCH** `long-task:long-task-explore` — isolated context
+   > Path: {repo_path}
+   > Depth: (omit — let explore auto-detect based on LOC)
+   > Focus: architecture,api,deps
 3. Record per-repo profile: language, framework, architecture patterns, API surface, entry points
 4. Identify inter-repo relationships:
    - Shared dependencies / packages (e.g., common internal library)
@@ -149,21 +138,11 @@ The multi-repo topology informs all subsequent elicitation rounds: questions sho
 3. **Dedup with Step 2**: If Step 2 already explored a repo, reuse those findings instead of re-dispatching explore for the same repo. Only dispatch explore for repos where the inferred focus dimensions differ significantly from what Step 2 used (`architecture,api,deps`), or where Step 2 failed/returned no findings.
 
    For repos that need fresh exploration, dispatch in parallel:
-   ```
-   For each repo in repos-manifest.json (not already covered by Step 2):
-     Agent(
-       subagent_type="general-purpose",
-       description="Targeted exploration: {repo_name}",
-       prompt="""
-       Invoke the long-task:long-task-explore skill with these parameters:
-       - Path: {repo_path}
-       - Depth: {determined_depth or omit for auto-detect}
-       - Focus: {inferred_dimensions}
-       - User question: "{user_description_summary}"
-       Execute the skill and return the exploration results.
-       """
-     )
-   ```
+   > **DISPATCH** `long-task:long-task-explore` — isolated context (per repo not covered by Step 2)
+   > Path: {repo_path}
+   > Depth: {determined_depth or omit for auto-detect}
+   > Focus: {inferred_dimensions}
+   > User question: "{user_description_summary}"
 
 4. Integrate findings into your understanding — merge with Step 2 results per repo
 5. Reference discovered modules, APIs, data models in your questions (e.g., "I found `src/auth/` with JWT-based authentication in the backend repo — do you want to extend this or replace it?")
@@ -528,26 +507,10 @@ Rules:
 
 Dispatch a subagent to independently verify the SRS:
 
-```
-Task(
-  subagent_type="general-purpose",
-  prompt="""
-  You are an SRS compliance reviewer aligned with ISO/IEC/IEEE 29148.
-  Read the reviewer prompt at: skills/long-task-multi-repo/prompts/srs-reviewer-prompt.md
-
-  Project context:
-  {project_context}
-
-  Full SRS draft (all sections):
-  {srs_draft}
-
-  Requirement ID list:
-  {requirement_id_list}
-
-  Perform the review following the prompt exactly.
-  """
-)
-```
+> **DISPATCH** subagent (general-purpose): SRS compliance reviewer (ISO/IEC/IEEE 29148)
+> Prompt: Read reviewer instructions at `skills/long-task-multi-repo/prompts/srs-reviewer-prompt.md`
+> Input: Project context, full SRS draft, requirement ID list
+> Execute the review following the prompt exactly.
 
 **ALL checks must PASS to proceed:**
 - Group R (R1-R8): quality attributes

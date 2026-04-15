@@ -101,22 +101,12 @@ Compare new requirements against the existing feature set:
 
    When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide.
 
-4. Dispatch `long-task-explore` with context-driven parameters:
-   ```
-   Agent(
-     subagent_type="general-purpose",
-     description="Targeted codebase exploration for increment impact",
-     prompt="""
-     Invoke the long-task:long-task-explore skill with these parameters:
-     - Depth: {determined_depth or omit for auto-detect}
-     - Focus: architecture,dataflow,deps
-     - Path: {inferred_path_from_affected_features or "."}
-     - User question: "Understand modules affected by: {increment_scope_summary}. 
-       Affected features: {hard_impact_feature_titles}."
-     Execute the skill and return the exploration results.
-     """
-   )
-   ```
+4. Dispatch `long-task-explore`:
+   > **DISPATCH** `long-task:long-task-explore` — isolated context
+   > Depth: {determined_depth or omit for auto-detect}
+   > Focus: architecture,dataflow,deps
+   > Path: {inferred_path_from_affected_features or "."}
+   > User question: "Understand modules affected by: {increment_scope_summary}. Affected features: {hard_impact_feature_titles}."
 5. Use exploration output to inform Step 4 (Design Revision):
    - Module dependency graph reveals which design sections need updating
    - Data flow analysis shows integration points that may break

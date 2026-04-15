@@ -113,21 +113,12 @@ On escalation: all Lite artifacts gathered so far become Expert input. Do NOT re
 
    When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide (<1K→quick, 1K-10K→standard, >10K→deep).
 
-3. Dispatch `long-task-explore` with context-driven parameters:
-     ```
-     Agent(
-       subagent_type="general-purpose",
-       description="Targeted codebase exploration for requirements context",
-       prompt="""
-       Invoke the long-task:long-task-explore skill with these parameters:
-       - Depth: {determined_depth or omit for auto-detect}
-       - Focus: {inferred_dimensions}
-       - Path: {inferred_path or "."}
-       - User question: "{user_description_summary}"
-       Execute the skill and return the exploration results.
-       """
-     )
-     ```
+3. Dispatch `long-task-explore`:
+   > **DISPATCH** `long-task:long-task-explore` — isolated context
+   > Depth: {determined_depth or omit for auto-detect}
+   > Focus: {inferred_dimensions}
+   > Path: {inferred_path or "."}
+   > User question: "{user_description_summary}"
 4. If explore returns useful findings → incorporate into your mental model for L1/E1 questioning:
    - Reference discovered modules, APIs, data models in your questions (e.g., "I found `src/auth/` with JWT-based authentication — do you want to extend this or replace it?")
    - Use discovered architecture patterns to ask more informed questions about integration points
@@ -440,26 +431,10 @@ Rules:
 
 Dispatch a subagent to independently verify the SRS:
 
-```
-Task(
-  subagent_type="general-purpose",
-  prompt="""
-  You are an SRS compliance reviewer aligned with ISO/IEC/IEEE 29148.
-  Read the reviewer prompt at: skills/long-task-requirements/prompts/srs-reviewer-prompt.md
-
-  Project context:
-  {project_context}
-
-  Full SRS draft (all sections):
-  {srs_draft}
-
-  Requirement ID list:
-  {requirement_id_list}
-
-  Perform the review following the prompt exactly.
-  """
-)
-```
+> **DISPATCH** subagent (general-purpose): SRS compliance reviewer (ISO/IEC/IEEE 29148)
+> Prompt: Read reviewer instructions at `skills/long-task-requirements/prompts/srs-reviewer-prompt.md`
+> Input: Project context, full SRS draft, requirement ID list
+> Execute the review following the prompt exactly.
 
 **ALL checks must PASS to proceed:**
 - Group R (R1-R8): quality attributes

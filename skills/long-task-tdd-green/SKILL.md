@@ -57,14 +57,6 @@ test_count=N, tests_pass=N, regressions=0
 
 ---
 
-## Orchestrator Notes
-
-> Worker解析返回值的指引。SubAgent执行时忽略此段。
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → regressions=0 → proceed to TDD Refactor.
-- Verdict FAIL / any test fails / regressions > 0 → escalate to user.
-
 ## Integration
 
 **Called by:** long-task-work (Step 4) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline
