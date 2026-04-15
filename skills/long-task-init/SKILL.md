@@ -39,29 +39,28 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
 3. **Verify `tech_stack` and `quality_gates`** in `feature-list.json`:
    - Confirm `language`, `test_framework`, `coverage_tool`, `mutation_tool` match the design doc
+   - If `docs/rules/build-and-compilation.md` exists: cross-check `tech_stack` against scanned build/test config; on conflict, prefer scanned values and update `feature-list.json`
    - Adjust `quality_gates` thresholds if needed (defaults: line 90%, branch 80%, mutation 80%)
    - Verify tool commands resolve correctly:
      ```bash
      python scripts/get_tool_commands.py feature-list.json
      ```
-4. **Generate `long-task-guide.md`** — Create a project-tailored Worker session guide:
-   - Read these files for reference:
-     - `skills/long-task-work/SKILL.md` — Worker workflow
-     - `skills/long-task-quality/references/quality-execution.md` — verification enforcement
-     - `skills/long-task-quality/coverage-recipes.md` — coverage/mutation tool setup
-     - `skills/using-long-task/references/architecture.md` — Persistent artifact schemas
-   - Include ONLY the project's language-specific coverage/mutation commands (get from `python scripts/get_tool_commands.py feature-list.json`)
-   - **Must include all required sections**: Orient, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules, Output Optimization
-   - **Must include `Environment Commands` section** with:
-     - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate myenv`, `nvm use 20`)
-     - Direct test execution command (e.g., `pytest --cov=src tests/`)
-     - Direct mutation testing command (e.g., `mutmut run`)
-     - Direct coverage report command
-     - **Quiet recipes** (`[test-quiet]`, `[coverage-quiet]`, `[mutation-full-quiet]`) from `get_tool_commands.py` output — each has a `cmd` (the tool invocation) and an `instruction` (what to do with output: capture, extract, tail); the executing LLM composes the shell-appropriate command at runtime
-     - These replace the now-removed test.sh/mutate.sh wrappers — Claude runs these directly
-   - Validate:
+4. **Generate `long-task-guide.md`** — Tool command reference (NOT workflow guide):
+   a. **Collect configuration sources** (priority order):
+      - `docs/rules/build-and-compilation.md` (if exists) — extract build command, test command, package manager
+      - `docs/rules/coding-constraints.md` (if exists) — extract static analysis tool run commands (§11.4)
+      - `python scripts/get_tool_commands.py feature-list.json` — get all `[*-quiet]`/`[*-detail]` recipes
+      - `skills/long-task-quality/coverage-recipes.md` — tool setup reference (fallback only)
+   b. **Guide content — ONLY these sections**:
+      1. **Test Commands** — `[test-quiet]`, `[test-detail]`, full test command
+      2. **Coverage Commands** — `[coverage-quiet]`, `[coverage-feature-quiet]`, `[coverage-feature-detail]`, full coverage command
+      3. **Mutation Commands** — `[mutation-feature-quiet]`, `[mutation-feature-detail]`, `[mutation-full-quiet]`, full mutation command
+      4. **Static Analysis** (if §11.4 non-empty) — tool name + run command from scanned rules
+   c. **Do NOT include**: TDD workflow, quality gate process, verification rules, critical rules, persist steps — these exist in sub-skill files
+   d. **User preview** — present guide content to user; proceed only after approval
+   e. **Validate**:
      ```bash
-     python scripts/validate_guide.py long-task-guide.md --feature-list feature-list.json
+     python scripts/validate_guide.py long-task-guide.md
      ```
 5. **Populate SRS fields in `feature-list.json`** — from the **SRS document**:
    - `constraints[]` — copy CON-xxx items from SRS "Constraints" section; each a concise string
@@ -141,7 +140,7 @@ Each feature:
 | `task-progress.md` | Session-by-session progress log |
 | `RELEASE_NOTES.md` | Living release notes (Keep a Changelog format) |
 | `examples/` | Runnable examples directory |
-| `long-task-guide.md` | Worker session guide with env activation + direct test commands (LLM-generated, validated) |
+| `long-task-guide.md` | Tool command reference — test/coverage/mutation recipes (LLM-generated, user-approved, validated) |
 
 ## Integration
 

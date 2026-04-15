@@ -24,29 +24,12 @@ import sys
 # Required section concepts — each is (label, list of alternative patterns).
 # The guide passes if at least ONE pattern from each group is found (case-insensitive).
 REQUIRED_SECTIONS = [
-    ("Orient / current state",
-     [r"orient", r"current state", r"understand.*state"]),
-    ("TDD Red / failing tests first",
-     [r"tdd\s*red", r"failing\s*tests?\s*first", r"write.*failing.*test"]),
-    ("TDD Green / implement to pass",
-     [r"tdd\s*green", r"implement.*pass", r"minimal.*code.*pass"]),
-    ("Coverage Gate",
-     [r"coverage\s*gate", r"coverage.*threshold", r"line.*coverage.*branch.*coverage"]),
-    ("TDD Refactor",
-     [r"tdd\s*refactor", r"refactor.*keeping.*test", r"clean\s*up"]),
-    ("Mutation Gate / mutation testing",
-     [r"mutation\s*gate", r"mutation.*test", r"mutation.*score"]),
-    ("Verification enforcement",
-     [r"verification.*enforce", r"fresh.*evidence", r"never.*mark.*passing.*without"]),
-    ("Inline Compliance Check",
-     [r"inline.*compliance", r"compliance.*check", r"spec.*coverage", r"design.*compliance"]),
-    ("Persist / save state",
-     [r"persist", r"save.*state", r"task-progress"]),
-    ("Critical Rules",
-     [r"critical\s*rule", r"iron\s*rule", r"must\s*never"]),
-    ("Output optimization / quiet commands",
-     [r"quiet", r"output\s*optim", r"progressive\s*disclosure",
-      r"test-quiet", r"tail\s*-\d+"]),
+    ("Test commands",
+     [r"test-quiet", r"test-detail", r"test.*command"]),
+    ("Coverage commands",
+     [r"coverage-quiet", r"coverage-feature-quiet", r"coverage.*command"]),
+    ("Mutation commands",
+     [r"mutation-feature-quiet", r"mutation-full-quiet", r"mutation.*command"]),
 ]
 
 

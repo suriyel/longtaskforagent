@@ -26,50 +26,49 @@ def run_validator(content):
         os.unlink(tmp_path)
 
 
-# A complete guide that contains all required sections
-COMPLETE_GUIDE = """# My Project — Long-Task Worker Guide
+# A complete guide with all required sections (pure tool config)
+COMPLETE_GUIDE = """# My Project — Tool Command Reference
 
-## Session Workflow
+## Test Commands
 
-### Step 1: Orient — understand current state
-1. Read `task-progress.md` to understand what happened before
-2. Read `feature-list.json` to find next priority failing feature
+[test-quiet]
+  cmd: pytest -q --tb=line
+  instruction: capture output to temp file; print exit code; show last 5 lines
 
-### Step 2: TDD Red — write failing tests first
-1. Write unit tests covering verification_steps — they MUST fail
+[test-detail]
+  instruction: search temp file for 'FAILED', 'ERROR'; show first 30 matches
 
-### Step 4: TDD Green — implement to pass tests
-1. Write minimal code to make ALL tests pass
+Full: pytest --cov=src tests/
 
-### Step 4.5: Coverage Gate — verify test coverage
-1. Line coverage >= threshold, branch coverage >= threshold
-2. Run: `pytest --cov=src --cov-branch`
+## Coverage Commands
 
-### Step 5: TDD Refactor — clean up
-1. Refactor while keeping tests green
+[coverage-quiet]
+  cmd: pytest --cov=src --cov-branch --cov-report=term-missing -q --tb=line
+  instruction: capture output to temp file; print exit code; show last 10 lines
 
-### Step 5.5m: Mutation Gate — verify test effectiveness
-1. Mutation score >= threshold
-2. Run: `mutmut run`
+[coverage-feature-quiet]
+  cmd: pytest --cov={changed_modules} --cov-branch --cov-report=term-missing -q --tb=line {test_files}
+  instruction: capture output to temp file; print exit code; show last 10 lines
 
-### Step 5.5v: Verification enforcement
-NEVER mark "passing" without fresh evidence — run tests, read output
+[coverage-feature-detail]
+  instruction: search temp file for coverage summary lines; show first 30 matches
 
-### Step 5.5r: Inline Compliance Check
-1. Spec compliance
-2. Design compliance
+Full: pytest --cov=src --cov-branch --cov-report=term-missing
 
-### Step 6: Persist — save state
-1. git commit
-2. Update task-progress.md
+## Mutation Commands
 
-## Output Optimization
-Use quiet pipe recipes (`[test-quiet]`, `[coverage-quiet]`) for compact output.
-On failure, re-run standard command with `tail -30` for details.
+[mutation-feature-quiet]
+  cmd: mutmut run --paths-to-mutate={changed_files} --tests-dir={test_files}
+  instruction: capture output to temp file; print exit code; show last 10 lines
 
-## Critical Rules
-- NEVER write implementation before tests
-- NEVER mark passing without evidence
+[mutation-feature-detail]
+  instruction: search temp file for 'survived' or 'timeout'; show first 30 matches
+
+[mutation-full-quiet]
+  cmd: mutmut run
+  instruction: capture output to temp file; print exit code; show last 10 lines
+
+Full: mutmut run
 """
 
 
@@ -86,111 +85,68 @@ def test_empty_guide_fails():
     assert code != 0, f"Expected non-zero for empty guide: {stdout}"
 
 
-def test_missing_tdd_red_fails():
-    """A guide missing TDD Red should fail."""
-    content = COMPLETE_GUIDE.replace("TDD Red", "Step Three")
-    content = content.replace("failing tests first", "initial setup")
-    content = content.replace("MUST fail", "MUST work")
-    content = content.replace("write failing test", "write initial code")
+def test_missing_test_commands_fails():
+    """A guide missing test commands should fail."""
+    content = COMPLETE_GUIDE.replace("test-quiet", "xxx-quiet")
+    content = content.replace("test-detail", "xxx-detail")
+    content = content.replace("Test Commands", "XXX Section")
+    content = content.replace("test command", "xxx")
     code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when TDD Red missing: {stdout}"
+    assert code != 0, f"Expected non-zero when test commands missing: {stdout}"
 
 
-def test_missing_coverage_gate_fails():
-    """A guide missing Coverage Gate should fail."""
-    content = COMPLETE_GUIDE.replace("Coverage Gate", "Quality Check")
-    content = content.replace("coverage", "quality")
-    content = content.replace("Coverage", "Quality")
-    # Also remove branch coverage reference
-    content = content.replace("line coverage", "line quality")
-    content = content.replace("branch coverage", "branch quality")
+def test_missing_coverage_commands_fails():
+    """A guide missing coverage commands should fail."""
+    content = COMPLETE_GUIDE.replace("coverage-quiet", "xxx-quiet")
+    content = content.replace("coverage-feature-quiet", "xxx-feature-quiet")
+    content = content.replace("Coverage Commands", "XXX Section")
+    content = content.replace("coverage command", "xxx")
     code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when Coverage Gate missing: {stdout}"
+    assert code != 0, f"Expected non-zero when coverage commands missing: {stdout}"
 
 
-def test_missing_mutation_gate_fails():
-    """A guide missing Mutation Gate should fail."""
-    content = COMPLETE_GUIDE.replace("Mutation Gate", "Extra Check")
-    content = content.replace("mutation", "extra")
-    content = content.replace("Mutation", "Extra")
-    content = content.replace("mutmut", "extratool")
+def test_missing_mutation_commands_fails():
+    """A guide missing mutation commands should fail."""
+    content = COMPLETE_GUIDE.replace("mutation-feature-quiet", "xxx-feature-quiet")
+    content = content.replace("mutation-full-quiet", "xxx-full-quiet")
+    content = content.replace("Mutation Commands", "XXX Section")
+    content = content.replace("mutation command", "xxx")
     code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when Mutation Gate missing: {stdout}"
-
-
-def test_missing_verification_enforcement_fails():
-    """A guide missing verification enforcement should fail."""
-    content = COMPLETE_GUIDE.replace("Verification enforcement", "Quality check")
-    content = content.replace("verification", "quality-check")
-    content = content.replace("fresh evidence", "good results")
-    content = content.replace("never mark passing without", "always ensure good")
-    content = content.replace("NEVER mark", "ALWAYS ensure")
-    code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when verification missing: {stdout}"
-
-
-def test_missing_compliance_review_fails():
-    """A guide missing Inline Compliance Check should fail."""
-    content = COMPLETE_GUIDE.replace("Inline Compliance Check", "Final Step")
-    content = content.replace("inline compliance", "final step")
-    content = content.replace("compliance check", "final step")
-    content = content.replace("Spec compliance", "Final check A")
-    content = content.replace("Design compliance", "Final check B")
-    content = content.replace("spec compliance", "final check a")
-    content = content.replace("design compliance", "final check b")
-    code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when Inline Compliance Check missing: {stdout}"
-
-
-def test_missing_critical_rules_fails():
-    """A guide missing Critical Rules section should fail."""
-    content = COMPLETE_GUIDE.replace("Critical Rules", "Guidelines")
-    content = content.replace("critical rule", "guideline")
-    content = content.replace("must never", "should avoid")
-    content = content.replace("NEVER", "AVOID")
-    code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when Critical Rules missing: {stdout}"
+    assert code != 0, f"Expected non-zero when mutation commands missing: {stdout}"
 
 
 def test_alternative_wording_passes():
     """A guide using alternative but equivalent wording should still pass."""
-    content = """# Project Guide
+    content = """# Project Tool Reference
 
-## Workflow
+## Test command recipes
 
-### Understand current state
-Read task-progress.md and feature-list.json.
+[test-quiet]
+  cmd: npx jest --verbose=false
+  instruction: capture output; show last 5 lines
 
-### Write failing tests first
-Write unit tests that MUST fail before implementation.
+[test-detail]
+  instruction: search for FAIL; show first 30
 
-### Implement to pass tests
-Write minimal code to make ALL tests pass.
+## Coverage command recipes
 
-### Coverage threshold check
-Verify line coverage >= 90% and branch coverage >= 80%.
+[coverage-quiet]
+  cmd: npx c8 npx jest
+  instruction: capture; show last 10 lines
 
-### Clean up
-Refactor code while keeping tests green.
+[coverage-feature-quiet]
+  cmd: npx c8 --include={changed_modules} npx jest
+  instruction: capture; show last 10 lines
 
-### Mutation testing
-Run mutation tests, verify mutation score >= 80%.
+## Mutation command recipes
 
-### Verification enforcement
-NEVER mark "passing" without fresh evidence.
+[mutation-feature-quiet]
+  cmd: npx stryker run --mutate={changed_files}
+  instruction: capture; show last 10 lines
 
-### Inline compliance check
-Spec compliance and design compliance checks.
-
-### Save state
-git commit, update task-progress.md.
-
-## Output Optimization
-Use quiet commands with tail -30 for compact output.
-
-## Critical Rules
-- Must never skip TDD
-- Must never mark passing without evidence
+[mutation-full-quiet]
+  cmd: npx stryker run
+  instruction: capture; show last 10 lines
 """
     code, stdout, _ = run_validator(content)
     assert code == 0, f"Expected exit 0 for alternative wording: {stdout}"
@@ -217,12 +173,9 @@ if __name__ == "__main__":
     tests = [
         test_complete_guide_passes,
         test_empty_guide_fails,
-        test_missing_tdd_red_fails,
-        test_missing_coverage_gate_fails,
-        test_missing_mutation_gate_fails,
-        test_missing_verification_enforcement_fails,
-        test_missing_compliance_review_fails,
-        test_missing_critical_rules_fails,
+        test_missing_test_commands_fails,
+        test_missing_coverage_commands_fails,
+        test_missing_mutation_commands_fails,
         test_alternative_wording_passes,
         test_nonexistent_file,
         test_error_count_in_output,

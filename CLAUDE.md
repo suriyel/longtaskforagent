@@ -157,7 +157,7 @@ Key files:
 | `bugfix-request.json` | Hotfix | Signal file (deleted after processing) |
 | `increment-request.json` | Increment | Signal file (deleted after processing) |
 | `feature-list.json` | 1 | Task inventory with status, constraints, assumptions, waves |
-| `long-task-guide.md` | 1 | Worker session guide (env activation, test/coverage/mutation commands) |
+| `long-task-guide.md` | 1 | Tool command reference (test/coverage/mutation recipes only; NOT workflow guide) |
 | `task-progress.md` | 1 | `## Current State` + session log |
 | `RELEASE_NOTES.md` | 1 | Keep a Changelog format |
 | `docs/features/YYYY-MM-DD-<name>.md` | 2 | Per-feature detailed design |

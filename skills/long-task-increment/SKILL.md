@@ -242,7 +242,7 @@ Update the SRS and decompose into features:
 
 Update supporting files as needed:
 
-- **`long-task-guide.md`**: If new tools, frameworks, or patterns were introduced → regenerate or update relevant sections; re-validate with `python scripts/validate_guide.py long-task-guide.md --feature-list feature-list.json`
+- **`long-task-guide.md`**: Only contains tool command recipes — update only if `tech_stack` changes (new test/coverage/mutation tools); re-validate with `python scripts/validate_guide.py long-task-guide.md`
 
 ### 7. Finalize
 
