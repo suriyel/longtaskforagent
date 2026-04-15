@@ -121,15 +121,6 @@ Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates) [round {retry_
 - **Update progress before ending session**
 - **Never leave broken code**
 
-## On Error
-
-1. Collect evidence (error message, stack trace, git diff)
-2. Reproduce the issue
-3. Trace root cause (read `references/systematic-debugging.md`)
-4. Write failing test for the bug
-5. Fix with single targeted change
-6. Give up after 3 attempts → escalate to user
-
 ## Integration
 
 **Called by:** using-long-task (when feature-list.json exists)
