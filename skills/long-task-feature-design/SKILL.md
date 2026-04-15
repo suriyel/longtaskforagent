@@ -31,9 +31,9 @@ Report summary using Structured Return Contract from `feature-design-execution.m
 
 > Worker解析返回值的指引。SubAgent执行时忽略此段。
 
-**Parse:** Read result summary.
-- Success → Ask user to review design doc via `AskUserQuestion`: "Please review feature design at {path}. Approve or provide corrections." If approved → proceed to TDD Red. If corrections → re-dispatch once with corrections.
-- Failure → escalate to user.
+**Parse:** Parse SubAgent return text (Structured Return Contract).
+- Verdict PASS → Ask user to review design doc via `AskUserQuestion`: "Please review feature design at {path}. Approve or provide corrections." If approved → proceed to TDD Red. If corrections → re-dispatch once with corrections.
+- Verdict FAIL / BLOCKED / CLARIFY → escalate to user.
 
 ## Integration
 

@@ -34,7 +34,26 @@ Read these sections:
 - ALL tests must pass, zero regressions
 - Test output protocol: `[test-quiet]` first → on PASS done; on FAIL → `[test-detail]` for errors
 
-Report summary: success/fail, implementation file paths, test pass count.
+Return result using the Structured Return Contract below.
+
+---
+
+## Structured Return Contract
+
+When implementation is complete and all tests pass, return your result in EXACTLY this format:
+
+```markdown
+## SubAgent Result: TDD Green
+### Verdict: PASS | FAIL | BLOCKED
+### Summary
+[1-2 sentences — implementation complete, all tests passing, zero regressions]
+### Metrics
+test_count=N, tests_pass=N, regressions=0
+### Artifacts
+[implementation files created/modified, one per line]
+### Issues
+[Omit if PASS. One line per issue: severity (Critical/Major/Minor) | description]
+```
 
 ---
 
@@ -42,9 +61,9 @@ Report summary: success/fail, implementation file paths, test pass count.
 
 > Worker解析返回值的指引。SubAgent执行时忽略此段。
 
-**Parse:** Read result summary.
-- All tests pass with zero regressions → proceed to TDD Refactor.
-- Failure → escalate to user.
+**Parse:** Parse SubAgent return text (Structured Return Contract).
+- Verdict PASS → regressions=0 → proceed to TDD Refactor.
+- Verdict FAIL / any test fails / regressions > 0 → escalate to user.
 
 ## Integration
 

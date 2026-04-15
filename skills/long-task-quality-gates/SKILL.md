@@ -27,9 +27,9 @@ Report summary using Structured Return Contract from `quality-execution.md`.
 
 > Worker解析返回值的指引。SubAgent执行时忽略此段。
 
-**Parse:** Read result summary.
-- All gates pass → proceed to Persist.
-- Failure → escalate to user.
+**Parse:** Parse SubAgent return text (Structured Return Contract).
+- Verdict PASS → proceed to Persist.
+- Verdict FAIL / BLOCKED → escalate to user.
 
 ## Integration
 

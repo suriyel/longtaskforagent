@@ -23,7 +23,26 @@ Refactor code, run static analysis, and verify codebase compliance. Read all doc
 - On violation: fix, re-run tests, re-check.
 - All tests must pass, zero static analysis violations, §11 compliance clean.
 
-Report summary: success/fail, static analysis result, compliance result.
+Return result using the Structured Return Contract below.
+
+---
+
+## Structured Return Contract
+
+When refactoring, static analysis, and §11 compliance are complete, return your result in EXACTLY this format:
+
+```markdown
+## SubAgent Result: TDD Refactor
+### Verdict: PASS | FAIL | BLOCKED
+### Summary
+[1-2 sentences — refactoring complete, static analysis and §11 compliance results]
+### Metrics
+static_analysis=CLEAN|N_violations, section11_compliance=CLEAN|N_violations, tests_pass=true/false
+### Artifacts
+[files modified, one per line]
+### Issues
+[Omit if PASS. One line per issue: severity (Critical/Major/Minor) | description]
+```
 
 ---
 
@@ -31,9 +50,9 @@ Report summary: success/fail, static analysis result, compliance result.
 
 > Worker解析返回值的指引。SubAgent执行时忽略此段。
 
-**Parse:** Read result summary.
-- Clean → proceed to Quality Gates.
-- Failure → escalate to user.
+**Parse:** Parse SubAgent return text (Structured Return Contract).
+- Verdict PASS → static_analysis=CLEAN, section11_compliance=CLEAN → proceed to Quality Gates.
+- Verdict FAIL / any violations → escalate to user.
 
 ## Integration
 

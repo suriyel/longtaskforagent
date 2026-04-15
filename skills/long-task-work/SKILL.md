@@ -29,9 +29,9 @@ Agent(
 )
 ```
 
-**Parse:** Read result summary.
-- Success → ask user to approve design doc via `AskUserQuestion`. If corrections → re-dispatch once.
-- Failure → escalate to user.
+**Parse:** Parse SubAgent return text (Structured Return Contract).
+- Verdict PASS → ask user to approve design doc via `AskUserQuestion`. If corrections → re-dispatch once.
+- Verdict FAIL / BLOCKED / CLARIFY → escalate to user.
 
 Update pipeline marker: `Feature #{id} → Step 2 (Feature Design)`
 

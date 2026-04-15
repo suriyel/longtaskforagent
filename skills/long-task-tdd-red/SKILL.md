@@ -36,7 +36,26 @@ Read these sections in order:
 - Follow related existing test conventions (Step 1b) for consistency. §11.5 and Test Inventory take precedence.
 - Test output protocol: `[test-quiet]` first → on PASS (wrong!) rewrite; on all-FAIL (correct!) done. If unclear → `[test-detail]`
 
-Report summary: success/fail, test file paths, test count, negative ratio.
+Return result using the Structured Return Contract below.
+
+---
+
+## Structured Return Contract
+
+When all tests are written and verified failing, return your result in EXACTLY this format:
+
+```markdown
+## SubAgent Result: TDD Red
+### Verdict: PASS | FAIL | BLOCKED
+### Summary
+[1-2 sentences — tests written, all confirmed failing (RED)]
+### Metrics
+test_count=N, negative_ratio=N% (≥40%, PASS/FAIL), all_tests_fail=true/false
+### Artifacts
+[test files created, one per line]
+### Issues
+[Omit if PASS. One line per issue: severity (Critical/Major/Minor) | description]
+```
 
 ---
 
@@ -44,9 +63,9 @@ Report summary: success/fail, test file paths, test count, negative ratio.
 
 > Worker解析返回值的指引。SubAgent执行时忽略此段。
 
-**Parse:** Read result summary.
-- All tests fail (RED PASS) → proceed to TDD Green.
-- Any test passes, or framework error → escalate to user.
+**Parse:** Parse SubAgent return text (Structured Return Contract).
+- Verdict PASS → all_tests_fail=true → proceed to TDD Green.
+- Verdict FAIL / any test passes / framework error → escalate to user.
 
 ## Integration
 
