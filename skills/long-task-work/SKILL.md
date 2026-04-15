@@ -83,7 +83,7 @@ Initialize: `retry_count = 0`
 
 ### Step 6d: Recheck
 
-`retry_count += 1`. Re-dispatch Quality Check (same as Step 6a).
+`retry_count += 1`. Re run Step 6a:Quality Check
 - Verdict PASS → proceed to Step 7.
 - Verdict FAIL + `retry_count < 20` → loop back to Step 6b.
 - Verdict FAIL + `retry_count >= 20` → escalate to user.
