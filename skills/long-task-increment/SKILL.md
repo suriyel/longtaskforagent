@@ -102,7 +102,7 @@ Compare new requirements against the existing feature set:
    When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide.
 
 4. Dispatch `long-task-explore`:
-   > **DISPATCH** `long-task:long-task-explore` — launch independent SubAgent to load and execute this Skill
+   > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore`
    > Depth: {determined_depth or omit for auto-detect}
    > Focus: architecture,dataflow,deps
    > Path: {inferred_path_from_affected_features or "."}

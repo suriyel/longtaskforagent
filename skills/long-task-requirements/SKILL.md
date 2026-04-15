@@ -114,7 +114,7 @@ On escalation: all Lite artifacts gathered so far become Expert input. Do NOT re
    When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide (<1K→quick, 1K-10K→standard, >10K→deep).
 
 3. Dispatch `long-task-explore`:
-   > **DISPATCH** `long-task:long-task-explore` — launch independent SubAgent to load and execute this Skill
+   > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore`
    > Depth: {determined_depth or omit for auto-detect}
    > Focus: {inferred_dimensions}
    > Path: {inferred_path or "."}
@@ -431,7 +431,7 @@ Rules:
 
 Dispatch a subagent to independently verify the SRS:
 
-> **DISPATCH** subagent (general-purpose): SRS compliance reviewer (ISO/IEC/IEEE 29148)
+> **DISPATCH** independent SubAgent — SRS compliance reviewer (ISO/IEC/IEEE 29148)
 > Prompt: Read reviewer instructions at `skills/long-task-requirements/prompts/srs-reviewer-prompt.md`
 > Input: Project context, full SRS draft, requirement ID list
 > Execute the review following the prompt exactly.

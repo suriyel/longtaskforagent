@@ -76,7 +76,7 @@ Build a **Project Profile** object:
 
 Dispatch the **codebase-locator** SubAgent to quickly identify key structural positions across the codebase.
 
-> **DISPATCH** subagent (general-purpose): Locate codebase structure for [project]
+> **DISPATCH** independent SubAgent — Locate codebase structure for [project]
 > Definition: `{plugin_root}/agents/codebase-locator.md`
 > Input: Project Profile (from Step 2)
 > Execute the full locator process. Return structured location inventory.
@@ -103,14 +103,14 @@ Determine which SubAgents to dispatch based on `--focus`:
 | `deps`, `health` (any) | Pattern-Finder |
 | `all` (default) | Both |
 
-> **DISPATCH** subagent (general-purpose): Analyze architecture of [project]
+> **DISPATCH** independent SubAgent — Analyze architecture of [project]
 > Definition: `{plugin_root}/agents/codebase-analyzer.md`
 > References: `{plugin_root}/skills/long-task-explore/references/exploration-dimensions.md`
 > Input: Project Profile + Location Inventory (from Step 3)
 > Dimensions: {filtered per --focus: architecture, api, dataflow, domain}
 > Execute the full analysis process. Return structured analysis.
 
-> **DISPATCH** subagent (general-purpose): Find patterns and health metrics for [project]
+> **DISPATCH** independent SubAgent — Find patterns and health metrics for [project]
 > Definition: `{plugin_root}/agents/codebase-pattern-finder.md`
 > References: `{plugin_root}/skills/long-task-explore/references/exploration-dimensions.md`
 > Input: Project Profile + Location Inventory (from Step 3)
