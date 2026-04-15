@@ -125,7 +125,10 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 | `long-task:long-task-tdd-red` | TDD Red — write failing tests for Test Inventory |
 | `long-task:long-task-tdd-green` | TDD Green — minimal implementation to pass all tests |
 | `long-task:long-task-tdd-refactor` | TDD Refactor — clean up + static analysis + §11 compliance |
-| `long-task:long-task-quality-gates` | Quality Gates — coverage + mutation testing |
+| `long-task:long-task-quality-check` | Quality Check — hard gate, measurement only (coverage + mutation) |
+| `long-task:long-task-coverage-fix` | Coverage Fix — add tests to close coverage gaps |
+| `long-task:long-task-mutation-fix` | Mutation Fix — strengthen tests to kill surviving mutants |
+| `long-task:long-task-quality-gates` | DEPRECATED — split into quality-check + coverage-fix + mutation-fix |
 
 ## Key Files (shared contract)
 

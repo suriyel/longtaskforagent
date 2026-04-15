@@ -74,18 +74,59 @@ Agent(
 **Parse:** Clean (zero violations, §11 compliant) → proceed to Step 6. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 5 (TDD Refactor)`
 
-## Step 6: Quality Gates
+## Step 6: Quality Gates (gate-fix-recheck loop, max 20 rounds)
+
+Initialize: `retry_count = 0`
+
+### Step 6a: Quality Check (hard gate — measurement only)
 
 Dispatch SubAgent:
 ```
 Agent(
-  description="Quality Gates for feature #{id}",
-  prompt="Call Skill(skill='long-task:long-task-quality-gates', args='{id}'). Follow the loaded instructions exactly."
+  description="Quality Check for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-quality-check', args='{id}'). Follow the loaded instructions exactly."
 )
 ```
 
-**Parse:** All gates pass → proceed to Step 7. Failure → escalate.
-Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates)`
+**Parse:** Parse SubAgent return text (Structured Return Contract).
+- Verdict PASS → proceed to Step 7.
+- Verdict BLOCKED → escalate to user.
+- Verdict FAIL → save `Coverage Gaps` and/or `Surviving Mutants` sections → proceed to Step 6b.
+
+### Step 6b: Coverage Fix (MUST run before mutation fix)
+
+**Skip if coverage PASS.** Otherwise dispatch SubAgent:
+```
+Agent(
+  description="Coverage Fix for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-coverage-fix', args='{id}').\n\nCoverage Gaps from Quality Check:\n{paste Coverage Gaps section here}\n\nFollow the loaded instructions exactly."
+)
+```
+
+**Parse:** Verdict PASS → proceed to Step 6c. Verdict FAIL / BLOCKED → escalate to user.
+
+**Rationale**: Running mutation on uncovered code is wasteful — coverage gaps must be closed first.
+
+### Step 6c: Mutation Fix
+
+**Skip if mutation PASS.** Otherwise dispatch SubAgent:
+```
+Agent(
+  description="Mutation Fix for feature #{id}",
+  prompt="Call Skill(skill='long-task:long-task-mutation-fix', args='{id}').\n\nSurviving Mutants from Quality Check:\n{paste Surviving Mutants section here}\n\nFollow the loaded instructions exactly."
+)
+```
+
+**Parse:** Verdict PASS → proceed to Step 6d. Verdict FAIL / BLOCKED → escalate to user.
+
+### Step 6d: Recheck
+
+`retry_count += 1`. Re-dispatch Quality Check (same as Step 6a).
+- Verdict PASS → proceed to Step 7.
+- Verdict FAIL + `retry_count < 20` → loop back to Step 6b.
+- Verdict FAIL + `retry_count >= 20` → escalate to user.
+
+Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates) [round {retry_count}]`
 
 ## Step 7: Persist (inline)
 
@@ -135,5 +176,7 @@ Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates)`
 2. `long-task:long-task-tdd-red` (Step 3)
 3. `long-task:long-task-tdd-green` (Step 4)
 4. `long-task:long-task-tdd-refactor` (Step 5)
-5. `long-task:long-task-quality-gates` (Step 6)
+5. `long-task:long-task-quality-check` (Step 6a)
+6. `long-task:long-task-coverage-fix` (Step 6b, if needed)
+7. `long-task:long-task-mutation-fix` (Step 6c, if needed)
 **Reads/Writes:** feature-list.json, task-progress.md, RELEASE_NOTES.md

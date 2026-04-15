@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → Init → Worker → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 12 skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration. Standalone `/static-review` skill for pre-push static analysis (iterative scan-fix to zero violations). Independent `long-task-multi-repo` skill for multi-repo projects.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → Design → Init → Worker → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. skills loaded on-demand via the `Skill` tool; bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration. Standalone `/static-review` skill for pre-push static analysis (iterative scan-fix to zero violations). Independent `long-task-multi-repo` skill for multi-repo projects.
 
 ## Key Commands
 
@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 12-Skill System
+### Skill System
 
 #### Phase Skills
 
@@ -58,7 +58,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-tdd-red` | TDD Red — write failing tests for Test Inventory |
 | `long-task-tdd-green` | TDD Green — minimal implementation to pass all tests |
 | `long-task-tdd-refactor` | TDD Refactor — clean up + static analysis + §11 compliance |
-| `long-task-quality-gates` | Quality Gates — coverage + mutation testing |
+| `long-task-quality-check` | Quality Check — hard gate, measurement only (coverage + mutation) |
+| `long-task-coverage-fix` | Coverage Fix — add tests to close coverage gaps |
+| `long-task-mutation-fix` | Mutation Fix — strengthen tests to kill surviving mutants |
+| `long-task-quality-gates` | DEPRECATED — split into quality-check + coverage-fix + mutation-fix |
 
 #### Skill Call Graph
 
@@ -76,7 +79,11 @@ using-long-task (router)
           ├─→ long-task-tdd-red (Step 3)
           ├─→ long-task-tdd-green (Step 4)
           ├─→ long-task-tdd-refactor (Step 5)
-          └─→ long-task-quality-gates (Step 6)
+          └─→ Quality Gate Loop (Step 6, max 20 rounds)
+                 ├─→ long-task-quality-check (Step 6a: hard gate)
+                 ├─→ long-task-coverage-fix (Step 6b: if coverage FAIL)
+                 ├─→ long-task-mutation-fix (Step 6c: if mutation FAIL)
+                 └─→ long-task-quality-check (Step 6d: recheck)
 
 long-task-explore (standalone — no pipeline dependency)
    ├─→ codebase-locator SubAgent (breadth-first scan)
@@ -98,7 +105,7 @@ long-task-static-review (standalone — no pipeline dependency)
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design updated in place; new features appended with `wave` metadata |
 | 1: Init | `long-task-init` | `feature-list.json`, `long-task-guide.md`, project skeleton |
-| 2: Worker | `long-task-work` | Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gates per feature |
+| 2: Worker | `long-task-work` | Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gate Loop (check → fix → recheck, max 20 rounds) per feature |
 
 ### Critical Rules
 
@@ -214,7 +221,10 @@ long-task-agent/
 │   ├── long-task-tdd-red/SKILL.md + references/tdd-red-execution.md
 │   ├── long-task-tdd-green/SKILL.md + references/tdd-green-execution.md
 │   ├── long-task-tdd-refactor/SKILL.md + references/tdd-refactor-execution.md
-│   ├── long-task-quality-gates/SKILL.md + references/quality-execution.md (symlink)
+│   ├── long-task-quality-check/SKILL.md + references/quality-check-execution.md
+│   ├── long-task-coverage-fix/SKILL.md + references/coverage-fix-execution.md
+│   ├── long-task-mutation-fix/SKILL.md + references/mutation-fix-execution.md
+│   ├── long-task-quality-gates/SKILL.md (DEPRECATED redirect)
 │   ├── long-task-quality/{references/quality-execution.md,coverage-recipes.md}
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
 │   ├── long-task-static-review/SKILL.md + references/tool-profiles.md (standalone)
@@ -247,7 +257,7 @@ long-task-agent/
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 12 skills loaded on-demand.
+This project uses a multi-session agent workflow with skills loaded on-demand.
 The `using-long-task` skill is injected at session start and routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §11) → Init → Worker cycles → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles.

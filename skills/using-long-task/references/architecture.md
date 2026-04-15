@@ -194,7 +194,7 @@ Its job:
 
 ## Worker Session Workflow
 
-> Authoritative workflow definition: `skills/long-task-work/SKILL.md`. Cycle: Orient → Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gates → Persist → End Session. One feature per cycle; external `scripts/auto_loop.py` handles multi-feature automation.
+> Authoritative workflow definition: `skills/long-task-work/SKILL.md`. Cycle: Orient → Feature Design → TDD Red → TDD Green → TDD Refactor → Quality Gate Loop (check → coverage fix → mutation fix → recheck, max 20 rounds) → Persist → End Session. One feature per cycle; external `scripts/auto_loop.py` handles multi-feature automation.
 
 ## Anti-Patterns to Avoid
 

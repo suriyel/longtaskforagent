@@ -1,39 +1,19 @@
 ---
 name: long-task-quality-gates
-description: "Run coverage and mutation gates for a feature. Input: feature_id."
+description: "DEPRECATED — split into long-task-quality-check, long-task-coverage-fix, long-task-mutation-fix. Do not invoke directly."
 ---
 
-# Quality Gates — Coverage + Mutation
+# Quality Gates — Redirect
 
-Execute coverage and mutation gates. Read all documents and thresholds yourself.
+This skill has been split into three phase skills:
 
-## Your Task
+1. **`long-task:long-task-quality-check`** — Hard gate (measurement only, never modifies code)
+2. **`long-task:long-task-coverage-fix`** — Fix coverage gaps (add tests for uncovered lines/branches)
+3. **`long-task:long-task-mutation-fix`** — Fix surviving mutants (strengthen tests, remove dead code)
 
-1. Read execution rules: `skills/long-task-quality-gates/references/quality-execution.md`
-2. Read coverage recipes (if needed): `skills/long-task-quality/coverage-recipes.md`
+The Worker (`long-task-work`) invokes them in a gate-fix-recheck loop at Step 6.
 
-## Key Constraints
+## Shared References
 
-- Gate 1: Coverage — line >= threshold, branch >= threshold
-- Gate 2: Mutation — score >= threshold (scope: full if active features <= mutation_full_threshold, else feature-scoped)
-- Final test run: confirm all tests still pass
-- Do NOT mark feature as "passing" in feature-list.json — only report results
-
-Report summary using Structured Return Contract from `quality-execution.md`.
-
----
-
-## Orchestrator Notes
-
-> Worker解析返回值的指引。SubAgent执行时忽略此段。
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → proceed to Persist.
-- Verdict FAIL / BLOCKED → escalate to user.
-
-## Integration
-
-**Called by:** long-task-work (Step 6) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline
-**Requires:** TDD Refactor completed (clean, passing code)
-**Produces:** Coverage + mutation metrics
-**Chains to:** Persist (Step 7, inline in Worker)
+- `skills/long-task-quality/references/quality-execution.md` — Original execution reference (superseded by `quality-check-execution.md`)
+- `skills/long-task-quality/coverage-recipes.md` — Coverage/mutation tool setup recipes (still used by quality-check)
