@@ -68,14 +68,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                         errors.append(
                             f"quality_gates.{key} must be a number between 0 and 100, got {val!r}"
                         )
-            # Validate mutation_full_threshold (positive integer, not a percentage)
-            mft = quality_gates.get("mutation_full_threshold")
-            if mft is not None:
-                if not isinstance(mft, int) or mft < 1:
-                    errors.append(
-                        f"quality_gates.mutation_full_threshold must be a positive integer, got {mft!r}"
-                    )
-
     # Validate single_round if present
     single_round = data.get("single_round")
     if single_round is not None and not isinstance(single_round, bool):

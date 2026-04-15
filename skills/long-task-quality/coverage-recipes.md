@@ -377,9 +377,9 @@ When the scope decision selects **feature scope**, the Quality Gate measures cov
 
 ## Per-Feature Mutation Test Scoping
 
-When the project's active feature count exceeds `mutation_full_threshold`, the Quality Gate scopes mutation testing to the current feature's changed files **and** tests. This avoids running the entire test suite per mutant, which becomes prohibitively slow in large projects.
+Mutation testing is always scoped to the current feature's changed files **and** tests. This avoids running the entire test suite per mutant, which becomes prohibitively slow.
 
-**Principle**: Mutate only changed source files, run only the feature's tests per mutant. Full mutation runs when the project's active feature count is at or below the threshold.
+**Principle**: Mutate only changed source files, run only the feature's tests per mutant.
 
 ### Identifying Feature Test Files
 

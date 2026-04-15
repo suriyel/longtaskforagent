@@ -173,22 +173,6 @@ def test_unknown_tool_mutation_feature_returns_unknown():
     assert cmds["mutation_feature"].startswith("UNKNOWN:")
 
 
-def test_mutation_full_threshold_default():
-    """Default mutation_full_threshold should be 5."""
-    data = {"tech_stack": {"test_framework": "pytest", "coverage_tool": "pytest-cov",
-                           "mutation_tool": "mutmut", "language": "python"}}
-    cmds = get_commands(data)
-    assert cmds["thresholds"]["mutation_full_threshold"] == 5
-
-
-def test_mutation_full_threshold_custom():
-    """Custom mutation_full_threshold should be respected."""
-    fl = make_feature_list()
-    fl["quality_gates"]["mutation_full_threshold"] = 50
-    cmds = get_commands(fl)
-    assert cmds["thresholds"]["mutation_full_threshold"] == 50
-
-
 def test_format_text_contains_sections():
     """Text format should contain all expected section labels."""
     cmds = get_commands(make_feature_list())
@@ -212,7 +196,6 @@ def test_format_text_contains_sections():
     assert "[mutation-feature-detail]" in text
     assert "[mutation-results-quiet]" in text
     assert "[thresholds]" in text
-    assert "mutation_full_threshold" in text
 
 
 # --- Feature-scoped command tests ---
@@ -464,7 +447,6 @@ def test_cli_json_output():
         assert "coverage" in data
         assert "mutation_feature" in data
         assert "thresholds" in data
-        assert "mutation_full_threshold" in data["thresholds"]
         # Verify quiet entries are structured dicts
         assert isinstance(data["test_quiet"], dict)
         assert "cmd" in data["test_quiet"]
@@ -522,8 +504,6 @@ if __name__ == "__main__":
         test_mutation_feature_key_present,
         test_mutation_feature_distinct_from_others,
         test_unknown_tool_mutation_feature_returns_unknown,
-        test_mutation_full_threshold_default,
-        test_mutation_full_threshold_custom,
         test_format_text_contains_sections,
         test_coverage_feature_keys_present,
         test_mutation_feature_quiet_keys_present,

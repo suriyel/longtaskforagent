@@ -34,37 +34,23 @@ For coverage metrics, prefer structured report files (`awk` on JaCoCo CSV, `grep
 5. **If still fails** → set Verdict to BLOCKED with error details
 6. **NEVER skip** — testing is a hard gate; no bypass allowed
 
-## Scope Decision (unified — applies to BOTH Gate 1 and Gate 2)
+## Scope: Always Feature-Scoped
 
-Check `quality_gates.mutation_full_threshold` (default 5) against total active (non-deprecated) features in `feature-list.json`:
-- If active features ≤ threshold → **full scope** (tiny project — full suite is fast enough for both gates)
-- If active features > threshold → **feature scope** (scope both coverage and mutation to this feature's changed files)
+Coverage and mutation are always scoped to this feature's changed files. Never run full-scope.
 
-**Fallback**: If `long-task-guide.md` does not contain `[coverage-feature-quiet]` or `[mutation-feature-quiet]` (older project guide), use the full-scope commands (`[coverage-quiet]`, `[mutation-full-quiet]`) regardless of scope decision.
-
-**For feature scope — identify changed files:**
+**Identify changed files:**
 1. **Changed source files**: from `git diff --name-only` against the commit before this feature's TDD cycle, or from the feature design doc's Project Structure section
 2. **Feature test files**: test files created/modified during TDD Red/Green for this feature (convention-based: `src/foo.ext` → `tests/test_foo.ext`)
 
 ## Gate 1: Coverage
 
-### Full scope (small project)
-
-1. **Run** `[coverage-quiet]` (activate env per `long-task-guide.md`)
-2. **Read** the output — verify line%/branch% numbers are visible
-3. **Verify**: line coverage >= `[thresholds] line_coverage`, branch coverage >= `[thresholds] branch_coverage`
-4. **If FAIL**: run `[coverage-detail]` to identify uncovered lines/branches → list them in `Coverage Gaps` section of return contract (format: `file:line-range | type | description`)
-5. **If PASS**: proceed to Mutation Gate
-
-### Feature scope (default)
-
-1. **Identify** changed source modules and feature test files (see Scope Decision above)
+1. **Identify** changed source modules and feature test files (see above)
 2. **Run** `[coverage-feature-quiet]` from `long-task-guide.md`, filling placeholders:
    - `{changed_modules}` → changed source module paths (e.g., `src/auth,src/utils`)
    - `{test_files}` → feature's test file paths (tool-dependent, may be omitted)
    - `{changed_classes_slash}` → Java only: class patterns with `/` separators
 3. **Verify**: line coverage >= `[thresholds] line_coverage`, branch coverage >= `[thresholds] branch_coverage`
-4. **If FAIL**: run `[coverage-feature-detail]` → list gaps in `Coverage Gaps` section
+4. **If FAIL**: run `[coverage-feature-detail]` → list gaps in `Coverage Gaps` section (format: `file:line-range | type | description`)
 5. **If PASS**: proceed to Mutation Gate
 
 **Evidence required:**
@@ -72,20 +58,10 @@ Check `quality_gates.mutation_full_threshold` (default 5) against total active (
 - Coverage summary showing line % and branch %
 - Line coverage >= threshold
 - Branch coverage >= threshold
-- Scope: feature-scoped | full (state which mode was used and why)
 - Coverage Gaps list (if FAIL, with file:line-range detail)
 ```
 
 ## Gate 2: Mutation Testing
-
-Uses the same scope decision as Gate 1 (see Scope Decision above).
-
-### Full scope (small project)
-
-1. **Run** the `[mutation-full-quiet]` command from `long-task-guide.md` (no placeholders needed)
-2. **Read** the output, **verify** mutation score >= `[thresholds] mutation_score`.
-
-### Feature scope (default)
 
 1. **Run** `[mutation-feature-quiet]` from `long-task-guide.md`, filling placeholders:
    - `{changed_files}` → changed source file paths
@@ -104,15 +80,8 @@ Uses the same scope decision as Gate 1 (see Scope Decision above).
 ```
 - Mutation summary showing killed/survived/total
 - Mutation score >= threshold
-- Scope: feature-scoped | full (state which mode was used and why)
 - Surviving Mutants list (if any, with file:line detail)
 ```
-
-**Scope by Phase:**
-| Scope | Coverage Mode | Coverage Measured | Mutation Mode | Mutated Files | Tests Run |
-|-------|--------------|-------------------|---------------|---------------|-----------|
-| Full (small project) | `[coverage-quiet]` | All source | `[mutation-full-quiet]` | All source | Full suite |
-| Feature (default) | `[coverage-feature-quiet]` | Changed modules | `[mutation-feature-quiet]` | Changed files | Feature tests |
 
 ### Final Verification
 

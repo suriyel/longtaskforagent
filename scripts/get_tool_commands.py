@@ -421,7 +421,6 @@ def get_commands(feature_list: dict) -> dict:
             "line_coverage_min": qg.get("line_coverage_min", 90),
             "branch_coverage_min": qg.get("branch_coverage_min", 80),
             "mutation_score_min": qg.get("mutation_score_min", 80),
-            "mutation_full_threshold": qg.get("mutation_full_threshold", 5),
         },
         "tech_stack": {
             "language": ts.get("language", "TODO"),
@@ -516,7 +515,6 @@ def format_text(cmds: dict) -> str:
         f"  line_coverage  >= {th['line_coverage_min']}%",
         f"  branch_coverage >= {th['branch_coverage_min']}%",
         f"  mutation_score  >= {th['mutation_score_min']}%",
-        f"  mutation_full_threshold = {th['mutation_full_threshold']} features",
     ]
     return "\n".join(lines)
 

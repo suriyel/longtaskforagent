@@ -94,7 +94,6 @@ def create_feature_list(
     line_coverage_min: int = 90,
     branch_coverage_min: int = 80,
     mutation_score_min: int = 80,
-    mutation_full_threshold: int = 5,
 ) -> dict:
     return {
         "project": project_name,
@@ -108,8 +107,7 @@ def create_feature_list(
         "quality_gates": {
             "line_coverage_min": line_coverage_min,
             "branch_coverage_min": branch_coverage_min,
-            "mutation_score_min": mutation_score_min,
-            "mutation_full_threshold": mutation_full_threshold
+            "mutation_score_min": mutation_score_min
         },
         "constraints": [],
         "assumptions": [],
@@ -230,9 +228,6 @@ def main():
                         help="Min branch coverage %% (default: 80)")
     parser.add_argument("--mutation-score", type=int, default=80,
                         help="Min mutation score %% (default: 80)")
-    parser.add_argument("--mutation-full-threshold", type=int, default=100,
-                        help="Feature count threshold for full mutation per-feature (default: 100)")
-
     args = parser.parse_args()
 
     out_dir = os.path.abspath(args.path)
@@ -257,7 +252,6 @@ def main():
             line_coverage_min=args.line_cov,
             branch_coverage_min=args.branch_cov,
             mutation_score_min=args.mutation_score,
-            mutation_full_threshold=args.mutation_full_threshold,
         ), f, indent=2, ensure_ascii=False)
     print(f"Created: {fl_path}")
 

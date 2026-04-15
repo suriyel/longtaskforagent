@@ -14,7 +14,7 @@ Run coverage and mutation gates. Report results with gap details. **You MUST NOT
 
 ## Key Constraints
 
-- Scope decision (unified): active features <= mutation_full_threshold → full scope; else feature-scoped (default)
+- Scope: always feature-scoped (coverage + mutation scoped to changed files)
 - Gate 1: Coverage — line >= threshold, branch >= threshold (scoped per unified decision)
 - Gate 2: Mutation — score >= threshold (scoped per unified decision)
 - Final test run: confirm all tests still pass
