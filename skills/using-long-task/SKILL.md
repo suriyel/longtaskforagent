@@ -22,8 +22,6 @@ description: "在 long-task 项目中启动会话时使用 — 根据项目状�
 ```dot
 digraph phase_detection {
     "Session Start" [shape=doublecircle];
-    "repos-manifest.json exists?" [shape=diamond];
-    "Invoke long-task:long-task-multi-repo" [shape=box style=filled fillcolor=lightyellow];
     "bugfix-request.json exists?" [shape=diamond];
     "increment-request.json exists?" [shape=diamond];
     "feature-list.json exists?" [shape=diamond];
@@ -32,19 +30,16 @@ digraph phase_detection {
     "docs/rules/ populated? (pre-design)" [shape=diamond];
     "Brownfield? (pre-design)" [shape=diamond];
     "docs/rules/ populated?" [shape=diamond];
-    "Source files > 3 AND commits >= 5?" [shape=diamond];
+    "Brownfield?" [shape=diamond];
     "Invoke long-task:long-task-hotfix" [shape=box style=filled fillcolor=orange];
     "Invoke long-task:long-task-increment" [shape=box style=filled fillcolor=plum];
     "Invoke long-task:long-task-requirements" [shape=box style=filled fillcolor=lightyellow];
-    "Invoke long-task:long-task-codebase-scanner (→ requirements)" [shape=box style=filled fillcolor=lightyellow];
-    "Invoke long-task:long-task-codebase-scanner (→ design)" [shape=box style=filled fillcolor=lightyellow];
+    "Invoke long-task:long-task-codebase-scanner" [shape=box style=filled fillcolor=lightyellow];
     "Invoke long-task:long-task-design" [shape=box style=filled fillcolor=lightblue];
     "Invoke long-task:long-task-init" [shape=box style=filled fillcolor=lightyellow];
     "Invoke long-task:long-task-work" [shape=box style=filled fillcolor=lightgreen];
 
-    "Session Start" -> "repos-manifest.json exists?";
-    "repos-manifest.json exists?" -> "Invoke long-task:long-task-multi-repo" [label="yes (multi-repo)"];
-    "repos-manifest.json exists?" -> "bugfix-request.json exists?" [label="no (single-repo)"];
+    "Session Start" -> "bugfix-request.json exists?";
 
     "bugfix-request.json exists?" -> "Invoke long-task:long-task-hotfix" [label="yes"];
     "bugfix-request.json exists?" -> "increment-request.json exists?" [label="no"];
@@ -57,28 +52,23 @@ digraph phase_detection {
     "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated? (pre-design)" [label="yes"];
     "docs/rules/ populated? (pre-design)" -> "Invoke long-task:long-task-design" [label="yes"];
     "docs/rules/ populated? (pre-design)" -> "Brownfield? (pre-design)" [label="no"];
-    "Brownfield? (pre-design)" -> "Invoke long-task:long-task-codebase-scanner (→ design)" [label="yes (brownfield)"];
+    "Brownfield? (pre-design)" -> "Invoke long-task:long-task-codebase-scanner" [label="yes (brownfield)"];
     "Brownfield? (pre-design)" -> "Invoke long-task:long-task-design" [label="no (greenfield)"];
     "SRS doc (*-srs.md) in docs/plans/?" -> "docs/rules/ populated?" [label="no"];
     "docs/rules/ populated?" -> "Invoke long-task:long-task-requirements" [label="yes"];
-    "docs/rules/ populated?" -> "Source files > 3 AND commits >= 5?" [label="no"];
-    "Source files > 3 AND commits >= 5?" -> "Invoke long-task:long-task-codebase-scanner (→ requirements)" [label="yes (brownfield)"];
-    "Source files > 3 AND commits >= 5?" -> "Invoke long-task:long-task-requirements" [label="no (greenfield)"];
+    "docs/rules/ populated?" -> "Brownfield?" [label="no"];
+    "Brownfield?" -> "Invoke long-task:long-task-codebase-scanner" [label="yes (brownfield)"];
+    "Brownfield?" -> "Invoke long-task:long-task-requirements" [label="no (greenfield)"];
+
+    "Invoke long-task:long-task-codebase-scanner" -> "bugfix-request.json exists?" [label="scan complete, re-evaluate" style=dashed];
 }
 ```
 
-**步骤 0：多仓库检测**（在所有其他检查之前）
-
-检查项目根目录是否存在 `repos-manifest.json`（当项目根目录不是 git 仓库但有子目录 git 仓库时由 session-start hook 生成）。
-
-若 `repos-manifest.json` 存在 → 调用 `long-task:long-task-multi-repo`
-（多仓库 skill 独立处理所有事务：探索、全局 SRS、拆分、依赖分发、交接）
-
-若 `repos-manifest.json` 不存在 → **单仓库项目** → 继续下方检测规则。
+**前置条件**：若项目根目录存在 `repos-manifest.json`（由 session-start hook 生成），此路由器不适用 — 直接调用 `long-task:long-task-multi-repo`。以下规则仅适用于单仓库项目。
 
 ---
 
-**检测规则**（单仓库）：
+**检测规则**：
 0. 检查项目根目录 `bugfix-request.json` → 若存在 → `long-task-hotfix` **（最高优先级）**
    注意：若 `bugfix-request.json` 和 `increment-request.json` 同时存在，热修复先运行；`increment-request.json` 保留待下一会话处理。
 1. 检查项目根目录 `increment-request.json` → 若存在 → `long-task-increment`
@@ -86,15 +76,13 @@ digraph phase_detection {
 3. 检查 `docs/plans/*-design.md` → 若匹配 → `long-task-init`（设计完成，进入初始化）
 4. 检查 `docs/plans/*-srs.md` → 若匹配：
    a. 检查 `docs/rules/` — 若存在且包含 ≥1 个 `.md` 文件（非新建项目桩） → `long-task-design`（规则已就绪，进入设计）
-   b. 检查现有源文件（存量项目启发式 — 与规则 7b 相同逻辑）：统计排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/` 的源文件数；检查 `git rev-list --count HEAD 2>/dev/null || echo 0`
-      - 若源文件 > 3 且 git 提交数 ≥ 5 → **调用 `long-task:long-task-codebase-scanner`**（见下方 Phase 0-pre）附 `--next-skill long-task-design`
-      - 若源文件 > 3 且 git 不可用（cwd 中无 `.git`） → 仍视为存量项目 → **调用 `long-task:long-task-codebase-scanner`** 附 `--next-skill long-task-design`
+   b. 存量项目启发式：统计排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/` 的源文件数；检查 `git rev-list --count HEAD 2>/dev/null || echo 0`
+      - 若源文件 > 3 且（git 提交数 ≥ 5 或 cwd 中无 `.git`） → **调用 `long-task:long-task-codebase-scanner`**（无参数）。扫描完成后，从头重新执行检测规则。
    c. 否则（新建项目或无源文件） → 若缺失则创建 `docs/rules/README.md` 桩（"Greenfield — no conventions to extract"） → `long-task-design`
 5. 否则 → 检查代码库约定：
    a. 检查 `docs/rules/` — 若存在且包含 ≥1 个 `.md` 文件（非新建项目桩） → `long-task-requirements`（规则已扫描）
-   b. 检查现有源文件（存量项目启发式）：统计源文件（`*.py`、`*.js`、`*.ts`、`*.java`、`*.c`、`*.cpp`、`*.go`、`*.rs` 等）排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/`；检查 `git rev-list --count HEAD 2>/dev/null || echo 0`
-      - 若源文件 > 3 且 git 提交数 ≥ 5 → **调用 `long-task:long-task-codebase-scanner`**（见下方 Phase 0-pre）附 `--next-skill long-task-requirements`
-      - 若源文件 > 3 且 git 不可用（cwd 中无 `.git`） → 仍视为存量项目 → **调用 `long-task:long-task-codebase-scanner`** 附 `--next-skill long-task-requirements`
+   b. 存量项目启发式：统计源文件（`*.py`、`*.js`、`*.ts`、`*.java`、`*.c`、`*.cpp`、`*.go`、`*.rs` 等）排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/`；检查 `git rev-list --count HEAD 2>/dev/null || echo 0`
+      - 若源文件 > 3 且（git 提交数 ≥ 5 或 cwd 中无 `.git`） → **调用 `long-task:long-task-codebase-scanner`**（无参数）。扫描完成后，从头重新执行检测规则。
       - 否则（新建项目） → 创建 `docs/rules/README.md` 桩（"Greenfield — no conventions to extract"） → `long-task-requirements`
 
 ## Skill 目录
@@ -102,10 +90,9 @@ digraph phase_detection {
 ### 阶段 Skill（根据上方检测结果调用其一）
 | Skill | 阶段 | 触发条件 |
 |-------|------|---------|
-| `long-task:long-task-multi-repo` | 多仓库 | repos-manifest.json 存在 — 处理探索、全局 SRS、拆分、依赖分发 |
 | `long-task:long-task-hotfix` | 热修复 | bugfix-request.json 存在（最高优先级） |
 | `long-task:long-task-increment` | Phase 1.5 | increment-request.json 存在 |
-| `long-task:long-task-codebase-scanner` | Phase 0-pre | 无规则文档且现有源文件 > 3 — 在需求（规则 7b）或设计（规则 5b）前扫描代码库 |
+| `long-task:long-task-codebase-scanner` | Phase 0-pre | 无规则文档且存量项目 — 扫描代码库约定后重新检测路由 |
 | `long-task:long-task-requirements` | Phase 0a | 无 SRS、无设计文档、无 feature-list.json |
 | `long-task:long-task-design` | Phase 0b | SRS 存在、无设计文档、无 feature-list.json |
 | `long-task:long-task-init` | Phase 1 | 设计文档存在、无 feature-list.json |
@@ -140,7 +127,6 @@ digraph phase_detection {
 | `bugfix-request.json` | 信号文件 — 触发热修复会话（处理后删除） |
 | `increment-request.json` | 信号文件 — 触发增量需求（处理后删除） |
 | `docs/rules/*.md` | 代码库约定 — 编码风格、2/3方件约束、构建模式（仅存量项目） |
-| `repos-manifest.json` | 多仓库拓扑 — 由 hook 生成，供 `long-task-multi-repo` skill 使用（单仓库项目中不存在） |
 
 ## 危险信号
 
@@ -170,10 +156,7 @@ digraph phase_detection {
 3. **遇到错误时** — 在任何修复前遵循 `skills/long-task-work/references/systematic-debugging.md` 中的系统化调试方法
 
 ## Phase 0-pre：代码库约定扫描（仅存量项目）
-> **DISPATCH** 创建独立SubAgent(使用Genral 或 Agent) 在 SubAgent中执行 Skill `long-task:long-task-codebase-scanner`,详细规则如下：
-当检测规则 5b 或 7b 触发时（存量项目，无现有 `docs/rules/`）：
 
-- 规则 7b（无 SRS）：args="--next-skill long-task-requirements"
-- 规则 5b（SRS 存在，无设计）：args="--next-skill long-task-design"
+当检测规则 4b 或 5b 触发时（存量项目，无现有 `docs/rules/`）：
 
-codebase-scanner skill 处理所有编排（目录创建、语言检测、约定扫描、验证、用户审查）并链接到下一个 skill。
+调用 `Skill(skill="long-task:long-task-codebase-scanner")`（无参数）。扫描完成后 `docs/rules/` 已填充，从头重新执行检测规则 — 规则 4a 或 5a 将自然匹配并路由到正确的下一个 skill。

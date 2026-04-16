@@ -11,20 +11,9 @@ description: "在存量项目（无 docs/rules/）中于需求或设计阶段之
 
 **你的倾向应偏向于发现约束条件。** 尤其是替代标准库或第三方 API 的二方（内部）库强制要求 -- 遗漏这些会导致下游代码不合规。
 
-## 调用模式
+## 调用方式
 
-### 流水线模式（默认）
-
-当检测规则 5b 或 7b 触发时（存量项目，无已有 `docs/rules/`），由 `using-long-task` 路由器调用。接收 `--next-skill` 参数，指定要链接的下游 skill：
-
-- 规则 7b（无 SRS）：`--next-skill long-task-requirements`
-- 规则 5b（有 SRS，无设计文档）：`--next-skill long-task-design`
-
-扫描完成后，skill 链接到指定的下一个 skill。
-
-### 独立模式
-
-用户直接调用（例如代码库变更后重新扫描）。无 `--next-skill` 参数 -- skill 执行扫描后停止，不进行链接。
+由 `using-long-task` 路由器调用（存量项目检测规则 4b/5b 触发时），或用户直接调用（例如代码库变更后重新扫描）。扫描完成后停止，不进行链接 — 调用方负责后续路由。
 
 ## 设计原则
 
@@ -260,13 +249,6 @@ mkdir -p docs/rules/
 - 关键发现的简明摘要（尤其是二方/三方约束和禁止的 API）
 - 请用户确认或编辑 `docs/rules/` 文件后再继续
 
-### 步骤 11：链接到下一个 Skill（仅流水线模式）
-
-如果提供了 `--next-skill`：
-- `Skill(skill="long-task:<next_skill>")`
-
-如果没有 `--next-skill`（独立模式）：到此停止。
-
 ## 输出文件格式
 
 每个输出文件遵循以下结构：
@@ -307,8 +289,8 @@ mkdir -p docs/rules/
 
 ## 集成
 
-- **被调用方**：`using-long-task` 路由器（当规则 5b 或 7b 触发时 -- 存量项目，无 `docs/rules/`）
+- **被调用方**：`using-long-task` 路由器（存量项目检测规则 4b/5b 触发时），或用户直接调用
 - **读取**：源文件、依赖清单、git 历史
-- **链接到**：`long-task-requirements`（规则 7b）或 `long-task-design`（规则 5b）-- 流水线模式；独立模式下无链接
+- **链接到**：无 — 扫描完成后停止。调用方负责后续路由。
 - **产出**：`docs/rules/coding-style.md`、`docs/rules/coding-constraints.md`、`docs/rules/build-and-compilation.md`、`docs/rules/README.md`
 - **下游消费者**：Design skill 将规则合并到设计 §11；Init skill 将 tech_stack 与 build-and-compilation.md 测试与质量工具表交叉检查；Worker skill 在 TDD 期间引用设计 §11

@@ -45,7 +45,7 @@ description: "为存量/遗留代码补全单元测试，迭代直至行覆盖�
 IF docs/rules/ does not exist OR is empty:
   Count source files (*.py, *.java, *.js, *.ts, *.c, *.cpp) excluding .git/, node_modules/, venv/, dist/, build/
   IF count > 3:
-    Invoke Skill("long-task:long-task-codebase-scanner")   # standalone mode, no --next-skill
+    Invoke Skill("long-task:long-task-codebase-scanner")
     # Produces docs/rules/{coding-style,coding-constraints,build-and-compilation,README}.md
   ELSE:
     Skip (greenfield / tiny project)

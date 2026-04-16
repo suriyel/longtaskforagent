@@ -66,9 +66,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 #### Skill Call Graph
 
 ```
-using-long-task (router)
-   ├─→ long-task-multi-repo (repos-manifest.json exists — exploration, global SRS, split, dep distribution, handoff)
-   ├─→ long-task-codebase-scanner (brownfield, no docs/rules/) ──→ long-task-requirements (rule 7b) OR long-task-design (rule 5b)
+long-task-multi-repo (repos-manifest.json exists — exploration, global SRS, split, dep distribution, handoff)
+   └─→ triggered directly when repos-manifest.json exists (router precondition, not a detection step)
+
+using-long-task (router — single-repo only)
+   ├─→ long-task-codebase-scanner (brownfield, no docs/rules/) → re-evaluate detection rules → long-task-requirements OR long-task-design
    ├─→ long-task-requirements ──→ long-task-design ──→ long-task-init ──→ long-task-work
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
    │      └─→ validate → reproduce → root cause → enqueue as category=bugfix → long-task-work
@@ -128,14 +130,14 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 - **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → invoke `long-task-codebase-scanner` skill (rule 7b: before requirements; rule 5b: before design in brownfield repos).
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
-- **Multi-repo: fully handled by independent `long-task-multi-repo` skill**: Hook detects topology → router invokes skill → skill does exploration, global SRS, split, dependency distribution, handoff. User then independently cd's into each repo for single-repo pipeline.
+- **Multi-repo: fully handled by independent `long-task-multi-repo` skill**: Hook detects topology → generates `repos-manifest.json` → `long-task-multi-repo` skill triggered directly (router precondition). User then independently cd's into each repo for single-repo pipeline.
 
 ### Multi-Repo Support
 
 Projects with multiple git repositories under a non-git root directory are handled by the independent `long-task-multi-repo` skill:
 
 1. **Hook detection**: `hooks/session-start` detects sub-directory git repos, generates `repos-manifest.json`
-2. **Router invocation**: `using-long-task` detects manifest → invokes `long-task-multi-repo`
+2. **Router precondition**: `repos-manifest.json` existence triggers `long-task-multi-repo` directly (router itself is single-repo only)
 3. **Multi-repo skill**: Explores all repos, elicits global requirements, writes global SRS, splits into per-repo SRS with IFR contracts, distributes dependency files (reference docs, global SRS, deferred backlog, cross-repo deps) to each sub-repo
 4. **Independent execution**: User cd's into each repo directory and runs the full single-repo pipeline (Design → Init → Worker) independently
 
