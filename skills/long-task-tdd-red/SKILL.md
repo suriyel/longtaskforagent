@@ -10,7 +10,7 @@ Write failing tests for all Test Inventory rows. Read all documents yourself.
 ## Your Task
 
 1. Read execution rules: `skills/long-task-tdd-red/references/tdd-red-execution.md`
-2. Read shared rules: `skills/long-task-tdd-shared/references/iron-law.md`,`docs/rules`
+2. Read rules: `skills/long-task-tdd-shared/references/iron-law.md`,`docs/rules`
 3. Read anti-patterns: `skills/long-task-tdd-shared/references/testing-anti-patterns.md`
 
 ## Specification Input (from feature design doc)
