@@ -170,10 +170,10 @@ digraph phase_detection {
 3. **遇到错误时** — 在任何修复前遵循 `skills/long-task-work/references/systematic-debugging.md` 中的系统化调试方法
 
 ## Phase 0-pre：代码库约定扫描（仅存量项目）
-
+> **DISPATCH** 创建独立SubAgent(使用Genral 或 Agent) 在 SubAgent中执行 Skill `long-task:long-task-codebase-scanner`,详细规则如下：
 当检测规则 5b 或 7b 触发时（存量项目，无现有 `docs/rules/`）：
 
-- 规则 7b（无 SRS）：`Skill(skill="long-task:long-task-codebase-scanner", args="--next-skill long-task-requirements")`
-- 规则 5b（SRS 存在，无设计）：`Skill(skill="long-task:long-task-codebase-scanner", args="--next-skill long-task-design")`
+- 规则 7b（无 SRS）：args="--next-skill long-task-requirements"
+- 规则 5b（SRS 存在，无设计）：args="--next-skill long-task-design"
 
 codebase-scanner skill 处理所有编排（目录创建、语言检测、约定扫描、验证、用户审查）并链接到下一个 skill。
