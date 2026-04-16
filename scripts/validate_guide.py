@@ -28,6 +28,8 @@ REQUIRED_SECTIONS = [
      [r"test-quiet", r"test-detail", r"test.*command"]),
     ("UT Style",
      [r"ut\s*style", r"\[test-framework\]", r"\[mock-style\]"]),
+    ("Caveats",
+     [r"caveat", r"注意事项"]),
 ]
 
 

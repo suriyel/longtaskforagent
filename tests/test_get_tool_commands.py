@@ -19,7 +19,8 @@ from get_tool_commands import (get_commands, format_text, MUTATION_COMMANDS,
                                TEST_COMMANDS_QUIET, TEST_COMMANDS_DETAIL,
                                COVERAGE_COMMANDS_QUIET, COVERAGE_COMMANDS_DETAIL,
                                MUTATION_COMMANDS_QUIET, MUTATION_COMMANDS_DETAIL,
-                               COMPILE_COMMANDS_QUIET, COMPILE_COMMANDS_DETAIL)
+                               COMPILE_COMMANDS_QUIET, COMPILE_COMMANDS_DETAIL,
+                               CAVEAT_PROMPTS)
 
 
 def make_feature_list(language="python", test_fw="pytest", cov_tool="pytest-cov",
@@ -382,6 +383,49 @@ def test_compile_quiet_empty_for_python():
     assert cmds["compile_quiet"] == {}
 
 
+def test_caveat_prompts_present_for_known_stacks():
+    """Known tech stacks should return non-empty caveat_prompts."""
+    for lang, fw, cov, mut in [
+        ("python", "pytest", "pytest-cov", "mutmut"),
+        ("java", "junit", "jacoco", "pitest"),
+        ("typescript", "vitest", "c8", "stryker"),
+        ("c", "ctest", "gcov", "mull"),
+    ]:
+        cmds = get_commands(make_feature_list(lang, fw, cov, mut))
+        assert "caveat_prompts" in cmds, f"Missing caveat_prompts for {lang}"
+        assert isinstance(cmds["caveat_prompts"], list)
+        assert len(cmds["caveat_prompts"]) > 0, f"Empty caveat_prompts for {lang}"
+
+
+def test_caveat_prompts_empty_for_unknown_tools():
+    """Unknown tools should return empty caveat_prompts."""
+    cmds = get_commands(make_feature_list("rust", "cargo-test", "tarpaulin", "cargo-mutants"))
+    assert cmds["caveat_prompts"] == []
+
+
+def test_caveat_prompts_are_strings():
+    """All entries in CAVEAT_PROMPTS should be lists of strings."""
+    for tool, prompts in CAVEAT_PROMPTS.items():
+        assert isinstance(prompts, list), f"CAVEAT_PROMPTS['{tool}'] should be a list"
+        for p in prompts:
+            assert isinstance(p, str), f"CAVEAT_PROMPTS['{tool}'] entry should be str"
+
+
+def test_format_text_contains_caveat_prompts():
+    """Text format should include Caveat Prompts section for known stacks."""
+    cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
+    text = format_text(cmds)
+    assert "## Caveat Prompts" in text
+    assert "检查" in text  # At least one Chinese-language prompt
+
+
+def test_format_text_no_caveat_prompts_for_unknown():
+    """Text format should omit Caveat Prompts for unknown stacks."""
+    cmds = get_commands(make_feature_list("rust", "cargo-test", "tarpaulin", "cargo-mutants"))
+    text = format_text(cmds)
+    assert "## Caveat Prompts" not in text
+
+
 def test_format_text_shows_cmd_and_instruction():
     """Text format should show cmd: and instruction: for quiet recipes."""
     cmds = get_commands(make_feature_list("java", "junit", "jacoco", "pitest"))
@@ -493,6 +537,11 @@ if __name__ == "__main__":
         test_no_bash_specific_in_quiet,
         test_compile_quiet_wired_for_java,
         test_compile_quiet_empty_for_python,
+        test_caveat_prompts_present_for_known_stacks,
+        test_caveat_prompts_empty_for_unknown_tools,
+        test_caveat_prompts_are_strings,
+        test_format_text_contains_caveat_prompts,
+        test_format_text_no_caveat_prompts_for_unknown,
         test_format_text_shows_cmd_and_instruction,
         test_cli_text_output,
         test_cli_json_output,

@@ -59,6 +59,15 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
          - `[mock-style]` — mock 方式
          - `[conventions]` — 固定：编写前探索现有测试+源码；复用 fixture
          - 若 `docs/rules/coding-constraints.md` 存在：用扫描值覆盖 `[test-framework]`/`[mock-style]`
+      3. **Caveats** — 项目特定的工具注意事项（**LLM 探查生成，非模板**）：
+         - 从 `get_tool_commands.py` 输出的 `## Caveat Prompts` 获取探查维度清单
+         - **对每条维度**：读取项目实际配置（pom.xml / package.json / pyproject.toml / CMakeLists.txt / conftest.py 等），回答该维度的问题
+         - 若 `docs/rules/coding-constraints.md` 存在：额外检查扫描发现的 mock 框架、断言库、内部库约束
+         - **输出规则**：
+           - 仅写入有实际发现的条目（无发现则跳过该维度）
+           - 每条 ≤ 1 行，格式：`- [类别] 发现 → 结论`
+           - 总条目数控制在 3-10 条（精选最影响下游 SubAgent 的）
+           - 重点关注：**必须参数**（漏掉会导致失败）、**工具冲突**（版本不兼容）、**项目已有选择**（统一而非引入新方案）
    c. **不要包含**：TDD 工作流、验证规则、关键规则、静态分析、persist 步骤 — 这些在子 skill 文件中
    d. **用户预览** — 向用户呈现指南内容；批准后方可继续
    e. **验证**：
