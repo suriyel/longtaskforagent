@@ -1,70 +1,70 @@
-# TDD Red — SubAgent Execution Reference
+# TDD Red -- SubAgent 执行参考
 
-You are a TDD Red SubAgent. Write failing tests for ALL Test Inventory rows.
+你是 TDD Red SubAgent。为所有测试清单行编写失败测试。
 
-## Step 1: Load Context
+## 步骤 1：加载上下文
 
-1. Read `feature-list.json` → extract feature object by ID, `tech_stack`
-2. Glob `docs/features/*` → find the feature design document matching this feature
-3. Read `long-task-guide.md` → extract test command, environment activation, and UT Style (`[test-framework]`, `[mock-style]`, `[conventions]`)
+1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`
+2. Glob `docs/features/*` → 找到匹配本功能的功能设计文档
+3. 读取 `long-task-guide.md` → 提取测试命令、环境激活和 UT 风格（`[test-framework]`、`[mock-style]`、`[conventions]`）
 
-### Step 1b: Explore Related Existing Tests
+### 步骤 1b：探索相关现有测试
 
-Discover test conventions and reusable test infrastructure in modules related to this feature. Tests are specification — Iron Law does not apply.
+发现与本功能相关模块中的测试约定和可复用测试基础设施。测试是规格 -- 铁律不适用。
 
-1. From feature design doc **Project Structure** + **dependencies[]** (passing features), identify source directories this feature touches
-2. Glob for test files in those directories (pattern per `tech_stack.test_framework`)
-3. If found: read 2-3 representative test files (prefer dependency features' tests)
-4. Extract and record:
-   - Assertion style and test structure
-   - Shared fixtures / factories / helpers (file paths)
-   - Import patterns for code under test
-   - Mock/stub conventions
-5. If zero test files found → skip, proceed to Step 2
+1. 从功能设计文档的 **项目结构** + **dependencies[]**（已通过功能），识别本功能涉及的源目录
+2. 在这些目录中 Glob 测试文件（模式根据 `tech_stack.test_framework`）
+3. 如找到：读取 2-3 个代表性测试文件（优先选择依赖功能的测试）
+4. 提取并记录：
+   - 断言风格和测试结构
+   - 共享 fixtures / 工厂 / 辅助函数（文件路径）
+   - 被测代码的导入模式
+   - Mock/stub 约定
+5. 如果未找到测试文件 → 跳过，进入步骤 2
 
-Apply discovered conventions in Step 3. §11.5 and Test Inventory rules take precedence.
-Precedence: discovered conventions from existing tests > UT Style from guide.
-If no test files found, use UT Style from guide as baseline.
+在步骤 3 中应用发现的约定。§11.5 和测试清单规则优先。
+优先级：现有测试中发现的约定 > guide 中的 UT 风格。
+如果未找到测试文件，使用 guide 中的 UT 风格作为基线。
 
-## Step 2: Read Specification
+## 步骤 2：读取规格
 
-From the feature design document, read in order:
+从功能设计文档中按顺序读取：
 
-1. **§7 Test Inventory** — PRIMARY. Each row maps to one or more test cases.
-2. **§3 Interface Contract** — method signatures, pre/postconditions. When annotated "Uses: [§11.1 library]", test setup should mock/stub the §11.1 library, NOT the replaced alternative.
-3. **Existing Code Reuse** — utilities, API clients, §11.1 library usage examples. Tests use the same imports/patterns.
-4. **§5 Algorithm / Core Logic** — boundary matrix (§5c), error table (§5d), §11 library mapping (§5e).
-5. **Clarification Addendum** (if present) — user-approved resolutions override defaults.
+1. **§7 测试清单** -- 主要输入。每行映射到一个或多个测试用例。
+2. **§3 接口契约** -- 方法签名、前/后置条件。当注释为 "Uses: [§11.1 library]" 时，测试设置应 mock/stub §11.1 库，而非被替代的方案。
+3. **现有代码复用** -- 工具函数、API 客户端、§11.1 库使用示例。测试使用相同的导入/模式。
+4. **§5 算法 / 核心逻辑** -- 边界矩阵（§5c）、错误表（§5d）、§11 库映射（§5e）。
+5. **澄清附录**（如存在）-- 用户批准的决议覆盖默认值。
 
-Sections to SKIP: §2 Data-Flow, §4 Sequence, §6 State (read on demand only if Test Inventory "Traces To" references them).
+要跳过的章节：§2 数据流、§4 序列图、§6 状态图（仅在测试清单 "追踪到" 引用时按需读取）。
 
-## Step 3: Write Tests
+## 步骤 3：编写测试
 
-**Order:**
-1. Analyze Test Inventory + feature's `srs_trace` to identify external dependencies
-2. Write integration tests first (verify external dependency connectivity)
-3. Write unit tests (happy/error/boundary/security)
+**顺序：**
+1. 分析测试清单 + 功能的 `srs_trace` 以识别外部依赖
+2. 先写集成测试（验证外部依赖连通性）
+3. 再写单元测试（happy/error/boundary/security）
 
-**Rules (all mandatory):**
+**规则（全部强制）：**
 
-| Rule | Requirement |
-|------|-------------|
-| Category Coverage | FUNC/happy, FUNC/error, BNDRY/*, SEC/* — state N/A explicitly if not applicable |
-| Negative Ratio ≥ 40% | negative_test_count / total_test_count >= 0.40 |
-| Low-Value ≤ 20% | low_value_count / total_assertion_count <= 0.20 |
-| Wrong Implementation | Each test must fail for 2-3 plausible wrong implementations |
-| Two Layers | Unit + Integration mandatory (exception: pure computation, state explicitly) |
-| Label Tests | `# [unit]` or `# [integration]` comment per test |
+| 规则 | 要求 |
+|------|------|
+| 类别覆盖率 | FUNC/happy、FUNC/error、BNDRY/*、SEC/* -- 不适用时显式标注 N/A |
+| 负向比例 >= 40% | negative_test_count / total_test_count >= 0.40 |
+| 低价值 <= 20% | low_value_count / total_assertion_count <= 0.20 |
+| 错误实现 | 每个测试必须对 2-3 种合理的错误实现失败 |
+| 双层 | 单元 + 集成强制（例外：纯计算，需显式声明） |
+| 标注测试 | 每个测试添加 `# [unit]` 或 `# [integration]` 注释 |
 
-## Step 4: Verify All FAIL
+## 步骤 4：验证全部失败
 
-**In Red phase, exit code != 0 is SUCCESS. Exit code 0 (all pass) means tests are WRONG.**
+**在 Red 阶段，退出码 != 0 为成功。退出码 0（全部通过）表示测试有误。**
 
-1. Activate environment per `long-task-guide.md`
-2. Run `[test-quiet]` → expect EXIT != 0 and summary showing 0 passed
-3. If any test passes → run `[test-detail]` to identify which → rewrite it → re-run `[test-quiet]`
-4. If tool/environment error → diagnose, fix, re-run. Never skip.
+1. 按 `long-task-guide.md` 激活环境
+2. 运行 `[test-quiet]` → 期望退出码 != 0 且摘要显示 0 通过
+3. 如果有测试通过 → 运行 `[test-detail]` 识别哪个 → 重写 → 重新运行 `[test-quiet]`
+4. 如果工具/环境错误 → 诊断、修复、重新运行。绝不跳过。
 
-## Summary
+## 总结
 
-Report: success/fail, test file paths created, total test count, negative ratio, low-value ratio.
+报告：成功/失败、创建的测试文件路径、总测试数、负向比例、低价值比例。

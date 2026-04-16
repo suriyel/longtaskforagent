@@ -1,37 +1,37 @@
-# <Project Name> — Deferred Requirements Backlog
+# <Project Name> — 延期需求积压清单
 
-**Date**: YYYY-MM-DD
-**Source SRS**: docs/plans/YYYY-MM-DD-<topic>-srs.md
-**Status**: Active
+**日期**: YYYY-MM-DD
+**源 SRS**: docs/plans/YYYY-MM-DD-<topic>-srs.md
+**状态**: 活跃
 
-## Purpose
+## 目的
 
-This document tracks requirements identified during SRS elicitation that were deferred to future increments for scope control. Each item preserves its full EARS statement and acceptance criteria to enable seamless pickup via the increment skill.
+本文档记录在 SRS 需求获取过程中被识别但为控制范围而延期至未来增量的需求。每个条目保留其完整的 EARS 陈述和验收标准，以便后续通过增量技能无缝衔接。
 
-## Deferred Requirements
+## 延期需求
 
-### DFR-001: <Title> (from FR-xxx)
+### DFR-001: <标题> (源自 FR-xxx)
 
-**Original ID**: FR-xxx
-**Priority**: Could
-**EARS**: When <trigger>, the system shall <action>.
-**Acceptance Criteria**:
-- Given <context>, when <action>, then <expected result>
+**原始 ID**: FR-xxx
+**优先级**: Could
+**EARS**: 当 <触发条件> 时，系统应 <执行动作>。
+**验收标准**:
+- 给定 <上下文>，当 <执行动作>，则 <预期结果>
 
-**Deferral Reason**: [Why this was deferred — scope, risk, dependency, priority]
-**Dependencies on Current Round**: [List FR IDs this depends on, or "None"]
-**Suggested Wave**: [Next increment / Wave 2 / Later]
-**Re-entry Hint**: [What must be true before this can be picked up]
-**Status**: Pending | Incorporated (wave N, YYYY-MM-DD) | Dropped (reason)
+**延期原因**: [延期原因 -- 范围、风险、依赖、优先级]
+**对当前轮次的依赖**: [列出所依赖的 FR ID，或"无"]
+**建议波次**: [下一增量 / Wave 2 / 更后]
+**重新纳入提示**: [纳入前需满足的条件]
+**状态**: Pending | Incorporated (wave N, YYYY-MM-DD) | Dropped (原因)
 
-[Repeat for each deferred requirement]
+[对每个延期需求重复上述格式]
 
-## Incorporation Log
+## 纳入日志
 
-| Date | Wave | Items Incorporated | Items Dropped | Remaining |
+| 日期 | 波次 | 已纳入条目 | 已弃置条目 | 剩余 |
 |------|------|--------------------|---------------|-----------|
 | | | | | |
 
-## Notes
+## 备注
 
-[Any cross-cutting observations about deferred items, grouping suggestions for future increments, or dependency patterns to watch]
+[关于延期条目的跨领域观察、未来增量的分组建议、或需关注的依赖模式]

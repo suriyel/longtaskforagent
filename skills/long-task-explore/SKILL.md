@@ -1,66 +1,66 @@
 ---
 name: long-task-explore
-description: "Use for on-demand deep exploration of an existing codebase - analyzes architecture, data flow, domain model, API surface, dependencies, and code health"
+description: "用于按需深度探索现有代码库——分析架构、数据流、领域模型、API 接口、依赖关系和代码健康度"
 ---
 
-# Deep Codebase Exploration
+# 深度代码库探索
 
-Explore an existing codebase to produce a structured understanding document. Dispatches specialized SubAgents to locate key structures, analyze architecture and data flow, and measure code health.
+探索现有代码库以生成结构化的理解文档。分派专门的 SubAgent 定位关键结构、分析架构和数据流，并度量代码健康度。
 
-**Announce at start:** "I'm using the long-task-explore skill to deeply explore this codebase."
+**启动时公告：** "我正在使用 long-task-explore skill 对此代码库进行深度探索。"
 
-## Invocation Modes
+## 调用模式
 
-This skill can be invoked **standalone** OR **from within pipeline phases** (requirements, increment).
+本 skill 可以**独立调用**或**在流水线阶段内调用**（requirements、increment）。
 
-- **Standalone**: operates independently — no pipeline state required, no skill chaining
-- **Pipeline**: the calling skill provides focus direction and depth; exploration results feed back to the caller
+- **独立模式**：独立运行——不需要流水线状态，不进行 skill 链式调用
+- **流水线模式**：调用方 skill 提供关注方向和深度；探索结果反馈给调用方
 
-In both modes:
-- Do NOT modify any source code, tests, or configuration files
-- If `docs/rules/` exists (from long-task-codebase-scanner), reference it but do not depend on it
+两种模式下：
+- 不修改任何源代码、测试或配置文件
+- 如果 `docs/rules/` 存在（来自 long-task-codebase-scanner），可参考但不依赖它
 
-## CRITICAL: DOCUMENT WHAT IS, NOT WHAT SHOULD BE
+## 关键原则：记录现状，而非应有之状
 
-- DO NOT suggest improvements or changes
-- DO NOT critique the implementation or identify "problems"
-- DO NOT recommend refactoring, optimization, or architectural changes
-- ONLY describe what exists, where it exists, how it works, and how components interact
-- You are creating a technical map of the existing system
-- All claims must cite `file:line` evidence
-- Read-only — never modify source code
+- 不建议改进或变更
+- 不批评实现或指出"问题"
+- 不推荐重构、优化或架构变更
+- 仅描述存在什么、在哪里、如何运作、组件之间如何交互
+- 你的任务是创建现有系统的技术地图
+- 所有断言必须引用 `file:line` 作为证据
+- 只读——绝不修改源代码
 
-## Step 1: Parse Arguments & Announce
+## 步骤 1：解析参数并公告
 
-Parse user input for optional parameters:
+解析用户输入的可选参数：
 
-| Parameter | Values | Default |
+| 参数 | 取值 | 默认值 |
 |-----------|--------|---------|
-| Depth | `quick` / `standard` / `deep` | Auto-detect by LOC |
-| `--focus` | `architecture` / `dataflow` / `domain` / `api` / `deps` / `health` (comma-separated) | All 6 dimensions |
-| `--path` | Relative directory path | `.` (project root) |
-| Natural language | Any text describing area of interest | None (full exploration) |
+| Depth | `quick` / `standard` / `deep` | 按代码行数自动检测 |
+| `--focus` | `architecture` / `dataflow` / `domain` / `api` / `deps` / `health`（逗号分隔） | 全部 6 个维度 |
+| `--path` | 相对目录路径 | `.`（项目根目录） |
+| 自然语言 | 任意描述关注领域的文本 | 无（完整探索） |
 
-If the user provides a natural-language question (e.g., "帮我理解认证模块", "how does the payment flow work"), treat it as a focus directive — the SubAgents should prioritize that area while still covering the requested dimensions.
+如果用户提供了自然语言问题（例如"帮我理解认证模块"、"支付流程是怎么运作的"），将其视为关注指令——SubAgent 应优先探索该领域，同时仍覆盖请求的维度。
 
-## Step 2: Project Detection
+## 步骤 2：项目检测
 
-Detect the project's characteristics:
+检测项目特征：
 
-1. **Languages**: count files by extension (`*.py`, `*.js`, `*.ts`, `*.tsx`, `*.java`, `*.go`, `*.rs`, `*.c`, `*.cpp`, `*.rb`, `*.kt`, `*.swift`), excluding `.git/`, `node_modules/`, `venv/`, `.venv/`, `dist/`, `build/`, `__pycache__/`
-2. **Frameworks**: check dependency manifests (`package.json`, `requirements.txt`, `pyproject.toml`, `pom.xml`, `build.gradle`, `Cargo.toml`, `go.mod`, `Gemfile`, `*.csproj`)
-3. **LOC estimate**: `find <path> -type f -name "*.{ext}" | head -500 | xargs wc -l` (cap sampling at 500 files for speed)
-4. **Depth auto-detection** (if user did not specify `--depth`):
+1. **语言**：按扩展名统计文件数量（`*.py`、`*.js`、`*.ts`、`*.tsx`、`*.java`、`*.go`、`*.rs`、`*.c`、`*.cpp`、`*.rb`、`*.kt`、`*.swift`），排除 `.git/`、`node_modules/`、`venv/`、`.venv/`、`dist/`、`build/`、`__pycache__/`
+2. **框架**：检查依赖清单（`package.json`、`requirements.txt`、`pyproject.toml`、`pom.xml`、`build.gradle`、`Cargo.toml`、`go.mod`、`Gemfile`、`*.csproj`）
+3. **代码行数估算**：`find <path> -type f -name "*.{ext}" | head -500 | xargs wc -l`（为提高速度，采样上限 500 个文件）
+4. **深度自动检测**（如果用户未指定 `--depth`）：
 
-   | LOC Range | Default Depth |
+   | 代码行数范围 | 默认深度 |
    |-----------|---------------|
    | < 1,000 | `quick` |
    | 1,000 – 10,000 | `standard` |
    | > 10,000 | `deep` |
 
-5. **Existing rules**: if `docs/rules/README.md` exists, read it for context (languages, internal libraries, build system). Pass as supplementary context to SubAgents.
+5. **已有规则**：如果 `docs/rules/README.md` 存在，读取其上下文（语言、内部库、构建系统），作为补充上下文传递给 SubAgent。
 
-Build a **Project Profile** object:
+构建**项目概况**对象：
 ```
 - root: {project_root or --path value}
 - languages: [list with file counts]
@@ -72,36 +72,36 @@ Build a **Project Profile** object:
 - existing_rules_summary: "..." or null
 ```
 
-## Step 3: Dispatch Locator SubAgent (Phase 1 — Breadth-First Scan)
+## 步骤 3：分派定位器 SubAgent（阶段 1——广度优先扫描）
 
-Dispatch the **codebase-locator** SubAgent to quickly identify key structural positions across the codebase.
+分派 **codebase-locator** SubAgent，快速识别代码库中的关键结构位置。
 
 > **DISPATCH** independent SubAgent — Locate codebase structure for [project]
 > Definition: `{plugin_root}/agents/codebase-locator.md`
 > Input: Project Profile (from Step 2)
 > Execute the full locator process. Return structured location inventory.
 
-**Wait for locator to return** before proceeding. The location inventory is the input for Phase 2.
+**等待定位器返回**后再继续。位置清单是阶段 2 的输入。
 
-If the locator returns `BLOCKED`, fall back to a minimal inventory by scanning the top-level directory structure and entry points only.
+如果定位器返回 `BLOCKED`，回退到最小清单——仅扫描顶层目录结构和入口点。
 
-## Step 4: Dispatch Analyzer + Pattern-Finder (Phase 2 — Parallel Deep Dive)
+## 步骤 4：分派分析器 + 模式发现器（阶段 2——并行深度分析）
 
-Based on the locator's inventory, dispatch **two SubAgents in parallel**:
+根据定位器的清单，**并行分派两个 SubAgent**：
 
-### Quick Mode Exception
+### Quick 模式例外
 
-If depth is `quick`, skip Phase 2. Instead, synthesize the locator's inventory directly into a brief overview document (Step 6, quick format). This avoids unnecessary SubAgent overhead for small projects.
+如果深度为 `quick`，跳过阶段 2。改为直接将定位器的清单综合成简要概览文档（步骤 6，quick 格式）。这避免了小项目不必要的 SubAgent 开销。
 
-### Standard / Deep Mode
+### Standard / Deep 模式
 
-Determine which SubAgents to dispatch based on `--focus`:
+根据 `--focus` 确定分派哪些 SubAgent：
 
-| Focus includes | Dispatch |
+| focus 包含 | 分派 |
 |----------------|----------|
-| `architecture`, `dataflow`, `domain`, `api` (any) | Analyzer |
-| `deps`, `health` (any) | Pattern-Finder |
-| `all` (default) | Both |
+| `architecture`、`dataflow`、`domain`、`api`（任一） | 分析器 |
+| `deps`、`health`（任一） | 模式发现器 |
+| `all`（默认） | 两者都分派 |
 
 > **DISPATCH** independent SubAgent — Analyze architecture of [project]
 > Definition: `{plugin_root}/agents/codebase-analyzer.md`
@@ -117,55 +117,55 @@ Determine which SubAgents to dispatch based on `--focus`:
 > Dimensions: {filtered per --focus: deps, health}
 > Execute the full analysis process. Return structured analysis.
 
-Wait for both SubAgents to complete.
+等待两个 SubAgent 全部完成。
 
-## Step 5: Synthesize Findings
+## 步骤 5：综合发现
 
-Merge the returns from all SubAgents (1–3 depending on depth and focus):
+合并所有 SubAgent（根据深度和关注维度，1-3 个）的返回结果：
 
-1. **Collect structured returns** — each SubAgent provides verdict, metrics, and content sections
-2. **Deduplicate** — if multiple SubAgents mention the same files/modules, consolidate
-3. **Cross-reference** — link architecture findings to health hotspots (e.g., "Module X is the most complex AND the most coupled")
-4. **Build Key Findings Summary** — aggregate metrics:
-   - Languages (from Project Profile)
-   - Architecture Pattern (from Analyzer)
-   - Entry Points count (from Locator)
-   - API Endpoints count (from Locator)
-   - Domain Entities count (from Analyzer)
-   - External Integrations count (from Locator + Pattern-Finder)
-   - Complexity Hotspots top 3 (from Pattern-Finder)
-   - Test-to-Source Ratio (from Pattern-Finder)
-   - Technical Debt Markers count (from Pattern-Finder)
+1. **收集结构化返回** —— 每个 SubAgent 提供判定、指标和内容章节
+2. **去重** —— 如果多个 SubAgent 提到相同的文件/模块，合并处理
+3. **交叉引用** —— 将架构发现与健康热点关联（例如"模块 X 既是最复杂的，也是耦合度最高的"）
+4. **构建关键发现摘要** —— 聚合指标：
+   - 语言（来自项目概况）
+   - 架构模式（来自分析器）
+   - 入口点数量（来自定位器）
+   - API 端点数量（来自定位器）
+   - 领域实体数量（来自分析器）
+   - 外部集成数量（来自定位器 + 模式发现器）
+   - 复杂度热点前 3 名（来自模式发现器）
+   - 测试与源码比例（来自模式发现器）
+   - 技术债务标记数量（来自模式发现器）
 
-## Step 6: Write Output
+## 步骤 6：写入输出
 
-Create the exploration report:
+创建探索报告：
 
 ```bash
 mkdir -p docs/explore/
 ```
 
-Write `docs/explore/codebase-research.md` using the template at `docs/templates/explore-report-template.md`.
+使用 `docs/templates/explore-report-template.md` 模板编写 `docs/explore/codebase-research.md`。
 
-### Output Size by Depth
+### 各深度的输出规模
 
-| Depth | Content | Budget |
+| 深度 | 内容 | 行数预算 |
 |-------|---------|--------|
-| Quick | Key Findings Summary + each section as 3–5 bullet points | <= 150 lines |
-| Standard | Full 6 sections with Mermaid diagrams and evidence tables | <= 400 lines |
-| Deep | Full 6 sections + detailed Code References index + complete hotspot lists | <= 600 lines |
+| Quick | 关键发现摘要 + 每个章节 3-5 个要点 | <= 150 行 |
+| Standard | 完整 6 个章节，含 Mermaid 图和证据表 | <= 400 行 |
+| Deep | 完整 6 个章节 + 详细代码引用索引 + 完整热点列表 | <= 600 行 |
 
-### Focus Filtering
+### 关注维度过滤
 
-If `--focus` was specified, only include the requested dimension sections. Always include Key Findings Summary and Code References.
+如果指定了 `--focus`，仅包含请求的维度章节。始终包含关键发现摘要和代码引用。
 
-### Re-run Behavior
+### 重新运行行为
 
-If `docs/explore/codebase-research.md` already exists, overwrite it cleanly. The report is always a fresh snapshot.
+如果 `docs/explore/codebase-research.md` 已存在，直接覆盖。报告始终是全新快照。
 
-## Step 7: Present Summary
+## 步骤 7：展示摘要
 
-Present the Key Findings Summary to the user in a concise format:
+以简洁格式向用户展示关键发现摘要：
 
 ```
 ## Exploration Complete
@@ -184,37 +184,37 @@ Depth: [depth] | Files sampled: [N] / [M total]
 Full report: docs/explore/codebase-research.md
 ```
 
-If the user provided a natural-language question, answer it directly using the synthesized findings before showing the summary.
+如果用户提供了自然语言问题，在展示摘要之前使用综合发现直接回答该问题。
 
-Inform the user they can ask follow-up questions about specific modules or components.
+告知用户可以针对特定模块或组件提出后续问题。
 
-## Depth-Specific Behavior Summary
+## 各深度行为汇总
 
-| Aspect | Quick | Standard | Deep |
+| 方面 | Quick | Standard | Deep |
 |--------|-------|----------|------|
-| SubAgents dispatched | 1 (locator only) | 2–3 (locator → analyzer + pattern-finder) | 3 (all) |
-| File sampling per agent | Top 30 | Top 60 | Top 120 + all configs |
-| Mermaid diagrams | 0 | 2–3 | All applicable |
-| Evidence citations | Top-3 per category | Top-5 per category | Exhaustive |
-| Output budget | 150 lines | 400 lines | 600 lines |
+| 分派的 SubAgent | 1（仅定位器） | 2-3（定位器 -> 分析器 + 模式发现器） | 3（全部） |
+| 每个 agent 采样文件数 | 前 30 | 前 60 | 前 120 + 全部配置文件 |
+| Mermaid 图 | 0 | 2-3 | 所有适用的 |
+| 证据引用 | 每类前 3 | 每类前 5 | 详尽 |
+| 输出预算 | 150 行 | 400 行 | 600 行 |
 
-## Focus Dimension Reference
+## 关注维度参考
 
-| Keyword | Dimension | Handled By |
+| 关键词 | 维度 | 处理者 |
 |---------|-----------|------------|
-| `architecture` | Architecture Overview — module decomposition, patterns, dependency graph | Analyzer |
-| `api` | Entry Points & API Surface — endpoints, CLI commands, config surface | Analyzer |
-| `dataflow` | Data Flow & State Management — models, pipelines, caching | Analyzer |
-| `domain` | Domain Model & Business Logic — entities, rules, algorithms | Analyzer |
-| `deps` | Dependencies & Integrations — dependency inventory, coupling, external services | Pattern-Finder |
-| `health` | Code Health & Complexity — hotspots, test landscape, tech debt | Pattern-Finder |
+| `architecture` | 架构概览——模块分解、模式、依赖图 | 分析器 |
+| `api` | 入口点与 API 接口——端点、CLI 命令、配置面 | 分析器 |
+| `dataflow` | 数据流与状态管理——模型、流水线、缓存 | 分析器 |
+| `domain` | 领域模型与业务逻辑——实体、规则、算法 | 分析器 |
+| `deps` | 依赖与集成——依赖清单、耦合度、外部服务 | 模式发现器 |
+| `health` | 代码健康度与复杂度——热点、测试全景、技术债务 | 模式发现器 |
 
-## Rules
+## 规则
 
-- **Read-only** — do NOT modify any source files, configs, or git state
-- **Evidence-based** — every structural claim needs `file:line` examples
-- **No judgment** — document patterns as-is, even if inconsistent or outdated
-- **Output budget** — respect line limits per depth level
-- **Pipeline isolation** — never read or write pipeline artifacts (feature-list.json, SRS, design docs)
-- **Idempotent** — re-running always produces a clean, fresh report
-- **SubAgent efficiency** — use Glob for file discovery, Grep for pattern matching, Read for file inspection, Bash only for git/wc/find commands
+- **只读** —— 不修改任何源文件、配置或 git 状态
+- **基于证据** —— 每个结构性断言需要 `file:line` 示例
+- **不作评判** —— 按原样记录模式，即使不一致或过时
+- **输出预算** —— 遵循各深度的行数限制
+- **流水线隔离** —— 绝不读写流水线工件（feature-list.json、SRS、设计文档）
+- **幂等性** —— 重新运行总是生成干净的全新报告
+- **SubAgent 效率** —— 使用 Glob 进行文件发现，Grep 进行模式匹配，Read 进行文件检查，Bash 仅用于 git/wc/find 命令

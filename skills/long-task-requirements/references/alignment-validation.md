@@ -1,85 +1,85 @@
-# Alignment Validation Execution Protocol
+# 对齐验证执行协议
 
-## When This Runs
+## 运行时机
 
-Expert track Step E10. Called by SKILL.md after Classify/Write/Validate/Granularity/Deferral (E9), before SRS Reviewer (E11).
+Expert 路线 Step E10。由 SKILL.md 在分类/编写/验证/粒度/延迟（E9）之后、SRS 审查员（E11）之前调用。
 
-## Purpose
+## 目的
 
-Backward validation: given the SRS as written, does it actually solve the root problem identified in E1? This step catches the most dangerous form of requirements failure — a formally correct SRS that addresses the wrong problem.
+反向验证：给定已编写的 SRS，它是否真正解决了 E1 中识别的根本问题？此步骤捕获最危险的需求失败形式 — 一份形式上正确但解决了错误问题的 SRS。
 
-This is an internal check. No user interaction unless specific failures require it.
+这是内部检查。除非特定失败需要，否则不与用户交互。
 
-## E10a. Root Cause Traceability Check
+## E10a. 根因可追溯性检查
 
-For EACH row in the Pain Map (from E1, stored in Section 1.3):
+对痛点地图（来自 E1，存储在第 1.3 节）中的每一行：
 
-1. Find at least one FR in Section 4 whose EARS statement or acceptance criteria addresses this pain point
-2. If a pain point has no addressing FR → check if it appears in Section 1.2 Out-of-Scope with an explicit exclusion reason
-3. If a pain point is neither addressed nor excluded → this is a **traceability gap**
+1. 在第 4 节中找到至少一个 FR，其 EARS 声明或验收标准解决了此痛点
+2. 若某痛点无对应 FR → 检查是否在第 1.2 节排除范围中并有明确的排除理由
+3. 若某痛点既未被解决也未被排除 → 这是**可追溯性缺口**
 
-For the 5-Whys Root Cause (from E1):
+对 5-Whys 根因（来自 E1）：
 
-1. Verify that at least one FR directly addresses the root cause (not just a symptom)
-2. If the root cause is unaddressed → flag as a traceability gap
+1. 验证至少一个 FR 直接解决根因（不仅仅是症状）
+2. 若根因未被解决 → 标记为可追溯性缺口
 
-**On traceability gaps**:
-- 1–2 gaps: auto-resolve by either creating a new minimal FR or adding an explicit Out-of-Scope entry (choose whichever requires less new elicitation)
-- 3+ gaps: use `AskUserQuestion` presenting the gap table and asking which gaps should become new FRs vs. explicit exclusions
+**对可追溯性缺口**：
+- 1-2 个缺口：通过创建新的最小 FR 或添加明确的排除范围条目来自动解决（选择需要更少新获取的方式）
+- 3+ 个缺口：使用 `AskUserQuestion` 呈现缺口表，询问哪些缺口应成为新 FR vs. 明确排除
 
-## E10b. JTBD Outcome Verification
+## E10b. JTBD 结果验证
 
-Locate the JTBD statement from E1 (stored in Section 1.3).
+定位来自 E1 的 JTBD 声明（存储在第 1.3 节）。
 
-Check: "If a user completes every Must-priority FR in Section 4, does that achieve the JTBD 'so I can [outcome]'?"
+检查："如果用户完成了第 4 节中所有 Must 优先级 FR，是否实现了 JTBD 的'以便 [结果]'？"
 
-- **YES** → proceed
-- **NO** → identify which part of the JTBD outcome is uncovered. Present the gap to the user via AskUserQuestion:
-  > "Your stated goal is '[JTBD outcome]'. The current requirements don't fully cover [missing aspect]. Should I add a requirement for this, or is the current scope sufficient?"
-  - User wants to add → create a new FR, return to E9 for classification
-  - User confirms the current scope is sufficient → record as **PARTIAL**, proceed
+- **是** → 继续
+- **否** → 识别 JTBD 结果中未覆盖的部分。通过 AskUserQuestion 向用户呈现缺口：
+  > "你陈述的目标是'[JTBD 结果]'。当前需求未完全覆盖 [缺失方面]。我应该为此添加一个需求，还是当前范围已足够？"
+  - 用户要添加 → 创建新 FR，返回 E9 进行分类
+  - 用户确认当前范围足够 → 记录为 **PARTIAL**，继续
 
-**Gate**: JTBD verification blocks E11 until resolved. Acceptable outcomes:
-- **PASS** — JTBD fully achievable
-- **PARTIAL** — user explicitly confirmed current scope is sufficient despite incomplete JTBD coverage
+**门禁**：JTBD 验证在解决前阻塞 E11。可接受的结果：
+- **PASS** — JTBD 完全可实现
+- **PARTIAL** — 用户明确确认当前范围足够，尽管 JTBD 覆盖不完整
 
-FAIL (unresolved JTBD gap without user confirmation) cannot proceed to E11.
+FAIL（未经用户确认的未解决 JTBD 缺口）不能进入 E11。
 
-## E10c. Pre-Mortem
+## E10c. 预验尸
 
-LLM self-assessment (no user interaction unless findings are non-trivial):
+LLM 自评（除非发现非平凡问题否则不与用户交互）：
 
-> "If we build everything in the SRS as written, what could still leave the user unsatisfied?"
+> "如果我们按 SRS 所写构建一切，什么仍可能让用户不满意？"
 
-Check against:
-- Workaround probe answers from E2 — was every frustrating step in the current workaround addressed by at least one FR?
-- Scenario walkthrough narratives from E3 — were all extracted flow gaps resolved in the final FR list?
-- Hidden requirements from E5 — did every YES answer become an explicit constraint or FR?
-- Pain Map items — are any only partially addressed (workaround eliminated but root cause remains)?
+对照检查：
+- E2 变通方案探测答案 — 当前变通方案中每个令人沮丧的步骤是否至少被一个 FR 解决？
+- E3 场景走查叙述 — 所有提取的流程缺口是否在最终 FR 列表中被解决？
+- E5 隐藏需求 — 每个 YES 回答是否已成为明确的约束或 FR？
+- 痛点地图项 — 是否有仅部分解决的项（变通方案消除但根因仍在）？
 
-For each pre-mortem finding:
-- Should be an FR → add it (return to E9 for classification)
-- Should be a constraint → add it
-- Known risk but not actionable now → add to Section 11 Open Questions
+对每个预验尸发现：
+- 应为 FR → 添加（返回 E9 分类）
+- 应为约束 → 添加
+- 已知风险但当前不可操作 → 添加到第 11 节开放问题
 
-## E10d. Orphan FR Detection (Gold-Plating Check)
+## E10d. 孤立 FR 检测（镀金检查）
 
-For each FR in Section 4, check if it has a traceable origin:
-- Linked to a Pain Map row (addresses a stated pain point)
-- Linked to the JTBD outcome (needed to achieve the stated goal)
-- Sourced from a walkthrough step (E3 extraction)
-- Sourced from Hidden Requirements (E5)
+对第 4 节中每个 FR，检查是否有可追溯的来源：
+- 链接到痛点地图行（解决陈述的痛点）
+- 链接到 JTBD 结果（实现陈述目标所需）
+- 源自走查步骤（E3 提取）
+- 源自隐藏需求（E5）
 
-If an FR has **no traceable origin** from any of the above sources:
-- Check if any other FR depends on it (infrastructure/utility FRs are often necessary without direct pain point linkage)
-- If no dependency exists → flag in Section 11 Open Questions:
-  > "FR-xxx has no traceable pain point or JTBD link — confirm in scope or defer to a future increment."
+若某 FR **无任何上述来源的可追溯来源**：
+- 检查是否有其他 FR 依赖它（基础设施/工具 FR 即使没有直接痛点关联也常常是必要的）
+- 若无依赖存在 → 在第 11 节开放问题中标记：
+  > "FR-xxx 无可追溯的痛点或 JTBD 链接 — 确认在范围内还是延迟到未来增量。"
 
-Do **NOT** auto-remove orphan FRs. Surfacing them for user awareness is the action.
+**不要**自动移除孤立 FR。呈现给用户知晓是此处的操作。
 
-## Output
+## 输出
 
-Write the alignment validation result into SRS Section 1.3:
+将对齐验证结果写入 SRS 第 1.3 节：
 
 ```
 **Alignment Validation**: PASS / PARTIAL / FAIL
@@ -89,5 +89,5 @@ Write the alignment validation result into SRS Section 1.3:
 - Orphan FRs flagged: N items in Open Questions / 0
 ```
 
-**PARTIAL** (with user-confirmed JTBD) is acceptable and does not block E11.
-**FAIL** on JTBD (E10b) without user confirmation blocks E11 until resolved.
+**PARTIAL**（含用户确认的 JTBD）可接受且不阻塞 E11。
+**FAIL**（E10b 中未经用户确认的 JTBD）在解决前阻塞 E11。

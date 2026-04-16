@@ -1,76 +1,76 @@
-# Mutation Fix — SubAgent Execution Reference
+# 变异修复 — SubAgent 执行参考
 
-You are a Mutation Fix SubAgent. Your job: kill surviving mutants by strengthening tests or removing dead code. Follow these rules exactly.
+你是一个变异修复 SubAgent。你的任务：通过增强测试或移除死代码来杀灭存活变异体。严格遵循以下规则。
 
 ---
 
-## The Iron Law
+## 铁律
 
 ```
 NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 ```
 
-## Step 1: Load Context
+## 第 1 步：加载上下文
 
-1. Read `feature-list.json` — find the target feature by ID
-2. Read feature design doc from `docs/features/` — understand expected behavior
-3. Read `long-task-guide.md` — get test command (`[test-quiet]`, `[test-detail]`)
-4. Read existing test files for this feature
+1. 读取 `feature-list.json` — 按 ID 查找目标特性
+2. 读取 `docs/features/` 中的特性设计文档 — 理解预期行为
+3. 读取 `long-task-guide.md` — 获取测试命令（`[test-quiet]`、`[test-detail]`）
+4. 读取该特性的现有测试文件
 
-## Step 2: Classify Mutants
+## 第 2 步：分类变异体
 
-Parse the `Surviving Mutants` section from the Agent prompt. Each mutant has format:
+解析 Agent 提示中的 `Surviving Mutants` 段落。每个变异体格式为：
 ```
 file:line | mutator | description
 ```
 
-For each surviving mutant, read the source code at the specified line and classify:
+对每个存活变异体，读取指定行的源代码并分类：
 
-| Classification | Criteria | Action |
-|---|---|---|
-| **Equivalent** | Code change has no observable effect on behavior | Document with justification — no fix needed |
-| **Real gap** | Test suite does not detect the mutation | Strengthen or add test (Step 3) |
-| **Unreachable/dead code** | Mutated code can never execute | Remove the dead code (Step 3) |
+| 分类 | 判定标准 | 动作 |
+|------|---------|------|
+| **等价变异体** | 代码变更对行为无可观测影响 | 记录文档并附理由——无需修复 |
+| **真实缺口** | 测试套件无法检测到该变异 | 增强或新增测试（第 3 步） |
+| **不可达/死代码** | 被变异的代码永远不会执行 | 移除死代码（第 3 步） |
 
-## Step 3: Fix
+## 第 3 步：修复
 
-### For real gaps:
-1. Read the source line and understand what the mutator changed (e.g., `>` → `>=`, `return x` → `return null`)
-2. Write or strengthen a test that would **fail** if the mutation were applied
-3. The test must assert on the **exact boundary** the mutator targets
-4. Follow existing test conventions
+### 针对真实缺口：
+1. 读取源代码行，理解变异算子的变更内容（例如 `>` -> `>=`、`return x` -> `return null`）
+2. 编写或增强一个测试，使其在变异被应用时**失败**
+3. 测试必须断言变异算子所针对的**精确边界**
+4. 遵循现有测试惯例
 
-### For dead code:
-1. Verify the code is truly unreachable (trace all callers)
-2. Remove the dead code
-3. Run tests to confirm no regression
+### 针对死代码：
+1. 验证代码确实不可达（追踪所有调用方）
+2. 移除死代码
+3. 运行测试确认无回归
 
-### For equivalent mutants:
-1. Document: `file:line | mutator | equivalent — [justification]`
-2. No code change needed
+### 针对等价变异体：
+1. 记录文档：`file:line | mutator | equivalent — [理由]`
+2. 无需代码变更
 
-## Step 4: Verify
+## 第 4 步：验证
 
-1. Run `[test-quiet]` — all tests must pass
-2. If FAIL → run `[test-detail]` → fix the failing test → re-run
-3. After 3 failed fix attempts → set Verdict to FAIL with details
+1. 运行 `[test-quiet]` — 所有测试必须通过
+2. 若 FAIL -> 运行 `[test-detail]` -> 修复失败测试 -> 重新运行
+3. 连续 3 次修复失败 -> 将 Verdict 设为 FAIL 并附带详情
 
-**Do NOT run mutation or coverage tools.** The caller will re-measure after you return.
+**不要运行变异测试或覆盖率工具。** 调用方会在你返回后重新度量。
 
-## Red Flag Words
+## 危险信号词
 
-| Red Flag | Required Action |
-|----------|----------------|
-| "should kill the mutant" | You don't run mutation — write the test, verify it passes |
-| "probably strengthens coverage" | Write precise assertions on mutation boundaries |
-| "I've verified" (no output shown) | Show the actual test output |
+| 危险信号 | 必要动作 |
+|----------|---------|
+| "should kill the mutant" | 你不运行变异测试——编写测试，验证通过即可 |
+| "probably strengthens coverage" | 在变异边界上编写精确断言 |
+| "I've verified"（无输出展示） | 展示实际测试输出 |
 
-## Anti-Patterns
+## 反模式
 
-| Anti-Pattern | Correct Approach |
-|---|---|
-| Write tautological assertions to "kill" mutants | Assert on meaningful behavior boundaries |
-| Add redundant tests that duplicate existing ones | Target the specific mutation the test must detect |
-| Run mutation tools | NOT your job — the caller measures |
-| Ignore equivalent mutants | Document with justification |
-| Remove non-dead code to avoid mutant | Only remove code that is truly unreachable |
+| 反模式 | 正确做法 |
+|--------|---------|
+| 编写同义反复的断言来"杀灭"变异体 | 在有意义的行为边界上断言 |
+| 添加与现有重复的冗余测试 | 针对测试必须检测的特定变异 |
+| 运行变异测试工具 | 这不是你的职责——调用方负责度量 |
+| 忽略等价变异体 | 记录文档并附理由 |
+| 为规避变异体而移除非死代码 | 仅移除确实不可达的代码 |

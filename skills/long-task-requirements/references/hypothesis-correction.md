@@ -1,80 +1,80 @@
-# Hypothesis-Correction Execution Protocol
+# 假设修正执行协议
 
-## When This Runs
+## 运行时机
 
-Expert track Step E4. Called by SKILL.md after Scenario Walkthrough (E3).
+Expert 路线 Step E4。由 SKILL.md 在场景走查（E3）之后调用。
 
-## Purpose
+## 目的
 
-Fill in every FR's boundaries, error handling, permissions, and data lifecycle — without asking open-ended questions. The LLM proactively derives concrete behavioral assumptions and presents them for user confirmation/correction, rather than asking the user to imagine edge cases from scratch.
+填充每个 FR 的边界、错误处理、权限和数据生命周期 — 不提开放式问题。LLM 主动从所有可用上下文推导具体行为假设并呈现给用户确认/修正，而非要求用户从零开始想象边界情况。
 
-## Core Mechanism
+## 核心机制
 
-For each FR (or group of 2–3 related FRs), the LLM **derives concrete behavioral assumptions** from all available context (walkthrough narrative, domain knowledge, Pain Map, Step 1 context). These are presented as a structured **Behavior Hypothesis Table** for the user to confirm (✓), correct (✗), or supplement (+).
+对每个 FR（或 2-3 个相关 FR 组），LLM 从所有可用上下文（走查叙述、领域知识、痛点地图、Step 1 上下文）**推导具体行为假设**。以结构化**行为假设表**呈现给用户确认（✓）、修正（✗）或补充（+）。
 
-## Behavior Hypothesis Table Format
+## 行为假设表格式
 
-Present via AskUserQuestion:
+通过 AskUserQuestion 呈现：
 
-> "Based on your walkthrough, here's what I assume about **[FR title]**. Please mark each row: ✓ correct, ✗ wrong (tell me what's right), or + add something I missed."
+> "基于你的走查，以下是我对 **[FR 标题]** 的假设。请标记每行：✓ 正确，✗ 错误（告诉我什么才对），或 + 添加我遗漏的内容。"
 
-| # | Dimension | My Assumption | ✓/✗/+ |
-|---|---|---|---|
-| 1 | **Happy path** | When [trigger], the system [action], resulting in [outcome] | |
-| 2 | **Invalid input** | If [specific invalid input], the system [assumed error behavior, e.g., shows inline error, rejects silently, auto-corrects] | |
-| 3 | **Boundary** | Maximum [N items / file size / characters] is [assumed limit]; beyond that [assumed behavior] | |
-| 4 | **Failure path** | If [external dependency] is unavailable, the system [assumed fallback: retry / queue / show error / degrade gracefully] | |
-| 5 | **Permission** | Only [assumed roles] can perform this; unauthorized users see [assumed behavior: 403 / hidden button / redirect] | |
-| 6 | **Concurrency** | If two users simultaneously [action], [assumed conflict resolution: last-write-wins / lock / merge / queue] | |
-| 7 | **Data lifecycle** | Data created by this action is [retained forever / expires after X / user-deletable / admin-archivable] | |
-| 8 | **Negative scope** | This FR does NOT [assumed exclusion — something the user might expect but is out of scope] | |
+| # | 维度 | 我的假设 | ✓/✗/+ |
+|---|------|---------|--------|
+| 1 | **正常路径** | 当 [触发] 时，系统 [动作]，产生 [结果] | |
+| 2 | **无效输入** | 若 [具体无效输入]，系统 [假设错误行为，如显示内联错误、静默拒绝、自动纠正] | |
+| 3 | **边界** | 最大 [N 项 / 文件大小 / 字符] 为 [假设限制]；超出后 [假设行为] | |
+| 4 | **失败路径** | 若 [外部依赖] 不可用，系统 [假设后备：重试 / 排队 / 显示错误 / 优雅降级] | |
+| 5 | **权限** | 仅 [假设角色] 可执行此操作；未授权用户看到 [假设行为：403 / 隐藏按钮 / 重定向] | |
+| 6 | **并发** | 若两个用户同时 [操作]，[假设冲突解决：后写入胜 / 锁 / 合并 / 排队] | |
+| 7 | **数据生命周期** | 此操作创建的数据 [永久保留 / X 后过期 / 用户可删除 / 管理员可归档] | |
+| 8 | **负面范围** | 此 FR 不包含 [假设排除 — 用户可能期望但不在范围内的内容] | |
 
-**Each assumption must be concrete and specific**, not generic. Bad: "If invalid input, the system shows an error." Good: "If the email field contains no @ sign, the system shows an inline error below the field and prevents submission."
+**每个假设必须具体且明确**，不能泛泛。坏的："若无效输入，系统显示错误。"好的："若邮箱字段不含 @ 符号，系统在字段下方显示内联错误并阻止提交。"
 
-## FR Type Definitions & Dimension Selection
+## FR 类型定义与维度选择
 
-Not all 8 dimensions apply to every FR. Select based on FR type:
+并非所有 8 个维度都适用于每个 FR。根据 FR 类型选择：
 
-| FR Type | Definition | Include Dimensions | Skip Dimensions |
-|---|---|---|---|
-| **Read-only display** | Shows data to the user without modifying state | 1, 3, 4, 5 | 2 (no input), 6 (no write), 7 (no data creation) |
-| **Data entry / form** | User submits new data or edits existing data | 1, 2, 3, 4, 5, 7 | 6 (unless multi-user editing is likely) |
-| **State-changing action** | Triggers a state transition (approve, cancel, publish, delete) | 1, 2, 4, 5, 6, 7 | 3 (unless batch processing) |
-| **Background process** | Runs without direct user interaction (cron job, queue consumer, sync) | 1, 4, 7 | 2, 3, 5, 6 (no direct user interaction) |
-| **Integration / API** | Sends or receives data from an external system | 1, 3, 4, 8 | 5 (unless user-facing), 6, 7 |
+| FR 类型 | 定义 | 包含维度 | 跳过维度 |
+|---------|------|---------|---------|
+| **只读显示** | 向用户展示数据但不修改状态 | 1, 3, 4, 5 | 2（无输入）、6（无写入）、7（无数据创建） |
+| **数据录入/表单** | 用户提交新数据或编辑现有数据 | 1, 2, 3, 4, 5, 7 | 6（除非多用户编辑可能） |
+| **状态变更操作** | 触发状态转换（审批、取消、发布、删除） | 1, 2, 4, 5, 6, 7 | 3（除非批处理） |
+| **后台进程** | 无直接用户交互运行（定时任务、队列消费者、同步） | 1, 4, 7 | 2, 3, 5, 6（无直接用户交互） |
+| **集成 / API** | 向外部系统发送或接收数据 | 1, 3, 4, 8 | 5（除非面向用户）、6、7 |
 
-**Always include dimension 8 (negative scope)** for complex FRs where the boundary between "in scope" and "out of scope" is ambiguous.
+**对"范围内"与"范围外"边界模糊的复杂 FR，始终包含维度 8（负面范围）。**
 
-## Batching Rules
+## 分批规则
 
-- Group 2–3 closely related FRs per AskUserQuestion when they share a workflow or data model
-- If a single FR needs all 8 dimensions, present it alone
-- Prefer fewer FRs with more dimensions over many FRs with fewer — depth over breadth per round
+- 当 2-3 个密切相关的 FR 共享工作流或数据模型时，将它们归入一次 AskUserQuestion
+- 若单个 FR 需要全部 8 个维度，单独呈现
+- 优先选择更少 FR 但更多维度，而非更多 FR 但更少维度 — 每轮深度优于广度
 
-## Convergence Mechanism
+## 收敛机制
 
-The hypothesis-correction protocol is **self-terminating** without any hard cap:
+假设修正协议是**自终止的**，无需硬性上限：
 
-- ✓ (confirmed) → assumption is correct, no further action
-- ✗ (corrected) → LLM updates the FR with the user's correction
-- \+ (added) → user adds a dimension the LLM missed → new acceptance criterion (or a new FR if the addition describes a distinct capability)
+- ✓（确认）→ 假设正确，无进一步操作
+- ✗（修正）→ LLM 用用户的修正更新 FR
+- \+（新增）→ 用户添加 LLM 遗漏的维度 → 新验收标准（若描述的是独立能力则为新 FR）
 
-**When no new ✗ or + corrections emerge across all FRs, hypothesis-correction is complete.** There are no open-ended follow-up questions, no "anything else?" probes — the table structure exhausts the behavioral dimensions by design.
+**当所有 FR 中不再出现新的 ✗ 或 + 修正时，假设修正完成。** 无开放式追问，无"还有什么？"探测 — 表格结构通过设计穷尽了行为维度。
 
-If a ✗ correction reveals significant new complexity (e.g., "actually, there are three different approval workflows depending on the amount"), treat the correction as a trigger for a new sub-FR and run another hypothesis table for the newly discovered sub-FR.
+若 ✗ 修正揭示了重大新复杂性（如"实际上，根据金额有三种不同的审批工作流"），将修正视为新子 FR 的触发器，为新发现的子 FR 运行另一个假设表。
 
-## Output Per Row
+## 每行输出
 
-| User Mark | Becomes |
-|---|---|
-| ✓ confirmed happy path | EARS statement for the FR |
-| ✓ or ✗ boundary/error/permission/concurrency/lifecycle | Given/When/Then acceptance criterion |
-| + added dimension | New acceptance criterion for the FR, or a new candidate FR if it describes a distinct capability |
-| ✓ confirmed dimension 8 (negative scope) | EXC-xxx exclusion entry |
+| 用户标记 | 转化为 |
+|---------|--------|
+| ✓ 确认正常路径 | FR 的 EARS 声明 |
+| ✓ 或 ✗ 边界/错误/权限/并发/生命周期 | Given/When/Then 验收标准 |
+| + 新增维度 | FR 的新验收标准，或若描述独立能力则为新候选 FR |
+| ✓ 确认维度 8（负面范围） | EXC-xxx 排除条目 |
 
-## Quality Check
+## 质量检查
 
-After all hypothesis tables are complete, verify:
-- Every FR has at least one error/boundary acceptance criterion (satisfies existing A6 anti-pattern check)
-- Every FR with external dependencies has a failure-path specified
-- Every FR with user input has an invalid-input handling specified
+所有假设表完成后验证：
+- 每个 FR 至少有一个错误/边界验收标准（满足现有 A6 反模式检查）
+- 每个有外部依赖的 FR 已指定失败路径
+- 每个有用户输入的 FR 已指定无效输入处理

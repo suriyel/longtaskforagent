@@ -1,27 +1,27 @@
-# Git Worktree Isolation
+# Git Worktree 隔离
 
-## Purpose
+## 目的
 
-Isolate feature implementation in a dedicated git worktree. This keeps the main branch clean, enables safe experimentation, and provides a clear merge/discard workflow.
+在专用的 git worktree 中隔离功能实现。这可以保持主分支的清洁，支持安全的实验，并提供清晰的合并/丢弃工作流。
 
-## When to Use
+## 适用场景
 
-- **Recommended** for all feature implementation in Worker sessions
-- **Required** when multiple features may be developed in parallel
-- **Optional** for single-feature sequential development if the user prefers direct branch work
+- **推荐** 在 Worker 会话中用于所有功能实现
+- **必须** 当可能并行开发多个功能时
+- **可选** 对于单功能顺序开发，如果用户偏好直接在分支上工作
 
-## Setup Process
+## 设置流程
 
-### Step 1: Check Existing Configuration
+### 步骤 1：检查现有配置
 
-1. Look for existing worktree directories:
+1. 查找已有的 worktree 目录：
    ```bash
    ls -d .worktrees worktrees 2>/dev/null
    ```
-2. Check CLAUDE.md or project docs for worktree preferences
-3. If ambiguous, ask the user which directory to use
+2. 检查 CLAUDE.md 或项目文档中的 worktree 偏好设置
+3. 如有歧义，询问用户使用哪个目录
 
-### Step 2: Create Worktree
+### 步骤 2：创建 Worktree
 
 ```bash
 # Determine base branch
@@ -34,14 +34,14 @@ WORKTREE_DIR=".worktrees/${FEATURE_BRANCH}"
 git worktree add "${WORKTREE_DIR}" -b "${FEATURE_BRANCH}" "${BASE_BRANCH}"
 ```
 
-### Step 3: Safety Verification
+### 步骤 3：安全验证
 
-1. Ensure worktree directory is in `.gitignore`:
+1. 确保 worktree 目录已加入 `.gitignore`：
    ```bash
    grep -q '.worktrees' .gitignore || echo '.worktrees/' >> .gitignore
    ```
 
-2. Run project setup in the worktree:
+2. 在 worktree 中运行项目设置：
    ```bash
    cd "${WORKTREE_DIR}"
    # Auto-detect and run setup
@@ -51,30 +51,30 @@ git worktree add "${WORKTREE_DIR}" -b "${FEATURE_BRANCH}" "${BASE_BRANCH}"
    [ -f go.mod ] && go mod download
    ```
 
-3. Run baseline tests to verify clean state:
+3. 运行基线测试以验证初始状态正常：
    ```bash
    # Run full test suite — all must pass before starting work
    ```
 
-### Step 4: Work in Worktree
+### 步骤 4：在 Worktree 中工作
 
-All TDD Red → Green → Refactor work happens inside the worktree directory.
+所有 TDD Red -> Green -> Refactor 工作在 worktree 目录内进行。
 
-## Branch Naming Convention
+## 分支命名规范
 
 ```
 feature/feature-{ID}-{short-name}
 ```
 
-Examples:
+示例：
 - `feature/feature-01-user-login`
 - `feature/feature-15-dashboard-charts`
 
-## Finishing a Feature Branch
+## 完成功能分支
 
-After a feature is marked "passing" and code review is complete, present the user with four options:
+功能标记为"passing"且代码审查完成后，向用户提供四个选项：
 
-### Option 1: Merge Locally
+### 选项 1：本地合并
 ```bash
 # Switch to base branch
 git checkout "${BASE_BRANCH}"
@@ -90,7 +90,7 @@ git worktree remove "${WORKTREE_DIR}"
 git branch -d "${FEATURE_BRANCH}"
 ```
 
-### Option 2: Push and Create PR
+### 选项 2：推送并创建 PR
 ```bash
 # Push the feature branch
 git push -u origin "${FEATURE_BRANCH}"
@@ -102,14 +102,14 @@ gh pr create --title "Feature #${FEATURE_ID}: ${TITLE}" --body "..."
 echo "Worktree kept at ${WORKTREE_DIR} — remove after PR merge"
 ```
 
-### Option 3: Keep As-Is
+### 选项 3：保持现状
 ```bash
 # Leave worktree and branch intact
 echo "Worktree preserved at ${WORKTREE_DIR}"
 echo "Branch: ${FEATURE_BRANCH}"
 ```
 
-### Option 4: Discard
+### 选项 4：丢弃
 ```bash
 # SAFETY: Require explicit confirmation
 echo "Type 'discard' to confirm deletion of all changes on ${FEATURE_BRANCH}"
@@ -120,7 +120,7 @@ git worktree remove --force "${WORKTREE_DIR}"
 git branch -D "${FEATURE_BRANCH}"
 ```
 
-## Worktree Lifecycle
+## Worktree 生命周期
 
 ```
 Orient → Select Feature
@@ -138,9 +138,9 @@ Orient → Select Feature
   └─ Finish: Merge / PR / Keep / Discard
 ```
 
-## Rules
+## 规则
 
-- Always verify `.gitignore` includes the worktree directory
-- Always run baseline tests before starting work in a new worktree
-- Never force-delete a worktree without user confirmation
-- If the user declines worktree isolation, work directly on a feature branch (still isolated from main)
+- 始终验证 `.gitignore` 包含 worktree 目录
+- 在新 worktree 中开始工作前始终运行基线测试
+- 未经用户确认，禁止强制删除 worktree
+- 如果用户拒绝 worktree 隔离，直接在功能分支上工作（仍与 main 隔离）

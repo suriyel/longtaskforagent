@@ -1,23 +1,23 @@
-# <Project Name> — Software Requirements Specification
+# <Project Name> — 软件需求规格说明书
 
-**Date**: YYYY-MM-DD
-**Status**: Approved
-**Standard**: Aligned with ISO/IEC/IEEE 29148
+**日期**: YYYY-MM-DD
+**状态**: 已批准
+**标准**: 对齐 ISO/IEC/IEEE 29148
 
-## 1. Purpose & Scope
-[Core problem being solved. System boundaries.]
+## 1. 目的与范围
+[要解决的核心问题。系统边界。]
 
-### 1.1 In Scope
-[What the system WILL do in this version]
+### 1.1 范围内
+[本版本系统将要完成的内容]
 
-### 1.2 Out of Scope
-[What is explicitly EXCLUDED — deferred or not planned]
-[If requirements were deferred during granularity analysis, reference the deferred backlog:
-"Deferred requirements tracked in [deferred backlog](YYYY-MM-DD-<topic>-deferred.md)"]
+### 1.2 范围外
+[明确排除的内容 -- 延期或不在计划内]
+[如果在粒度分析过程中有需求被延期，请引用延期积压清单：
+"延期需求记录在 [延期积压清单](YYYY-MM-DD-<topic>-deferred.md) 中"]
 
-### 1.3 Problem Statement
+### 1.3 问题陈述
 
-**Root Cause (5-Whys)**:
+**根因分析（5-Whys）**:
 ```
 Symptom: [user-stated problem in their words]
 Why 1: [first cause]
@@ -26,27 +26,27 @@ Why 3: [deepest supported cause]
 Root Cause: [systemic cause requirements must address]
 ```
 
-**Jobs-to-be-Done**: When [situation], I want to [motivation], so I can [outcome].
+**待完成任务（Jobs-to-be-Done）**: 当 [情景] 时，我希望 [动机]，以便 [期望结果]。
 
-**Pain Map**:
-| Pain Point | Current Workaround | Frequency | Severity | Score |
+**痛点地图**:
+| 痛点 | 当前替代方案 | 频率 | 严重程度 | 评分 |
 |---|---|---|---|---|
 
-**Alignment Validation**: [PASS / PARTIAL / FAIL — filled by alignment validation step]
+**对齐验证**: [PASS / PARTIAL / FAIL -- 由对齐验证步骤填写]
 
-[Not applicable — Lite track or fully-specified increment]
+[不适用 -- Lite 路径或完全指定的增量]
 
-## 2. Glossary & Definitions
-| Term | Definition | Do NOT confuse with |
+## 2. 术语表与定义
+| 术语 | 定义 | 勿与以下混淆 |
 |------|-----------|---------------------|
-[Every domain-specific or ambiguous term. Omit section if none.]
+[每个领域特定或有歧义的术语。若无则省略本节。]
 
-## 3. Stakeholders & User Personas
-| Persona | Technical Level | Key Needs | Access Level |
+## 3. 干系人与用户画像
+| 画像 | 技术水平 | 关键需求 | 访问级别 |
 |---------|----------------|-----------|--------------|
-[Omit if no UI / end-user features]
+[若无 UI / 面向终端用户的功能则省略]
 
-### 3.1 Use Case View
+### 3.1 用例视图
 
 ```mermaid
 graph LR
@@ -64,24 +64,24 @@ graph LR
     Actor1 --> UC2
 ```
 
-[Omit this section if no user-facing functional requirements exist]
+[若不存在面向用户的功能需求则省略本节]
 
-## 4. Functional Requirements
+## 4. 功能需求
 
-### FR-001: <Title>
-**Priority**: Must
-**EARS**: When <trigger>, the system shall <action>.
-**Acceptance Criteria**:
-- Given <context>, when <action>, then <expected result>
-- Given <error context>, when <action>, then <error handling>
+### FR-001: <标题>
+**优先级**: Must
+**EARS**: 当 <触发条件> 时，系统应 <执行动作>。
+**验收标准**:
+- 给定 <上下文>，当 <执行动作>，则 <预期结果>
+- 给定 <错误上下文>，当 <执行动作>，则 <错误处理>
 
-[Repeat for each functional requirement]
+[对每个功能需求重复上述格式]
 
-### 4.1 Process Flows
+### 4.1 流程图
 
-[One flowchart per functional area with 3+ steps or branching logic — generated during Step 4c]
+[针对包含 3 个以上步骤或分支逻辑的每个功能领域绘制一张流程图 -- 在 Step 4c 期间生成]
 
-#### Flow: <Workflow Name>
+#### 流程: <工作流名称>
 
 ```mermaid
 flowchart TD
@@ -103,35 +103,35 @@ flowchart TD
     B2 --> E
 ```
 
-[Add additional #### Flow sections for each distinct functional area]
-[Omit this section if all requirements are single-step with no branching]
+[为每个独立的功能领域添加额外的 #### 流程节]
+[若所有需求都是单步且无分支则省略本节]
 
-## 5. Interface Requirements
-| ID | External System | Direction | Protocol | Data Format |
+## 5. 接口需求
+| ID | 外部系统 | 方向 | 协议 | 数据格式 |
 |----|----------------|-----------|----------|-------------|
 | IFR-001 | Payment Gateway | Outbound | REST/HTTPS | JSON |
-[Omit if no external interfaces]
+[若无外部接口则省略]
 
-## 6. Constraints
-| ID | Constraint | Rationale |
+## 6. 约束
+| ID | 约束 | 依据 |
 |----|-----------|-----------|
 | CON-001 | Must run on Python 3.8+ | Corporate standard |
-[If none, write "None identified"]
+[若无，填写"未发现"]
 
-## 7. Assumptions & Dependencies
-| ID | Assumption | Impact if Invalid |
+## 7. 假设与依赖
+| ID | 假设 | 若不成立的影响 |
 |----|-----------|------------------|
 | ASM-001 | JWT validation handled by API Gateway | Business layer must add validation |
-[If none, write "None identified"]
+[若无，填写"未发现"]
 
-## 8. Acceptance Criteria Summary
-[Consolidated table or list linking each FR to its pass/fail criteria]
+## 8. 验收标准汇总
+[将每个 FR 与其通过/失败标准关联的汇总表或列表]
 
-## 9. Traceability Matrix
-| Requirement ID | Source (stakeholder need) | Pain Point Addressed | Verification Method |
+## 9. 可追溯性矩阵
+| 需求 ID | 来源（干系人需求） | 对应痛点 | 验证方法 |
 |---------------|-------------------------|---------------------|-------------------|
-| FR-001 | User story: "As a user, I want to..." | [Pain Map row label or "None — new capability"] | Automated test |
-[Every requirement must appear in this matrix]
+| FR-001 | User story: "As a user, I want to..." | [痛点地图行标签 或 "无 -- 新增能力"] | Automated test |
+[每个需求都必须出现在此矩阵中]
 
-## 10. Open Questions
-[Any items that need resolution during the design phase. If none, write "None".]
+## 10. 待解决问题
+[需在设计阶段解决的所有事项。若无，填写"无"。]

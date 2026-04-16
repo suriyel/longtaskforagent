@@ -1,92 +1,92 @@
 ---
 name: long-task-hotfix
-description: "Use when bugfix-request.json exists - validate, reproduce, root-cause, and enqueue a user-reported bug as a category=bugfix feature, then chain to Worker for TDD fix"
+description: "当 bugfix-request.json 存在时使用 - 验证、复现、定位根因，并将用户报告的缺陷作为 category=bugfix 功能入队，然后链接到 Worker 进行 TDD 修复"
 ---
 
 <EXTREMELY-IMPORTANT>
-You are using the long-task-hotfix skill. This skill handles bugs found during user manual testing.
+你正在使用 long-task-hotfix skill。此 skill 处理用户手动测试中发现的缺陷。
 
-Your job is ONLY: validate → reproduce → root cause → enqueue → chain to Worker.
-The actual fix (TDD) is handled by the Worker pipeline — do NOT implement fixes here.
+你的职责仅限于：验证 → 复现 → 根因分析 → 入队 → 链接到 Worker。
+实际修复（TDD）由 Worker 流水线处理 — 不要在此处实现修复。
 </EXTREMELY-IMPORTANT>
 
-## Step 1: Announce
+## 步骤 1：宣告
 
-Print: "I'm using the long-task-hotfix skill. Processing bugfix-request.json."
+打印："I'm using the long-task-hotfix skill. Processing bugfix-request.json."
 
-Use TodoWrite to track your progress through the 8 steps.
+使用 TodoWrite 跟踪你在 8 个步骤中的进度。
 
 ---
 
-## Step 2: Validate Signal File
+## 步骤 2：验证信号文件
 
-Run:
+运行：
 ```bash
 python scripts/validate_bugfix_request.py bugfix-request.json
 ```
 
-If validation fails:
-- Print the errors clearly
-- `AskUserQuestion` asking the user to fix the file
-- Re-validate after the user responds
-- Do NOT proceed until validation passes
+如果验证失败：
+- 清晰地打印错误信息
+- 通过 `AskUserQuestion` 要求用户修复文件
+- 用户响应后重新验证
+- 验证通过前不得继续
 
 ---
 
-## Step 3: Orient
+## 步骤 3：定位
 
-Read these files in order:
-1. `bugfix-request.json` — understand title, description, severity, feature_id, reproduction steps
-2. `feature-list.json` — find the linked feature (if `feature_id` non-null), read `tech_stack`; determine next available feature `id`
-3. `long-task-guide.md` — environment activation commands
-4. `task-progress.md` `## Current State` section — recent session history
-6. `git log --oneline -10` — recent commit context
+按顺序读取以下文件：
+1. `bugfix-request.json` — 了解标题、描述、严重性、feature_id、复现步骤
+2. `feature-list.json` — 查找关联的功能（如果 `feature_id` 非空），读取 `tech_stack`；确定下一个可用功能 `id`
+3. `long-task-guide.md` — 环境激活命令
+4. `task-progress.md` 的 `## Current State` 节 — 近期会话历史
+6. `git log --oneline -10` — 近期提交上下文
 
-If `feature_id` is non-null: read the linked feature's entry from `feature-list.json` to understand context (existing `srs_trace`).
-
----
-
-## Step 4: Reproduce
-
-**Goal**: Confirm the bug is reproducible before any analysis.
-
-1. Activate environment per `long-task-guide.md`
-2. Follow `reproduction_steps` from `bugfix-request.json` exactly
-3. Run the existing test suite; note any currently failing tests
-4. Record: exact command run, exact output observed, confirmation that bug manifests
-
-**HARD GATE — Cannot Reproduce:**
-If the bug cannot be reproduced:
-- Record the attempt in `task-progress.md`
-- Do NOT delete `bugfix-request.json`
-- `AskUserQuestion` asking for clarification (more detailed steps, specific environment, sample data)
-- **Stop here until reproduction is confirmed**
+如果 `feature_id` 非空：从 `feature-list.json` 读取关联功能的条目以了解上下文（已有的 `srs_trace`）。
 
 ---
 
-## Step 5: Root Cause Analysis
+## 步骤 4：复现
 
-Execute the **4-phase systematic debugging process** from `skills/long-task-work/references/systematic-debugging.md`:
+**目标**：在任何分析之前确认缺陷可复现。
 
-**Phase 1 — Root Cause Investigation**: collect full error evidence, find minimal reproduction, check recent git changes, trace data flow from entry point to failure.
+1. 按 `long-task-guide.md` 激活环境
+2. 严格按照 `bugfix-request.json` 中的 `reproduction_steps` 执行
+3. 运行现有测试套件；记录当前失败的测试
+4. 记录：执行的确切命令、观察到的确切输出、确认缺陷已显现
 
-**Phase 2 — Pattern Analysis**: find similar working code paths, compare contexts, check dependency versions and config values.
-
-**Phase 3 — Hypothesis & Testing**: form ONE specific testable hypothesis; make ONE minimal diagnostic change to confirm or disprove it; if wrong, return to Phase 1.
-
-**Phase 4 — Confirmed Root Cause**: arrive at a single confirmed root cause statement.
-
-**Required output**: `"Root cause: [one-sentence statement]"`
-
-**Iron Law**: NO FEATURE ENTRY before root cause is confirmed. If you cannot confirm root cause after 3 Phase 3 iterations, `AskUserQuestion` to ask the user for more context.
+**硬性门禁 — 无法复现：**
+如果缺陷无法复现：
+- 在 `task-progress.md` 中记录尝试
+- 不要删除 `bugfix-request.json`
+- 通过 `AskUserQuestion` 请求澄清（更详细的步骤、特定环境、样本数据）
+- **在复现确认之前停在此处**
 
 ---
 
-## Step 6: Enqueue as Bugfix Feature
+## 步骤 5：根因分析
 
-Add a new feature entry to `feature-list.json`. Determine the next available `id` (max existing id + 1).
+执行 `skills/long-task-work/references/systematic-debugging.md` 中的 **4 阶段系统化调试流程**：
 
-**New feature object:**
+**阶段 1 — 根因调查**：收集完整错误证据，找到最小复现，检查近期 git 变更，从入口点到故障点追踪数据流。
+
+**阶段 2 — 模式分析**：查找类似的正常工作代码路径，比较上下文，检查依赖版本和配置值。
+
+**阶段 3 — 假设与测试**：形成一个具体的可测试假设；做一个最小的诊断性变更来验证或推翻；如果错误，返回阶段 1。
+
+**阶段 4 — 确认根因**：得出单一确认的根因陈述。
+
+**必需输出**：`"Root cause: [一句话陈述]"`
+
+**铁律**：根因确认之前不得创建功能条目。如果经过 3 次阶段 3 迭代仍无法确认根因，通过 `AskUserQuestion` 向用户请求更多上下文。
+
+---
+
+## 步骤 6：作为 Bugfix 功能入队
+
+向 `feature-list.json` 添加新功能条目。确定下一个可用 `id`（现有最大 id + 1）。
+
+**新功能对象：**
 ```json
 {
   "id": <next available>,
@@ -108,23 +108,23 @@ Add a new feature entry to `feature-list.json`. Determine the next available `id
 }
 ```
 
-**Notes:**
-- `dependencies`: set to `[fixed_feature_id]` if non-null (ensures Worker processes the original feature before this fix); set to `[]` if null
-- `wave`: use the current maximum wave id from `feature-list.json`'s `waves` array
-- If `fixed_feature_id` is non-null, set `srs_trace` to include the linked feature's requirement IDs for traceability
+**注意事项：**
+- `dependencies`：如果非空则设为 `[fixed_feature_id]`（确保 Worker 在此修复之前处理原始功能）；如果为空则设为 `[]`
+- `wave`：使用 `feature-list.json` 的 `waves` 数组中当前最大的 wave id
+- 如果 `fixed_feature_id` 非空，将 `srs_trace` 设置为包含关联功能的需求 ID 以确保可追溯性
 
-After adding, validate:
+添加后进行验证：
 ```bash
 python scripts/validate_features.py feature-list.json
 ```
 
-Fix any validation errors before continuing.
+继续之前修复所有验证错误。
 
 ---
 
-## Step 7: Update task-progress.md
+## 步骤 7：更新 task-progress.md
 
-Append a hotfix session entry after the current `## Current State` content:
+在当前 `## Current State` 内容之后追加热修复会话条目：
 
 ```markdown
 ## Hotfix Session — YYYY-MM-DD: <bug title>
@@ -135,14 +135,14 @@ Append a hotfix session entry after the current `## Current State` content:
 - **Status**: Enqueued — Worker will handle TDD
 ```
 
-Also update the `## Current State` header to reflect the new failing feature.
+同时更新 `## Current State` 标题以反映新的失败功能。
 
 ---
 
-## Step 8: Finalize
+## 步骤 8：收尾
 
-1. Delete `bugfix-request.json` (this is the final irreversible action — only after Steps 6 and 7 are complete and `validate_features.py` has passed)
-3. Print:
+1. 删除 `bugfix-request.json`（这是最终不可逆操作 — 仅在步骤 6 和 7 完成且 `validate_features.py` 通过后执行）
+3. 打印：
    ```
    Bug #<id> enqueued as category=bugfix feature.
    Title: Fix: <title>
@@ -150,38 +150,38 @@ Also update the `## Current State` header to reflect the new failing feature.
    Root cause: <one sentence>
    Worker will handle: TDD
    ```
-4. Chain to: `long-task:long-task-work`
+4. 链接到：`long-task:long-task-work`
 
 ---
 
-## Critical Rules
+## 关键规则
 
-- **Validate signal file before any action** — validator must pass before Step 3
-- **Must reproduce before analyzing** — "Cannot Reproduce" is a valid documented outcome; do NOT skip to root cause on an unreproduced bug
-- **Root cause confirmed before enqueuing** — systematic debugging 4-phase process is mandatory; no guess-and-enqueue
-- **Signal file deleted LAST** — deletion is the final irreversible action; `validate_features.py` must pass first
-- **If both `bugfix-request.json` AND `increment-request.json` exist**: process this hotfix fully first; do NOT delete `increment-request.json`; it will be processed in the next session
-- **This skill does NOT implement the fix** — Worker owns TDD; this skill only validates, diagnoses, and enqueues
-- **No ad-hoc code edits here** — do not write tests or fix code during this skill; that is Worker's job
+- **任何操作前先验证信号文件** — 步骤 3 之前验证器必须通过
+- **分析前必须复现** — "无法复现"是有效的已记录结果；不得在未复现的缺陷上跳到根因分析
+- **入队前必须确认根因** — 4 阶段系统化调试流程为强制步骤；不得猜测后入队
+- **信号文件最后删除** — 删除是最终不可逆操作；`validate_features.py` 必须先通过
+- **如果 `bugfix-request.json` 和 `increment-request.json` 同时存在**：先完整处理此热修复；不要删除 `increment-request.json`；它将在下一个会话中处理
+- **此 skill 不实现修复** — Worker 负责 TDD；此 skill 仅验证、诊断和入队
+- **此处不做临时代码编辑** — 不要在此 skill 期间编写测试或修复代码；那是 Worker 的工作
 
-## Red Flags
+## 危险信号
 
-These thoughts mean STOP — you're rationalizing:
+这些想法意味着停下 — 你在自我合理化：
 
-| Thought | Reality |
+| 想法 | 现实 |
 |---------|---------|
-| "I can see the bug in the code, let me just fix it" | Root cause 4-phase first; then enqueue; Worker fixes |
-| "I know the root cause, skipping Phase 1-3" | All 4 phases are mandatory; documenting them protects against wrong assumptions |
-| "Can't reproduce but I know the cause" | Cannot Reproduce = stop; document in task-progress.md; ask user |
-| "I'll skip the feature-list.json entry, fix it directly" | Every fix must be traceable in feature-list.json as category=bugfix |
-| "Signal file has errors but the intent is clear" | Validator must pass; ask user to fix the file |
-| "I'll delete the signal file first, then clean up" | Signal file deletion is the LAST step after everything is verified |
-| "The fix is simple, Worker pipeline is overkill" | Worker ensures regression tests via TDD — required |
+| "我能看到代码中的缺陷，让我直接修复" | 先完成 4 阶段根因分析；然后入队；Worker 修复 |
+| "我知道根因，跳过阶段 1-3" | 全部 4 个阶段都是强制的；记录它们可防止错误假设 |
+| "无法复现但我知道原因" | 无法复现 = 停止；记录到 task-progress.md；询问用户 |
+| "我跳过 feature-list.json 条目，直接修复" | 每个修复必须在 feature-list.json 中作为 category=bugfix 可追溯 |
+| "信号文件有错误但意图很明确" | 验证器必须通过；要求用户修复文件 |
+| "我先删除信号文件，然后再清理" | 信号文件删除是所有验证通过后的最后步骤 |
+| "修复很简单，Worker 流水线是大材小用" | Worker 通过 TDD 确保回归测试 — 这是必需的 |
 
-## Integration
+## 集成
 
-This skill is invoked by the `using-long-task` router when `bugfix-request.json` exists in the project root (highest priority — above increment). After this skill completes:
-- `bugfix-request.json` is deleted
-- A new `category: "bugfix"` feature is in `feature-list.json` with `status: "failing"`
-- The router's next detection: `feature-list.json` exists with failing features → `long-task-work`
-- Worker picks up the bugfix feature and runs the full TDD pipeline
+此 skill 由 `using-long-task` 路由器在项目根目录存在 `bugfix-request.json` 时调用（最高优先级 — 高于增量）。此 skill 完成后：
+- `bugfix-request.json` 已删除
+- `feature-list.json` 中新增了一个 `category: "bugfix"` 功能，`status: "failing"`
+- 路由器的下一次检测：`feature-list.json` 存在且有失败功能 → `long-task-work`
+- Worker 拾取 bugfix 功能并运行完整 TDD 流水线

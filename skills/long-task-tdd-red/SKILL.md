@@ -1,49 +1,49 @@
 ---
 name: long-task-tdd-red
-description: "TDD Red phase — write failing tests for a feature's Test Inventory. Input: feature_id."
+description: "TDD Red 阶段 -- 为功能测试清单编写失败测试。输入：feature_id。"
 ---
 
-# TDD Red — Write Failing Tests
+# TDD Red -- 编写失败测试
 
-Write failing tests for all Test Inventory rows. Read all documents yourself.
+为所有测试清单行编写失败测试。请自行读取所有文档。
 
-## Your Task
+## 你的任务
 
-1. Read execution rules: `skills/long-task-tdd-red/references/tdd-red-execution.md`
-2. Read rules: `skills/long-task-tdd-shared/references/iron-law.md`,`docs/rules`
-3. Read anti-patterns: `skills/long-task-tdd-shared/references/testing-anti-patterns.md`
+1. 读取执行规则：`skills/long-task-tdd-red/references/tdd-red-execution.md`
+2. 读取规则：`skills/long-task-tdd-shared/references/iron-law.md`，`docs/rules`
+3. 读取反模式：`skills/long-task-tdd-shared/references/testing-anti-patterns.md`
 
-## Specification Input (from feature design doc)
+## 规格输入（来自功能设计文档）
 
-Read these sections in order:
-1. §7 Test Inventory — PRIMARY input. Each row → one or more test cases.
-2. §3 Interface Contract — method signatures, pre/postconditions, §11.1 library annotations.
-3. Existing Code Reuse — utilities, API clients, §11.1 library usage examples.
-4. §5 Algorithm / Core Logic — boundary matrix (§5c), error table (§5d).
-5. Clarification Addendum (if present) — user-approved resolutions.
-6. UT Style from `long-task-guide.md` — UT/mock framework, mock style, exploration conventions
-7. Related existing tests (Step 1b) — explore dependency features' test files for assertion style, fixtures, imports, mock patterns. Overrides UT Style where they differ.
+按顺序读取以下章节：
+1. §7 测试清单 -- 主要输入。每行 → 一个或多个测试用例。
+2. §3 接口契约 -- 方法签名、前/后置条件、§11.1 库注释。
+3. 现有代码复用 -- 工具函数、API 客户端、§11.1 库使用示例。
+4. §5 算法 / 核心逻辑 -- 边界矩阵（§5c）、错误表（§5d）。
+5. 澄清附录（如存在）-- 用户批准的决议。
+6. `long-task-guide.md` 中的 UT 风格 -- UT/mock 框架、mock 风格、探索约定
+7. 相关现有测试（步骤 1b）-- 探索依赖功能的测试文件，获取断言风格、fixtures、导入、mock 模式。与 UT 风格不同时以此为准。
 
-## Key Constraints
+## 关键约束
 
-- Write integration tests first, then unit tests (happy/error/boundary/security)
-- Rule 1: Category coverage (FUNC/happy, FUNC/error, BNDRY/*, SEC/*)
-- Rule 2: Negative test ratio >= 40%
-- Rule 3: Low-value assertion ratio <= 20%
-- Rule 4: "Wrong Implementation" challenge for each test
-- Rule 5: Both UT + Integration layers mandatory (unless pure computation)
-- Label tests by layer: # [unit] or # [integration]
-- ALL tests MUST FAIL (exit code != 0 is SUCCESS). Exit 0 means tests are wrong — rewrite
-- Follow related existing test conventions (Step 1b) for consistency. §11.5 and Test Inventory take precedence.
-- Test output protocol: `[test-quiet]` first → on PASS (wrong!) rewrite; on all-FAIL (correct!) done. If unclear → `[test-detail]`
+- 先写集成测试，再写单元测试（happy/error/boundary/security）
+- 规则 1：类别覆盖率（FUNC/happy、FUNC/error、BNDRY/*、SEC/*）
+- 规则 2：负向测试比例 >= 40%
+- 规则 3：低价值断言比例 <= 20%
+- 规则 4：对每个测试进行"错误实现"挑战
+- 规则 5：UT + 集成两层均为强制（除非纯计算）
+- 按层标注测试：# [unit] 或 # [integration]
+- 所有测试必须失败（退出码 != 0 为成功）。退出码 0 表示测试有误 -- 重写
+- 遵循相关现有测试约定（步骤 1b）以保持一致性。§11.5 和测试清单优先。
+- 测试输出协议：先 `[test-quiet]` → 如果 PASS（错误！）重写；如果全部 FAIL（正确！）完成。不确定时 → `[test-detail]`
 
-Return result using the Structured Return Contract below.
+使用下方的结构化返回契约返回结果。
 
 ---
 
-## Structured Return Contract
+## 结构化返回契约
 
-When all tests are written and verified failing, return your result in EXACTLY this format:
+当所有测试编写完毕并验证为失败状态时，请严格按照以下格式返回结果：
 
 ```markdown
 ## SubAgent Result: TDD Red
@@ -60,8 +60,8 @@ test_count=N, negative_ratio=N% (≥40%, PASS/FAIL), all_tests_fail=true/false
 
 ---
 
-## Integration
+## 集成
 
-**Called by:** long-task-work (Step 3) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline
-**Produces:** Failing test files
-**Chains to:** long-task-tdd-green (Step 4)
+**调用方：** long-task-work（步骤 3）-- Worker 分派 SubAgent，SubAgent 加载此 Skill 并内联执行
+**产出：** 失败的测试文件
+**后续：** long-task-tdd-green（步骤 4）

@@ -1,258 +1,258 @@
-# Feature-Level Detailed Design — SubAgent Execution Reference
+# 功能级详细设计 -- SubAgent 执行参考
 
-You are a Feature Design execution SubAgent. Follow these rules exactly. When finished, return your result using the **Structured Return Contract** at the bottom of this document.
+你是功能设计执行 SubAgent。请严格遵循以下规则。完成后，使用本文档底部的**结构化返回契约**返回结果。
 
 ---
 
-# Feature-Level Detailed Design
+# 功能级详细设计
 
-Produce a detailed design for a single feature, bridging system-level design (§4.N) and TDD implementation.
+为单个功能生成详细设计，衔接系统级设计（§4.N）与 TDD 实现。
 
-System design answers "WHAT classes exist and HOW they interact."
-This skill answers "WHAT each method does internally, WHAT can go wrong, and WHAT existing behavior to leverage."
+系统设计回答"存在哪些类、它们如何交互"。
+本技能回答"每个方法内部做什么、可能出什么问题、可以利用哪些现有行为"。
 
-## Inputs
+## 输入
 
-Read ALL of these BEFORE writing any design content:
+在编写任何设计内容之前，请读取以下全部内容：
 
-1. **Feature object** from feature-list.json — ID, title, description, srs_trace, dependencies, priority (verification_steps if present)
-2. **System design section** — full §4.N from the design document (read the entire subsection, NOT grep)
-3. **SRS requirement** — full FR-xxx from the SRS document
-4. **Constraints & assumptions** from feature-list.json root
-5. **Existing code** — if dependency features are passing, read their public interfaces (imports, class/function signatures)
-6. **Internal API contracts** (if §6.2 exists) — from Design Section 6.2, read rows where this feature appears as Provider or Consumer. These define cross-feature schemas that this feature's Interface Contract (§3) must align with.
-7. **Codebase Conventions & Constraints** — Read Design doc §11 in full. Extract and keep in working memory:
-   - §11.1: Mandatory internal libraries table (domain, library, replaces, import pattern)
-   - §11.2: Prohibited APIs table (prohibited, reason, use instead)
-   - §11.3: Approved 3rd-party libraries (purpose, library, version)
-   - §11.5: Naming conventions table (rule, convention)
-   - §11.6: Error handling pattern description
-   §11 is always present in the design document. Empty tables mean no constraints for that category.
+1. **功能对象** -- 来自 feature-list.json 的 ID、标题、描述、srs_trace、依赖、优先级（如有 verification_steps）
+2. **系统设计章节** -- 设计文档中完整的 §4.N（读取整个子章节，不要用 grep）
+3. **SRS 需求** -- SRS 文档中完整的 FR-xxx
+4. **约束与假设** -- feature-list.json 根级别
+5. **现有代码** -- 如果依赖功能已通过，读取其公开接口（导入、类/函数签名）
+6. **内部 API 契约**（如 §6.2 存在）-- 来自设计文档第 6.2 节，读取当前功能作为 Provider 或 Consumer 的行。这些定义了跨功能 schema，本功能的接口契约（§3）必须与之对齐。
+7. **代码库约定与约束** -- 完整读取设计文档 §11。提取并保持在工作记忆中：
+   - §11.1：强制内部库表（领域、库、替代、导入模式）
+   - §11.2：禁止 API 表（禁止项、原因、替代方案）
+   - §11.3：批准的第三方库（用途、库、版本）
+   - §11.5：命名约定表（规则、约定）
+   - §11.6：错误处理模式描述
+   §11 在设计文档中始终存在。空表意味着该类别无约束。
 
-## Template
+## 模板
 
-Use `skills/long-task-feature-design/references/feature-design-template.md` as the structural template. Copy the template, fill each section for the target feature.
+使用 `skills/long-task-feature-design/references/feature-design-template.md` 作为结构模板。复制模板，为目标功能填充每个章节。
 
-## Checklist
+## 检查清单
 
-You MUST complete each step in order:
+你必须按顺序完成每个步骤：
 
-### 1. Load Context
+### 1. 加载上下文
 
-Read all input artifacts listed in Inputs above.
+读取上述输入中列出的所有输入制品。
 
-### 1a. Project Structure
+### 1a. 项目结构
 
-After loading context, fill the "Project Structure" section of the template:
-1. From the design document §4.N and existing code (dependency features), identify all files this feature will create or modify
-2. Mark each as [existing], [new], or [modified]
-3. Include only files architecturally relevant to this feature — omit test utilities, configs unless directly modified
+加载上下文后，填充模板中的"项目结构"章节：
+1. 根据设计文档 §4.N 和现有代码（依赖功能），识别本功能将创建或修改的所有文件
+2. 标记每个文件为 [existing]、[new] 或 [modified]
+3. 仅包含与本功能架构相关的文件 -- 除非直接修改，否则省略测试工具、配置文件
 
-### 1b. Ambiguity Scan
+### 1b. 歧义扫描
 
-After reading all inputs and BEFORE writing any design content, scan for specification ambiguities that could affect design correctness. This scan uses the following taxonomy:
+读取所有输入后、编写任何设计内容之前，扫描可能影响设计正确性的规格歧义。扫描使用以下分类：
 
-| Code | What to check |
-|------|---------------|
-| `SRS-VAGUE` | Acceptance criterion contains vague language ("fast", "user-friendly", "appropriate", "should handle") without measurable thresholds or concrete behaviors |
-| `SRS-DESIGN-CONFLICT` | SRS requirement and Design §4.N contradict on interface type, data format, behavior, or error handling |
-| `SRS-MISSING` | Acceptance criterion has no Given/When/Then or the expected result is not specified |
-| `DEP-AMBIGUOUS` | Cross-feature interface is unclear — missing or incomplete §6.2 entry for a dependency |
-| `CONSTRAINT-CONFLICT` | §11 codebase convention conflicts with feature requirement — e.g., §11.1 mandates an internal library that lacks capabilities the feature needs (streaming, specific protocol, batch size), or §11.2 prohibits an API the feature's SRS explicitly requires |
+| 代码 | 检查内容 |
+|------|----------|
+| `SRS-VAGUE` | 验收标准包含模糊语言（"快速"、"用户友好"、"适当"、"应处理"），缺少可衡量的阈值或具体行为 |
+| `SRS-DESIGN-CONFLICT` | SRS 需求与设计 §4.N 在接口类型、数据格式、行为或错误处理上存在矛盾 |
+| `SRS-MISSING` | 验收标准没有 Given/When/Then 或未指定预期结果 |
+| `DEP-AMBIGUOUS` | 跨功能接口不清晰 -- 依赖的 §6.2 条目缺失或不完整 |
+| `CONSTRAINT-CONFLICT` | §11 代码库约定与功能需求冲突 -- 例如 §11.1 强制使用的内部库缺少功能所需的能力（流式、特定协议、批量大小），或 §11.2 禁止的 API 是功能 SRS 明确要求的 |
 
-**Scan procedure:**
+**扫描流程：**
 
-1. For each SRS acceptance criterion (from srs_trace requirements): check if it contains measurable, specific, testable conditions. Flag vague language without numeric thresholds or concrete behaviors → `SRS-VAGUE`
-2. For each SRS requirement mapped to this feature: cross-reference against Design §4.N. Flag contradictions in interface type, data format, behavior, or error handling → `SRS-DESIGN-CONFLICT`
-3. For each SRS acceptance criterion: verify Given/When/Then exists with explicit expected results → `SRS-MISSING`
-4. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
-5. For each non-empty §11.1 row: check if the feature's requirements demand capabilities beyond the mandatory library's known API. For each non-empty §11.2 row: check if the feature's SRS acceptance criteria explicitly require the prohibited API → `CONSTRAINT-CONFLICT`
+1. 对每个 SRS 验收标准（来自 srs_trace 需求）：检查是否包含可衡量、具体、可测试的条件。标记缺少数值阈值或具体行为的模糊语言 → `SRS-VAGUE`
+2. 对映射到本功能的每个 SRS 需求：与设计 §4.N 交叉参照。标记接口类型、数据格式、行为或错误处理上的矛盾 → `SRS-DESIGN-CONFLICT`
+3. 对每个 SRS 验收标准：验证 Given/When/Then 存在且有明确的预期结果 → `SRS-MISSING`
+4. 对本功能作为 Provider 或 Consumer 的 §6.2 契约：检查 schema 是否完整（无缺失字段、无模糊类型） → `DEP-AMBIGUOUS`
+5. 对每个非空的 §11.1 行：检查功能需求是否要求超出强制库已知 API 的能力。对每个非空的 §11.2 行：检查功能的 SRS 验收标准是否明确要求被禁止的 API → `CONSTRAINT-CONFLICT`
 
-**For each detected ambiguity, produce a structured record:**
+**对检测到的每个歧义，生成结构化记录：**
 ```
-- Category: [code from taxonomy]
-- Source: [document path + section/line reference]
-- Description: [what is ambiguous]
-- Impact: [which design sections cannot be completed without resolution — e.g., "§3 Interface Contract postcondition", "§7 Test Inventory expected result"]
-- Suggested interpretation: [SubAgent's best guess based on context, if one exists; "none" if no reasonable interpretation]
-- Question for user: [specific, actionable question that would resolve the ambiguity]
+- Category: [分类代码]
+- Source: [文档路径 + 章节/行引用]
+- Description: [歧义内容]
+- Impact: [哪些设计章节无法在未解决的情况下完成 -- 例如 "§3 接口契约后置条件"、"§7 测试清单预期结果"]
+- Suggested interpretation: [SubAgent 基于上下文的最佳猜测（如有）；无合理解释则填 "none"]
+- Question for user: [具体、可操作的问题，用于消除歧义]
 ```
 
-**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria.
+**对于 `category: "bugfix"` 功能**：仅对缺陷的验收标准扫描 `SRS-VAGUE` 和 `SRS-DESIGN-CONFLICT`。
 
-**Decision gate:**
-- **Zero ambiguities detected** → proceed to Step 2 normally. No friction added.
-- **All ambiguities have a reasonable suggested interpretation AND impact is LIMITED to non-critical sections** (does NOT affect Interface Contract signatures, Test Inventory expected results, or cross-feature §6.2 contracts) → proceed with assumptions. Document each assumption in the design document's `## Clarification Addendum` section with Authority = "assumed". Set Verdict to `PASS`. Include assumption count in `### Next Step Inputs`.
-- **Any ambiguity has HIGH impact** (affects Interface Contract signatures, Test Inventory expected results, or cross-feature contracts) **OR has no reasonable suggested interpretation** → set Verdict to `CLARIFY`. Include the full Ambiguities table in the Structured Return Contract. Do NOT proceed to Step 2 — the orchestrator will collect user answers and re-dispatch.
+**决策门禁：**
+- **未检测到歧义** → 正常进入步骤 2。不增加额外流程。
+- **所有歧义都有合理的建议解释，且影响仅限于非关键章节**（不影响接口契约签名、测试清单预期结果或跨功能 §6.2 契约） → 带假设继续。将每个假设记录在设计文档的 `## 澄清附录` 章节，Authority = "assumed"。设置 Verdict 为 `PASS`。在 `### Next Step Inputs` 中包含假设数量。
+- **任何歧义具有高影响**（影响接口契约签名、测试清单预期结果或跨功能契约）**或无合理的建议解释** → 设置 Verdict 为 `CLARIFY`。在结构化返回契约中包含完整的歧义表。不要进入步骤 2 -- 协调器将收集用户回答并重新分派。
 
-> **On re-dispatch with Clarification Addendum**: If the SubAgent prompt includes a `## Clarification Addendum (user-approved resolutions)` section, treat those resolutions as authoritative constraints. Do NOT re-flag them as ambiguities. Incorporate them into the design as if they were in the original SRS/Design documents.
+> **带澄清附录重新分派时**：如果 SubAgent 提示词包含 `## Clarification Addendum (user-approved resolutions)` 章节，将这些决议视为权威约束。不要重新标记为歧义。将它们作为原始 SRS/设计文档的一部分纳入设计。
 
-### 1c. Existing Implementation Discovery
+### 1c. 现有实现发现
 
-**Principle — maximize reuse**: Prefer importing existing code over writing new. Duplicating existing functionality is a design defect.
+**原则 -- 最大化复用**：优先导入现有代码而非编写新代码。重复现有功能是设计缺陷。
 
-After loading context and BEFORE writing design content, discover ALL reusable code — first by broad codebase exploration, then by narrow dependency scanning. Results merge into a single "## Existing Code Reuse" section.
+加载上下文后、编写设计内容之前，发现所有可复用代码 -- 先通过广泛的代码库探索，再通过精确的依赖扫描。结果合并到统一的 "## 现有代码复用" 章节。
 
-#### Phase A: Codebase Exploration (brownfield only)
+#### 阶段 A：代码库探索（仅限存量项目）
 
-**Trigger**: `docs/rules/` exists with ≥1 `.md`, OR source files > 3.
-**Skip if**: Greenfield. Note "Greenfield — no codebase to explore." and proceed to Phase B.
+**触发条件**：`docs/rules/` 存在且包含 >=1 个 `.md` 文件，或源文件 > 3。
+**跳过条件**：新建项目。标注 "新建项目 -- 无代码库可探索。" 并进入阶段 B。
 
-1. Extract focus from feature inputs:
-   - Feature title/description + SRS text → domain keywords
-   - Design §4.N → architectural area
-   - Infer `--focus`: data features → `dataflow,architecture,deps`; API → `api,architecture,deps`; business logic → `domain,architecture,deps`; cross-cutting → `architecture,deps`
-   - Infer `--path` from §4.N if localized
+1. 从功能输入中提取焦点：
+   - 功能标题/描述 + SRS 文本 → 领域关键词
+   - 设计 §4.N → 架构区域
+   - 推断 `--focus`：数据功能 → `dataflow,architecture,deps`；API → `api,architecture,deps`；业务逻辑 → `domain,architecture,deps`；横切关注点 → `architecture,deps`
+   - 如果 §4.N 有局部定位，推断 `--path`
 
-2. Determine depth (do NOT hardcode):
+2. 确定深度（不要硬编码）：
 
-   | Signal | Depth |
-   |--------|-------|
-   | ≤1 dependency, single-class scope | quick |
-   | 2+ dependencies or multiple SRS traces | standard |
-   | Cross-cutting concern (auth, logging, middleware) | standard |
+   | 信号 | 深度 |
+   |------|------|
+   | <=1 个依赖，单类范围 | quick |
+   | 2+ 个依赖或多个 SRS 追踪 | standard |
+   | 横切关注点（认证、日志、中间件） | standard |
 
-   When in doubt, omit and let LOC-based auto-detection decide.
+   有疑问时省略，让基于 LOC 的自动检测决定。
 
-3. Dispatch:
-   > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore`
+3. 分派：
+   > **DISPATCH** 独立 SubAgent -- 加载并执行 `long-task:long-task-explore`
    > Depth: {determined_depth or omit}
    > Focus: {inferred_dimensions}
    > Path: {inferred_path or "."}
    > User question: "Find reusable code for feature: {feature_title}. SRS: {srs_summary}. Look for: utilities, API clients, data access, error helpers, base classes, middleware, factories relevant to this feature."
 
-4. Consume `docs/explore/codebase-research.md`:
-   - Architecture → base classes, factories, middleware → EXTEND/PATTERN
-   - Domain → validators, business logic → REUSE
-   - Dependencies → API clients, service connectors → REUSE
-   - Data Flow → models, pipelines → REUSE/EXTEND
+4. 消费 `docs/explore/codebase-research.md`：
+   - 架构 → 基类、工厂、中间件 → EXTEND/PATTERN
+   - 领域 → 校验器、业务逻辑 → REUSE
+   - 依赖 → API 客户端、服务连接器 → REUSE
+   - 数据流 → 模型、流水线 → REUSE/EXTEND
 
-5. Record discoveries in "## Existing Code Reuse" with REUSE/EXTEND/PATTERN labels.
+5. 将发现记录在 "## 现有代码复用" 中，标注 REUSE/EXTEND/PATTERN 标签。
 
-**Non-blocking** — if BLOCKED or no findings, proceed to Phase A-2 normally.
+**非阻塞** -- 如果 BLOCKED 或无发现，正常进入阶段 A-2。
 
-#### Phase A-2: Requirement-Related Behavior Discovery
+#### 阶段 A-2：需求相关行为发现
 
-**Principle — maximize reuse of existing related logic**: Beyond finding reusable code modules, understand existing codebase behavior that relates to this feature's SRS acceptance criteria. Duplicating existing behavior (even with different code structure) is a design defect.
+**原则 -- 最大化复用现有相关逻辑**：除了发现可复用的代码模块外，还要理解与本功能 SRS 验收标准相关的现有代码库行为。重复现有行为（即使代码结构不同）也是设计缺陷。
 
-**Trigger**: Same as Phase A (brownfield). If Phase A was skipped (greenfield), skip this too.
+**触发条件**：与阶段 A 相同（存量项目）。如果阶段 A 被跳过（新建项目），也跳过此阶段。
 
-1. Extract behavioral keywords from the feature's SRS acceptance criteria:
-   - Parse each Given/When/Then from srs_trace requirements
-   - Identify action verbs (e.g., "validate", "calculate", "transform", "authenticate")
-   - Identify domain nouns (e.g., "user", "order", "permission", "score")
-   - Combine into search patterns: `{verb}_{noun}`, `{noun}_{verb}`, domain-specific terms
+1. 从功能的 SRS 验收标准中提取行为关键词：
+   - 解析 srs_trace 需求中的每个 Given/When/Then
+   - 识别动作动词（例如 "validate"、"calculate"、"transform"、"authenticate"）
+   - 识别领域名词（例如 "user"、"order"、"permission"、"score"）
+   - 组合为搜索模式：`{verb}_{noun}`、`{noun}_{verb}`、领域特定术语
 
-2. Search for existing behavior in source code:
-   - Grep for behavioral keywords in source files (exclude test files, configs, docs)
-   - Limit to top 10 file matches to control token budget
-   - For each match: read the surrounding function/class to understand what behavior exists
-   - Focus on: What does this code DO? What business rules does it enforce? What edge cases does it handle?
+2. 在源代码中搜索现有行为：
+   - 在源文件中 Grep 行为关键词（排除测试文件、配置、文档）
+   - 限制在前 10 个匹配文件以控制 token 预算
+   - 对每个匹配：读取周围的函数/类以理解存在什么行为
+   - 关注：这段代码做什么？它执行什么业务规则？它处理什么边界情况？
 
-3. Cross-reference with feature requirements:
-   - For each SRS acceptance criterion, check if existing code already handles it (fully or partially)
-   - **Full overlap**: existing code satisfies the criterion → mark as REUSE (may already be in Phase A findings — deduplicate)
-   - **Partial overlap**: existing code handles part of the criterion → mark as EXTEND with gap analysis
-   - **Adjacent behavior**: existing code handles a similar but different scenario → mark as PATTERN (informs design for consistency, prevents contradictory behavior)
+3. 与功能需求交叉参照：
+   - 对每个 SRS 验收标准，检查现有代码是否已处理（完全或部分）
+   - **完全重叠**：现有代码满足标准 → 标记为 REUSE（可能已在阶段 A 发现中 -- 去重）
+   - **部分重叠**：现有代码处理标准的一部分 → 标记为 EXTEND 并进行差距分析
+   - **相邻行为**：现有代码处理类似但不同的场景 → 标记为 PATTERN（为一致性提供设计参考，防止矛盾行为）
 
-4. Record findings in the "Existing Code Reuse" section under "Requirement-Related Existing Behavior" subsection:
+4. 将发现记录在 "现有代码复用" 章节的 "需求相关现有行为" 子章节中：
 
-   | # | SRS Criterion | Existing Behavior | Source File | Overlap | Design Impact |
-   |---|---------------|-------------------|-------------|---------|---------------|
-   | 1 | [AC reference] | [what existing code does] | [file:line] | [full/partial/adjacent] | [reuse/extend/pattern — specific recommendation] |
+   | # | SRS 标准 | 现有行为 | 源文件 | 重叠度 | 设计影响 |
+   |---|----------|----------|--------|--------|----------|
+   | 1 | [AC 引用] | [现有代码的功能] | [file:line] | [完全/部分/相邻] | [复用/扩展/模式 -- 具体建议] |
 
-**Non-blocking** — if no overlapping behavior found, note: "No existing behavior overlaps with this feature's requirements." and proceed.
+**非阻塞** -- 如果未发现重叠行为，标注："本功能需求与现有行为无重叠。" 并继续。
 
-#### Phase B: Dependency Feature Scanning
+#### 阶段 B：依赖功能扫描
 
-1. From `dependencies[]` in the feature object, list all features with `"status": "passing"`
-2. For each passing dependency feature, read its implementation files (from its feature design Project Structure, or from source tree) and catalog (skip items already discovered in Phase A):
+1. 从功能对象的 `dependencies[]` 中，列出所有 `"status": "passing"` 的功能
+2. 对每个已通过的依赖功能，读取其实现文件（来自功能设计的项目结构或源码树）并编目（跳过阶段 A 中已发现的项目）：
 
-   | Discovery Category | What to Find | Record |
-   |-------------------|--------------|--------|
-   | Utility functions | Shared validators, formatters, parsers, type converters | Function name, file path, signature, purpose |
-   | API client implementations | HTTP clients, SDK wrappers, service connectors | Class/module, file path, target service, available methods |
-   | Data access patterns | Repository classes, ORM models, query builders | Class, file path, entity/table, CRUD methods |
-   | Error handling helpers | Custom exception classes, error middleware, Result types | Class/type name, file path, usage pattern |
-   | §11.1 library usage patterns | How mandatory internal libraries are actually imported and called | Import statement, typical call site with file:line |
+   | 发现类别 | 查找内容 | 记录 |
+   |----------|----------|------|
+   | 工具函数 | 共享校验器、格式化器、解析器、类型转换器 | 函数名、文件路径、签名、用途 |
+   | API 客户端实现 | HTTP 客户端、SDK 包装器、服务连接器 | 类/模块、文件路径、目标服务、可用方法 |
+   | 数据访问模式 | Repository 类、ORM 模型、查询构建器 | 类、文件路径、实体/表、CRUD 方法 |
+   | 错误处理辅助 | 自定义异常类、错误中间件、Result 类型 | 类/类型名、文件路径、使用模式 |
+   | §11.1 库使用模式 | 强制内部库的实际导入和调用方式 | 导入语句、典型调用点（含 file:line） |
 
-3. For each §11.1 mandatory library with non-empty rows: find at least one concrete usage example in passing features. Record the import pattern and typical call site. If no usage exists yet (first feature needing it), note: "First usage — implement per §11.1 import pattern."
+3. 对每个非空行的 §11.1 强制库：在已通过的功能中找到至少一个具体使用示例。记录导入模式和典型调用点。如果尚无使用（第一个需要它的功能），标注："首次使用 -- 按 §11.1 导入模式实现。"
 
-4. Record ALL discoveries in the "## Existing Code Reuse" section. For each item, assign one of:
-   - **REUSE**: Import and call existing code directly
-   - **EXTEND**: Extend/subclass existing code
-   - **PATTERN**: Follow the same structural pattern but create own implementation
+4. 将所有发现记录在 "## 现有代码复用" 章节中。对每个项目，指定以下之一：
+   - **REUSE**：直接导入并调用现有代码
+   - **EXTEND**：扩展/继承现有代码
+   - **PATTERN**：遵循相同的结构模式但创建自己的实现
 
-**If zero passing dependencies AND Phase A returned no reusable items**: Write "No reusable code discovered — all §11.1 library usage follows import patterns directly." and proceed.
+**如果零个已通过依赖且阶段 A 未返回可复用项**：写入 "未发现可复用代码 -- 所有 §11.1 库使用直接遵循导入模式。" 并继续。
 
-### 2. Component Data-Flow Diagram
+### 2. 组件数据流图
 
-Show THIS feature's internal components and how data flows between them at runtime. This is NOT a copy of the system design class diagram — it is a **runtime data-flow view** showing what data enters, how it transforms, and what exits.
+展示本功能的内部组件及运行时数据在它们之间的流动方式。这不是系统设计类图的副本 -- 它是一个**运行时数据流视图**，展示数据如何进入、如何转换、如何输出。
 
-Requirements:
-- Mermaid `graph` or `flowchart` format
-- Label edges with data types (what flows between components)
-- Include external dependencies as dashed-border boxes
-- Every component maps to a class or module to be implemented
+要求：
+- Mermaid `graph` 或 `flowchart` 格式
+- 用数据类型标注边（组件间流动的内容）
+- 将外部依赖显示为虚线边框框
+- 每个组件映射到一个待实现的类或模块
 
-> **Skip rule**: If the feature is a single class with a single method and no internal component collaboration, write "N/A — single-class feature, see Interface Contract below"
+> **跳过规则**：如果功能是单类、单方法且无内部组件协作，写入 "N/A -- 单类功能，见下方接口契约"
 
-### 3. Interface Contract
+### 3. 接口契约
 
-For each PUBLIC method this feature exposes or modifies:
+对本功能暴露或修改的每个公共方法：
 
-| Method | Signature | Preconditions | Postconditions | Raises |
-|--------|-----------|---------------|----------------|--------|
-| name   | full typed signature | what must be true before call | what is guaranteed after call | exception + condition |
+| 方法 | 签名 | 前置条件 | 后置条件 | 异常 |
+|------|------|----------|----------|------|
+| name | 完整类型签名 | 调用前必须为真的条件 | 调用后保证的条件 | 异常 + 条件 |
 
-Rules:
-- Preconditions use Given/When style from SRS acceptance criteria
-- Postconditions are specific and testable (not "returns correct result")
-- Every SRS acceptance criterion (from srs_trace requirements) must trace to at least one method's postcondition
-- Include internal methods only if they contain non-trivial logic
-- **§6.2 alignment rule**: For methods that produce or consume cross-feature data, the method signature (parameters, return type) MUST be compatible with the schema defined in Design Section 6.2. If the feature is a **Provider**, postconditions MUST guarantee the Response Schema. If a **Consumer**, preconditions MUST assume the Request Schema format. Any deviation requires explicit justification in Design Rationale and triggers the Contract Deviation Protocol below.
-- **§11.5 naming compliance**: All method, parameter, and class names MUST follow §11.5 naming conventions. If §11.5 documents `snake_case` and the design names a method `getUserData`, change to `get_user_data`.
-- **§11.1 library compliance**: For any method that performs HTTP calls, DB queries, file I/O, logging, or other operations covered by §11.1 mandatory libraries: annotate in a "Uses" note after the Raises column — e.g., "Uses: @company/http (§11.1)". The method signature MUST NOT assume direct use of replaced APIs (e.g., do not type-hint `axios.Response` when §11.1 replaces axios).
-- **§11.2 prohibited API check**: If any method's preconditions, postconditions, or Raises reference APIs from §11.2 prohibited list, this is a design defect. Replace with the §11.2-specified alternative before proceeding.
-- **Existing code reuse check**: For each method in the Interface Contract, cross-check the "Existing Code Reuse" section. If existing code provides equivalent functionality marked REUSE, do NOT create a new method — reference the existing one. If EXTEND, design the method as an override/extension of the existing class.
+规则：
+- 前置条件使用 SRS 验收标准中的 Given/When 风格
+- 后置条件必须具体且可测试（不是 "返回正确结果"）
+- 每个 SRS 验收标准（来自 srs_trace 需求）必须追踪到至少一个方法的后置条件
+- 仅在包含非平凡逻辑时才包含内部方法
+- **§6.2 对齐规则**：对于产生或消费跨功能数据的方法，方法签名（参数、返回类型）必须与设计文档第 6.2 节定义的 schema 兼容。如果功能是 **Provider**，后置条件必须保证 Response Schema。如果是 **Consumer**，前置条件必须假设 Request Schema 格式。任何偏差需要在设计理由中明确说明，并触发下方的契约偏差协议。
+- **§11.5 命名合规**：所有方法、参数和类名必须遵循 §11.5 命名约定。如果 §11.5 记录 `snake_case` 而设计命名方法为 `getUserData`，则改为 `get_user_data`。
+- **§11.1 库合规**：对于执行 HTTP 调用、DB 查询、文件 I/O、日志记录或 §11.1 强制库覆盖的其他操作的方法：在 Raises 列后添加 "Uses" 注释 -- 例如 "Uses: @company/http (§11.1)"。方法签名不得假设直接使用被替代的 API（例如，当 §11.1 替代 axios 时，不要类型提示 `axios.Response`）。
+- **§11.2 禁止 API 检查**：如果任何方法的前置条件、后置条件或 Raises 引用了 §11.2 禁止列表中的 API，这是设计缺陷。在继续之前替换为 §11.2 指定的替代方案。
+- **现有代码复用检查**：对接口契约中的每个方法，交叉检查 "现有代码复用" 章节。如果现有代码提供标记为 REUSE 的等效功能，不要创建新方法 -- 引用现有方法。如果是 EXTEND，将方法设计为现有类的重写/扩展。
 
-### Contract Deviation Protocol
+### 契约偏差协议
 
-If during feature design, a §6.2 contract is found to be incorrect, insufficient, or technically infeasible:
+如果在功能设计过程中，发现 §6.2 契约不正确、不充分或技术上不可行：
 
-1. **DO NOT silently deviate** — a mismatched contract will cause integration failures
-2. **Record the deviation** in the design document's Design Rationale section:
-   - Contract ID (e.g., IAPI-001)
-   - Original schema vs. proposed change
-   - Technical reason for the change
-   - Impact on Consumer features (list affected feature IDs)
-3. **Set Verdict to BLOCKED** with Issue: "Contract deviation requires design update"
-4. The orchestrator (long-task-work) will escalate to user via AskUserQuestion
-5. If approved: user updates §6.2 in the design doc; orchestrator re-dispatches SubAgent
-6. If rejected: SubAgent must conform to the original contract
+1. **不要静默偏差** -- 不匹配的契约将导致集成失败
+2. **在设计文档的设计理由章节记录偏差**：
+   - 契约 ID（例如 IAPI-001）
+   - 原始 schema vs. 建议变更
+   - 变更的技术原因
+   - 对 Consumer 功能的影响（列出受影响的功能 ID）
+3. **设置 Verdict 为 BLOCKED**，Issue："契约偏差需要设计更新"
+4. 协调器（long-task-work）将通过 AskUserQuestion 上报用户
+5. 如果批准：用户更新设计文档中的 §6.2；协调器重新分派 SubAgent
+6. 如果拒绝：SubAgent 必须遵守原始契约
 
-### 4. Internal Sequence Diagram
+### 4. 内部序列图
 
-Show method-to-method calls WITHIN this feature's implementation. Unlike the system design's sequence diagram (system-wide flow), this shows the feature's own classes/functions collaborating.
+展示本功能实现内部的方法间调用。与系统设计的序列图（系统级流程）不同，这展示功能自身的类/函数的协作。
 
-Requirements:
-- Mermaid `sequenceDiagram` format
-- Must cover the main success path
-- Must cover at least one error path per Raises entry in Interface Contract
-- Participants are the feature's OWN classes/functions
+要求：
+- Mermaid `sequenceDiagram` 格式
+- 必须覆盖主要成功路径
+- 必须覆盖接口契约中每个 Raises 条目的至少一个错误路径
+- 参与者是功能自身的类/函数
 
-> **Skip rule**: If the feature has only one class with no internal cross-method delegation worth diagramming, write "N/A — single-class implementation, error paths documented in Algorithm §5 error handling table"
+> **跳过规则**：如果功能只有一个类且无值得绘图的内部跨方法委托，写入 "N/A -- 单类实现，错误路径记录在算法 §5 错误处理表中"
 
-### 5. Algorithm / Core Logic
+### 5. 算法 / 核心逻辑
 
-For each non-trivial method (anything beyond simple delegation or CRUD):
+对每个非平凡方法（超出简单委托或 CRUD 的任何方法）：
 
-**a) Flow diagram** (Mermaid `flowchart TD`):
-- Decision nodes for every branching condition
-- Process nodes for transformations
-- Terminal nodes for return/raise
+**a) 流程图**（Mermaid `flowchart TD`）：
+- 每个分支条件的决策节点
+- 转换的处理节点
+- return/raise 的终止节点
 
-**b) Pseudocode**:
+**b) 伪代码**：
 ```
 FUNCTION name(param1: Type, param2: Type) -> ReturnType
   // Step 1: [major step]
@@ -264,127 +264,123 @@ FUNCTION name(param1: Type, param2: Type) -> ReturnType
 END
 ```
 
-**c) Boundary decisions table**:
+**c) 边界决策表**：
 
-| Parameter | Min | Max | Empty/Null | At boundary |
-|-----------|-----|-----|------------|-------------|
-| [param]   | [val] | [val] | [behavior] | [behavior] |
+| 参数 | 最小值 | 最大值 | 空/Null | 边界行为 |
+|------|--------|--------|---------|----------|
+| [param] | [val] | [val] | [行为] | [行为] |
 
-**d) Error handling table**:
+**d) 错误处理表**：
 
-| Condition | Detection | Response | Recovery |
-|-----------|-----------|----------|----------|
-| [condition] | [how detected] | [exception or default] | [caller action] |
+| 条件 | 检测方式 | 响应 | 恢复 |
+|------|----------|------|------|
+| [条件] | [如何检测] | [异常或默认值] | [调用方操作] |
 
-**e) §11 library usage mapping:**
+**e) §11 库使用映射：**
 
-For each non-trivial method, identify which §11.1 mandatory libraries and "Existing Code Reuse" REUSE items (from both codebase exploration and dependency scanning) it must use:
+对每个非平凡方法，识别必须使用的 §11.1 强制库和 "现有代码复用" REUSE 项（来自代码库探索和依赖扫描）：
 
-| Method | Operation | Required Library/Reuse Item | Import Pattern | Replaces |
-|--------|-----------|---------------------------|----------------|----------|
+| 方法 | 操作 | 必需库/复用项 | 导入模式 | 替代 |
+|------|------|---------------|----------|------|
 | [method] | [e.g., HTTP GET to external API] | [e.g., @company/http (§11.1)] | [e.g., `from company.http import get`] | [e.g., requests.get, urllib] |
 | [method] | [e.g., validate email format] | [e.g., REUSE: validate_email() from Feature #2] | [e.g., `from src.utils.validators import validate_email`] | [new implementation] |
 
-Error handling within pseudocode: follow §11.6 error handling pattern. If §11.6 documents "custom Error subclasses + centralized handler", pseudocode RAISE statements must use project custom error classes, not generic exceptions.
+伪代码中的错误处理：遵循 §11.6 错误处理模式。如果 §11.6 记录 "自定义 Error 子类 + 集中处理器"，伪代码中的 RAISE 语句必须使用项目自定义错误类，而非通用异常。
 
-> **Skip rule**: If the method has no external I/O and no reusable items apply, write "N/A — pure computation, no library dependencies"
+> **跳过规则**：如果方法无外部 I/O 且无适用的可复用项，写入 "N/A -- 纯计算，无库依赖"
 
-> **Skip rule**: If a method is pure delegation (calls another service, returns result), write "Delegates to [X] — see Feature #N" instead of a full algorithm section. An empty section without explicit skip is a defect.
+> **跳过规则**：如果方法是纯委托（调用另一个服务、返回结果），写入 "委托给 [X] -- 见功能 #N" 而非完整算法章节。空章节且无明确跳过说明是缺陷。
 
-### 6. State Diagram (if applicable)
+### 6. 状态图（如适用）
 
-For features that manage stateful objects (entities with lifecycle):
+对管理有状态对象（具有生命周期的实体）的功能：
 
-- Mermaid `stateDiagram-v2` format
-- All valid states and transitions
-- Transition triggers (events/method calls)
-- Guard conditions on transitions
+- Mermaid `stateDiagram-v2` 格式
+- 所有有效状态和转换
+- 转换触发器（事件/方法调用）
+- 转换上的守卫条件
 
-> **Skip rule**: Write "N/A — stateless feature" if no object lifecycle exists. Most query/transform features are stateless.
+> **跳过规则**：如果不存在对象生命周期，写入 "N/A -- 无状态功能"。大多数查询/转换功能是无状态的。
 
-### 7. Test Inventory
+### 7. 测试清单
 
-Build this table as the FINAL design step — it synthesizes all sections above into concrete test scenarios.
+将此表作为最终设计步骤构建 -- 它将上述所有章节综合为具体的测试场景。
 
-| ID | Category | Traces To | Input / Setup | Expected | Kills Which Bug? |
-|----|----------|-----------|---------------|----------|-----------------|
-| A  | FUNC/happy | FR-xxx AC-1 | [specific values] | [exact result] | [wrong impl] |
-| B  | FUNC/error | §3 Raises row | [trigger] | [exception type + msg] | [missing branch] |
-| C  | BNDRY/edge | §5c boundary table | [edge value] | [behavior] | [off-by-one] |
-| D  | FUNC/state | §6 transition | [pre-state + event] | [post-state] | [missing guard] |
-| E  | INTG/db    | §3 method + external dependency | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
-| F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
+| ID | 类别 | 追踪到 | 输入/设置 | 预期 | 杀死哪个缺陷？ |
+|----|------|--------|-----------|------|----------------|
+| A  | FUNC/happy | FR-xxx AC-1 | [具体值] | [精确结果] | [错误实现] |
+| B  | FUNC/error | §3 Raises 行 | [触发条件] | [异常类型 + 消息] | [缺失分支] |
+| C  | BNDRY/edge | §5c 边界表 | [边界值] | [行为] | [偏移错误] |
+| D  | FUNC/state | §6 转换 | [前状态 + 事件] | [后状态] | [缺失守卫] |
+| E  | INTG/db    | §3 方法 + 外部依赖 | [真实 DB 设置] | [数据持久化 + 可查询] | [连接未建立/错误表] |
+| F  | INTG/api   | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点/超时未处理] |
 
-Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF, INTG` and subtag is a free-form label.
+类别格式：`MAIN/subtag`，其中 MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` 之一，subtag 为自由标签。
 
-Rules:
-- Minimum 1 row per SRS acceptance criterion (from srs_trace requirements)
-- Negative tests (FUNC/error + BNDRY/*) >= 40% of total rows
-- "Traces To" references the design section the test derives from
-- "Kills Which Bug?" names a specific wrong implementation this test catches
+规则：
+- 每个 SRS 验收标准（来自 srs_trace 需求）至少 1 行
+- 负向测试（FUNC/error + BNDRY/*）>= 总行数的 40%
+- "追踪到" 引用测试来源的设计章节
+- "杀死哪个缺陷？" 指出此测试捕获的具体错误实现
 
-**Integration test rows (INTG category):**
-- For features with external dependencies (DB, HTTP services, file system, third-party SDK): add ≥1 `INTG/*` row per dependency type
-- Derive from: Interface Contract (§3) methods that interact with external systems + design doc external dependency specifications
-- "Traces To" = §3 method + the specific external dependency
-- "Kills Which Bug?" = connection/integration failure the unit mock would miss
-- If feature is pure computation with no external deps: write "INTG: N/A — pure function, no external I/O" (mirrors TDD Rule 5 exemption)
+**集成测试行（INTG 类别）：**
+- 对有外部依赖（DB、HTTP 服务、文件系统、第三方 SDK）的功能：每种依赖类型至少添加 1 个 `INTG/*` 行
+- 来源：与外部系统交互的接口契约（§3）方法 + 设计文档外部依赖规格
+- "追踪到" = §3 方法 + 具体外部依赖
+- "杀死哪个缺陷？" = 单元 mock 会遗漏的连接/集成故障
+- 如果功能是纯计算无外部依赖：写入 "INTG: N/A -- 纯函数，无外部 I/O"（与 TDD 规则 5 豁免一致）
 
-**Relationship with TDD**: This table is the PRIMARY INPUT for TDD Red (long-task-tdd Step 1). TDD Red uses this table as its starting point and may add tests per its own Rule 1-5 (category coverage, assertion quality, real test requirements). The Test Inventory provides the design-driven scenarios; TDD adds implementation-driven scenarios discovered during coding.
+**与 TDD 的关系**：此表是 TDD Red（long-task-tdd 步骤 1）的主要输入。TDD Red 以此表为起点，可能根据其规则 1-5（类别覆盖率、断言质量、真实测试需求）添加测试。测试清单提供设计驱动的场景；TDD 添加编码过程中发现的实现驱动场景。
 
-**Design Interface Coverage Gate (mandatory — execute as the final design quality check):**
+**设计接口覆盖率门禁（强制 -- 作为最终设计质量检查执行）：**
 
-1. Re-read §4.N of the system design document
-2. Extract ALL named functions, methods, endpoints, middleware, validators,
-   and authorization checks (e.g., `check_repo_access`, `validate_input`)
-3. For EACH named item: confirm at least one Test Inventory row exercises it
-   (match in "Traces To" or "Input / Setup" columns)
-4. If ANY design-specified function has zero Test Inventory coverage:
-   - Add row(s) — typically error/security category
-   - Set "Traces To" = the specific design section (e.g., "§4.5.3 ACL check")
-5. Re-verify negative test ratio ≥ 40% after additions
+1. 重新读取系统设计文档的 §4.N
+2. 提取所有命名的函数、方法、端点、中间件、校验器和授权检查（例如 `check_repo_access`、`validate_input`）
+3. 对每个命名项：确认至少一个测试清单行练习它（在 "追踪到" 或 "输入/设置" 列中匹配）
+4. 如果任何设计指定的函数在测试清单中零覆盖率：
+   - 添加行 -- 通常是错误/安全类别
+   - 设置 "追踪到" = 具体设计章节（例如 "§4.5.3 ACL 检查"）
+5. 添加后重新验证负向测试比例 >= 40%
 
-This is the PRIMARY defense against spec drift. If the design says "check_repo_access
-enforces ACL" and no test row covers it, the TDD phase will silently skip it —
-causing a late-stage finding that triggers cascading mock-setup costs.
+这是防止规格漂移的主要防线。如果设计说 "check_repo_access 执行 ACL" 但没有测试行覆盖它，TDD 阶段将静默跳过 -- 导致后期发现并触发级联的 mock 设置成本。
 
-### Verification Checklist
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
-- [ ] Algorithm pseudocode covers all non-trivial methods
-- [ ] Boundary table covers all algorithm parameters
-- [ ] Error handling table covers all Raises entries
-- [ ] Test Inventory negative ratio >= 40%
-- [ ] Every skipped section has explicit "N/A — [reason]"
-- [ ] All functions/methods named in §4.N have at least one Test Inventory row
-- [ ] All method/class/parameter names comply with §11.5 naming conventions
-- [ ] All operations covered by §11.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
-- [ ] Existing Code Reuse section documents all discoverable reusable code from codebase exploration and passing dependencies
-- [ ] Requirement-related behavior scan complete — overlapping existing behavior documented or explicitly noted as absent
+### 验证检查清单
+- [ ] 所有 SRS 验收标准（来自 srs_trace）追踪到接口契约后置条件
+- [ ] 所有 SRS 验收标准（来自 srs_trace）追踪到测试清单行
+- [ ] 算法伪代码覆盖所有非平凡方法
+- [ ] 边界表覆盖所有算法参数
+- [ ] 错误处理表覆盖所有 Raises 条目
+- [ ] 测试清单负向测试比例 >= 40%
+- [ ] 每个跳过的章节有明确的 "N/A -- [原因]"
+- [ ] §4.N 中命名的所有函数/方法至少有一个测试清单行
+- [ ] 所有方法/类/参数名符合 §11.5 命名约定
+- [ ] §11.1 强制库覆盖的所有操作使用这些库（接口契约或算法中无被替代的方案）
+- [ ] 现有代码复用章节记录了来自代码库探索和已通过依赖的所有可发现的可复用代码
+- [ ] 需求相关行为扫描完成 -- 重叠的现有行为已记录或明确标注为不存在
 
-## Diagram Quality Rules
+## 图表质量规则
 
-Concrete, verifiable rules:
+具体、可验证的规则：
 
-- **Component/flow diagrams**: every edge labeled with data type; every node maps to a class/module
-- **Sequence diagrams**: include alt/opt/loop blocks for all branches; show return types; participant names match class names from §2
-- **Flow diagrams**: every decision node has exactly 2 exits; no transitions without labeled conditions
-- **State diagrams**: every state reachable from initial; every terminal reachable; no orphan states; guard conditions on ambiguous transitions
-- **Increment change tracking** (when feature.wave > 0 and prior feature design exists): apply visual change markers per design template Diagram Change Tracking Convention. New nodes/states/participants use green styling (`classDef newNode fill:#d1fae5,stroke:#2ea043,stroke-width:2px` or equivalent per diagram type); modified elements use amber styling (`classDef modNode fill:#fef3c7,stroke:#d4a017,stroke-width:2px`). Include legend before each affected diagram. Remove previous-wave markers.
+- **组件/流程图**：每条边标注数据类型；每个节点映射到类/模块
+- **序列图**：包含所有分支的 alt/opt/loop 块；显示返回类型；参与者名称匹配 §2 中的类名
+- **流程图**：每个决策节点恰好 2 个出口；无条件标签的转换不允许存在
+- **状态图**：从初始状态可达每个状态；每个终态可达；无孤立状态；模糊转换上的守卫条件
+- **增量变更追踪**（当 feature.wave > 0 且存在先前功能设计时）：按设计模板图表变更追踪约定应用可视化变更标记。新节点/状态/参与者使用绿色样式（`classDef newNode fill:#d1fae5,stroke:#2ea043,stroke-width:2px` 或按图表类型等效）；修改的元素使用琥珀色样式（`classDef modNode fill:#fef3c7,stroke:#d4a017,stroke-width:2px`）。在每个受影响的图表前包含图例。移除前一批次的标记。
 
-## Skip-Explicitly Rule
+## 显式跳过规则
 
-Every section (§2-§6) must either:
-- Contain COMPLETE content per the requirements above, OR
-- State "N/A — [specific reason why this section does not apply]"
+每个章节（§2-§6）必须满足以下之一：
+- 包含上述要求的完整内容，或
+- 标注 "N/A -- [该章节不适用的具体原因]"
 
-An empty or half-filled section is a design defect that blocks TDD. A section that says "N/A" without a reason is also a defect.
+空或半填充的章节是阻塞 TDD 的设计缺陷。标注 "N/A" 但无原因也是缺陷。
 
 ---
 
-## Structured Return Contract
+## 结构化返回契约
 
-When the design document is complete, return your result in EXACTLY this format:
+设计文档完成后，请严格按照以下格式返回结果：
 
 ```markdown
 ## SubAgent Result: Feature Design
@@ -424,4 +420,4 @@ When the design document is complete, return your result in EXACTLY this format:
 - requirement_behavior_items: [number of requirement-related behavior discoveries]
 ```
 
-**IMPORTANT**: Write the design document to disk at the specified output path. The orchestrator expects the file to exist after this SubAgent completes.
+**重要**：将设计文档写入磁盘的指定输出路径。协调器期望在此 SubAgent 完成后文件存在。

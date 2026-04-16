@@ -1,23 +1,23 @@
-# Coverage & Mutation Tool Setup Recipes
+# 覆盖率与变异测试工具配置指南
 
-Multi-language setup instructions for coverage tracking and mutation testing tools. Read this file when configuring tools for a new project.
+多语言覆盖率跟踪和变异测试工具的配置说明。为新项目配置工具时阅读此文件。
 
-## Multi-Language Tool Matrix
+## 多语言工具矩阵
 
-| Language | Coverage Tool | Branch Support | Mutation Tool | Incremental Support |
-|----------|--------------|----------------|---------------|---------------------|
-| Python | pytest-cov (coverage.py) | Yes | mutmut | Yes (`--paths-to-mutate`) |
-| Java | JaCoCo | Yes | PIT (pitest) | Yes (`-DtargetClasses`) |
-| JavaScript | c8 / nyc (Istanbul) | Yes | Stryker | Yes (`--mutate` glob) |
-| TypeScript | c8 / nyc (Istanbul) | Yes | Stryker | Yes (`--mutate` glob) |
-| C | gcov + lcov | Yes (`--branch-probabilities`) | Mull | Partial (filter by file) |
-| C++ | gcov + lcov / llvm-cov | Yes | Mull | Partial (filter by file) |
+| 语言 | 覆盖率工具 | 分支支持 | 变异工具 | 增量支持 |
+|------|-----------|---------|---------|---------|
+| Python | pytest-cov (coverage.py) | 是 | mutmut | 是（`--paths-to-mutate`） |
+| Java | JaCoCo | 是 | PIT (pitest) | 是（`-DtargetClasses`） |
+| JavaScript | c8 / nyc (Istanbul) | 是 | Stryker | 是（`--mutate` glob） |
+| TypeScript | c8 / nyc (Istanbul) | 是 | Stryker | 是（`--mutate` glob） |
+| C | gcov + lcov | 是（`--branch-probabilities`） | Mull | 部分（按文件过滤） |
+| C++ | gcov + lcov / llvm-cov | 是 | Mull | 部分（按文件过滤） |
 
 ---
 
 ## Python
 
-**Coverage** — pytest-cov (wraps coverage.py):
+**覆盖率** — pytest-cov（封装 coverage.py）：
 
 ```toml
 # pyproject.toml
@@ -38,7 +38,7 @@ exclude_lines = [
 ]
 ```
 
-**Mutation** — mutmut:
+**变异** — mutmut：
 
 ```toml
 # pyproject.toml (or setup.cfg)
@@ -48,15 +48,15 @@ tests_dir = "tests/"
 runner = "python -m pytest -x --tb=short"
 ```
 
-> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
+> 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
 ## Java
 
-**Coverage** — JaCoCo:
+**覆盖率** — JaCoCo：
 
-Maven (`pom.xml`):
+Maven（`pom.xml`）：
 ```xml
 <plugin>
     <groupId>org.jacoco</groupId>
@@ -99,7 +99,7 @@ Maven (`pom.xml`):
 </plugin>
 ```
 
-Gradle (`build.gradle`):
+Gradle（`build.gradle`）：
 ```groovy
 plugins {
     id 'jacoco'
@@ -125,9 +125,9 @@ test.finalizedBy jacocoTestReport
 check.dependsOn jacocoTestCoverageVerification
 ```
 
-**Mutation** — PIT (pitest):
+**变异** — PIT (pitest)：
 
-Maven:
+Maven：
 ```xml
 <plugin>
     <groupId>org.pitest</groupId>
@@ -145,7 +145,7 @@ Maven:
 </plugin>
 ```
 
-Gradle:
+Gradle：
 ```groovy
 plugins {
     id 'info.solidsoft.pitest' version '1.15.0'
@@ -160,13 +160,13 @@ pitest {
 }
 ```
 
-> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
+> 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
 ## JavaScript
 
-**Coverage** — c8 (native V8 coverage, recommended) or nyc (Istanbul):
+**覆盖率** — c8（原生 V8 覆盖率，推荐）或 nyc (Istanbul)：
 
 ```json
 // package.json
@@ -197,7 +197,7 @@ pitest {
 }
 ```
 
-**Mutation** — Stryker:
+**变异** — Stryker：
 
 ```json
 // stryker.conf.json
@@ -215,13 +215,13 @@ pitest {
 }
 ```
 
-> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
+> 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
 ## TypeScript
 
-**Coverage** — c8 (native V8 coverage, recommended) or nyc (Istanbul):
+**覆盖率** — c8（原生 V8 覆盖率，推荐）或 nyc (Istanbul)：
 
 ```json
 // package.json
@@ -251,7 +251,7 @@ pitest {
 }
 ```
 
-**Mutation** — Stryker:
+**变异** — Stryker：
 
 ```json
 // stryker.conf.json
@@ -269,13 +269,13 @@ pitest {
 }
 ```
 
-> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
+> 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
 ## C
 
-**Coverage** — gcov + lcov:
+**覆盖率** — gcov + lcov：
 
 ```makefile
 # Makefile additions
@@ -294,7 +294,7 @@ clean-coverage:
 	rm -rf coverage.info coverage-report
 ```
 
-CMake:
+CMake：
 ```cmake
 option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
 
@@ -304,7 +304,7 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-**Mutation** — Mull:
+**变异** — Mull：
 
 ```yaml
 # mull.yml
@@ -323,13 +323,13 @@ reporters:
   - SQLite
 ```
 
-> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
+> 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
 ## C++
 
-**Coverage** — gcov + lcov or llvm-cov:
+**覆盖率** — gcov + lcov 或 llvm-cov：
 
 ```cmake
 option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
@@ -345,37 +345,37 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-> Runtime commands: `python scripts/get_tool_commands.py feature-list.json`
+> 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
 
 ---
 
-## Per-Feature Mutation Test Scoping
+## 按功能变异测试范围限定
 
-When the project's active feature count exceeds `mutation_full_threshold`, the Quality Gate scopes mutation testing to the current feature's changed files **and** tests. This avoids running the entire test suite per mutant, which becomes prohibitively slow in large projects.
+当项目活跃功能数超过 `mutation_full_threshold` 时，质量门禁将变异测试范围限定为当前功能变更的文件**及**测试。这避免了对大项目中每个变异体运行整个测试套件（速度极慢）。
 
-**Principle**: Mutate only changed source files, run only the feature's tests per mutant. Full mutation runs when the project's active feature count is at or below the threshold.
+**原则**：仅变异已变更的源文件，每个变异体仅运行该功能的测试。当项目活跃功能数等于或低于阈值时运行完整变异测试。
 
-### Identifying Feature Test Files
+### 识别功能测试文件
 
-- Test files created/modified during the TDD cycle for this feature
-- Convention-based: if source is `src/foo.ext`, tests are likely `tests/test_foo.ext`
-- Marker-based: if the project uses test markers/tags, filter by feature marker
-- The Worker passes feature test file paths to the Quality SubAgent
+- 本功能 TDD 周期中创建/修改的测试文件
+- 基于约定：如源文件为 `src/foo.ext`，测试可能为 `tests/test_foo.ext`
+- 基于标记：如果项目使用测试标记/标签，按功能标记过滤
+- Worker 将功能测试文件路径传递给 Quality SubAgent
 
-### Per-Tool Scoping Reference
+### 各工具范围限定参考
 
-| Tool | Mutation Target Scoping | Test Scoping Mechanism |
-|------|------------------------|------------------------|
+| 工具 | 变异目标范围限定 | 测试范围限定机制 |
+|------|-----------------|-----------------|
 | mutmut | `--paths-to-mutate={files}` | `--runner='{test_runner} {test_files}'` |
 | pitest | `-DtargetClasses={classes}` | `-DtargetTests={test_classes}` |
-| stryker | `--mutate='{files}'` | `--coverageAnalysis perTest` (auto-selects relevant tests) |
-| mull | `--filters={files}` | Build feature-specific test binary |
+| stryker | `--mutate='{files}'` | `--coverageAnalysis perTest`（自动选择相关测试） |
+| mull | `--filters={files}` | 构建功能专用测试二进制文件 |
 
-### Tool-Specific Notes
+### 各工具特别说明
 
-- **mutmut** `--runner`: Provide the full test execution command including framework binary and file paths. The `{test_runner}` placeholder resolves to the project's test runner command (e.g., `python -m pytest -x --tb=short`, `npx vitest run`).
-- **pitest** `-DtargetTests`: Accepts comma-separated Java class patterns (e.g., `com.example.UserAuthTest,com.example.UserLoginTest`).
-- **Stryker** `--coverageAnalysis perTest`: Stryker automatically determines which tests cover each mutant and runs only those. No explicit test file list needed. Requires Stryker 6+.
-- **mull**: Link only feature-relevant test object files when compiling the test binary. This requires building a separate binary per feature scope.
+- **mutmut** `--runner`：提供完整的测试执行命令，包括框架二进制文件和文件路径。`{test_runner}` 占位符解析为项目的测试运行器命令（如 `python -m pytest -x --tb=short`、`npx vitest run`）。
+- **pitest** `-DtargetTests`：接受逗号分隔的 Java 类模式（如 `com.example.UserAuthTest,com.example.UserLoginTest`）。
+- **Stryker** `--coverageAnalysis perTest`：Stryker 自动确定哪些测试覆盖每个变异体并仅运行那些测试。无需显式测试文件列表。需要 Stryker 6+。
+- **mull**：编译测试二进制文件时仅链接功能相关的测试目标文件。这要求按功能范围构建单独的二进制文件。

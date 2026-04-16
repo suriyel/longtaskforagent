@@ -1,112 +1,112 @@
-# Systematic Debugging
+# 系统化调试
 
-## Iron Law
+## 铁律
 
-**NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST.**
+**未经根因调查，禁止进行任何修复。**
 
-Never apply a fix based on a guess. Always trace the bug to its root cause, then fix that cause.
+永远不要基于猜测进行修复。始终追溯 bug 的根因，然后修复该根因。
 
-## When This Applies
+## 适用场景
 
-- Test failure during TDD Green or Refactor
-- Regression detected during testing
-- Runtime error during functional testing
-- Build or environment failure during Bootstrap
-- Any unexpected behavior during implementation
+- TDD Green 或重构阶段的测试失败
+- 测试过程中检测到回归
+- 功能测试中的运行时错误
+- 引导阶段的构建或环境故障
+- 实现过程中的任何意外行为
 
-## Four-Phase Debugging Process
+## 四阶段调试流程
 
-### Phase 1: Root Cause Investigation
+### 阶段 1：根因调查
 
-**Goal**: Understand WHAT is happening and WHERE.
+**目标**：理解发生了什么（WHAT）以及在哪里发生（WHERE）。
 
-1. **Collect error evidence**:
-   - Read the full error message (not just the first line)
-   - Note the stack trace — which file, which line, which function
-   - Record the exact command/action that triggered the error
+1. **收集错误证据**：
+   - 阅读完整的错误消息（不仅是第一行）
+   - 记录堆栈跟踪 -- 哪个文件、哪一行、哪个函数
+   - 记录触发错误的确切命令/操作
 
-2. **Reproduce reliably**:
-   - Can you trigger the error consistently?
-   - What is the minimal reproduction case?
-   - Does it happen in isolation or only with other features?
+2. **可靠复现**：
+   - 能否稳定触发错误？
+   - 最小复现用例是什么？
+   - 是单独发生还是仅在与其他功能一起时发生？
 
-3. **Check recent changes**:
-   - `git diff` — what changed since it last worked?
-   - `git log --oneline -10` — what commits were made?
-   - Did the error exist before your current changes?
+3. **检查近期变更**：
+   - `git diff` -- 上次正常后改了什么？
+   - `git log --oneline -10` -- 做了哪些提交？
+   - 在当前变更之前错误就存在吗？
 
-4. **Trace data flow**:
-   - Follow the failing input from entry point to error location
-   - Log intermediate values if needed
-   - Identify where actual behavior diverges from expected behavior
+4. **追踪数据流**：
+   - 从入口点到错误位置跟踪失败的输入
+   - 必要时记录中间值
+   - 找出实际行为与预期行为的分歧点
 
-### Phase 2: Pattern Analysis
+### 阶段 2：模式分析
 
-**Goal**: Understand WHY it's happening.
+**目标**：理解为什么（WHY）会发生。
 
-1. **Find working examples**:
-   - Is there similar code that works correctly?
-   - What's different between the working and broken paths?
+1. **寻找正常工作的示例**：
+   - 有类似但正常工作的代码吗？
+   - 正常路径和异常路径之间有什么不同？
 
-2. **Check dependencies**:
-   - Are all dependencies available and correct versions?
-   - Did an upstream API or schema change?
-   - Are environment variables / configs correct?
+2. **检查依赖**：
+   - 所有依赖是否可用且版本正确？
+   - 上游 API 或 schema 是否发生了变化？
+   - 环境变量/配置是否正确？
 
-3. **Compare contexts**:
-   - Does it work locally but fail in tests (or vice versa)?
-   - Does it work with one input but fail with another?
-   - Is it timing-dependent (race condition)?
+3. **比较上下文**：
+   - 本地正常但测试中失败（或反之）？
+   - 某个输入正常但另一个输入失败？
+   - 是否与时序有关（竞态条件）？
 
-### Phase 3: Hypothesis & Testing
+### 阶段 3：假设与验证
 
-**Goal**: Form ONE hypothesis and validate it.
+**目标**：形成一个假设并验证它。
 
-1. **Form a single hypothesis**:
-   - "The error occurs because X is null when Y expects it to be non-null"
-   - Be specific — vague hypotheses lead to vague fixes
+1. **形成单一假设**：
+   - "错误发生是因为 Y 期望 X 非空时 X 为 null"
+   - 要具体 -- 模糊的假设导致模糊的修复
 
-2. **Design a minimal test**:
-   - What's the smallest change that would confirm or disprove the hypothesis?
-   - Can you add a targeted assertion or log?
+2. **设计最小测试**：
+   - 能确认或否定假设的最小变更是什么？
+   - 能否添加一个有针对性的断言或日志？
 
-3. **Test the hypothesis**:
-   - Make ONLY the diagnostic change
-   - Run the failing test
-   - Did the hypothesis hold?
+3. **验证假设**：
+   - 仅做诊断性变更
+   - 运行失败的测试
+   - 假设是否成立？
 
-4. **If hypothesis was wrong**:
-   - Record what you learned
-   - Return to Phase 1 with new information
-   - Do NOT try random fixes
+4. **如果假设错误**：
+   - 记录学到的东西
+   - 带着新信息回到阶段 1
+   - 不要尝试随机修复
 
-### Phase 4: Implementation
+### 阶段 4：实施
 
-**Goal**: Fix the root cause with a verified solution.
+**目标**：用经过验证的方案修复根因。
 
-1. **Write a failing test for the bug**:
-   - The test should fail for the same reason as the original bug
-   - This prevents regression
+1. **为 bug 编写一个失败的测试**：
+   - 测试应因与原始 bug 相同的原因而失败
+   - 这可以防止回归
 
-2. **Implement a single, targeted fix**:
-   - Fix only the root cause identified in Phase 3
-   - Avoid "while I'm here" changes
+2. **实施单一的、有针对性的修复**：
+   - 仅修复阶段 3 中识别的根因
+   - 避免"顺便改一下"的变更
 
-3. **Verify the fix**:
-   - The new test passes
-   - All existing tests still pass
-   - The original error no longer occurs
+3. **验证修复**：
+   - 新测试通过
+   - 所有现有测试仍然通过
+   - 原始错误不再发生
 
-4. **If fix doesn't work after 3 attempts**:
-   - Stop and reconsider the root cause
-   - You may have misidentified it
-   - Consider asking the user for help or context
+4. **如果 3 次尝试后修复仍失败**：
+   - 停下来重新思考根因
+   - 可能识别错了根因
+   - 考虑向用户寻求帮助或上下文
 
-## Supporting Techniques
+## 辅助技术
 
-### Root Cause Tracing
+### 根因追踪
 
-Trace bugs backward through the call stack:
+沿调用栈反向追踪 bug：
 
 ```
 Error at line N in file F
@@ -115,11 +115,11 @@ Error at line N in file F
       ← Root cause: incorrect value set at line K in file H
 ```
 
-Work backward from the error to find where the wrong value was introduced.
+从错误处反向追踪，找到错误值的引入位置。
 
-### Defense in Depth
+### 纵深防御
 
-After fixing a root cause, consider adding validation at multiple layers:
+修复根因后，考虑在多个层次添加验证：
 
 ```
 Layer 1: Input validation     → Reject bad data early
@@ -127,11 +127,11 @@ Layer 2: Function preconditions → Assert expected state
 Layer 3: Output verification   → Confirm correct results
 ```
 
-Only add validation that serves a purpose — don't add defensive code for impossible states.
+仅添加有实际意义的验证 -- 不要为不可能的状态添加防御性代码。
 
-### Condition-Based Waiting (for timing bugs)
+### 基于条件的等待（时序 bug）
 
-Replace arbitrary timeouts with condition polling:
+用条件轮询替代固定超时：
 
 ```
 # BAD: sleep(5) and hope the server is ready
@@ -140,7 +140,7 @@ Replace arbitrary timeouts with condition polling:
 wait_for("Expected text", timeout=10000)
 ```
 
-For non-UI timing bugs:
+对于非 UI 时序 bug：
 ```python
 # Poll with backoff
 for attempt in range(max_retries):
@@ -152,29 +152,29 @@ else:
     raise TimeoutError("Condition not met")
 ```
 
-### Test Pollution Detection
+### 测试污染检测
 
-When a test passes in isolation but fails when run with the suite, another test is polluting shared state.
+当一个测试单独运行通过但在整个套件中运行时失败，说明另一个测试正在污染共享状态。
 
-Binary search approach:
-1. Run failing test with first half of the suite → still fails?
-2. If yes → polluter is in the first half; bisect again
-3. If no → polluter is in the second half; bisect again
-4. Repeat until the single polluting test is found
-5. Fix the polluter (cleanup its shared state)
+二分查找法：
+1. 将失败测试与前半部分套件一起运行 -> 仍然失败？
+2. 如果是 -> 污染源在前半部分；继续二分
+3. 如果否 -> 污染源在后半部分；继续二分
+4. 重复直到找到单个污染测试
+5. 修复污染源（清理其共享状态）
 
-## Red Flags (Stop and Reconsider)
+## 危险信号（停下来重新思考）
 
-| Red Flag | What It Signals | Correct Response |
-|----------|----------------|-----------------|
-| "Let me just try this quick fix" | Skipping root cause analysis | Go back to Phase 1 |
-| "It's probably X, let me change it" | Guessing without evidence | Form a testable hypothesis |
-| "I'll add a try/catch to suppress the error" | Hiding symptoms, not fixing cause | Find and fix the root cause |
-| "Let me restart everything and try again" | Hoping the problem goes away | Reproduce reliably first |
-| "This worked before, not sure what changed" | Need to check git diff | Compare current state with last known good |
-| Third fix attempt still failing | Wrong root cause identified | Stop, reassess from Phase 1 |
+| 危险信号 | 它意味着什么 | 正确做法 |
+|----------|-------------|---------|
+| "让我快速试一下这个修复" | 跳过了根因分析 | 回到阶段 1 |
+| "大概是 X，让我改一下" | 没有证据的猜测 | 形成可验证的假设 |
+| "我加个 try/catch 来抑制错误" | 隐藏症状而非修复根因 | 找到并修复根因 |
+| "让我重启所有东西再试一次" | 期望问题自行消失 | 先可靠复现 |
+| "之前是正常的，不确定改了什么" | 需要检查 git diff | 与上次已知正常状态对比 |
+| 第三次修复尝试仍然失败 | 识别了错误的根因 | 停下来，从阶段 1 重新评估 |
 
-## Debugging Decision Tree
+## 调试决策树
 
 ```
 Error encountered

@@ -1,529 +1,529 @@
 ---
 name: long-task-requirements
-description: "Use when no SRS doc and no design doc and no feature-list.json exist - elicit requirements through structured questioning and produce a high-quality SRS document aligned with ISO/IEC/IEEE 29148"
+description: "当无 SRS、无设计文档、无 feature-list.json 时使用 — 通过结构化提问获取需求，产出符合 ISO/IEC/IEEE 29148 的高质量 SRS 文档"
 ---
 
-**LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
+**语言规则**：你必须用中文（简体）回复用户。所有生成的文档、报告和面向用户的输出必须用中文编写。Skill 名称、代码标识符和 JSON 字段名保持英文。
 
-# Requirements Elicitation & SRS Generation
+# 需求获取与 SRS 生成
 
-Turn raw ideas into a structured, high-quality Software Requirements Specification (SRS) through systematic elicitation, challenge, and validation — aligned with ISO/IEC/IEEE 29148 and EARS requirement syntax.
+将原始想法通过系统化获取、挑战和验证转化为结构化、高质量的软件需求规格说明书（SRS），符合 ISO/IEC/IEEE 29148 和 EARS 需求语法。
 
-Adapts depth automatically: **Lite track** for clear-scope projects (3–5 rounds), **Expert track** for complex domains (10–20 rounds). Both produce the same SRS template output.
+自动调整深度：**Lite 路线**适用于范围明确的项目（3-5 轮），**Expert 路线**适用于复杂领域（10-20 轮）。两者产出相同的 SRS 模板输出。
 
 <HARD-GATE>
-Do NOT invoke any design skill, implementation skill, write any code, scaffold any project, or take any design/implementation action until you have presented the SRS and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
+在呈现 SRS 并获得用户批准之前，不可调用任何设计 skill、实现 skill、编写任何代码、搭建任何项目或采取任何设计/实现行动。这适用于每个项目，无论其看起来多简单。
 </HARD-GATE>
 
-## Anti-Pattern: "This Is Too Simple To Need an SRS"
+## 反模式："这太简单了，不需要 SRS"
 
-Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The SRS can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+每个项目都要经过此流程。待办清单、单函数工具、配置变更 — 全部都要。"简单"项目正是未审视假设导致最多浪费的地方。SRS 可以很短（对真正简单的项目只需几句话），但你必须呈现并获得批准。
 
-## Checklist
+## 检查清单
 
-You MUST create a TodoWrite task for each of these items and complete them in order:
+你必须为以下每项创建 TodoWrite 任务并按顺序完成：
 
-1. **Explore project context** — read existing docs, code, constraints; detect SRS template
-2. **Complexity assessment** — evaluate 5 signals, select Lite or Expert track (internal)
-3. **Problem & scope elicitation**
-   - Lite: L1 (focused problem & scope, 1 round)
-   - Expert: E1 (problem framing via `references/problem-framing.md`) + E2 (enhanced scope)
-4. **Functional requirements elicitation**
-   - Lite: L2 (flat capability rounds)
-   - Expert: E3 (scenario walkthrough via `references/scenario-walkthrough.md`) + E4 (hypothesis-correction via `references/hypothesis-correction.md`)
-5. **Hidden requirements** — Lite: L3 (merged, 1 round); Expert: E5 (hidden requirements)
-6. **Constraints, assumptions, glossary** — same for both tracks
-7. **Classify requirements** — functional / constraint / assumption / interface / exclusion
-8. **Write requirements** — apply EARS templates, assign IDs, write acceptance criteria, generate diagrams
-9. **Validate SRS** — check 8 quality attributes, detect anti-patterns, verify testability
-10. **Granularity analysis** — bidirectional sizing: detect oversized FRs (G1-G6 split) AND undersized FRs (S1-S4 merge) to fit context budget; user approval for non-trivial changes
-10b. **FR granularity confirmation** — present finalized FR list; dedicated user approval of split/merge rationality
-10c. **Single-round mode confirmation** — offer single-round mode (all FRs in wave 0, no deferral)
-11. **Scope fit & deferral** — assess current-round vs next-round, generate deferred backlog if applicable
-12. **[Expert only] Alignment validation** — via `references/alignment-validation.md`
-13. **SRS Compliance Review** — dispatch srs-reviewer subagent; gate: all checks PASS before proceeding
-14. **Present & approve SRS** — Lite: single combined step; Expert: section-by-section
-15. **Save SRS & backlog** — `docs/plans/YYYY-MM-DD-<topic>-srs.md` + deferred backlog (if any) and commit
-16. **Transition to Design** — invoke `long-task:long-task-design`
+1. **探索项目上下文** — 阅读现有文档、代码、约束；检测 SRS 模板
+2. **复杂度评估** — 评估 5 个信号，选择 Lite 或 Expert 路线（内部）
+3. **问题与范围获取**
+   - Lite：L1（聚焦问题与范围，1 轮）
+   - Expert：E1（通过 `references/problem-framing.md` 进行问题框架化）+ E2（增强范围）
+4. **功能需求获取**
+   - Lite：L2（扁平能力轮次）
+   - Expert：E3（通过 `references/scenario-walkthrough.md` 场景走查）+ E4（通过 `references/hypothesis-correction.md` 假设修正）
+5. **隐藏需求** — Lite：L3（合并，1 轮）；Expert：E5（隐藏需求）
+6. **约束、假设、术语表** — 两条路线相同
+7. **分类需求** — 功能 / 约束 / 假设 / 接口 / 排除
+8. **编写需求** — 应用 EARS 模板、分配 ID、编写验收标准、生成图表
+9. **验证 SRS** — 检查 8 项质量属性、检测反模式、验证可测试性
+10. **粒度分析** — 双向定量：检测过大 FR（G1-G6 拆分）和过小 FR（S1-S4 合并）以适应上下文预算；非平凡变更需用户批准
+10b. **FR 粒度确认** — 呈现最终 FR 列表；用户专门确认拆分/合并合理性
+10c. **单轮模式确认** — 提供单轮模式（所有 FR 在 wave 0，不延迟）
+11. **范围适配与延迟** — 评估当前轮 vs 下一轮，如适用则生成延迟积压
+12. **[仅 Expert] 对齐验证** — 通过 `references/alignment-validation.md`
+13. **SRS 合规审查** — 分派 srs-reviewer subagent；门禁：所有检查 PASS 后方可继续
+14. **呈现并批准 SRS** — Lite：单次合并步骤；Expert：逐章节
+15. **保存 SRS 与积压** — `docs/plans/YYYY-MM-DD-<topic>-srs.md` + 延迟积压（如有）并提交
+16. **过渡到设计** — 调用 `long-task:long-task-design`
 
-**Terminal state: invoking long-task-design.**
+**终态：调用 long-task-design。**
 
-## Step 1: Explore Context
+## Step 1：探索上下文
 
-1. Read the user-provided requirement doc / idea description thoroughly
-2. Explore existing code / repos the project will build on or integrate with
-3. Identify initial constraints: tech stack, platform, integrations, regulations
-4. Read `docs/rules/` (if exists and populated) — codebase conventions extracted by Phase 0-pre scanner:
-   - `coding-constraints.md` — 2/3方件 library constraints, prohibited APIs, internal library mandates
-   - `build-and-compilation.md` — build system constraints
-   - These constraints may affect requirement feasibility and should be considered during elicitation (e.g., "this feature requires HTTP calls — project mandates using internal HTTP library, not standard fetch"; "project CI requires all code to pass checkstyle — affects acceptance criteria")
-5. Check for an SRS template:
-   - If the user specified a template path → read and validate it
-   - Else → read `docs/templates/srs-template.md` (the default template shipped with this skill)
-   - **Validation**: template must be a `.md` file containing at least one `## ` heading
+1. 仔细阅读用户提供的需求文档/想法描述
+2. 探索项目将构建或集成的现有代码/仓库
+3. 识别初始约束：技术栈、平台、集成、法规
+4. 阅读 `docs/rules/`（若存在且已填充）— Phase 0-pre 扫描器提取的代码库约定：
+   - `coding-constraints.md` — 2/3方件库约束、禁止的 API、内部库强制要求
+   - `build-and-compilation.md` — 构建系统约束
+   - 这些约束可能影响需求可行性，应在获取期间考虑（如"此功能需要 HTTP 调用 — 项目强制使用内部 HTTP 库而非标准 fetch"；"项目 CI 要求所有代码通过 checkstyle — 影响验收标准"）
+5. 检查 SRS 模板：
+   - 若用户指定了模板路径 → 读取并验证
+   - 否则 → 读取 `docs/templates/srs-template.md`（此 skill 附带的默认模板）
+   - **验证**：模板必须是包含至少一个 `## ` 标题的 `.md` 文件
 
-## Step 1.5: Complexity Assessment (internal — no user interaction)
+## Step 1.5：复杂度评估（内部 — 不与用户交互）
 
-After Step 1, evaluate 5 complexity signals against the user's description and project context:
+Step 1 之后，根据用户描述和项目上下文评估 5 个复杂度信号：
 
-| # | Signal | Lite indicator | Expert indicator |
-|---|---|---|---|
-| S1 | **Stated scope** | Single purpose, clear boundary ("a script that does X") | Vague/broad scope ("a platform for managing...", "a system that...") |
-| S2 | **Actor count** | 1 actor or no user-facing interaction | 2+ distinct user roles mentioned |
-| S3 | **Integration surface** | No external systems, or 1 well-known API | 2+ external systems, custom protocols |
-| S4 | **Domain complexity** | Developer tool, utility, well-understood domain | Business domain with jargon, regulatory exposure, multi-stakeholder |
-| S5 | **Description style** | Solution-specific ("build X using Y") | Problem-oriented or vague ("we need better X", "users complain about Y") |
+| # | 信号 | Lite 指标 | Expert 指标 |
+|---|------|----------|------------|
+| S1 | **陈述范围** | 单一目的，清晰边界（"一个做 X 的脚本"） | 模糊/宽泛范围（"一个管理...的平台"，"一个...的系统"） |
+| S2 | **角色数量** | 1 个角色或无用户交互 | 提及 2+ 个不同用户角色 |
+| S3 | **集成面** | 无外部系统，或 1 个知名 API | 2+ 个外部系统、自定义协议 |
+| S4 | **领域复杂度** | 开发者工具、实用程序、熟知领域 | 有术语的业务领域、法规风险、多利益相关者 |
+| S5 | **描述风格** | 方案导向（"用 Y 构建 X"） | 问题导向或模糊（"我们需要更好的 X"，"用户抱怨 Y"） |
 
-**≥3 Expert signals → Expert track. Otherwise → Lite track.**
+**≥3 个 Expert 信号 → Expert 路线。否则 → Lite 路线。**
 
-Record the tier decision internally. Do NOT ask the user which tier to use.
+内部记录层级决策。不要询问用户使用哪个层级。
 
-### Escalation Trigger (Lite → Expert)
+### 升级触发器（Lite → Expert）
 
-During Lite elicitation, if ANY of these emerge, switch seamlessly to Expert track:
-- 2+ distinct user roles with conflicting needs
-- 3+ external system integrations surface
-- Regulatory/compliance requirements are mentioned
-- User contradicts their own earlier answers (signals unclear mental model)
-- FR count exceeds 10 after elicitation
+Lite 获取过程中，若出现以下任一情况，无缝切换到 Expert 路线：
+- 2+ 个需求冲突的不同用户角色
+- 3+ 个外部系统集成浮现
+- 提及法规/合规需求
+- 用户自相矛盾（暗示心智模型不清晰）
+- 获取后 FR 数量超过 10
 
-On escalation: all Lite artifacts gathered so far become Expert input. Do NOT restart or announce a disruptive switch — simply begin asking deeper questions (E1 problem framing, E3 walkthrough, etc.).
+升级时：已收集的所有 Lite 产物成为 Expert 输入。不要重启或宣布破坏性切换 — 直接开始提出更深入的问题（E1 问题框架化、E3 走查等）。
 
-## Step 1.6: Targeted Codebase Exploration (brownfield only — no user interaction)
+## Step 1.6：针对性代码库探索（仅存量项目 — 不与用户交互）
 
-**Trigger conditions**:
-1. `docs/rules/` exists AND contains ≥1 `.md` file beyond a greenfield stub (brownfield project), AND the user's description mentions concrete functionality, a domain area, or a specific module
+**触发条件**：
+1. `docs/rules/` 存在且包含 ≥1 个非新建项目桩的 `.md` 文件（存量项目），且用户描述提及具体功能、领域区域或特定模块
 
-**Skip if**: greenfield project, OR user description is too vague to derive a focus direction (e.g., "I want to build a platform" with no specifics).
+**跳过条件**：新建项目，或用户描述过于模糊无法推导聚焦方向（如"我想构建一个平台"且无具体内容）。
 
-**Execution**:
-1. Extract a focus direction from the user's description:
-   - Identify domain keywords (e.g., "authentication", "payment", "API gateway", "data pipeline")
-   - Infer relevant `--focus` dimensions (e.g., auth → `api,architecture`; data pipeline → `dataflow,deps`)
-   - Infer `--path` if the user mentions a specific module or directory
-2. Determine exploration depth from context (do NOT hardcode):
+**执行**：
+1. 从用户描述中提取聚焦方向：
+   - 识别领域关键词（如"认证"、"支付"、"API 网关"、"数据管道"）
+   - 推断相关 `--focus` 维度（如 auth → `api,architecture`；data pipeline → `dataflow,deps`）
+   - 若用户提及特定模块或目录则推断 `--path`
+2. 根据上下文确定探索深度（不要硬编码）：
 
-   | Signal | Depth adjustment |
-   |--------|-----------------|
-   | Complexity tier = Lite | Prefer quick (locator only, fast) |
-   | Complexity tier = Expert | Prefer standard (full analysis) |
-   | User description mentions a single module/area | Keep current or lower (narrow scope = less depth needed) |
-   | User description spans multiple subsystems | Bump up one level (broad scope = more context needed) |
-   | If `--path` narrows to a small subtree | Keep current or lower |
+   | 信号 | 深度调整 |
+   |------|---------|
+   | 复杂度层级 = Lite | 倾向 quick（仅 locator，快速） |
+   | 复杂度层级 = Expert | 倾向 standard（完整分析） |
+   | 用户描述提及单个模块/区域 | 保持当前或降低（窄范围 = 需更少深度） |
+   | 用户描述跨多个子系统 | 提升一级（宽范围 = 需更多上下文） |
+   | `--path` 缩窄到小子树 | 保持当前或降低 |
 
-   When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide (<1K→quick, 1K-10K→standard, >10K→deep).
+   不确定时省略 `--depth`，让 explore 的 LOC 自动检测决定（<1K→quick, 1K-10K→standard, >10K→deep）。
 
-3. Dispatch `long-task-explore`:
-   > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore`
-   > Depth: {determined_depth or omit for auto-detect}
-   > Focus: {inferred_dimensions}
-   > Path: {inferred_path or "."}
-   > User question: "{user_description_summary}"
-4. If explore returns useful findings → incorporate into your mental model for L1/E1 questioning:
-   - Reference discovered modules, APIs, data models in your questions (e.g., "I found `src/auth/` with JWT-based authentication — do you want to extend this or replace it?")
-   - Use discovered architecture patterns to ask more informed questions about integration points
-5. If explore returns BLOCKED or no actionable findings → skip silently, proceed to L1/E1
+3. 分派 `long-task-explore`：
+   > **DISPATCH** 独立 SubAgent — 加载并执行 `long-task:long-task-explore`
+   > Depth：{determined_depth 或省略以自动检测}
+   > Focus：{inferred_dimensions}
+   > Path：{inferred_path 或 "."}
+   > User question："{user_description_summary}"
+4. 若 explore 返回有用发现 → 纳入 L1/E1 提问的心智模型：
+   - 在问题中引用发现的模块、API、数据模型（如"我发现 `src/auth/` 使用 JWT 认证 — 你想扩展还是替换？"）
+   - 使用发现的架构模式提出更有针对性的集成点问题
+5. 若 explore 返回 BLOCKED 或无可用发现 → 静默跳过，进入 L1/E1
 
-**This step is non-blocking** — failure or lack of useful results never prevents proceeding to elicitation.
-
----
-
-## Lite Track
-
-For projects with clear scope, single actor, and well-understood domain. Target: 3–5 interaction rounds.
-
-### L1: Focused Problem & Scope (single AskUserQuestion, ≤4 questions)
-
-1. "What problem does this solve, and what does success look like when it's working?"
-2. "Who uses it, and in what environment (desktop/mobile/CLI/API)?"
-3. "What is explicitly out of scope for this version?"
-4. "Any hard constraints — language, platform, hosting, licenses?"
-
-Output: one-sentence problem statement in SRS Section 1, actor list, scope boundary, constraints.
-
-If the answer to Q1 is vague or problem-oriented → escalation trigger fires → switch to Expert.
-
-### L2: Flat Capability Elicitation (1–3 rounds of ≤4 questions each)
-
-For each capability area, ask per round (up to 4 questions):
-- What does the user do? (trigger/action)
-- What does the system do in response? (observable behavior)
-- What inputs would be invalid, and what should happen?
-- Confirm a concrete Given/When/Then example
-
-Group related capabilities into the same round when they share a workflow. Split large capability areas across multiple rounds.
-
-### L3: Quick Hidden Requirements Check (single AskUserQuestion)
-
-1. "Does this handle personal data, face regulations, or need accessibility support? (If yes, which?)"
-2. "Multiple languages or timezones?"
-3. "Any security requirements beyond basic auth?"
-
-Any YES to Q1 → generate EARS-formatted constraint or functional requirement candidates inline. If Q1 reveals significant regulatory exposure → escalation trigger.
-
-### L4–L6: Classify, Write, Validate, Present, Save
-
-After Lite elicitation, proceed to the **shared steps** (Steps 7–16 in the checklist):
-- L4 = Steps 7–8 (classify, EARS, diagrams)
-- L5 = Steps 9–10b–10c–11 + Step 13 (validate, granularity, granularity confirmation, single-round mode confirmation, deferral, SRS reviewer)
-- L6 = Steps 14–16 (present entire SRS in one block as single approval, save, transition to Design)
+**此步骤非阻塞** — 失败或缺乏有用结果绝不阻止进入获取阶段。
 
 ---
 
-## Expert Track
+## Lite 路线
 
-For projects with complex domains, multiple actors, or unclear scope. Target: 10–20 interaction rounds.
+适用于范围明确、单角色、熟知领域的项目。目标：3-5 轮交互。
 
-### E1: Problem Framing [Expert only]
+### L1：聚焦问题与范围（单次 AskUserQuestion，≤4 个问题）
 
-Read `references/problem-framing.md` and follow it exactly.
+1. "这个项目解决什么问题？正常工作时成功是什么样的？"
+2. "谁使用它？在什么环境下（桌面/移动/CLI/API）？"
+3. "这个版本明确不包含什么？"
+4. "有什么硬性约束 — 语言、平台、托管、许可证？"
 
-**Summary**: Single AskUserQuestion (≤4 questions) — 5-Whys seed, JTBD probe, pain ranking, solution challenge. Produces: 5-Whys chain, JTBD statement, Pain Map → embedded in SRS Section 1.3.
+输出：SRS 第 1 节中的一句话问题陈述、角色列表、范围边界、约束。
 
-### E2: Enhanced Scope Round [Expert only]
+若 Q1 回答模糊或问题导向 → 升级触发器触发 → 切换到 Expert。
 
-Use slots freed by E1 answers. Single AskUserQuestion (≤4 questions). Replace standard Round 1 questions already answered in E1 with targeted probes:
+### L2：扁平能力获取（1-3 轮，每轮 ≤4 个问题）
 
-- **Workaround probe**: "Walk me through the most annoying step in [workaround from Pain Map]. What makes it frustrating — is it manual, error-prone, slow, or opaque?"
-  → Every step the user hates in their current workaround is a candidate FR.
+对每个能力区域，每轮提问（最多 4 个问题）：
+- 用户做什么？（触发/动作）
+- 系统如何响应？（可观察行为）
+- 什么输入无效？应如何处理？
+- 确认一个具体的 Given/When/Then 示例
 
-- **Environment probe**: "Where and when is this typically done — at a desk with a large screen, on mobile in the field, under time pressure, or shared among a team?"
-  → Reveals UX, offline, mobile-first, multi-user, and accessibility constraints.
+共享工作流的相关能力在同一轮分组。大能力区域分多轮。
 
-Plus remaining standard scope questions not yet answered by E1 (out of scope, constraints).
+### L3：快速隐藏需求检查（单次 AskUserQuestion）
 
-**Rule**: Total questions ≤4. Prioritize probes that surface new information over re-asking what E1 already covered.
+1. "是否涉及个人数据、受法规约束或需要无障碍支持？（若是，具体哪些？）"
+2. "多语言或多时区？"
+3. "除基本认证外有什么安全需求？"
 
-### E3: Scenario Walkthrough [Expert only]
+Q1 回答 YES → 内联生成 EARS 格式的约束或功能需求候选。Q1 揭示重大法规风险 → 升级触发器。
 
-Read `references/scenario-walkthrough.md` and follow it exactly.
+### L4-L6：分类、编写、验证、呈现、保存
 
-**Summary**: One walkthrough per major workflow (1–3 workflows). User narrates end-to-end. LLM extracts explicit steps, implicit steps, flow gaps, integration points, error mentions. Follow-up for flow gaps (bounded by extraction count).
-
-### E4: Hypothesis-Correction [Expert only]
-
-Read `references/hypothesis-correction.md` and follow it exactly.
-
-**Summary**: Per FR (or 2–3 related FR group), present Behavior Hypothesis Table with applicable dimensions (selected by FR type). User marks ✓/✗/+. Converges naturally when no new corrections emerge.
-
-### E5: Hidden Requirements [Expert only]
-
-Single AskUserQuestion, checkbox-style (YES/NO + tell me more), ≤4 probes:
-
-1. **Regulatory/Compliance**: "Does this system handle data or processes subject to regulations? (Personal data → GDPR/CCPA; Health → HIPAA; Payments → PCI-DSS; Financial → SOX; Government → sector-specific)"
-   - YES → implied constraints/FRs: data residency, audit logging, breach notification timeline, consent management, data retention limits
-
-2. **Accessibility**: "Do any users have accessibility needs — visual impairment, motor limitations, older adults, screen reader users, or keyboard-only navigation? Will this run on mobile?"
-   - YES → implied constraints/FRs: WCAG 2.1 AA compliance, keyboard navigability, minimum touch targets (44x44px), sufficient color contrast (4.5:1)
-
-3. **Privacy by design**: "Will the system collect, store, or process personally identifiable information (names, emails, locations, behavioral data, device IDs)?"
-   - YES → implied constraints/FRs: data minimization, user-controlled data export/deletion, consent recording, breach response time
-
-4. **Internationalization**: "Will any users interact in a language other than [detected primary], or from a different timezone or locale?"
-   - YES → implied constraints/FRs: locale-aware date/time/currency formatting, string externalization (no hardcoded UI text), RTL layout if applicable, timezone-aware storage
-
-**Rule**: Any YES → create a constraint or functional requirement candidate in EARS format before proceeding. Mark with Source = "Hidden (E5)".
-
-**Smart Skip**: If Step 1 context clearly shows a purely internal, no-PII, single-language, non-regulated developer tool → collapse all four probes into one confirmation:
-> "This appears to be an internal tool with no personal data, no regulated industry exposure, no accessibility requirements, and no i18n needs — correct?"
-
-### E6–E7: Constraints, Glossary
-
-**E6 (Constraints & Interfaces)**: Hard limits, assumptions, external system contracts.
-
-**E7 (Glossary)**: Domain terms with potential ambiguity.
-
-### E9: Classify, Write, Validate, Granularity, Deferral
-
-Same as shared Steps 7–11 (including Step 10b granularity confirmation and Step 10c single-round mode confirmation) in the checklist. No differences from standard process.
-
-### E10: Alignment Validation [Expert only]
-
-Read `references/alignment-validation.md` and follow it exactly.
-
-**Summary**: Root cause traceability (Pain Map → FR coverage), JTBD outcome verification (**gate — blocks E11 on failure**), pre-mortem, orphan FR detection. Output → SRS Section 1.3 Alignment Validation field.
-
-### E11: SRS Reviewer, Present, Save
-
-Same as shared Steps 13–16, with two differences:
-- SRS reviewer includes **Group P** (active, not PASS-SKIPPED)
-- Present section-by-section for non-trivial projects (not single combined approval)
+Lite 获取后，进入**共享步骤**（检查清单中的 Steps 7-16）：
+- L4 = Steps 7-8（分类、EARS、图表）
+- L5 = Steps 9-10b-10c-11 + Step 13（验证、粒度、粒度确认、单轮模式确认、延迟、SRS 审查员）
+- L6 = Steps 14-16（将整个 SRS 作为一个块呈现为单次批准、保存、过渡到设计）
 
 ---
 
-## Steps 7–11: Shared Quality Pipeline (both tracks)
+## Expert 路线
 
-### Step 7: Classify Requirements
+适用于复杂领域、多角色或范围不清晰的项目。目标：10-20 轮交互。
 
-Organize into categories:
+### E1：问题框架化 [仅 Expert]
 
-| Category | ID Prefix | Description |
-|---|---|---|
-| Functional | FR-001 | Observable system behaviors |
-| Constraint | CON-001 | Hard limits that restrict the solution space |
-| Assumption | ASM-001 | Beliefs assumed true; document invalidation risk |
-| Interface | IFR-001 | External system contracts |
-| Exclusion | EXC-001 | Explicitly out of scope |
+阅读 `references/problem-framing.md` 并严格遵循。
 
-### Step 8: Write Requirements with EARS Templates
+**摘要**：单次 AskUserQuestion（≤4 个问题）— 5-Whys 种子、JTBD 探测、痛点排名、方案挑战。产出：5-Whys 链、JTBD 声明、痛点地图 → 嵌入 SRS 第 1.3 节。
 
-Apply the EARS template to each functional requirement:
+### E2：增强范围轮次 [仅 Expert]
 
-| Pattern | Template | When to use |
-|---|---|---|
-| **Ubiquitous** | The system shall `<action>`. | Always-on behavior |
-| **Event-driven** | When `<trigger>`, the system shall `<action>`. | Response to event |
-| **State-driven** | While `<state>`, the system shall `<action>`. | Behavior depends on mode/state |
-| **Unwanted behavior** | If `<condition>`, then the system shall `<action>`. | Error handling, fault tolerance |
-| **Optional** | Where `<feature/config>`, the system shall `<action>`. | Configurable capability |
+利用 E1 答案释放的槽位。单次 AskUserQuestion（≤4 个问题）。用定向探测替换已在 E1 中回答的标准第 1 轮问题：
 
-For each requirement, also write:
-- **Acceptance criteria** — at least one concrete Given/When/Then scenario
-- **Priority** — Must / Should / Could / Won't (MoSCoW)
-- **Source** — which stakeholder need or user story this traces to
+- **变通方案探测**："请带我走过 [痛点地图中的变通方案] 最烦人的步骤。什么让它令人沮丧 — 是手动的、易错的、缓慢的还是不透明的？"
+  → 用户在当前变通方案中讨厌的每一步都是候选 FR。
 
-#### 8b. Generate Diagrams
+- **环境探测**："这通常在哪里、什么时候执行 — 大屏幕的桌面、野外的手机、时间压力下还是团队共享？"
+  → 揭示 UX、离线、移动优先、多用户和无障碍约束。
 
-After all requirements are written, generate visual aids:
+加上 E1 尚未回答的剩余标准范围问题（排除范围、约束）。
 
-**Use Case View** (Section 3.1): `graph LR` with all actors as `Actor((Name))`, all FR-xxx as use case nodes inside `subgraph System Boundary`, directed edges per actor-to-use-case participation.
+**规则**：总问题 ≤4。优先选择能浮现新信息的探测，而非重复 E1 已覆盖的内容。
 
-**Process Flows** (Section 4.1): One `flowchart TD` per functional area with 3+ sequential steps or branching. Start/End as `([label])`, decisions as `{condition?}` with `-- YES -->` / `-- NO -->` labels.
+### E3：场景走查 [仅 Expert]
 
-### Step 9: Validate SRS Quality
+阅读 `references/scenario-walkthrough.md` 并严格遵循。
 
-#### 9a. Per-Requirement Checks (8 quality attributes)
+**摘要**：每个主要工作流一次走查（1-3 个工作流）。用户端到端叙述。LLM 提取显式步骤、隐式步骤、流程缺口、集成点、错误提及。对流程缺口追问（受提取数量限制）。
 
-| # | Attribute | Check | Red flag |
-|---|---|---|---|
-| 1 | **Correct** | Traces to a confirmed stakeholder need? | Orphan requirement (gold-plating) |
-| 2 | **Unambiguous** | Two readers would write the same test case? | Weasel words: "fast", "robust", "user-friendly" |
-| 3 | **Complete** | All inputs, outputs, error cases, boundaries defined? | "including but not limited to..." |
-| 4 | **Consistent** | No contradiction with other requirements? | Timing conflicts, format conflicts |
-| 5 | **Ranked** | Has a MoSCoW priority? | Everything is "high priority" |
-| 6 | **Verifiable** | Can write a pass/fail test? | "The system shall be easy to use" |
-| 7 | **Modifiable** | Stated in exactly one place? | Duplicated across sections |
-| 8 | **Traceable** | Has unique ID + source link? | Missing ID or orphan |
+### E4：假设修正 [仅 Expert]
 
-#### 9b. Anti-Pattern Detection
+阅读 `references/hypothesis-correction.md` 并严格遵循。
 
-| Anti-Pattern | Detection Signal | Fix |
-|---|---|---|
-| **Ambiguous adjective** | "fast", "large", "scalable" without number | Quantify |
-| **Compound requirement** | "and" / "or" joining two capabilities | Split |
-| **Design leakage** | "class", "table", "endpoint" | Rewrite as behavior |
-| **Passive without agent** | "data shall be validated" — by whom? | Add actor |
-| **TBD / TBC** | Unresolved placeholders | Resolve or Open Question |
-| **Missing negatives** | Only positive cases specified | Add error/boundary cases |
+**摘要**：每个 FR（或 2-3 个相关 FR 组），呈现行为假设表，包含适用维度（按 FR 类型选择）。用户标记 ✓/✗/+。当无新修正出现时自然收敛。
 
-#### 9c. Completeness Cross-Check
+### E5：隐藏需求 [仅 Expert]
 
-- Every functional area has at least one error/boundary case
-- All external interfaces have data format + protocol
-- Glossary covers all domain-specific terms
-- Out-of-Scope section lists deferred features
+单次 AskUserQuestion，复选框式（YES/NO + 详述），≤4 个探测：
 
-### Step 10: Granularity Analysis — Bidirectional Sizing
+1. **法规/合规**："此系统是否处理受法规约束的数据或流程？（个人数据 → GDPR/CCPA；健康 → HIPAA；支付 → PCI-DSS；金融 → SOX；政府 → 行业特定）"
+   - YES → 隐含约束/FR：数据驻留、审计日志、泄漏通知时限、同意管理、数据保留期限
 
-Right-size each FR for one Worker session. Apply both over-size (G) and under-size (S) heuristics. The goal: each FR should produce a feature that productively uses ~50% of the model's context window. As a concrete sizing target, each FR should produce approximately 1,000 lines of implementation code (excluding unit test code).
+2. **无障碍**："是否有用户有无障碍需求 — 视障、运动障碍、老年人、屏幕阅读器用户或仅键盘导航？会在移动端运行吗？"
+   - YES → 隐含约束/FR：WCAG 2.1 AA 合规、键盘可导航、最小触控目标（44x44px）、足够的颜色对比（4.5:1）
 
-**Step 10.0 — Select your sizing profile:** You know your own maximum context window. Apply the matching row to all G/S decisions below.
+3. **隐私设计**："系统是否会收集、存储或处理个人可识别信息（姓名、邮箱、位置、行为数据、设备 ID）？"
+   - YES → 隐含约束/FR：数据最小化、用户可控的数据导出/删除、同意记录、泄漏响应时间
 
-| Context window | Profile | Target ACs per FR | Single-feature implementation scope |
-|---|---|---|---|
-| ≤ 200K tokens | **Standard** | 3-12 | ~1,000 lines implementation code (excluding UT) |
-| > 200K tokens | **Extended** | 5-20 | ~1,000 lines implementation code (excluding UT) |
+4. **国际化**："是否有用户会使用 [检测到的主要语言] 以外的语言交互，或来自不同时区或区域？"
+   - YES → 隐含约束/FR：区域感知的日期/时间/货币格式、字符串外部化（无硬编码 UI 文本）、RTL 布局（如适用）、时区感知存储
 
-An FR below the profile minimum AC count is under-sized (S-heuristic candidate). An FR above the profile maximum is over-sized (G-heuristic candidate). When the AC-based heuristic is ambiguous, estimate the likely implementation LOC: an FR producing significantly fewer than ~1,000 lines is a merge candidate; significantly more is a split candidate.
+**规则**：任何 YES → 在继续前以 EARS 格式创建约束或功能需求候选。标记 Source = "Hidden (E5)"。
 
-**Phase 1 — Over-size detection (G1-G6):** Split FRs that are too coarse for a single session.
+**智能跳过**：若 Step 1 上下文明确显示是纯内部、无 PII、单语言、非受管的开发者工具 → 将四个探测合并为一个确认：
+> "这看起来是一个内部工具，无个人数据、无受管行业风险、无无障碍需求、无国际化需求 — 对吗？"
 
-| # | Heuristic | Detection Signal |
-|---|---|---|
-| G1 | **Multiple actors** | 2+ distinct roles performing different actions |
-| G2 | **CRUD bundle** | Create + Read + Update + Delete as single requirement |
-| G3 | **Scenario explosion** | 4+ acceptance criteria covering distinct behavioral paths |
-| G4 | **Cross-layer concern** | Backend logic AND user-facing UI in one FR |
-| G5 | **Multi-state behavior** | 3+ distinct system states or modes |
-| G6 | **Temporal coupling** | Trigger event + deferred/scheduled consequence |
+### E6-E7：约束、术语表
 
-For decomposition candidates: identify atomic behaviors, apply Single Responsibility Test, preserve traceability (FR-003 → FR-003a, FR-003b), re-validate children.
+**E6（约束与接口）**：硬性限制、假设、外部系统契约。
 
-**Phase 2 — Under-size detection (S1-S4):** Merge FRs that are too trivial for a dedicated session.
+**E7（术语表）**：有潜在歧义的领域术语。
 
-| # | Heuristic | Detection Signal | Action |
-|---|---|---|---|
-| S1 | **Trivial addition** | Single field/constant/config, no behavioral logic, ≤1 AC | Merge into parent entity/endpoint FR |
-| S2 | **Single-assertion test** | Only 1 AC with no error/boundary cases | Enrich with error/boundary ACs, or merge into related FR sharing same entity/endpoint |
-| S3 | **Pure data echo** | Displays/returns data another FR produces, no transformation | Merge into the producing FR as vertical slice |
-| S4 | **Config/setup only** | Env setup, dependency install, scaffolding, no business logic | Merge all S4 FRs into a single Foundation FR |
+### E9：分类、编写、验证、粒度、延迟
 
-**Merge rules:**
-- **Content preservation (mandatory)**: the absorbed FR's EARS statement, all acceptance criteria, and description text are fully integrated into the primary FR — no requirement content may be lost or summarized away. The primary FR's description and AC list must contain the complete union of both FRs' content.
-- The absorbed FR entry is then eliminated from the SRS. After all merges, re-number FR IDs sequentially (FR-001, FR-002, ...) and update all SRS cross-references (Use Case View, Process Flows, Traceability Matrix).
-- Combined ACs must stay ≤ 20 (if exceeds, G3 re-triggers — split along better seams)
-- Merged FRs must share primary actor and functional area
-- If both G and S trigger on the same FR: G wins (split first, then S re-checks children)
+同检查清单中的共享 Steps 7-11（包括 Step 10b 粒度确认和 Step 10c 单轮模式确认）。与标准流程无差异。
 
-**Decision thresholds:**
+### E10：对齐验证 [仅 Expert]
 
-| Candidate Count (G or S) | Action |
-|---|---|
-| 0 | Skip |
-| 1-3 | Auto-apply; present rationale inline |
-| 4+ | Present to user via AskUserQuestion for approval |
+阅读 `references/alignment-validation.md` 并严格遵循。
 
-Note: All granularity changes (auto-applied or user-approved) are subject to the holistic FR granularity confirmation in Step 10b.
+**摘要**：根因可追溯性（痛点地图 → FR 覆盖）、JTBD 结果验证（**门禁 — 失败时阻塞 E11**）、预验尸、孤立 FR 检测。输出 → SRS 第 1.3 节对齐验证字段。
 
-### Step 10b: FR Granularity Confirmation
+### E11：SRS 审查员、呈现、保存
 
-After all G1-G6 splits, S1-S4 merges, and FR ID re-numbering, present the finalized FR list for dedicated user confirmation.
+同共享 Steps 13-16，有两个差异：
+- SRS 审查员包含 **Group P**（活跃，非 PASS-SKIPPED）
+- 对非平凡项目逐章节呈现（非单次合并批准）
 
-**Content preservation check (before presenting):** For every merged FR, verify that the primary FR now contains the complete union of EARS statements and acceptance criteria from all absorbed FRs. No original requirement content may be lost.
+---
 
-**Present via AskUserQuestion:**
+## Steps 7-11：共享质量流水线（两条路线）
 
-1. Show the complete FR list in table format:
-   | FR ID | Title | AC Count | Est. Impl. LOC | Changed? | Notes |
-   |-------|-------|----------|----------------|----------|-------|
-   - "Changed?" column: "split from FR-XXX" / "absorbed FR-YYY" / "unchanged"
-   - "Est. Impl. LOC" column: rough estimate targeting ~1,000 lines (excluding UT)
-   - For merged FRs, list which original FRs were absorbed so user can verify completeness
+### Step 7：分类需求
 
-2. Ask: "Please review the FR list above. Each FR targets ~1,000 lines of implementation code (excluding unit tests). All merged FRs retain the complete requirement content of the absorbed FRs. Confirm the granularity is appropriate, or indicate which FRs should be further split, merged, or adjusted."
+按类别组织：
 
-3. Process response:
-   - **Confirmed** → proceed to Step 10c
-   - **Adjustment requested** → apply changes, re-number IDs, re-present (loop until confirmed)
+| 类别 | ID 前缀 | 描述 |
+|------|---------|------|
+| 功能 | FR-001 | 可观察的系统行为 |
+| 约束 | CON-001 | 限制解决方案空间的硬性限制 |
+| 假设 | ASM-001 | 假定为真的信念；记录失效风险 |
+| 接口 | IFR-001 | 外部系统契约 |
+| 排除 | EXC-001 | 明确不在范围内 |
 
-**Mandatory for both Lite and Expert tracks.** Even if Step 10 produced 0 granularity candidates (no splits or merges), present the FR list for confirmation — the user may identify granularity issues the heuristics missed.
+### Step 8：用 EARS 模板编写需求
 
-### Step 10c: Single-Round Mode Confirmation
+对每个功能需求应用 EARS 模板：
 
-After FR granularity confirmation, present via `AskUserQuestion`:
+| 模式 | 模板 | 适用场景 |
+|------|------|---------|
+| **普遍型** | The system shall `<action>`. | 始终生效的行为 |
+| **事件驱动型** | When `<trigger>`, the system shall `<action>`. | 响应事件 |
+| **状态驱动型** | While `<state>`, the system shall `<action>`. | 行为取决于模式/状态 |
+| **异常行为型** | If `<condition>`, then the system shall `<action>`. | 错误处理、容错 |
+| **可选型** | Where `<feature/config>`, the system shall `<action>`. | 可配置能力 |
 
-> "The finalized FR list contains {N} functional requirement(s).
+对每个需求还需编写：
+- **验收标准** — 至少一个具体的 Given/When/Then 场景
+- **优先级** — Must / Should / Could / Won't（MoSCoW）
+- **来源** — 可追溯到哪个利益相关者需求或用户故事
+
+#### 8b. 生成图表
+
+所有需求编写完毕后生成视觉辅助：
+
+**用例视图**（第 3.1 节）：`graph LR`，所有角色为 `Actor((Name))`，所有 FR-xxx 作为 `subgraph System Boundary` 内的用例节点，按角色到用例的参与关系绘制有向边。
+
+**流程图**（第 4.1 节）：每个有 3+ 个顺序步骤或分支的功能区域一个 `flowchart TD`。起止为 `([label])`，决策为 `{condition?}`，标注 `-- YES -->` / `-- NO -->`。
+
+### Step 9：验证 SRS 质量
+
+#### 9a. 每需求检查（8 项质量属性）
+
+| # | 属性 | 检查 | 危险信号 |
+|---|------|------|---------|
+| 1 | **正确** | 可追溯到已确认的利益相关者需求？ | 孤立需求（镀金） |
+| 2 | **无歧义** | 两个读者会写出相同的测试用例？ | 模糊词："快速"、"健壮"、"用户友好" |
+| 3 | **完整** | 所有输入、输出、错误情况、边界已定义？ | "包括但不限于..." |
+| 4 | **一致** | 与其他需求无矛盾？ | 时序冲突、格式冲突 |
+| 5 | **有优先级** | 有 MoSCoW 优先级？ | 全部是"高优先级" |
+| 6 | **可验证** | 能写出通过/失败测试？ | "系统应易于使用" |
+| 7 | **可修改** | 仅在一处陈述？ | 跨章节重复 |
+| 8 | **可追溯** | 有唯一 ID + 来源链接？ | 缺少 ID 或孤立 |
+
+#### 9b. 反模式检测
+
+| 反模式 | 检测信号 | 修复 |
+|--------|---------|------|
+| **模糊形容词** | "快速"、"大量"、"可扩展"且无数字 | 量化 |
+| **复合需求** | "和"/"或"连接两个能力 | 拆分 |
+| **设计泄漏** | "类"、"表"、"端点" | 重写为行为 |
+| **无主语被动句** | "数据应被验证" — 谁来？ | 添加角色 |
+| **TBD / TBC** | 未解决占位符 | 解决或标记为开放问题 |
+| **缺少负面情况** | 仅指定正面用例 | 添加错误/边界用例 |
+
+#### 9c. 完整性交叉检查
+
+- 每个功能区域至少有一个错误/边界用例
+- 所有外部接口有数据格式 + 协议
+- 术语表覆盖所有领域特定术语
+- 排除范围章节列出延迟功能
+
+### Step 10：粒度分析 — 双向定量
+
+将每个 FR 调整为一个 Worker 会话的合适大小。同时应用过大（G）和过小（S）启发式。目标：每个 FR 应产生一个约使用模型上下文窗口 ~50% 的功能。具体定量目标：每个 FR 约产生 1,000 行实现代码（不含单元测试代码）。
+
+**Step 10.0 — 选择定量配置：** 你知道自己的最大上下文窗口。对下方所有 G/S 决策应用匹配行。
+
+| 上下文窗口 | 配置 | 每 FR 目标 AC 数 | 单功能实现范围 |
+|-----------|------|-----------------|--------------|
+| ≤ 200K tokens | **Standard** | 3-12 | ~1,000 行实现代码（不含 UT） |
+| > 200K tokens | **Extended** | 5-20 | ~1,000 行实现代码（不含 UT） |
+
+低于配置最小 AC 数的 FR 为过小（S 启发式候选）。高于最大值的为过大（G 启发式候选）。当 AC 启发式模糊时，估算可能的实现 LOC：FR 产出明显少于 ~1,000 行为合并候选；明显多于为拆分候选。
+
+**阶段 1 — 过大检测（G1-G6）：** 拆分对单个会话来说过粗的 FR。
+
+| # | 启发式 | 检测信号 |
+|---|--------|---------|
+| G1 | **多角色** | 2+ 个不同角色执行不同操作 |
+| G2 | **CRUD 捆绑** | 增删改查作为单一需求 |
+| G3 | **场景爆炸** | 4+ 个覆盖不同行为路径的验收标准 |
+| G4 | **跨层关注** | 后端逻辑和用户界面在一个 FR 中 |
+| G5 | **多状态行为** | 3+ 个不同的系统状态或模式 |
+| G6 | **时序耦合** | 触发事件 + 延迟/定时后果 |
+
+对分解候选：识别原子行为，应用单一职责测试，保持可追溯性（FR-003 → FR-003a, FR-003b），重新验证子项。
+
+**阶段 2 — 过小检测（S1-S4）：** 合并对专门会话来说过小的 FR。
+
+| # | 启发式 | 检测信号 | 操作 |
+|---|--------|---------|------|
+| S1 | **微小新增** | 单字段/常量/配置，无行为逻辑，≤1 AC | 合并到父实体/端点 FR |
+| S2 | **单断言测试** | 仅 1 个 AC 且无错误/边界用例 | 用错误/边界 AC 充实，或合并到共享相同实体/端点的相关 FR |
+| S3 | **纯数据回显** | 显示/返回另一 FR 产生的数据，无转换 | 作为垂直切片合并到产出 FR |
+| S4 | **仅配置/设置** | 环境设置、依赖安装、脚手架，无业务逻辑 | 将所有 S4 FR 合并为一个 Foundation FR |
+
+**合并规则：**
+- **内容保留（强制）**：被吸收 FR 的 EARS 声明、所有验收标准和描述文本必须完整集成到主 FR — 不可丢失或摘要化任何需求内容。主 FR 的描述和 AC 列表必须包含两个 FR 内容的完整并集。
+- 被吸收的 FR 条目随后从 SRS 中消除。所有合并完成后，按顺序重新编号 FR ID（FR-001, FR-002, ...）并更新所有 SRS 交叉引用（用例视图、流程图、可追溯矩阵）。
+- 合并后 AC 必须 ≤ 20（若超出，G3 重新触发 — 按更好的接缝拆分）
+- 合并的 FR 必须共享主角色和功能区域
+- 若 G 和 S 同时触发于同一 FR：G 优先（先拆分，然后 S 重新检查子项）
+
+**决策阈值：**
+
+| 候选数量（G 或 S） | 操作 |
+|-------------------|------|
+| 0 | 跳过 |
+| 1-3 | 自动应用；内联呈现理由 |
+| 4+ | 通过 AskUserQuestion 向用户呈现以获取批准 |
+
+注意：所有粒度变更（自动应用或用户批准）均受 Step 10b 中整体 FR 粒度确认约束。
+
+### Step 10b：FR 粒度确认
+
+所有 G1-G6 拆分、S1-S4 合并和 FR ID 重新编号完成后，呈现最终 FR 列表供用户专门确认。
+
+**内容保留检查（呈现前）：** 对每个合并的 FR，验证主 FR 现在包含所有被吸收 FR 的 EARS 声明和验收标准的完整并集。不可丢失任何原始需求内容。
+
+**通过 AskUserQuestion 呈现：**
+
+1. 以表格格式显示完整 FR 列表：
+   | FR ID | 标题 | AC 数 | 预估实现 LOC | 变更？ | 备注 |
+   |-------|------|-------|-------------|--------|------|
+   - "变更？"列："从 FR-XXX 拆分" / "吸收了 FR-YYY" / "未变更"
+   - "预估实现 LOC"列：粗略估算，目标 ~1,000 行（不含 UT）
+   - 对合并的 FR，列出被吸收的原始 FR 以便用户验证完整性
+
+2. 问："请审查上方 FR 列表。每个 FR 目标 ~1,000 行实现代码（不含单元测试）。所有合并的 FR 保留被吸收 FR 的完整需求内容。请确认粒度是否合适，或指出哪些 FR 需要进一步拆分、合并或调整。"
+
+3. 处理响应：
+   - **已确认** → 进入 Step 10c
+   - **请求调整** → 应用变更、重新编号 ID、重新呈现（循环直到确认）
+
+**两条路线均为强制。** 即使 Step 10 产生 0 个粒度候选（无拆分或合并），也呈现 FR 列表供确认 — 用户可能识别出启发式遗漏的粒度问题。
+
+### Step 10c：单轮模式确认
+
+FR 粒度确认后，通过 `AskUserQuestion` 呈现：
+
+> "最终 FR 列表包含 {N} 个功能需求。
 >
-> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD) run normally — no steps are skipped.
+> **单轮模式可用**：所有 FR 将在本开发轮次（wave 0）中实现，不延迟。每个 FR 映射到一个功能；Worker 每会话处理一个功能。所有流水线步骤（feature-design、TDD）正常执行 — 不跳过任何步骤。
 >
-> **Context overflow risk**: If any single FR is estimated to exceed ~1,000 lines of implementation code (excluding unit tests), consider splitting it further (return to Step 10).
+> **上下文溢出风险**：若任何单个 FR 估计超过 ~1,000 行实现代码（不含单元测试），请考虑进一步拆分（返回 Step 10）。
 >
-> [Enable single-round mode] / [Skip — proceed to deferral analysis]"
+> [启用单轮模式] / [跳过 — 进入延迟分析]"
 
-Process response:
-- **Enable** → record `Single-Round: Yes` in the SRS document metadata header. Step 11 (Scope Fit & Deferral) still executes but presents a confirmation summary instead of deferral recommendations — user has declared intent to implement all FRs in this round.
-- **Skip** → proceed to Step 11 normally (full deferral analysis).
+处理响应：
+- **启用** → 在 SRS 文档元数据头中记录 `Single-Round: Yes`。Step 11（范围适配与延迟）仍执行但呈现确认摘要而非延迟建议 — 用户已声明在本轮实现所有 FR。
+- **跳过** → 正常进入 Step 11（完整延迟分析）。
 
-**Mandatory for both Lite and Expert tracks.**
+**两条路线均为强制。**
 
-### Step 11: Scope Fit & Deferral
+### Step 11：范围适配与延迟
 
-Assess whether all requirements belong in the current round. Apply scope fit criteria (Priority, Dependency, Completeness, Risk, Scope budget). Present deferral recommendations to user. If deferrals approved, generate `docs/plans/YYYY-MM-DD-<topic>-deferred.md`.
+评估所有需求是否属于当前轮次。应用范围适配标准（优先级、依赖、完整性、风险、范围预算）。向用户呈现延迟建议。若延迟获批，生成 `docs/plans/YYYY-MM-DD-<topic>-deferred.md`。
 
-Rules:
-- Must-priority FRs are NEVER auto-deferred
-- Dependency integrity — if FR-X depends on FR-Y, both stay
-- Deferred backlog preserves EARS + acceptance criteria for increment pickup
+规则：
+- Must 优先级 FR 绝不自动延迟
+- 依赖完整性 — 若 FR-X 依赖 FR-Y，两者均保留
+- 延迟积压保留 EARS + 验收标准以供 increment 拾取
 
 ---
 
-## Step 13: SRS Compliance Review
+## Step 13：SRS 合规审查
 
-Dispatch a subagent to independently verify the SRS:
+分派 subagent 独立验证 SRS：
 
-> **DISPATCH** independent SubAgent — SRS compliance reviewer (ISO/IEC/IEEE 29148)
-> Prompt: Read reviewer instructions at `skills/long-task-requirements/prompts/srs-reviewer-prompt.md`
-> Input: Project context, full SRS draft, requirement ID list
-> Execute the review following the prompt exactly.
+> **DISPATCH** 独立 SubAgent — SRS 合规审查员（ISO/IEC/IEEE 29148）
+> Prompt：读取 `skills/long-task-requirements/prompts/srs-reviewer-prompt.md` 中的审查员指令
+> Input：项目上下文、完整 SRS 草稿、需求 ID 列表
+> 严格按 prompt 执行审查。
 
-**ALL checks must PASS to proceed:**
-- Group R (R1-R8): quality attributes
-- Group A (A1-A6): anti-patterns
-- Group C (C1-C4): completeness
-- Group S (S1-S4): structural compliance
-- Group D (D1-D4): diagrams
-- Group G (G1-G3): granularity (over-size detection)
-- Group Z (Z1-Z3): sizing (under-size detection)
-- Group P (P1-P4): problem alignment (Expert track; PASS-SKIPPED for Lite track)
+**所有检查必须 PASS 方可继续：**
+- Group R（R1-R8）：质量属性
+- Group A（A1-A6）：反模式
+- Group C（C1-C4）：完整性
+- Group S（S1-S4）：结构合规
+- Group D（D1-D4）：图表
+- Group G（G1-G3）：粒度（过大检测）
+- Group Z（Z1-Z3）：定量（过小检测）
+- Group P（P1-P4）：问题对齐（Expert 路线；Lite 路线为 PASS-SKIPPED）
 
-**On FAIL — two-track resolution:**
+**FAIL 时 — 双轨解决：**
 
-**Track 1: USER-INPUT items → ask immediately**
+**Track 1：USER-INPUT 项 → 立即询问**
 
-Use `AskUserQuestion` with a targeted questionnaire — do NOT dump the full review report.
+使用 `AskUserQuestion` 附带定向问卷 — 不要倾倒完整审查报告。
 
-**Track 2: LLM-FIXABLE items → auto-fix**
+**Track 2：LLM-FIXABLE 项 → 自动修复**
 
-Fix all LLM-FIXABLE items in parallel. Re-dispatch reviewer (Cycle 2).
+并行修复所有 LLM-FIXABLE 项。重新分派审查员（第 2 周期）。
 
-**Maximum: 2 re-dispatch cycles.** After Cycle 2 failure → escalate to user.
+**最多 2 次重新分派周期。** 第 2 周期后仍失败 → 上报用户。
 
-## Steps 14–16: Present, Save, Transition
+## Steps 14-16：呈现、保存、过渡
 
-### Step 14: Present & Approve SRS
+### Step 14：呈现并批准 SRS
 
-- **Lite track**: Present entire SRS in one block. Single approval step.
-- **Expert track (< 5 FR)**: Combined approval step.
-- **Expert track (≥ 5 FR)**: Section by section:
-  1. Purpose, Scope, Problem Statement & Exclusions
-  2. Glossary & User Personas
-  3. Functional Requirements
-  4. Constraints, Assumptions & Interfaces
+- **Lite 路线**：以一个块呈现整个 SRS。单次批准步骤。
+- **Expert 路线（< 5 FR）**：合并批准步骤。
+- **Expert 路线（≥ 5 FR）**：逐章节：
+  1. 目的、范围、问题陈述与排除
+  2. 术语表与用户画像
+  3. 功能需求
+  4. 约束、假设与接口
 
-Present each section. Wait for user feedback. Incorporate changes before moving to the next.
+呈现每个章节。等待用户反馈。整合变更后再进入下一个。
 
-### Step 15: Save SRS Document & Deferred Backlog
+### Step 15：保存 SRS 文档与延迟积压
 
-Save to `docs/plans/YYYY-MM-DD-<topic>-srs.md`.
+保存到 `docs/plans/YYYY-MM-DD-<topic>-srs.md`。
 
-Read the template found in Step 1:
-1. Preserve the template's heading structure
-2. Replace guidance text under each heading with approved SRS content
-3. Add metadata at top if not already present (`Date`, `Status`, `Standard`, `Template` path)
-4. For uncovered template sections: mark "[Not applicable]"
-5. For approved content without matching template section: append as "Additional Notes"
+读取 Step 1 中找到的模板：
+1. 保留模板的标题结构
+2. 用批准的 SRS 内容替换每个标题下的指导文本
+3. 若尚无元数据则在顶部添加（`Date`、`Status`、`Standard`、`Template` 路径）
+4. 对模板中未覆盖的章节：标记"[不适用]"
+5. 对无匹配模板章节的已批准内容：追加为"附加说明"
 
-If a deferred backlog was generated in Step 11, save alongside: `docs/plans/YYYY-MM-DD-<topic>-deferred.md`. Commit both.
+若 Step 11 中生成了延迟积压，一并保存：`docs/plans/YYYY-MM-DD-<topic>-deferred.md`。同时提交。
 
-### Step 16: Transition to Design
+### Step 16：过渡到设计
 
-1. Summarize key inputs for the next phase
-2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-design`
+1. 总结下一阶段的关键输入
+2. **必需子 SKILL：** 调用 `long-task:long-task-design`
 
 ---
 
-## Scaling Table
+## 规模表
 
-| Tier | Signals | Typical FR Count | Elicitation Depth | Approval |
-|---|---|---|---|---|
-| **Lite** | <3 Expert signals | 1–10 | L1-L3 (flat rounds, hidden requirements) | Combined single step |
-| **Expert (Small)** | ≥3 Expert signals | 5–15 | E1-E5 (1–2 walkthroughs, grouped hypothesis) | 2–3 sections |
-| **Expert (Medium)** | ≥3 Expert signals | 15–50 | E1-E5 (2–3 walkthroughs, per-FR hypothesis) | Per-section |
-| **Expert (Large)** | ≥3 Expert signals | 50–200+ | E1-E5 (3–5 walkthroughs, batched hypothesis) | Per-section |
+| 层级 | 信号 | 典型 FR 数 | 获取深度 | 批准 |
+|------|------|-----------|---------|------|
+| **Lite** | <3 Expert 信号 | 1-10 | L1-L3（扁平轮次、隐藏需求） | 合并单步 |
+| **Expert（小）** | ≥3 Expert 信号 | 5-15 | E1-E5（1-2 次走查、分组假设） | 2-3 个章节 |
+| **Expert（中）** | ≥3 Expert 信号 | 15-50 | E1-E5（2-3 次走查、逐 FR 假设） | 逐章节 |
+| **Expert（大）** | ≥3 Expert 信号 | 50-200+ | E1-E5（3-5 次走查、批量假设） | 逐章节 |
 
-## Red Flags
+## 危险信号
 
-| Rationalization | Correct Response |
-|---|---|
-| "This is too simple for an SRS" | Lite track IS the simple path. It produces a short SRS in 3–5 rounds. |
-| "The user already described what they want" | User descriptions are raw input; SRS adds structure, completeness, testability |
-| "I can figure out the requirements during design" | Requirements define WHAT; discovering them during HOW causes rework |
-| "The glossary is obvious" | Obvious to whom? Define every term the user and developer might interpret differently |
-| "I'll just start with the happy path" | Error cases, boundaries, and negatives must be captured NOW |
-| "This FR is fine as one big requirement" | Apply the 6 over-size heuristics (G1-G6) — hidden complexity creates oversized features |
-| "This FR is small but clear — leave it" | Apply the 4 under-size heuristics (S1-S4) — trivially small FRs waste full pipeline sessions on fixed overhead |
-| "All requirements belong in this round" | Scope fit assessment ensures focus — defer lower-priority items |
-| "Deferred items can just go in Out-of-Scope" | Out-of-Scope is prose; deferred backlog preserves EARS + acceptance criteria |
-| "This is complex but I'll use Lite to save time" | Complexity assessment exists for a reason. If ≥3 Expert signals fired, use Expert. |
-| "Skip the walkthrough, I have enough FRs" | Walkthroughs find cross-capability gaps that per-FR questioning misses |
-| "The hypothesis table has too many dimensions" | Select dimensions by FR type (5 rows for read-only, 7 for data entry). Not all 8. |
-| "Accessibility doesn't apply to this project" | Any user interface has accessibility implications. WCAG 2.1 AA is the baseline. |
-| "We'll handle GDPR/privacy in design" | Privacy requirements must be in the SRS. Data model and consent flows depend on them. |
-| "Expert path is too many rounds, skip some steps" | Every Expert step prevents downstream rework. If the project is truly simpler, it should be Lite. |
+| 合理化 | 正确回应 |
+|--------|---------|
+| "这太简单了，不需要 SRS" | Lite 路线就是简单路径。它在 3-5 轮内产出短 SRS。 |
+| "用户已经描述了他们想要什么" | 用户描述是原始输入；SRS 增加结构、完整性、可测试性 |
+| "我可以在设计时搞清楚需求" | 需求定义 WHAT；在 HOW 中发现导致返工 |
+| "术语表很明显" | 对谁明显？定义每个用户和开发者可能不同理解的术语 |
+| "我先从正常路径开始" | 错误用例、边界和负面情况必须现在捕获 |
+| "这个 FR 作为一个大需求没问题" | 应用 6 个过大启发式（G1-G6）— 隐藏复杂性创造过大功能 |
+| "这个 FR 小但清晰 — 不动它" | 应用 4 个过小启发式（S1-S4）— 过小 FR 浪费完整流水线会话在固定开销上 |
+| "所有需求都属于本轮" | 范围适配评估确保聚焦 — 延迟低优先级项 |
+| "延迟项放在排除范围就行" | 排除范围是散文；延迟积压保留 EARS + 验收标准 |
+| "这很复杂但我用 Lite 节省时间" | 复杂度评估有其原因。若 ≥3 Expert 信号触发，使用 Expert。 |
+| "跳过走查，我有足够 FR 了" | 走查发现逐 FR 提问遗漏的跨能力缺口 |
+| "假设表维度太多" | 按 FR 类型选择维度（只读 5 行，数据录入 7 行）。不是全部 8 个。 |
+| "无障碍不适用于此项目" | 任何用户界面都有无障碍影响。WCAG 2.1 AA 是基线。 |
+| "我们在设计时处理 GDPR/隐私" | 隐私需求必须在 SRS 中。数据模型和同意流程依赖它们。 |
+| "Expert 路径轮次太多，跳过一些步骤" | 每个 Expert 步骤都防止下游返工。若项目真更简单，它应是 Lite。 |
 
-## Integration
+## 集成
 
-**Called by:** using-long-task (when no SRS doc, no design doc, and no feature-list.json — single-repo only)
-**Chains to:** long-task-design (after SRS approval)
-**References:** `references/problem-framing.md`, `references/scenario-walkthrough.md`, `references/hypothesis-correction.md`, `references/alignment-validation.md`
-**Produces:** `docs/plans/YYYY-MM-DD-<topic>-srs.md`, optionally `docs/plans/YYYY-MM-DD-<topic>-deferred.md`
+**调用者：** using-long-task（当无 SRS、无设计文档、无 feature-list.json — 仅单仓库）
+**链接到：** long-task-design（SRS 批准后）
+**引用：** `references/problem-framing.md`、`references/scenario-walkthrough.md`、`references/hypothesis-correction.md`、`references/alignment-validation.md`
+**产出：** `docs/plans/YYYY-MM-DD-<topic>-srs.md`，可选 `docs/plans/YYYY-MM-DD-<topic>-deferred.md`

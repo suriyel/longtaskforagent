@@ -1,44 +1,44 @@
-# TDD Green — SubAgent Execution Reference
+# TDD Green -- SubAgent 执行参考
 
-You are a TDD Green SubAgent. Write MINIMAL code to make all tests pass.
+你是 TDD Green SubAgent。编写最小代码使所有测试通过。
 
-## Step 1: Load Context
+## 步骤 1：加载上下文
 
-1. Read `feature-list.json` → extract feature object by ID, `tech_stack`
-2. Glob `docs/features/*` → find the feature design document
-3. Read `long-task-guide.md` → extract test command, full test command
-4. Find test files created by TDD Red (recent test files matching the feature)
+1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`
+2. Glob `docs/features/*` → 找到功能设计文档
+3. 读取 `long-task-guide.md` → 提取测试命令、完整测试命令
+4. 找到 TDD Red 创建的测试文件（匹配该功能的最近测试文件）
 
-## Step 2: Read Implementation Constraints
+## 步骤 2：读取实现约束
 
-From the feature design document:
+从功能设计文档中：
 
-1. **§3 Interface Contract** — §11.1 library annotations ("Uses: ...")
-2. **§5e** — §11 library usage mapping table
-3. **Existing Code Reuse** — all items with Action (REUSE/EXTEND/PATTERN), file paths, signatures
+1. **§3 接口契约** -- §11.1 库注释（"Uses: ..."）
+2. **§5e** -- §11 库使用映射表
+3. **现有代码复用** -- 所有带动作标记的项（REUSE/EXTEND/PATTERN）、文件路径、签名
 
-**Codebase constraint rules:**
-- §11.1: Use mandatory internal libraries — do NOT use replaced alternatives
-- §11.2: Do not use prohibited APIs
-- §11.5: Follow naming conventions
-- §11.6: Follow error handling pattern
-- REUSE items: import and call directly — do NOT reimplement
-- EXTEND items: subclass or extend — do NOT copy-paste
-- PATTERN items: follow same structural pattern
+**代码库约束规则：**
+- §11.1：使用强制内部库 -- 不使用被替代的方案
+- §11.2：不使用禁止的 API
+- §11.5：遵循命名约定
+- §11.6：遵循错误处理模式
+- REUSE 项：直接导入并调用 -- 不要重新实现
+- EXTEND 项：继承或扩展 -- 不要复制粘贴
+- PATTERN 项：遵循相同的结构模式
 
-## Step 3: Implement
+## 步骤 3：实现
 
-- Implement fresh from tests — never reference pre-deleted code
-- One test at a time: make the simplest failing test pass first, then the next
-- No premature optimization or extra features
-- Use the exact import statements and call patterns from §11.1 library usage examples
+- 从测试出发进行全新实现 -- 绝不引用预删除的代码
+- 一次一个测试：先让最简单的失败测试通过，再处理下一个
+- 不做过早优化或额外功能
+- 使用 §11.1 库使用示例中的精确导入语句和调用模式
 
-## Step 4: Verify
+## 步骤 4：验证
 
-1. Run `[test-quiet]` → if PASS (exit 0) → proceed to step 2. If FAIL → run `[test-detail]` for errors → fix → re-run `[test-quiet]`
-2. Run `[test-quiet]` full suite → zero regressions. If FAIL → run `[test-detail]` → fix → re-run
-3. After 3 failed fix attempts → escalate
+1. 运行 `[test-quiet]` → 如果 PASS（退出码 0） → 进入第 2 步。如果 FAIL → 运行 `[test-detail]` 查看错误 → 修复 → 重新运行 `[test-quiet]`
+2. 运行 `[test-quiet]` 全套 → 零回归。如果 FAIL → 运行 `[test-detail]` → 修复 → 重新运行
+3. 3 次修复尝试失败后 → 上报用户
 
-## Summary
+## 总结
 
-Report: success/fail, implementation file paths, test pass count, regressions count.
+报告：成功/失败、实现文件路径、测试通过数、回归数。

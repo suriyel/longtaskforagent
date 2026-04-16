@@ -1,71 +1,71 @@
 ---
 name: long-task-codebase-scanner
-description: "Use before requirements or design in brownfield projects (no docs/rules/) — scan codebase conventions (coding style, constraints, build patterns, commit format)"
+description: "在存量项目（无 docs/rules/）中于需求或设计阶段之前使用 -- 扫描代码库约定（编码风格、约束条件、构建模式、提交格式）"
 ---
 
-**LANGUAGE RULE**: You MUST respond in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Code identifiers and JSON field names remain in English.
+**语言规则**：你必须使用简体中文回复。所有生成的文档、报告和面向用户的输出必须使用中文编写。代码标识符和 JSON 字段名保持英文。
 
-# Codebase Convention Scanner
+# 代码库约定扫描器
 
-Scan an existing project's source code to extract and document established coding conventions, library constraints, build patterns, and commit standards. Output enables downstream skills to produce code that conforms to the project's existing patterns.
+扫描已有项目的源代码，提取并记录已建立的编码约定、库约束、构建模式和提交标准。输出使下游 skill 能够生成符合项目既有模式的代码。
 
-**Your bias should be toward discovering constraints.** Especially 2nd-party (internal) library mandates that replace standard library or 3rd-party APIs — missing these causes non-compliant code downstream.
+**你的倾向应偏向于发现约束条件。** 尤其是替代标准库或第三方 API 的二方（内部）库强制要求 -- 遗漏这些会导致下游代码不合规。
 
-## Invocation Modes
+## 调用模式
 
-### Pipeline Mode (default)
+### 流水线模式（默认）
 
-Invoked by the `using-long-task` router when detection rule 5b or 7b triggers (brownfield project, no existing `docs/rules/`). Receives `--next-skill` argument specifying the downstream skill to chain to:
+当检测规则 5b 或 7b 触发时（存量项目，无已有 `docs/rules/`），由 `using-long-task` 路由器调用。接收 `--next-skill` 参数，指定要链接的下游 skill：
 
-- Rule 7b (no SRS): `--next-skill long-task-requirements`
-- Rule 5b (SRS exists, no design): `--next-skill long-task-design`
+- 规则 7b（无 SRS）：`--next-skill long-task-requirements`
+- 规则 5b（有 SRS，无设计文档）：`--next-skill long-task-design`
 
-After scanning, the skill chains to the specified next skill.
+扫描完成后，skill 链接到指定的下一个 skill。
 
-### Standalone Mode
+### 独立模式
 
-User invokes directly (e.g., to re-scan after codebase changes). No `--next-skill` argument — the skill performs the scan and stops without chaining.
+用户直接调用（例如代码库变更后重新扫描）。无 `--next-skill` 参数 -- skill 执行扫描后停止，不进行链接。
 
-## Design Principles
+## 设计原则
 
-- **Read-only** — do NOT modify any source files, configs, or git state (except creating `docs/rules/`)
-- **Observe, don't prescribe** — document what the project currently does, not what it should do
-- **Evidence-based** — every convention claim must cite concrete `file:line` examples
-- **Handle mixed conventions** — if the project is inconsistent, report all patterns with their frequency %
-- **Respect .gitignore** — do not scan ignored directories
-- **Output budget** — each output file MUST be ≤ 200 lines (focus on LLM-consumable summary tables, not exhaustive listings)
+- **只读** -- 不修改任何源文件、配置或 git 状态（仅创建 `docs/rules/`）
+- **观察而非规定** -- 记录项目当前的做法，而非应该怎么做
+- **基于证据** -- 每个约定声明必须引用具体的 `file:line` 示例
+- **处理混合约定** -- 如果项目不一致，报告所有模式及其频率百分比
+- **遵守 .gitignore** -- 不扫描被忽略的目录
+- **输出预算** -- 每个输出文件必须 ≤ 200 行（聚焦于 LLM 可消费的摘要表，而非穷举列表）
 
-## Process
+## 流程
 
-### Step 1: Create Output Directory
+### 步骤 1：创建输出目录
 
 ```bash
 mkdir -p docs/rules/
 ```
 
-### Step 2: Detect Language, Framework & Scan Depth
+### 步骤 2：检测语言、框架与扫描深度
 
-Analyze file extensions and dependency manifests (`package.json`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `go.mod`, `*.csproj`). Determine scan depth:
+分析文件扩展名和依赖清单（`package.json`、`requirements.txt`、`pom.xml`、`Cargo.toml`、`go.mod`、`*.csproj`）。确定扫描深度：
 
-| LOC Range | Depth | Files per Category |
+| 代码行数范围 | 深度 | 每类别文件数 |
 |-----------|-------|--------------------|
-| < 1,000 | Lightweight | Top 20 (most recently modified) |
-| 1,000–10,000 | Standard | Top 50 (recent + diverse directories) |
-| > 10,000 | Deep | Top 100 + all config files (full coverage) |
+| < 1,000 | 轻量 | 前 20 个（最近修改） |
+| 1,000–10,000 | 标准 | 前 50 个（最近 + 多样化目录） |
+| > 10,000 | 深度 | 前 100 个 + 所有配置文件（全覆盖） |
 
-### Step 3: Sample Selection
+### 步骤 3：样本选取
 
-Select a representative sample of source files based on scan depth (Step 2). Include files from different directories to capture organizational patterns. Include both implementation and test files.
+根据扫描深度（步骤 2）选取有代表性的源文件样本。包含来自不同目录的文件以捕获组织模式。同时包含实现文件和测试文件。
 
-Pre-filter: exclude `.git/`, `node_modules/`, `venv/`, `dist/`, `build/` directories.
+预过滤：排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/` 目录。
 
-### Step 4: Coding Style Analysis → `docs/rules/coding-style.md`
+### 步骤 4：编码风格分析 → `docs/rules/coding-style.md`
 
-Analyze and document:
+分析并记录：
 
-**Naming Conventions** — for each category, detect the dominant pattern:
+**命名约定** -- 对每个类别，检测主导模式：
 
-| Category | What to Detect |
+| 类别 | 检测内容 |
 |----------|---------------|
 | Variables | camelCase / snake_case / PascalCase / SCREAMING_SNAKE |
 | Functions/Methods | camelCase / snake_case / PascalCase |
@@ -74,48 +74,48 @@ Analyze and document:
 | Files | kebab-case / snake_case / camelCase / PascalCase |
 | Directories | kebab-case / snake_case / singular / plural |
 | Private members | underscore prefix / no prefix / # prefix |
-| Boolean names | is/has/should prefix patterns |
+| Boolean names | is/has/should 前缀模式 |
 
-For each: report dominant pattern, consistency % (how many files follow it), 2-3 concrete examples.
+对每项：报告主导模式、一致性百分比（多少文件遵循该模式）、2-3 个具体示例。
 
-**Formatting** — detect:
-- Indentation: spaces vs tabs, indent width (2/4/8)
-- Line length: P95 measured across sampled files
-- Bracket style: same-line (K&R) vs next-line (Allman)
-- Trailing commas, semicolons, quote style (JS/TS/Python specific)
-- Blank lines between functions/methods
+**格式化** -- 检测：
+- 缩进：空格 vs 制表符，缩进宽度（2/4/8）
+- 行长度：在采样文件中测量的 P95
+- 花括号风格：同行（K&R）vs 换行（Allman）
+- 尾逗号、分号、引号风格（JS/TS/Python 特定）
+- 函数/方法之间的空行
 
-**Formatter Configuration** — check for config files: `.prettierrc`, `.editorconfig`, `.clang-format`, `pyproject.toml [tool.black]`, `rustfmt.toml`, `biome.json`. If found, reference the file path — do NOT open or parse the content (the tool reads its own config).
+**格式化器配置** -- 检查配置文件：`.prettierrc`、`.editorconfig`、`.clang-format`、`pyproject.toml [tool.black]`、`rustfmt.toml`、`biome.json`。如发现，引用文件路径 -- 不打开或解析内容（工具在运行时读取自身配置）。
 
-**File & Directory Organization** — document:
-- Top-level directory structure with purpose annotations
-- Code organization pattern: by-feature / by-layer / by-type / hybrid
-- Test file location: co-located vs separate `tests/` directory
-- Test file naming: `test_*.py` / `*.test.ts` / `*_test.go` / `*Test.java`
+**文件与目录组织** -- 记录：
+- 顶层目录结构及用途标注
+- 代码组织模式：按功能 / 按层 / 按类型 / 混合
+- 测试文件位置：共存 vs 独立 `tests/` 目录
+- 测试文件命名：`test_*.py` / `*.test.ts` / `*_test.go` / `*Test.java`
 
-### Step 5: Coding Constraints Analysis → `docs/rules/coding-constraints.md`
+### 步骤 5：编码约束分析 → `docs/rules/coding-constraints.md`
 
-This is the **most critical** output. Focus on constraints that would cause non-compliant code if missed.
+这是**最关键**的输出。聚焦于遗漏后会导致不合规代码的约束条件。
 
-**2nd-Party (Internal) Library Detection** — scan import/require statements to identify:
-- Internal libraries that wrap or replace standard library APIs (e.g., `@company/http` replacing `fetch`; `internal.logger` replacing `console.log`; custom ORM replacing direct DB queries)
-- Detection heuristic: imports from non-public-registry packages (scoped packages like `@company/*`, relative workspace imports, internal module paths that don't map to known npm/PyPI packages)
-- For each found: document Domain, Internal Library name, what it Replaces, Import Pattern, usage frequency
+**二方（内部）库检测** -- 扫描 import/require 语句以识别：
+- 包装或替代标准库 API 的内部库（例如 `@company/http` 替代 `fetch`；`internal.logger` 替代 `console.log`；自定义 ORM 替代直接数据库查询）
+- 检测启发式：来自非公共注册表包的导入（作用域包如 `@company/*`、相对工作区导入、无法映射到已知 npm/PyPI 包的内部模块路径）
+- 对每个发现：记录领域、内部库名称、它替代了什么、导入模式、使用频率
 
-**3rd-Party Library Constraints** — analyze dependency manifests:
-- Version pinning strategy: exact (`==2.31.0`) vs range (`^7.4`) vs unpinned
-- Identify the chosen library for common domains (HTTP, logging, testing, serialization, date/time, validation)
-- Flag any deprecated libraries still in use
+**第三方库约束** -- 分析依赖清单：
+- 版本锁定策略：精确（`==2.31.0`）vs 范围（`^7.4`）vs 未锁定
+- 识别常见领域（HTTP、日志、测试、序列化、日期/时间、校验）所选择的库
+- 标记仍在使用的已废弃库
 
-**Prohibited APIs / Libraries** — detect patterns suggesting certain APIs are banned:
-- Standard library APIs that are never used despite being the natural choice (e.g., no `console.log` anywhere, only `logger.info`)
-- 3rd-party libraries present in lock files but not imported (replaced by internal alternatives)
-- Lint rules that ban specific APIs (detected via config file existence — see Static Analysis Tools below)
+**禁止的 API / 库** -- 检测暗示某些 API 被禁用的模式：
+- 从未使用但本应是自然选择的标准库 API（例如任何地方都没有 `console.log`，只有 `logger.info`）
+- 存在于锁文件但未被导入的第三方库（被内部替代方案取代）
+- 禁止特定 API 的 lint 规则（通过配置文件存在来检测 -- 见下方静态分析工具）
 
-**Static Analysis Tools** — detect config files for linters and static analyzers. For each found:
-- Record: Tool name, Config file path, Run command (inferred from build scripts or standard invocation)
-- **Do NOT open or read the config file contents** — the tool reads its own config at runtime
-- Common configs to detect:
+**静态分析工具** -- 检测 linter 和静态分析器的配置文件。对每个发现：
+- 记录：工具名称、配置文件路径、运行命令（从构建脚本或标准调用推断）
+- **不打开或读取配置文件内容** -- 工具在运行时读取自身配置
+- 需检测的常见配置：
 
 | Tool | Config Files | Typical Run Command |
 |------|-------------|-------------------|
@@ -132,65 +132,65 @@ This is the **most critical** output. Focus on constraints that would cause non-
 | SwiftLint | `.swiftlint.yml` | `swiftlint` |
 | ktlint | `.editorconfig` | `ktlint` |
 
-**Error Handling Pattern** — identify:
-- Dominant pattern: try/catch, Result/Either types, error codes, panic/recover
-- Custom Error/Exception classes (names, hierarchy)
-- Centralized error handling (middleware, global handler)
-- Error logging patterns
+**错误处理模式** -- 识别：
+- 主导模式：try/catch、Result/Either 类型、错误码、panic/recover
+- 自定义 Error/Exception 类（名称、层次结构）
+- 集中式错误处理（中间件、全局处理器）
+- 错误日志模式
 
-**Import Organization** — detect grouping order:
-- stdlib → 2nd-party → 3rd-party → local (or other ordering)
-- Absolute vs relative imports
-- Blank line separators between groups
+**Import 组织** -- 检测分组顺序：
+- 标准库 → 二方 → 三方 → 本地（或其他排序）
+- 绝对导入 vs 相对导入
+- 组间空行分隔
 
-**Comment/Documentation Style** — detect:
-- Docstring format: JSDoc, Google-style, NumPy-style, Javadoc, Rustdoc
-- Usage frequency: what % of public functions have docs
-- Position: above declaration, inline
+**注释/文档风格** -- 检测：
+- 文档字符串格式：JSDoc、Google 风格、NumPy 风格、Javadoc、Rustdoc
+- 使用频率：公共函数中有多少百分比有文档
+- 位置：声明上方、内联
 
-**Type Annotations** — detect:
-- Strict vs optional vs none
-- TypeScript: `strict`, `strictNullChecks`, etc. (from tsconfig presence)
-- Python: type hints usage frequency
+**类型注解** -- 检测：
+- 严格 vs 可选 vs 无
+- TypeScript：`strict`、`strictNullChecks` 等（通过 tsconfig 存在判断）
+- Python：类型提示使用频率
 
-**Testing Conventions** — detect:
-- Test framework (from imports AND config files — see Testing & Quality Tools in Step 6)
-- Fixture/setup patterns (shared fixtures, setup/teardown, factory functions)
-- Assertion style (assert, expect, should) — with consistency %
-- Mock framework (from imports: unittest.mock, Mockito, jest.fn, vi.fn, gmock)
-- Test grouping (describe/it, test classes, flat functions)
-- Test naming convention: `test_*.py` / `*.test.ts` / `*Test.java` / `*_test.go`
-- Test directory structure: co-located vs separate `tests/` / `test/` / `__tests__` / `src/test/java/`
+**测试约定** -- 检测：
+- 测试框架（通过 import 和配置文件 -- 见步骤 6 的测试与质量工具）
+- Fixture/setup 模式（共享 fixture、setup/teardown、工厂函数）
+- 断言风格（assert、expect、should）-- 附一致性百分比
+- Mock 框架（通过 import：unittest.mock、Mockito、jest.fn、vi.fn、gmock）
+- 测试分组（describe/it、测试类、平铺函数）
+- 测试命名约定：`test_*.py` / `*.test.ts` / `*Test.java` / `*_test.go`
+- 测试目录结构：共存 vs 独立 `tests/` / `test/` / `__tests__` / `src/test/java/`
 
-### Step 6: Build & Compilation Analysis → `docs/rules/build-and-compilation.md`
+### 步骤 6：构建与编译分析 → `docs/rules/build-and-compilation.md`
 
-**Build System** — identify:
-- Build tool: Makefile, CMake, Gradle, Maven, npm/yarn/pnpm scripts, Cargo, go build, Bazel
-- Key commands: build, test, lint, format, clean (extract from scripts/Makefile/package.json)
-- Compilation flags and targets
+**构建系统** -- 识别：
+- 构建工具：Makefile、CMake、Gradle、Maven、npm/yarn/pnpm scripts、Cargo、go build、Bazel
+- 关键命令：build、test、lint、format、clean（从 scripts/Makefile/package.json 提取）
+- 编译标志和目标
 
-**Packaging** — detect:
-- Container: Dockerfile, docker-compose.yml
-- Package publishing: setup.py, pyproject.toml, npm publish config, Cargo.toml
-- Distribution format
+**打包** -- 检测：
+- 容器：Dockerfile、docker-compose.yml
+- 包发布：setup.py、pyproject.toml、npm 发布配置、Cargo.toml
+- 分发格式
 
-**Pre-commit Hooks** — detect:
-- `.pre-commit-config.yaml`, `.husky/`, `lefthook.yml`, `.githooks/`
-- List configured hooks
+**Pre-commit 钩子** -- 检测：
+- `.pre-commit-config.yaml`、`.husky/`、`lefthook.yml`、`.githooks/`
+- 列出已配置的钩子
 
-**Environment Management** — detect:
-- Dockerfile, devcontainer.json, nix, `.tool-versions`, `.node-version`, `.python-version`
-- Package manager: npm/yarn/pnpm/bun (JS); pip/poetry/pipenv/uv (Python); go mod; cargo
+**环境管理** -- 检测：
+- Dockerfile、devcontainer.json、nix、`.tool-versions`、`.node-version`、`.python-version`
+- 包管理器：npm/yarn/pnpm/bun（JS）；pip/poetry/pipenv/uv（Python）；go mod；cargo
 
-**Code Generation** — detect directories/configs for:
-- protobuf, OpenAPI/Swagger, GraphQL codegen, database migration generators
-- **Mark generated directories** — downstream skills should exclude these from convention checks
+**代码生成** -- 检测以下目录/配置：
+- protobuf、OpenAPI/Swagger、GraphQL codegen、数据库迁移生成器
+- **标记生成目录** -- 下游 skill 应将这些排除在约定检查之外
 
-**Testing & Quality Tools** — detect config files for test frameworks, coverage tools, and mutation testing tools. For each found:
-- Record: Tool name, Category (test-framework / coverage / mutation), Config file path, Run command (inferred from build scripts or standard invocation)
-- **Do NOT open or read the config file contents** — the tool reads its own config at runtime
-- Additionally detect test runner commands from build scripts (`package.json "scripts.test"`, Makefile `test:` target, `pom.xml` surefire-plugin, etc.)
-- Common configs to detect:
+**测试与质量工具** -- 检测测试框架、覆盖率工具和变异测试工具的配置文件。对每个发现：
+- 记录：工具名称、类别（test-framework / coverage / mutation）、配置文件路径、运行命令（从构建脚本或标准调用推断）
+- **不打开或读取配置文件内容** -- 工具在运行时读取自身配置
+- 另外从构建脚本中检测测试运行命令（`package.json "scripts.test"`、Makefile `test:` 目标、`pom.xml` surefire-plugin 等）
+- 需检测的常见配置：
 
 | Category | Tool | Config Files | Typical Run Command |
 |----------|------|-------------|---------------------|
@@ -209,7 +209,7 @@ This is the **most critical** output. Focus on constraints that would cause non-
 | Mutation | Stryker | `stryker.conf.json`, `stryker.conf.js`, `stryker.conf.mjs` | `npx stryker run` |
 | Mutation | Mull | `mull.yml` | `mull-runner ./test-binary` |
 
-**Test Runner Commands** — extract from build scripts:
+**测试运行命令** -- 从构建脚本中提取：
 
 | Build System | Where to Look | Example |
 |-------------|--------------|---------|
@@ -219,9 +219,9 @@ This is the **most critical** output. Focus on constraints that would cause non-
 | Make | `Makefile` → `test:` target | `make test` |
 | CMake/CTest | `CMakeLists.txt` → `add_test()` / `enable_testing()` | `ctest --test-dir build` |
 
-### Step 7: Generate Index → `docs/rules/README.md`
+### 步骤 7：生成索引 → `docs/rules/README.md`
 
-Create an index file linking all 3 documents with a scan summary:
+创建索引文件，链接所有 3 个文档并附扫描摘要：
 
 ```markdown
 # Codebase Convention Rules
@@ -250,26 +250,26 @@ Create an index file linking all 3 documents with a scan summary:
 - **Build System**: [name]
 ```
 
-### Step 8: Validate Results
+### 步骤 8：验证结果
 
-Verify ≥1 output file exists in `docs/rules/`. If the scan encountered issues and could not produce all files, write minimal stubs for missing files (non-blocking — scan is best-effort).
+验证 `docs/rules/` 中至少存在 1 个输出文件。如果扫描遇到问题且无法生成所有文件，为缺失文件写入最小存根（非阻塞 -- 扫描尽力而为）。
 
-### Step 10: User Review
+### 步骤 10：用户评审
 
-Present findings via `AskUserQuestion`:
-- Concise summary of key findings (especially 2nd/3rd-party constraints and prohibited APIs)
-- Ask user to confirm or edit `docs/rules/` files before continuing
+通过 `AskUserQuestion` 展示发现：
+- 关键发现的简明摘要（尤其是二方/三方约束和禁止的 API）
+- 请用户确认或编辑 `docs/rules/` 文件后再继续
 
-### Step 11: Chain to Next Skill (Pipeline Mode Only)
+### 步骤 11：链接到下一个 Skill（仅流水线模式）
 
-If `--next-skill` was provided:
+如果提供了 `--next-skill`：
 - `Skill(skill="long-task:<next_skill>")`
 
-If no `--next-skill` (standalone mode): stop here.
+如果没有 `--next-skill`（独立模式）：到此停止。
 
-## Output File Format
+## 输出文件格式
 
-Each output file follows this structure:
+每个输出文件遵循以下结构：
 
 ```markdown
 # [Title]
@@ -289,26 +289,26 @@ Each output file follows this structure:
 *Scanner: long-task-codebase-scanner | Depth: [level] | Files sampled: N*
 ```
 
-## Multi-Language / Monorepo Handling
+## 多语言 / Monorepo 处理
 
-- **Multiple languages**: describe conventions per language in separate subsections
-- **Monorepo**: identify sub-package boundaries; note convention differences across modules
-- **Generated code directories** (protobuf output, codegen, etc.): mark as excluded — do not use as convention source; list in build-and-compilation.md for downstream exclusion
+- **多语言**：在单独子节中描述每种语言的约定
+- **Monorepo**：识别子包边界；记录跨模块的约定差异
+- **生成代码目录**（protobuf 输出、codegen 等）：标记为排除 -- 不作为约定来源使用；在 build-and-compilation.md 中列出以供下游排除
 
-## Rules
+## 规则
 
-- **Read-only** — do NOT modify any source files, configs, or git history
-- **No config content reading for static analysis tools** — only detect tool name + config path + run command. The tool reads its own config at runtime.
-- **Evidence-based** — every convention claim needs file:line examples
-- **Output budget ≤ 200 lines per file** — use summary tables, not exhaustive listings
-- **Scan efficiency** — use Glob for file discovery, Grep for pattern matching, Read for file inspection, Bash for git commands
-- **Respect .gitignore** — do not scan ignored directories
-- **No judgment** — document patterns as-is, even if they seem inconsistent or outdated
+- **只读** -- 不修改任何源文件、配置或 git 历史
+- **不读取静态分析工具的配置内容** -- 仅检测工具名称 + 配置路径 + 运行命令。工具在运行时读取自身配置。
+- **基于证据** -- 每个约定声明需要 file:line 示例
+- **输出预算 ≤ 200 行/文件** -- 使用摘要表，而非穷举列表
+- **扫描效率** -- 使用 Glob 发现文件、Grep 匹配模式、Read 检查文件、Bash 执行 git 命令
+- **遵守 .gitignore** -- 不扫描被忽略的目录
+- **不做评判** -- 按原样记录模式，即使它们看起来不一致或已过时
 
-## Integration
+## 集成
 
-- **Called by**: `using-long-task` router (when rule 5b or 7b triggers — brownfield, no `docs/rules/`)
-- **Reads**: Source files, dependency manifests, git history
-- **Chains to**: `long-task-requirements` (rule 7b) or `long-task-design` (rule 5b) — in pipeline mode; nothing in standalone mode
-- **Produces**: `docs/rules/coding-style.md`, `docs/rules/coding-constraints.md`, `docs/rules/build-and-compilation.md`, `docs/rules/README.md`
-- **Downstream consumers**: Design skill merges rules into Design §11; Init skill cross-checks tech_stack against build-and-compilation.md Testing & Quality Tools table; Worker skill references Design §11 during TDD
+- **被调用方**：`using-long-task` 路由器（当规则 5b 或 7b 触发时 -- 存量项目，无 `docs/rules/`）
+- **读取**：源文件、依赖清单、git 历史
+- **链接到**：`long-task-requirements`（规则 7b）或 `long-task-design`（规则 5b）-- 流水线模式；独立模式下无链接
+- **产出**：`docs/rules/coding-style.md`、`docs/rules/coding-constraints.md`、`docs/rules/build-and-compilation.md`、`docs/rules/README.md`
+- **下游消费者**：Design skill 将规则合并到设计 §11；Init skill 将 tech_stack 与 build-and-compilation.md 测试与质量工具表交叉检查；Worker skill 在 TDD 期间引用设计 §11

@@ -1,50 +1,50 @@
-# TDD Refactor — SubAgent Execution Reference
+# TDD 重构 -- SubAgent 执行参考
 
-You are a TDD Refactor SubAgent. Clean up code, pass static analysis, verify §11 compliance.
+你是一个 TDD 重构 SubAgent。负责清理代码、通过静态分析、验证 S11 合规性。
 
-## Step 1: Load Context
+## 步骤 1：加载上下文
 
-1. Read `feature-list.json` → extract feature object by ID, `tech_stack`
-2. Glob `docs/plans/*-design.md` → read §11 (Codebase Conventions & Constraints)
-3. Glob `docs/features/*` → find the feature design document, read "Existing Code Reuse" section
-4. Read `long-task-guide.md` → extract test command
+1. 读取 `feature-list.json` -> 按 ID 提取功能对象及 `tech_stack`
+2. Glob `docs/plans/*-design.md` -> 读取 S11（代码库约定与约束）
+3. Glob `docs/features/*` -> 找到功能设计文档，读取"现有代码复用"章节
+4. 读取 `long-task-guide.md` -> 提取测试命令
 
-## Step 2: Refactor
+## 步骤 2：重构
 
-- Extract duplication, improve naming, simplify
-- Run `[test-quiet]` after EVERY change; on FAIL run `[test-detail]` for errors
-- No new functionality in this step
+- 提取重复代码、改善命名、简化逻辑
+- 每次修改后运行 `[test-quiet]`；失败时运行 `[test-detail]` 查看错误信息
+- 本步骤不得添加新功能
 
-## Step 3: Static Analysis Gate
+## 步骤 3：静态分析质量门禁
 
-If Design §11.4 lists static analysis tools (e.g., `npx eslint .`, `mvn checkstyle:check`, `mypy src/`):
+如果设计文档 S11.4 列出了静态分析工具（如 `npx eslint .`、`mvn checkstyle:check`、`mypy src/`）：
 
-1. Run each tool's command
-2. Fix ALL violations — violations are **blocking**
-3. Re-run tests after fixes
-4. Tools read their own config; do not parse configs manually
+1. 运行每个工具的命令
+2. 修复所有违规项 -- 违规项为**阻塞性问题**
+3. 修复后重新运行测试
+4. 工具自行读取配置；不要手动解析配置文件
 
-## Step 4: §11 Compliance Check
+## 步骤 4：S11 合规检查
 
-**a) Dependency versions (D3):**
-If feature design §3 or §5 specifies third-party library versions, spot-check that `requirements.txt` / `package.json` / `pom.xml` matches. Flag mismatches.
+**a) 依赖版本 (D3)：**
+如果功能设计 S3 或 S5 指定了第三方库版本，抽查 `requirements.txt` / `package.json` / `pom.xml` 是否匹配。标记不匹配项。
 
-**b) §11.1/§11.2 compliance:**
-1. Run `git diff --name-only` to identify feature's new/modified files
-2. Read Design §11.1: for each non-empty "Replaces" entry, grep new/modified source files for the replaced import pattern. Match → violation → fix.
-3. Read Design §11.2: for each non-empty "Prohibited" entry, grep new/modified source files. Match → violation → fix.
+**b) S11.1/S11.2 合规：**
+1. 运行 `git diff --name-only` 识别功能的新增/修改文件
+2. 读取设计文档 S11.1：对每个非空的"替换"条目，grep 新增/修改的源文件查找被替换的导入模式。匹配即违规，必须修复。
+3. 读取设计文档 S11.2：对每个非空的"禁止"条目，grep 新增/修改的源文件。匹配即违规，必须修复。
 
-**c) Existing code reuse verification:**
-1. Read feature design "Existing Code Reuse" section
-2. For each REUSE item: grep implementation files for the expected import
-3. If REUSE item NOT imported but equivalent functionality reimplemented → violation → replace with REUSE import
+**c) 现有代码复用验证：**
+1. 读取功能设计的"现有代码复用"章节
+2. 对每个 REUSE 项：grep 实现文件查找预期的导入
+3. 如果 REUSE 项未导入但等效功能被重新实现 -> 违规 -> 替换为 REUSE 导入
 
-On any violation: fix, re-run tests to confirm no regression, re-check.
+发现任何违规时：修复，重新运行测试以确认无回归，重新检查。
 
-## Step 5: Final Verify
+## 步骤 5：最终验证
 
-Run `[test-quiet]` — all tests pass, zero static analysis violations, §11 compliance clean.
+运行 `[test-quiet]` -- 所有测试通过，静态分析零违规，S11 合规检查通过。
 
-## Summary
+## 总结
 
-Report: success/fail, refactorings count, static analysis violations fixed, §11 compliance result (D3, §11.1/§11.2, Reuse).
+报告：成功/失败、重构数量、修复的静态分析违规数量、S11 合规结果（D3、S11.1/S11.2、复用）。

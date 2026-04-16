@@ -1,598 +1,598 @@
 ---
 name: long-task-multi-repo
-description: "Use when repos-manifest.json exists - handles multi-repo exploration, global SRS elicitation, per-repo SRS split, and dependency distribution. Fully independent from single-repo pipeline."
+description: "当 repos-manifest.json 存在时使用 - 处理多仓库探索、全局 SRS 需求获取、各仓库 SRS 拆分及依赖分发。完全独立于单仓库流水线。"
 ---
 
-**LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
+**语言规则**：你必须用中文（简体）回复用户。所有生成的文档、报告和面向用户的输出必须用中文撰写。Skill 名称、代码标识符和 JSON 字段名保持英文。
 
-# Multi-Repo Requirements Elicitation, SRS Split & Dependency Distribution
+# 多仓库需求获取、SRS 拆分与依赖分发
 
-Turn raw ideas into a structured, high-quality Software Requirements Specification (SRS) for a multi-repo project. Explores all repos, elicits global requirements through systematic questioning (ISO/IEC/IEEE 29148 + EARS), splits the approved SRS into per-repo documents, and distributes all dependency files so each repo can work independently.
+将原始想法转化为结构化、高质量的软件需求规格说明书（SRS），适用于多仓库项目。探索所有仓库，通过系统化提问获取全局需求（ISO/IEC/IEEE 29148 + EARS），将批准的 SRS 拆分为各仓库文档，并分发所有依赖文件，使每个仓库可独立工作。
 
-Adapts depth automatically: **Lite track** for clear-scope projects (3–5 rounds), **Expert track** for complex domains (10–20 rounds). Both produce the same SRS template output.
+根据项目复杂度自动调整深度：**精简模式**适用于范围清晰的项目（3-5 轮），**专家模式**适用于复杂领域（10-20 轮）。两种模式产出相同的 SRS 模板输出。
 
 <HARD-GATE>
-Do NOT invoke any design skill, implementation skill, write any code, scaffold any project, or take any design/implementation action until you have completed the full pipeline: global SRS approved → split → dependencies distributed → handoff summary presented.
+在完成完整流水线（全局 SRS 批准 → 拆分 → 依赖分发 → 交接摘要展示）之前，不得调用任何设计 skill、实现 skill、编写任何代码、搭建任何项目骨架，也不得采取任何设计/实现行为。
 </HARD-GATE>
 
-## Anti-Pattern: "This Is Too Simple To Need an SRS"
+## 反模式："这个项目太简单，不需要 SRS"
 
-Every project goes through this process. "Simple" multi-repo projects are where unexamined cross-repo assumptions cause the most wasted work. The SRS can be short, but you MUST present it and get approval.
+每个项目都必须经过此流程。"简单"的多仓库项目恰恰是跨仓库隐含假设导致最多返工之处。SRS 可以简短，但你必须呈现并获得批准。
 
-## Checklist
+## 检查清单
 
-You MUST create a TodoWrite task for each of these items and complete them in order:
+你必须为以下每个条目创建 TodoWrite 任务，并按顺序完成：
 
-1. **Explore project context** — read existing docs, code, constraints at project root; detect SRS template
-2. **Multi-repo exploration** — explore each repo via `long-task-explore`, identify inter-repo relationships, confirm topology with user
-3. **Targeted codebase exploration** (brownfield only) — focused explore with context-driven parameters; dedup with Step 2
-4. **Complexity assessment** — evaluate 5 signals, select Lite or Expert track (internal)
-5. **Problem & scope elicitation** — Lite: L1 / Expert: E1+E2; include cross-repo interaction probes
-6. **Functional requirements elicitation** — Lite: L2 / Expert: E3+E4; annotate repo ownership per capability
-7. **Hidden requirements** — Lite: L3; Expert: E5
-8. **Constraints, assumptions, glossary** — same for both tracks
-9. **Classify requirements** — functional / constraint / assumption / interface / exclusion
-10. **Write requirements + repo annotation** — EARS templates, repo ownership annotation, diagrams
-11. **Validate SRS** — 8 quality attributes, anti-patterns, testability
-12. **Granularity analysis** — bidirectional sizing (G1-G6 split, S1-S4 merge)
-12b. **FR granularity confirmation** — present finalized FR list; dedicated user approval of split/merge rationality
-12c. **Single-round mode confirmation** — offer single-round mode (all FRs in wave 0); decision applies globally to all per-repo pipelines
-13. **Scope fit & deferral** — assess current-round vs next-round, deferred backlog
-14. **[Expert only] Alignment validation** — via `references/alignment-validation.md`
-15. **SRS Compliance Review** — dispatch srs-reviewer subagent; gate: all checks PASS
-16. **Present & approve global SRS** — Lite: single block; Expert: section-by-section
-17. **Save global SRS & backlog** — `docs/plans/YYYY-MM-DD-<topic>-srs.md` at project root + deferred backlog
-18. **Split global SRS into per-repo SRS** — group FRs by repo, split cross-repo FRs, generate per-repo SRS + IFRs
-19. **Distribute dependency files** — copy reference docs, global SRS, deferred backlog, cross-repo deps to each sub-repo
-20. **Handoff** — present summary with cross-repo deps + dev order, end session
+1. **探索项目上下文** — 读取项目根目录下的现有文档、代码、约束；检测 SRS 模板
+2. **多仓库探索** — 通过 `long-task-explore` 探索每个仓库，识别跨仓库关系，与用户确认拓扑
+3. **定向代码库探索**（仅存量项目）— 带上下文驱动参数的聚焦探索；与步骤 2 去重
+4. **复杂度评估** — 评估 5 个信号，选择精简或专家模式（内部决策）
+5. **问题与范围获取** — 精简：L1 / 专家：E1+E2；包含跨仓库交互探针
+6. **功能需求获取** — 精简：L2 / 专家：E3+E4；标注每个能力的仓库归属
+7. **隐性需求** — 精简：L3；专家：E5
+8. **约束、假设、术语表** — 两种模式相同
+9. **需求分类** — 功能 / 约束 / 假设 / 接口 / 排除项
+10. **编写需求 + 仓库标注** — EARS 模板、仓库归属标注、图表
+11. **验证 SRS** — 8 项质量属性、反模式、可测试性
+12. **粒度分析** — 双向调整（G1-G6 拆分，S1-S4 合并）
+12b. **FR 粒度确认** — 呈现最终 FR 列表；用户专项批准拆分/合并的合理性
+12c. **单轮模式确认** — 提供单轮模式选项（所有 FR 归入 wave 0）；该决策全局适用于所有各仓库流水线
+13. **范围适配与延期** — 评估当前轮次 vs 下一轮次，延期需求积压
+14. **[仅专家模式] 对齐验证** — 通过 `references/alignment-validation.md`
+15. **SRS 合规审查** — 分派 srs-reviewer SubAgent；门禁：所有检查 PASS
+16. **展示与批准全局 SRS** — 精简：整体展示；专家：逐节展示
+17. **保存全局 SRS 与积压** — 在项目根目录保存 `docs/plans/YYYY-MM-DD-<topic>-srs.md` + 延期积压
+18. **拆分全局 SRS 为各仓库 SRS** — 按仓库分组 FR，拆分跨仓库 FR，生成各仓库 SRS + IFR
+19. **分发依赖文件** — 将参考文档、全局 SRS、延期积压、跨仓库依赖复制到各子仓库
+20. **交接** — 展示包含跨仓库依赖和开发顺序的摘要，结束会话
 
-**Terminal state: session ends after handoff.** No chaining to design — user independently cd's into each repo.
-
----
-
-## Re-entry Guard
-
-Before starting Step 1, check if the SRS split was already completed in a previous session:
-
-1. Read `repos-manifest.json` → check if `cross_repo_deps` field exists (set by Step 18)
-2. Check if any repo in the manifest already has a per-repo SRS at `<repo_path>/docs/plans/*-srs.md`
-
-If **both** conditions are true → SRS split was already done. **Skip directly to Step 20 (Handoff)** — present the summary and remind the user to cd into each repo.
-
-If only the global SRS exists (`docs/plans/*-srs.md` at project root) but no per-repo SRS → **skip to Step 18 (Split)** — split the existing global SRS, then continue to Steps 19-20.
-
-If no global SRS exists → proceed normally from Step 1.
+**终态：交接后会话结束。** 不链接到设计 — 用户独立 cd 到各仓库。
 
 ---
 
-## Step 1: Explore Project Context
+## 重入保护
 
-1. Read the user-provided requirement doc / idea description thoroughly
-2. Scan for existing documentation at project root:
-   - `docs/plans/` — any prior SRS, design docs
-   - `docs/rules/` — codebase conventions (brownfield)
-   - Root-level reference files (*.md, *.pdf, *.json, *.yaml) — user-provided specs, API docs, etc.
-3. If `docs/rules/` has populated `.md` files beyond a greenfield stub → note as brownfield. Record:
-   - `coding-style.md` — language conventions
-   - `mandatory-libraries.md` — required internal libraries (2/3方件 constraints)
-   - `prohibited-apis.md` — banned APIs
-   - `build-and-compilation.md` — build system constraints
-   - These constraints may affect requirement feasibility and should be considered during elicitation
-4. Check for an SRS template:
-   - If the user specified a template path → read and validate it
-   - Else → read `docs/templates/srs-template.md` (the default template shipped with this skill)
-   - **Validation**: template must be a `.md` file containing at least one `## ` heading
+在开始步骤 1 之前，检查 SRS 拆分是否已在上一个会话中完成：
 
-## Step 2: Multi-Repo Exploration
+1. 读取 `repos-manifest.json` → 检查是否存在 `cross_repo_deps` 字段（由步骤 18 设置）
+2. 检查清单中是否有仓库已在 `<repo_path>/docs/plans/*-srs.md` 存在各仓库 SRS
 
-**Trigger**: `repos-manifest.json` exists in project root (this skill is only invoked when it does).
+如果**两个条件都满足** → SRS 拆分已完成。**直接跳到步骤 20（交接）** — 展示摘要并提醒用户 cd 到各仓库。
 
-**Execution**:
-1. Read `repos-manifest.json` → get repo list (name, path)
-2. For each repo, dispatch `long-task-explore` to build context (all repos in parallel when possible):
+如果仅全局 SRS 存在（项目根目录的 `docs/plans/*-srs.md`）但无各仓库 SRS → **跳到步骤 18（拆分）** — 拆分已有的全局 SRS，然后继续步骤 19-20。
+
+如果不存在全局 SRS → 从步骤 1 正常开始。
+
+---
+
+## 步骤 1：探索项目上下文
+
+1. 仔细阅读用户提供的需求文档 / 想法描述
+2. 扫描项目根目录下的现有文档：
+   - `docs/plans/` — 任何已有的 SRS、设计文档
+   - `docs/rules/` — 代码库规约（存量项目）
+   - 根级参考文件（*.md, *.pdf, *.json, *.yaml）— 用户提供的规格、API 文档等
+3. 如果 `docs/rules/` 中有已填充的 `.md` 文件（非新建项目的空白桩）→ 标记为存量项目。记录：
+   - `coding-style.md` — 语言规约
+   - `mandatory-libraries.md` — 必需的内部库（2/3方件约束）
+   - `prohibited-apis.md` — 禁用的 API
+   - `build-and-compilation.md` — 构建系统约束
+   - 这些约束可能影响需求可行性，应在获取过程中予以考虑
+4. 检查 SRS 模板：
+   - 如果用户指定了模板路径 → 读取并验证
+   - 否则 → 读取 `docs/templates/srs-template.md`（本 skill 随附的默认模板）
+   - **验证**：模板必须是包含至少一个 `## ` 标题的 `.md` 文件
+
+## 步骤 2：多仓库探索
+
+**触发条件**：项目根目录存在 `repos-manifest.json`（本 skill 仅在此条件下被调用）。
+
+**执行**：
+1. 读取 `repos-manifest.json` → 获取仓库列表（名称、路径）
+2. 对每个仓库分派 `long-task-explore` 构建上下文（尽可能并行所有仓库）：
    > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore`
    > Path: {repo_path}
    > Depth: (omit — let explore auto-detect based on LOC)
    > Focus: architecture,api,deps
-3. Record per-repo profile: language, framework, architecture patterns, API surface, entry points
-4. Identify inter-repo relationships:
-   - Shared dependencies / packages (e.g., common internal library)
-   - API contracts between repos (e.g., backend exposes REST, frontend consumes)
-   - Shared database / message queue / event bus
-   - Shared configuration or environment (e.g., same Docker network)
-5. Present multi-repo topology summary to user for confirmation via `AskUserQuestion`:
-   - Repo count and names
-   - Detected tech stack per repo
-   - Inter-repo relationships
-   - Ask: "以上多仓库拓扑是否正确？是否有遗漏的仓库或关系？"
+3. 记录各仓库概况：语言、框架、架构模式、API 表面、入口点
+4. 识别跨仓库关系：
+   - 共享的依赖 / 包（如共用的内部库）
+   - 仓库间的 API 契约（如后端暴露 REST，前端消费）
+   - 共享的数据库 / 消息队列 / 事件总线
+   - 共享的配置或环境（如同一 Docker 网络）
+5. 通过 `AskUserQuestion` 向用户展示多仓库拓扑摘要进行确认：
+   - 仓库数量和名称
+   - 各仓库检测到的技术栈
+   - 跨仓库关系
+   - 询问："以上多仓库拓扑是否正确？是否有遗漏的仓库或关系？"
 
-This step is **non-blocking** — if explore fails for a repo, log a warning and proceed with whatever context was gathered.
+此步骤**不阻塞** — 如果某仓库的探索失败，记录警告并继续处理已收集到的上下文。
 
-The multi-repo topology informs all subsequent elicitation rounds: questions should probe which repo a requirement belongs to, and specifically ask about cross-repo interactions.
+多仓库拓扑将影响后续所有获取轮次：提问应探究需求属于哪个仓库，并特别询问跨仓库交互。
 
-## Step 3: Targeted Codebase Exploration (brownfield only — no user interaction)
+## 步骤 3：定向代码库探索（仅存量项目 — 无用户交互）
 
-**Trigger conditions** (ANY of these):
-1. `docs/rules/` exists AND contains ≥1 `.md` file beyond a greenfield stub (brownfield project), AND the user's description mentions concrete functionality, a domain area, or a specific module
-2. The user's description mentions concrete functionality — explore each repo with inferred focus
+**触发条件**（满足以下任一）：
+1. `docs/rules/` 存在且包含 ≥1 个非新建项目空白桩的 `.md` 文件（存量项目），且用户描述提及了具体功能、领域方向或特定模块
+2. 用户描述提及了具体功能 — 以推断的焦点探索每个仓库
 
-**Skip if**: user description is too vague to derive a focus direction (e.g., "I want to build a platform" with no specifics).
+**跳过条件**：用户描述过于模糊，无法推导焦点方向（如"我想搭建一个平台"且无具体说明）。
 
-**Execution**:
-1. Extract a focus direction from the user's description:
-   - Identify domain keywords (e.g., "authentication", "payment", "API gateway", "data pipeline")
-   - Infer relevant `--focus` dimensions (e.g., auth → `api,architecture`; data pipeline → `dataflow,deps`)
-   - Infer `--path` if the user mentions a specific module or directory
-2. Determine exploration depth from context (do NOT hardcode):
+**执行**：
+1. 从用户描述中提取焦点方向：
+   - 识别领域关键词（如"认证"、"支付"、"API 网关"、"数据管道"）
+   - 推断相关的 `--focus` 维度（如认证 → `api,architecture`；数据管道 → `dataflow,deps`）
+   - 如果用户提及特定模块或目录，推断 `--path`
+2. 根据上下文确定探索深度（不要硬编码）：
 
-   | Signal | Depth adjustment |
+   | 信号 | 深度调整 |
    |--------|-----------------|
-   | Complexity tier = Lite | Prefer quick (locator only, fast) |
-   | Complexity tier = Expert | Prefer standard (full analysis) |
-   | User description mentions a single module/area | Keep current or lower (narrow scope = less depth needed) |
-   | User description spans multiple subsystems | Bump up one level (broad scope = more context needed) |
-   | If `--path` narrows to a small subtree | Keep current or lower |
+   | 复杂度分级 = 精简 | 倾向 quick（仅定位器，快速） |
+   | 复杂度分级 = 专家 | 倾向 standard（完整分析） |
+   | 用户描述指向单个模块/区域 | 维持当前或降低（窄范围 = 低深度） |
+   | 用户描述跨越多个子系统 | 提升一级（宽范围 = 更多上下文） |
+   | `--path` 缩窄到较小的子树 | 维持当前或降低 |
 
-   When in doubt, omit `--depth` and let explore's LOC-based auto-detection decide (<1K→quick, 1K-10K→standard, >10K→deep).
+   不确定时省略 `--depth`，让 explore 的基于 LOC 的自动检测决定（<1K→quick, 1K-10K→standard, >10K→deep）。
 
-3. **Dedup with Step 2**: If Step 2 already explored a repo, reuse those findings instead of re-dispatching explore for the same repo. Only dispatch explore for repos where the inferred focus dimensions differ significantly from what Step 2 used (`architecture,api,deps`), or where Step 2 failed/returned no findings.
+3. **与步骤 2 去重**：如果步骤 2 已探索了某仓库，复用其发现而非重新分派探索。仅对推断的焦点维度与步骤 2 所用维度（`architecture,api,deps`）显著不同的仓库，或步骤 2 失败/无结果的仓库，分派探索。
 
-   For repos that need fresh exploration, dispatch in parallel:
+   对需要新探索的仓库并行分派：
    > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore` (per repo not covered by Step 2)
    > Path: {repo_path}
    > Depth: {determined_depth or omit for auto-detect}
    > Focus: {inferred_dimensions}
    > User question: "{user_description_summary}"
 
-4. Integrate findings into your understanding — merge with Step 2 results per repo
-5. Reference discovered modules, APIs, data models in your questions (e.g., "I found `src/auth/` with JWT-based authentication in the backend repo — do you want to extend this or replace it?")
-6. If explore returns BLOCKED or no actionable findings → skip silently, proceed
+4. 将发现整合到你的理解中 — 按仓库合并步骤 2 的结果
+5. 在提问中引用已发现的模块、API、数据模型（如："我在后端仓库发现 `src/auth/` 中有基于 JWT 的认证 — 你要扩展还是替换它？"）
+6. 如果 explore 返回 BLOCKED 或无可操作发现 → 静默跳过，继续
 
-**This step is non-blocking** — failure or lack of useful results never prevents proceeding to elicitation.
+**此步骤不阻塞** — 失败或缺乏有用结果不会阻止进入获取阶段。
 
-## Step 4: Complexity Assessment (internal — no user interaction)
+## 步骤 4：复杂度评估（内部 — 无用户交互）
 
-Evaluate 5 complexity signals against the user's description and project context:
+根据用户描述和项目上下文评估 5 个复杂度信号：
 
-| # | Signal | Lite indicator | Expert indicator |
+| # | 信号 | 精简模式指标 | 专家模式指标 |
 |---|---|---|---|
-| S1 | **Stated scope** | Single purpose, clear boundary ("a script that does X") | Vague/broad scope ("a platform for managing...", "a system that...") |
-| S2 | **Actor count** | 1 actor or no user-facing interaction | 2+ distinct user roles mentioned |
-| S3 | **Integration surface** | No external systems, or 1 well-known API | 2+ external systems, custom protocols |
-| S4 | **Domain complexity** | Developer tool, utility, well-understood domain | Business domain with jargon, regulatory exposure, multi-stakeholder |
-| S5 | **Description style** | Solution-specific ("build X using Y") | Problem-oriented or vague ("we need better X", "users complain about Y") |
+| S1 | **陈述范围** | 单一用途，边界清晰（"一个做 X 的脚本"） | 模糊/宽泛范围（"一个管理...的平台"、"一个...系统"） |
+| S2 | **角色数量** | 1 个角色或无面向用户的交互 | 提及 2+ 个不同的用户角色 |
+| S3 | **集成面** | 无外部系统，或 1 个常见 API | 2+ 个外部系统、自定义协议 |
+| S4 | **领域复杂度** | 开发者工具、实用工具、众所周知的领域 | 有术语的业务领域、法规要求、多利益方 |
+| S5 | **描述风格** | 特定解决方案（"用 Y 构建 X"） | 面向问题或模糊（"我们需要更好的 X"、"用户抱怨 Y"） |
 
-**≥3 Expert signals → Expert track. Otherwise → Lite track.**
+**≥3 个专家信号 → 专家模式。否则 → 精简模式。**
 
-> **Multi-repo note**: Multi-repo projects naturally escalate complexity signals — multiple repos often imply 2+ actors (S2) and 2+ integration points (S3). Account for this but don't auto-force Expert solely because of multi-repo topology.
+> **多仓库注意**：多仓库项目天然提升复杂度信号 — 多个仓库通常意味着 2+ 个角色（S2）和 2+ 个集成点（S3）。应考虑这一点，但不要仅因多仓库拓扑就自动强制进入专家模式。
 
-**Escalation triggers** (if detected later → switch to Expert immediately):
-- Answer to Problem/Scope question reveals domain jargon, regulatory requirements, or multi-stakeholder conflict
-- FR count exceeds 10 after elicitation
+**升级触发**（如后续检测到则立即切换到专家模式）：
+- 问题/范围问题的回答中出现领域术语、法规要求或多利益方冲突
+- 获取后 FR 数量超过 10 个
 
-On escalation: all Lite artifacts gathered so far become Expert input. Do NOT restart or announce a disruptive switch — simply begin asking deeper questions.
+升级时：已收集的所有精简模式产物将成为专家模式的输入。不要重新开始或宣布中断性切换 — 直接开始提出更深层的问题。
 
 ---
 
-## Lite Track
+## 精简模式
 
-For projects with clear scope, single actor, and well-understood domain. Target: 3–5 interaction rounds.
+适用于范围清晰、单一角色、领域明确的项目。目标：3-5 轮交互。
 
-### L1: Focused Problem & Scope (single AskUserQuestion, ≤4 questions)
+### L1：聚焦式问题与范围（单次 AskUserQuestion，≤4 个问题）
 
-1. "What problem does this solve, and what does success look like when it's working?"
-2. "Who uses it, and in what environment (desktop/mobile/CLI/API)?"
-3. "What is explicitly out of scope for this version?"
-4. "Any hard constraints — language, platform, hosting, licenses?"
+1. "这个项目解决什么问题？成功运行后是什么样的？"
+2. "谁使用它？在什么环境下使用（桌面/移动端/CLI/API）？"
+3. "本版本明确排除什么范围？"
+4. "有硬性约束吗 — 语言、平台、托管方式、许可证？"
 
-> **Multi-repo addition**: If the user's answers don't clarify cross-repo scope, add a follow-up: "各仓库之间如何协作？哪些功能是跨仓库的？" (How do the repos collaborate? Which features span multiple repos?)
+> **多仓库补充**：如果用户的回答未澄清跨仓库范围，追问："各仓库之间如何协作？哪些功能是跨仓库的？"
 
-Output: one-sentence problem statement in SRS Section 1, actor list, scope boundary, constraints.
+输出：SRS 第 1 节中的一句话问题陈述、角色列表、范围边界、约束。
 
-If the answer to Q1 is vague or problem-oriented → escalation trigger fires → switch to Expert.
+如果 Q1 的回答模糊或面向问题 → 触发升级 → 切换到专家模式。
 
-### L2: Flat Capability Elicitation (1–3 rounds of ≤4 questions each)
+### L2：扁平化能力获取（1-3 轮，每轮 ≤4 个问题）
 
-For each capability area, ask per round (up to 4 questions):
-- What does the user do? (trigger/action)
-- What does the system do in response? (observable behavior)
-- What inputs would be invalid, and what should happen?
-- Confirm a concrete Given/When/Then example
+对每个能力区域，每轮提问（最多 4 个问题）：
+- 用户做什么？（触发/操作）
+- 系统如何响应？（可观察行为）
+- 什么输入是无效的？应如何处理？
+- 确认一个具体的 Given/When/Then 示例
 
-Group related capabilities into the same round when they share a workflow. Split large capability areas across multiple rounds.
+共享工作流的相关能力归入同一轮。大的能力区域分拆到多轮。
 
-> **Multi-repo addition**: For each capability, probe repo ownership: "这个功能主要由哪个仓库负责？是否涉及跨仓库交互？" (Which repo owns this? Does it involve cross-repo interaction?)
+> **多仓库补充**：对每个能力探查仓库归属："这个功能主要由哪个仓库负责？是否涉及跨仓库交互？"
 
-### L3: Quick Hidden Requirements Check (single AskUserQuestion)
+### L3：快速隐性需求检查（单次 AskUserQuestion）
 
-1. "Does this handle personal data, face regulations, or need accessibility support? (If yes, which?)"
-2. "Multiple languages or timezones?"
-3. "Any security requirements beyond basic auth?"
+1. "涉及个人数据、法规合规或无障碍支持吗？（如有，是哪些？）"
+2. "多语言或多时区？"
+3. "除基本认证外还有安全需求吗？"
 
-Any YES to Q1 → generate EARS-formatted constraint or functional requirement candidates inline. If Q1 reveals significant regulatory exposure → escalation trigger.
+Q1 回答 YES → 生成 EARS 格式的约束或功能需求候选。如果 Q1 揭示重大法规风险 → 触发升级。
 
-### L4–L6: Classify, Write, Validate, Present, Save
+### L4-L6：分类、编写、验证、展示、保存
 
-After Lite elicitation, proceed to the **shared steps** (Steps 9–17 in the checklist):
-- L4 = Steps 9–10 (classify, EARS + repo annotation, diagrams)
-- L5 = Steps 11–12b–12c–13 + Step 15 (validate, granularity, granularity confirmation, single-round mode confirmation, deferral, SRS reviewer with Group P = PASS-SKIPPED)
-- L6 = Steps 16–17 (present entire SRS in one block as single approval, save)
+精简模式获取完成后，进入**共享步骤**（检查清单中的步骤 9-17）：
+- L4 = 步骤 9-10（分类、EARS + 仓库标注、图表）
+- L5 = 步骤 11-12b-12c-13 + 步骤 15（验证、粒度、粒度确认、单轮模式确认、延期、SRS 审查员 Group P = PASS-SKIPPED）
+- L6 = 步骤 16-17（以单个区块展示整个 SRS 作为一次性批准，保存）
 
-Then proceed to **Steps 18–20** (split, distribute, handoff).
-
----
-
-## Expert Track
-
-For projects with complex domains, multiple actors, or unclear scope. Target: 10–20 interaction rounds.
-
-### E1: Problem Framing [Expert only]
-
-Read `references/problem-framing.md` and follow it exactly.
-
-**Summary**: Single AskUserQuestion (≤4 questions) — 5-Whys seed, JTBD probe, pain ranking, solution challenge. Produces: 5-Whys chain, JTBD statement, Pain Map → embedded in SRS Section 1.3.
-
-### E2: Enhanced Scope Round [Expert only]
-
-Use slots freed by E1 answers. Single AskUserQuestion (≤4 questions). Replace standard Round 1 questions already answered in E1 with targeted probes:
-
-- **Workaround probe**: "Walk me through the most annoying step in [workaround from Pain Map]. What makes it frustrating — is it manual, error-prone, slow, or opaque?"
-  → Every step the user hates in their current workaround is a candidate FR.
-
-- **Environment probe**: "Where and when is this typically done — at a desk with a large screen, on mobile in the field, under time pressure, or shared among a team?"
-  → Reveals UX, offline, mobile-first, multi-user, and accessibility constraints.
-
-> **Multi-repo addition**: "各仓库目前的职责划分是什么？是否存在职责重叠或不清晰的地方？" (What are the current responsibilities of each repo? Any overlap or ambiguity?)
-
-Plus remaining standard scope questions not yet answered by E1 (out of scope, constraints).
-
-**Rule**: Total questions ≤4. Prioritize probes that surface new information over re-asking what E1 already covered.
-
-### E3: Scenario Walkthrough [Expert only]
-
-Read `references/scenario-walkthrough.md` and follow it exactly.
-
-**Summary**: One walkthrough per major workflow (1–3 workflows). User narrates end-to-end. LLM extracts explicit steps, implicit steps, flow gaps, integration points, error mentions. Follow-up for flow gaps (bounded by extraction count).
-
-> **Multi-repo addition**: During extraction, mark each step with the repo it belongs to. When a step crosses repo boundaries (e.g., "frontend calls backend API"), extract it as a candidate IFR (Interface Requirement).
-
-### E4: Hypothesis-Correction [Expert only]
-
-Read `references/hypothesis-correction.md` and follow it exactly.
-
-**Summary**: Per FR (or 2–3 related FR group), present Behavior Hypothesis Table with applicable dimensions (selected by FR type). User marks check/cross/plus. Converges naturally when no new corrections emerge.
-
-### E5: Hidden Requirements [Expert only]
-
-Single AskUserQuestion, checkbox-style (YES/NO + tell me more), ≤4 probes:
-
-1. **Regulatory/Compliance**: "Does this system handle data or processes subject to regulations? (Personal data → GDPR/CCPA; Health → HIPAA; Payments → PCI-DSS; Financial → SOX; Government → sector-specific)"
-   - YES → implied constraints/FRs: data residency, audit logging, breach notification timeline, consent management, data retention limits
-
-2. **Accessibility**: "Do any users have accessibility needs — visual impairment, motor limitations, older adults, screen reader users, or keyboard-only navigation? Will this run on mobile?"
-   - YES → implied constraints/FRs: WCAG 2.1 AA compliance, keyboard navigability, minimum touch targets (44x44px), sufficient color contrast (4.5:1)
-
-3. **Privacy by design**: "Will the system collect, store, or process personally identifiable information (names, emails, locations, behavioral data, device IDs)?"
-   - YES → implied constraints/FRs: data minimization, user-controlled data export/deletion, consent recording, breach response time
-
-4. **Internationalization**: "Will any users interact in a language other than [detected primary], or from a different timezone or locale?"
-   - YES → implied constraints/FRs: locale-aware date/time/currency formatting, string externalization (no hardcoded UI text), RTL layout if applicable, timezone-aware storage
-
-**Rule**: Any YES → create a constraint or functional requirement candidate in EARS format before proceeding. Mark with Source = "Hidden (E5)".
-
-**Smart Skip**: If Step 1 context clearly shows a purely internal, no-PII, single-language, non-regulated developer tool → collapse all four probes into one confirmation:
-> "This appears to be an internal tool with no personal data, no regulated industry exposure, no accessibility requirements, and no i18n needs — correct?"
-
-### E6–E7: Constraints, Glossary
-
-**E6 (Constraints & Interfaces)**: Hard limits, assumptions, external system contracts.
-
-**E7 (Glossary)**: Domain terms with potential ambiguity.
-
-### E9: Classify, Write, Validate, Granularity, Deferral
-
-Same as shared Steps 9–13 (including Step 12b granularity confirmation and Step 12c single-round mode confirmation) in the checklist. No differences from standard process.
-
-### E10: Alignment Validation [Expert only]
-
-Read `references/alignment-validation.md` and follow it exactly.
-
-**Summary**: Root cause traceability (Pain Map → FR coverage), JTBD outcome verification (**gate — blocks E11 on failure**), pre-mortem, orphan FR detection. Output → SRS Section 1.3 Alignment Validation field.
-
-### E11: SRS Reviewer, Present, Save
-
-Same as shared Steps 15–17, with two differences:
-- SRS reviewer includes **Group P** (active, not PASS-SKIPPED)
-- Present section-by-section for non-trivial projects (not single combined approval)
-
-Then proceed to **Steps 18–20** (split, distribute, handoff).
+然后进入**步骤 18-20**（拆分、分发、交接）。
 
 ---
 
-## Steps 9–13: Shared Quality Pipeline (both tracks)
+## 专家模式
 
-### Step 9: Classify Requirements
+适用于领域复杂、多角色或范围不明确的项目。目标：10-20 轮交互。
 
-Organize into categories:
+### E1：问题框架 [仅专家模式]
 
-| Category | ID Prefix | Description |
+阅读 `references/problem-framing.md` 并严格遵循。
+
+**摘要**：单次 AskUserQuestion（≤4 个问题）— 5-Whys 种子、JTBD 探针、痛点排序、方案挑战。产出：5-Whys 链、JTBD 陈述、痛点地图 → 嵌入 SRS 第 1.3 节。
+
+### E2：增强范围轮次 [仅专家模式]
+
+利用 E1 回答释放的空间。单次 AskUserQuestion（≤4 个问题）。将 E1 中已回答的标准第 1 轮问题替换为定向探针：
+
+- **变通方案探针**："请描述 [痛点地图中的变通方案] 中最烦人的步骤。是手动、易出错、缓慢还是不透明？"
+  → 用户在当前变通方案中厌恶的每个步骤都是候选 FR。
+
+- **环境探针**："通常在什么场景下使用 — 桌面大屏、移动端外勤、时间紧迫、还是团队共享？"
+  → 揭示 UX、离线、移动优先、多用户和无障碍约束。
+
+> **多仓库补充**："各仓库目前的职责划分是什么？是否存在职责重叠或不清晰的地方？"
+
+加上 E1 尚未回答的标准范围问题（排除范围、约束）。
+
+**规则**：总问题数 ≤4。优先提出能挖掘新信息的探针，而非重复询问 E1 已覆盖的内容。
+
+### E3：场景走查 [仅专家模式]
+
+阅读 `references/scenario-walkthrough.md` 并严格遵循。
+
+**摘要**：每个主要工作流一次走查（1-3 个工作流）。用户端到端叙述。LLM 提取显式步骤、隐式步骤、流程缺口、集成点、错误提及。针对流程缺口进行追问（上限由提取数量决定）。
+
+> **多仓库补充**：提取时为每个步骤标注其所属仓库。当某步骤跨越仓库边界（如"前端调用后端 API"），将其提取为候选 IFR（接口需求）。
+
+### E4：假设-修正 [仅专家模式]
+
+阅读 `references/hypothesis-correction.md` 并严格遵循。
+
+**摘要**：针对每个 FR（或 2-3 个相关 FR 分组），展示行为假设表，包含适用维度（根据 FR 类型选择）。用户标记 check/cross/plus。当不再产生新修正时自然收敛。
+
+### E5：隐性需求 [仅专家模式]
+
+单次 AskUserQuestion，复选框式（YES/NO + 详述），≤4 个探针：
+
+1. **法规/合规**："该系统是否处理受法规约束的数据或流程？（个人数据 → GDPR/CCPA；医疗 → HIPAA；支付 → PCI-DSS；金融 → SOX；政府 → 行业特定法规）"
+   - YES → 隐含的约束/FR：数据驻留、审计日志、泄露通知时限、同意管理、数据保留限制
+
+2. **无障碍**："是否有用户存在无障碍需求 — 视觉障碍、运动限制、老年用户、屏幕阅读器用户或仅键盘操作？是否在移动端运行？"
+   - YES → 隐含的约束/FR：WCAG 2.1 AA 合规、键盘可导航、最小触控目标（44x44px）、足够的颜色对比度（4.5:1）
+
+3. **隐私设计**："系统是否会收集、存储或处理个人身份信息（姓名、邮箱、位置、行为数据、设备 ID）？"
+   - YES → 隐含的约束/FR：数据最小化、用户可控的数据导出/删除、同意记录、泄露响应时限
+
+4. **国际化**："是否有用户使用 [检测到的主要语言] 之外的语言交互，或来自不同时区或地区？"
+   - YES → 隐含的约束/FR：地区感知的日期/时间/货币格式、字符串外部化（无硬编码 UI 文本）、RTL 布局（如适用）、时区感知存储
+
+**规则**：任何 YES → 在继续之前以 EARS 格式创建约束或功能需求候选。标记 Source = "Hidden (E5)"。
+
+**智能跳过**：如果步骤 1 的上下文明确显示项目是纯内部、无 PII、单语言、非受监管的开发者工具 → 将四个探针折叠为一个确认：
+> "这看起来是一个内部工具，无个人数据、无受监管行业、无无障碍需求、无国际化需求 — 对吗？"
+
+### E6-E7：约束、术语表
+
+**E6（约束与接口）**：硬性限制、假设、外部系统契约。
+
+**E7（术语表）**：可能有歧义的领域术语。
+
+### E9：分类、编写、验证、粒度、延期
+
+与检查清单中的共享步骤 9-13 相同（包括步骤 12b 粒度确认和步骤 12c 单轮模式确认）。与标准流程无差异。
+
+### E10：对齐验证 [仅专家模式]
+
+阅读 `references/alignment-validation.md` 并严格遵循。
+
+**摘要**：根因可追溯性（痛点地图 → FR 覆盖率）、JTBD 结果验证（**门禁 — 失败时阻塞 E11**）、预检剖析、孤立 FR 检测。输出 → SRS 第 1.3 节对齐验证字段。
+
+### E11：SRS 审查员、展示、保存
+
+与共享步骤 15-17 相同，有两处区别：
+- SRS 审查员包含 **Group P**（生效，非 PASS-SKIPPED）
+- 对非平凡项目逐节展示（而非单次合并批准）
+
+然后进入**步骤 18-20**（拆分、分发、交接）。
+
+---
+
+## 步骤 9-13：共享质量流水线（两种模式通用）
+
+### 步骤 9：需求分类
+
+组织为以下类别：
+
+| 类别 | ID 前缀 | 说明 |
 |---|---|---|
-| Functional | FR-001 | Observable system behaviors |
-| Constraint | CON-001 | Hard limits that restrict the solution space |
-| Assumption | ASM-001 | Beliefs assumed true; document invalidation risk |
-| Interface | IFR-001 | External system contracts (includes cross-repo interfaces) |
-| Exclusion | EXC-001 | Explicitly out of scope |
+| 功能 | FR-001 | 可观察的系统行为 |
+| 约束 | CON-001 | 限制解决方案空间的硬性限制 |
+| 假设 | ASM-001 | 假定为真的信念；记录失效风险 |
+| 接口 | IFR-001 | 外部系统契约（包括跨仓库接口） |
+| 排除 | EXC-001 | 明确排除在范围之外 |
 
-### Step 10: Write Requirements with EARS Templates + Repo Annotation
+### 步骤 10：用 EARS 模板编写需求 + 仓库标注
 
-Apply the EARS template to each functional requirement:
+对每个功能需求应用 EARS 模板：
 
-| Pattern | Template | When to use |
+| 模式 | 模板 | 适用场景 |
 |---|---|---|
-| **Ubiquitous** | The system shall `<action>`. | Always-on behavior |
-| **Event-driven** | When `<trigger>`, the system shall `<action>`. | Response to event |
-| **State-driven** | While `<state>`, the system shall `<action>`. | Behavior depends on mode/state |
-| **Unwanted behavior** | If `<condition>`, then the system shall `<action>`. | Error handling, fault tolerance |
-| **Optional** | Where `<feature/config>`, the system shall `<action>`. | Configurable capability |
+| **普遍型** | The system shall `<action>`. | 始终生效的行为 |
+| **事件驱动型** | When `<trigger>`, the system shall `<action>`. | 响应事件 |
+| **状态驱动型** | While `<state>`, the system shall `<action>`. | 行为依赖于模式/状态 |
+| **异常行为型** | If `<condition>`, then the system shall `<action>`. | 错误处理、容错 |
+| **可选型** | Where `<feature/config>`, the system shall `<action>`. | 可配置能力 |
 
-For each requirement, also write:
-- **Acceptance criteria** — at least one concrete Given/When/Then scenario
-- **Priority** — Must / Should / Could / Won't (MoSCoW)
-- **Source** — which stakeholder need or user story this traces to
+对每个需求还需编写：
+- **验收标准** — 至少一个具体的 Given/When/Then 场景
+- **优先级** — Must / Should / Could / Won't (MoSCoW)
+- **来源** — 此需求追溯到的利益方需要或用户故事
 
-#### 10a. Repo Annotation
+#### 10a. 仓库标注
 
-For each FR, annotate which repo it belongs to:
-- **Repo**: `backend` — single-repo requirement
-- **Repo**: `backend, frontend` — cross-repo requirement
-- **Cross-repo note**: (for cross-repo only) describe the inter-repo interaction, e.g., "Backend provides REST API `/auth/login`; Frontend consumes it"
+对每个 FR 标注其所属仓库：
+- **Repo**: `backend` — 单仓库需求
+- **Repo**: `backend, frontend` — 跨仓库需求
+- **Cross-repo note**:（仅跨仓库）描述跨仓库交互，如"后端提供 REST API `/auth/login`；前端消费它"
 
-This annotation is used in Step 18 to split the global SRS into per-repo SRS documents. If a requirement spans multiple repos, it will be split into separate per-repo FRs linked by dependencies and IFR contracts.
+此标注在步骤 18 中用于将全局 SRS 拆分为各仓库 SRS 文档。如果某需求跨越多个仓库，将被拆分为通过依赖和 IFR 契约关联的各仓库独立 FR。
 
-#### 10b. Generate Diagrams
+#### 10b. 生成图表
 
-After all requirements are written, generate visual aids:
+所有需求编写完成后，生成可视化辅助：
 
-**Use Case View** (Section 3.1): `graph LR` with all actors as `Actor((Name))`, all FR-xxx as use case nodes inside `subgraph System Boundary`, directed edges per actor-to-use-case participation.
+**用例视图**（第 3.1 节）：`graph LR`，所有角色为 `Actor((Name))`，所有 FR-xxx 作为 `subgraph System Boundary` 内的用例节点，角色到用例的有向边表示参与关系。
 
-**Process Flows** (Section 4.1): One `flowchart TD` per functional area with 3+ sequential steps or branching. Start/End as `([label])`, decisions as `{condition?}` with `-- YES -->` / `-- NO -->` labels.
+**流程图**（第 4.1 节）：每个包含 3+ 个顺序步骤或分支的功能区域一个 `flowchart TD`。开始/结束为 `([label])`，判断为 `{condition?}`，带 `-- YES -->` / `-- NO -->` 标签。
 
-**Multi-repo interaction diagram**: One `graph LR` showing repos as subgraphs, with cross-repo IFR edges.
+**多仓库交互图**：一个 `graph LR`，仓库作为子图，跨仓库 IFR 边。
 
-### Step 11: Validate SRS Quality
+### 步骤 11：验证 SRS 质量
 
-#### 11a. Per-Requirement Checks (8 quality attributes)
+#### 11a. 逐需求检查（8 项质量属性）
 
-| # | Attribute | Check | Red flag |
+| # | 属性 | 检查 | 危险信号 |
 |---|---|---|---|
-| 1 | **Correct** | Traces to a confirmed stakeholder need? | Orphan requirement (gold-plating) |
-| 2 | **Unambiguous** | Two readers would write the same test case? | Weasel words: "fast", "robust", "user-friendly" |
-| 3 | **Complete** | All inputs, outputs, error cases, boundaries defined? | "including but not limited to..." |
-| 4 | **Consistent** | No contradiction with other requirements? | Timing conflicts, format conflicts |
-| 5 | **Ranked** | Has a MoSCoW priority? | Everything is "high priority" |
-| 6 | **Verifiable** | Can write a pass/fail test? | "The system shall be easy to use" |
-| 7 | **Modifiable** | Stated in exactly one place? | Duplicated across sections |
-| 8 | **Traceable** | Has unique ID + source link? | Missing ID or orphan |
+| 1 | **正确** | 可追溯到已确认的利益方需要？ | 孤立需求（镀金） |
+| 2 | **无歧义** | 两个读者会写出相同的测试用例？ | 模糊词："快速"、"健壮"、"用户友好" |
+| 3 | **完整** | 所有输入、输出、错误情况、边界都已定义？ | "包括但不限于…" |
+| 4 | **一致** | 与其他需求无矛盾？ | 时间冲突、格式冲突 |
+| 5 | **已排序** | 有 MoSCoW 优先级？ | 所有需求都是"高优先级" |
+| 6 | **可验证** | 能编写通过/失败测试？ | "系统应易于使用" |
+| 7 | **可修改** | 仅在一处陈述？ | 跨节重复 |
+| 8 | **可追溯** | 有唯一 ID + 来源链接？ | 缺少 ID 或孤立 |
 
-#### 11b. Anti-Pattern Detection
+#### 11b. 反模式检测
 
-| Anti-Pattern | Detection Signal | Fix |
+| 反模式 | 检测信号 | 修复 |
 |---|---|---|
-| **Ambiguous adjective** | "fast", "large", "scalable" without number | Quantify |
-| **Compound requirement** | "and" / "or" joining two capabilities | Split |
-| **Design leakage** | "class", "table", "endpoint" | Rewrite as behavior |
-| **Passive without agent** | "data shall be validated" — by whom? | Add actor |
-| **TBD / TBC** | Unresolved placeholders | Resolve or Open Question |
-| **Missing negatives** | Only positive cases specified | Add error/boundary cases |
+| **模糊形容词** | "快速"、"大量"、"可扩展"但无数字 | 量化 |
+| **复合需求** | "和" / "或"连接两个能力 | 拆分 |
+| **设计泄露** | "类"、"表"、"端点" | 改写为行为 |
+| **无主语被动句** | "数据应被验证" — 由谁？ | 添加角色 |
+| **TBD / TBC** | 未解决的占位符 | 解决或标记为待定问题 |
+| **缺少否定情况** | 仅指定了正向情况 | 添加错误/边界情况 |
 
-#### 11c. Completeness Cross-Check
+#### 11c. 完整性交叉检查
 
-- Every functional area has at least one error/boundary case
-- All external interfaces have data format + protocol
-- Glossary covers all domain-specific terms
-- Out-of-Scope section lists deferred features
-- **All cross-repo interfaces have both provider and consumer sides documented**
+- 每个功能区域至少有一个错误/边界情况
+- 所有外部接口都有数据格式 + 协议
+- 术语表涵盖所有领域特定术语
+- 排除范围章节列出了延期功能
+- **所有跨仓库接口都有提供方和消费方双方的文档**
 
-### Step 12: Granularity Analysis — Bidirectional Sizing
+### 步骤 12：粒度分析 — 双向调整
 
-Right-size each FR for one Worker session. Apply both over-size (G) and under-size (S) heuristics. The goal: each FR should produce a feature that productively uses ~50% of the model's context window. As a concrete sizing target, each FR should produce approximately 1,000 lines of implementation code (excluding unit test code).
+将每个 FR 调整到适合单个 Worker 会话的粒度。同时应用过大（G）和过小（S）启发式。目标：每个 FR 应产出一个能有效利用模型上下文窗口约 50% 的功能特性。具体的大小目标是每个 FR 应产出约 1,000 行实现代码（不含单元测试代码）。
 
-**Multi-repo sizing basis**: The ~1,000 LOC target refers to the **per-repo implementation** of a single FR, not the combined total across all repos. For cross-repo FRs (annotated with multiple repos), estimate the LOC for each repo's portion independently — if any repo's portion falls below ~500 LOC, the FR is an under-size candidate for that repo after Step 18 split. For single-repo FRs, the target applies directly.
+**多仓库调整基准**：约 1,000 行 LOC 目标指的是单个 FR 的**各仓库实现部分**，而非所有仓库的合计。对于跨仓库 FR（标注了多个仓库），独立估算每个仓库部分的 LOC — 如果任一仓库部分低于约 500 行，该 FR 在步骤 18 拆分后将成为该仓库的过小候选。对于单仓库 FR，目标直接适用。
 
-**Step 12.0 — Select your sizing profile:** You know your own maximum context window. Apply the matching row to all G/S decisions below.
+**步骤 12.0 — 选择你的调整配置：** 你知道自己的最大上下文窗口。将匹配行应用于以下所有 G/S 决策。
 
-| Context window | Profile | Target ACs per FR | Single-feature implementation scope |
+| 上下文窗口 | 配置 | 每个 FR 目标 AC 数 | 单功能实现范围 |
 |---|---|---|---|
-| ≤ 200K tokens | **Standard** | 3-12 | ~1,000 lines implementation code per repo (excluding UT) |
-| > 200K tokens | **Extended** | 5-20 | ~1,000 lines implementation code per repo (excluding UT) |
+| ≤ 200K tokens | **标准** | 3-12 | 每仓库约 1,000 行实现代码（不含 UT） |
+| > 200K tokens | **扩展** | 5-20 | 每仓库约 1,000 行实现代码（不含 UT） |
 
-An FR below the profile minimum AC count is under-sized (S-heuristic candidate). An FR above the profile maximum is over-sized (G-heuristic candidate). When the AC-based heuristic is ambiguous, estimate the likely implementation LOC **per repo**: an FR producing significantly fewer than ~1,000 lines in its target repo is a merge candidate; significantly more is a split candidate.
+低于配置最小 AC 数的 FR 为过小（S 启发式候选）。高于配置最大 AC 数的 FR 为过大（G 启发式候选）。当基于 AC 的启发式不明确时，估算**各仓库**的可能实现 LOC：FR 在目标仓库中产出明显少于约 1,000 行为合并候选；明显多于为拆分候选。
 
-**Phase 1 — Over-size detection (G1-G6):** Split FRs that are too coarse for a single session.
+**阶段 1 — 过大检测（G1-G6）：** 拆分对单个会话来说过于粗粒度的 FR。
 
-| # | Heuristic | Detection Signal |
+| # | 启发式 | 检测信号 |
 |---|---|---|
-| G1 | **Multiple actors** | 2+ distinct roles performing different actions |
-| G2 | **CRUD bundle** | Create + Read + Update + Delete as single requirement |
-| G3 | **Scenario explosion** | 4+ acceptance criteria covering distinct behavioral paths |
-| G4 | **Cross-layer concern** | Backend logic AND user-facing UI in one FR |
-| G5 | **Multi-state behavior** | 3+ distinct system states or modes |
-| G6 | **Temporal coupling** | Trigger event + deferred/scheduled consequence |
+| G1 | **多角色** | 2+ 个不同角色执行不同操作 |
+| G2 | **CRUD 捆绑** | 创建 + 读取 + 更新 + 删除作为单个需求 |
+| G3 | **场景爆炸** | 4+ 个验收标准覆盖不同的行为路径 |
+| G4 | **跨层关注** | 后端逻辑和面向用户的 UI 在同一 FR 中 |
+| G5 | **多状态行为** | 3+ 个不同的系统状态或模式 |
+| G6 | **时间耦合** | 触发事件 + 延迟/定时后果 |
 
-For decomposition candidates: identify atomic behaviors, apply Single Responsibility Test, preserve traceability (FR-003 → FR-003a, FR-003b), re-validate children.
+对于分解候选：识别原子行为，应用单一职责测试，保持可追溯性（FR-003 → FR-003a, FR-003b），重新验证子 FR。
 
-**Phase 2 — Under-size detection (S1-S4):** Merge FRs that are too trivial for a dedicated session.
+**阶段 2 — 过小检测（S1-S4）：** 合并对专用会话来说过于琐碎的 FR。
 
-| # | Heuristic | Detection Signal | Action |
+| # | 启发式 | 检测信号 | 操作 |
 |---|---|---|---|
-| S1 | **Trivial addition** | Single field/constant/config, no behavioral logic, ≤1 AC | Merge into parent entity/endpoint FR |
-| S2 | **Single-assertion test** | Only 1 AC with no error/boundary cases | Enrich with error/boundary ACs, or merge into related FR sharing same entity/endpoint |
-| S3 | **Pure data echo** | Displays/returns data another FR produces, no transformation | Merge into the producing FR as vertical slice |
-| S4 | **Config/setup only** | Env setup, dependency install, scaffolding, no business logic | Merge all S4 FRs into a single Foundation FR |
+| S1 | **琐碎添加** | 单字段/常量/配置，无行为逻辑，≤1 AC | 合并到父实体/端点 FR |
+| S2 | **单断言测试** | 仅 1 个 AC 且无错误/边界情况 | 用错误/边界 AC 丰富，或合并到共享同一实体/端点的相关 FR |
+| S3 | **纯数据回显** | 显示/返回另一 FR 产出的数据，无转换 | 合并到产出 FR 作为垂直切片 |
+| S4 | **仅配置/设置** | 环境设置、依赖安装、脚手架，无业务逻辑 | 将所有 S4 FR 合并为单个基础 FR |
 
-**Merge rules:**
-- **Content preservation (mandatory)**: the absorbed FR's EARS statement, all acceptance criteria, and description text are fully integrated into the primary FR — no requirement content may be lost or summarized away. The primary FR's description and AC list must contain the complete union of both FRs' content.
-- The absorbed FR entry is then eliminated from the SRS. After all merges, re-number FR IDs sequentially (FR-001, FR-002, ...) and update all SRS cross-references (Use Case View, Process Flows, Traceability Matrix).
-- Combined ACs must stay ≤ 20 (if exceeds, G3 re-triggers — split along better seams)
-- Merged FRs must share primary actor and functional area
-- If both G and S trigger on the same FR: G wins (split first, then S re-checks children)
+**合并规则：**
+- **内容保全（强制）**：被吸收 FR 的 EARS 陈述、所有验收标准和描述文本必须完整集成到主 FR 中 — 不得丢失或摘要化任何需求内容。主 FR 的描述和 AC 列表必须包含两个 FR 内容的完整并集。
+- 被吸收的 FR 条目随后从 SRS 中删除。所有合并完成后，按顺序重新编号 FR ID（FR-001, FR-002, ...），并更新所有 SRS 交叉引用（用例视图、流程图、可追溯矩阵）。
+- 合并后的 AC 总数必须 ≤ 20（如超出，G3 重新触发 — 沿更好的接缝拆分）
+- 合并的 FR 必须共享主角色和功能区域
+- 如果同一 FR 同时触发 G 和 S：G 优先（先拆分，然后 S 重新检查子 FR）
 
-**Decision thresholds:**
+**决策阈值：**
 
-| Candidate Count (G or S) | Action |
+| 候选数量（G 或 S） | 操作 |
 |---|---|
-| 0 | Skip |
-| 1-3 | Auto-apply; present rationale inline |
-| 4+ | Present to user via AskUserQuestion for approval |
+| 0 | 跳过 |
+| 1-3 | 自动应用；内联展示理由 |
+| 4+ | 通过 AskUserQuestion 向用户展示以获取批准 |
 
-Note: All granularity changes (auto-applied or user-approved) are subject to the holistic FR granularity confirmation in Step 12b.
+注意：所有粒度变更（自动应用或用户批准）都须经过步骤 12b 的整体 FR 粒度确认。
 
-### Step 12b: FR Granularity Confirmation
+### 步骤 12b：FR 粒度确认
 
-After all G1-G6 splits, S1-S4 merges, and FR ID re-numbering, present the finalized FR list for dedicated user confirmation.
+完成所有 G1-G6 拆分、S1-S4 合并和 FR ID 重新编号后，呈现最终 FR 列表供用户专项确认。
 
-**Content preservation check (before presenting):** For every merged FR, verify that the primary FR now contains the complete union of EARS statements and acceptance criteria from all absorbed FRs. No original requirement content may be lost.
+**内容保全检查（呈现前）：** 对每个合并的 FR，验证主 FR 现在包含所有被吸收 FR 的 EARS 陈述和验收标准的完整并集。不得丢失任何原始需求内容。
 
-**Present via AskUserQuestion:**
+**通过 AskUserQuestion 呈现：**
 
-1. Show the complete FR list in table format:
-   | FR ID | Title | AC Count | Est. Impl. LOC | Changed? | Notes |
+1. 以表格格式展示完整 FR 列表：
+   | FR ID | 标题 | AC 数 | 预估实现 LOC | 是否变更？ | 备注 |
    |-------|-------|----------|----------------|----------|-------|
-   - "Changed?" column: "split from FR-XXX" / "absorbed FR-YYY" / "unchanged"
-   - "Est. Impl. LOC" column: rough estimate targeting ~1,000 lines **per repo** (excluding UT). For cross-repo FRs, show per-repo breakdown (e.g., "backend: ~800, frontend: ~400")
-   - For merged FRs, list which original FRs were absorbed so user can verify completeness
+   - "是否变更？"列："从 FR-XXX 拆分" / "吸收了 FR-YYY" / "未变更"
+   - "预估实现 LOC"列：粗略估计目标约 1,000 行**每仓库**（不含 UT）。对于跨仓库 FR，显示各仓库分项（如"backend: ~800, frontend: ~400"）
+   - 对于合并的 FR，列出被吸收的原始 FR 以供用户验证完整性
 
-2. Ask: "Please review the FR list above. Each FR targets ~1,000 lines of implementation code per repo (excluding unit tests). For cross-repo FRs, per-repo LOC breakdowns are shown — portions below ~500 LOC may be merged after Step 18 split. All merged FRs retain the complete requirement content of the absorbed FRs. Confirm the granularity is appropriate, or indicate which FRs should be further split, merged, or adjusted."
+2. 询问："请审查上方 FR 列表。每个 FR 目标为每仓库约 1,000 行实现代码（不含单元测试）。跨仓库 FR 显示了各仓库 LOC 分项 — 低于约 500 行的部分可能在步骤 18 拆分后被合并。所有合并的 FR 均保留了被吸收 FR 的完整需求内容。请确认粒度是否合适，或指出哪些 FR 需要进一步拆分、合并或调整。"
 
-3. Process response:
-   - **Confirmed** → proceed to Step 12c
-   - **Adjustment requested** → apply changes, re-number IDs, re-present (loop until confirmed)
+3. 处理响应：
+   - **确认** → 进入步骤 12c
+   - **请求调整** → 应用变更，重新编号 ID，重新呈现（循环直到确认）
 
-**Mandatory for both Lite and Expert tracks.** Even if Step 12 produced 0 granularity candidates (no splits or merges), present the FR list for confirmation — the user may identify granularity issues the heuristics missed.
+**精简和专家模式均为强制步骤。** 即使步骤 12 产生了 0 个粒度候选（无拆分或合并），也要呈现 FR 列表供确认 — 用户可能发现启发式遗漏的粒度问题。
 
-### Step 12c: Single-Round Mode Confirmation
+### 步骤 12c：单轮模式确认
 
-After FR granularity confirmation, present via `AskUserQuestion`:
+FR 粒度确认后，通过 `AskUserQuestion` 呈现：
 
-> "The finalized FR list contains {N} functional requirement(s).
+> "最终 FR 列表包含 {N} 个功能需求。
 >
-> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD) run normally — no steps are skipped.
+> **单轮模式可用**：所有 FR 将在本开发轮次（wave 0）中实现，不进行延期。每个 FR 映射到一个功能特性；Worker 每个会话处理一个功能特性。所有流水线步骤（feature-design、TDD）正常执行 — 不跳过任何步骤。
 >
-> **Multi-repo scope**: This decision applies at the global SRS level. When the global SRS is split into per-repo SRS documents (Step 18), each per-repo SRS inherits `Single-Round: Yes` — all per-repo pipelines will set `single_round: true` in their `feature-list.json` and skip deferral analysis.
+> **多仓库范围**：此决策在全局 SRS 级别适用。当全局 SRS 拆分为各仓库 SRS 文档（步骤 18）时，每个各仓库 SRS 继承 `Single-Round: Yes` — 所有各仓库流水线将在其 `feature-list.json` 中设置 `single_round: true` 并跳过延期分析。
 >
-> **Context overflow risk**: If any single FR is estimated to exceed ~1,000 lines of implementation code (excluding unit tests), consider splitting it further (return to Step 12).
+> **上下文溢出风险**：如果任何单个 FR 预估超过约 1,000 行实现代码（不含单元测试），考虑进一步拆分（返回步骤 12）。
 >
-> [Enable single-round mode] / [Skip — proceed to deferral analysis]"
+> [启用单轮模式] / [跳过 — 进入延期分析]"
 
-Process response:
-- **Enable** → record `Single-Round: Yes` in the global SRS document metadata header. Step 13 (Scope Fit & Deferral) still executes but presents a confirmation summary instead of deferral recommendations — user has declared intent to implement all FRs in this round.
-- **Skip** → proceed to Step 13 normally (full deferral analysis).
+处理响应：
+- **启用** → 在全局 SRS 文档元数据头中记录 `Single-Round: Yes`。步骤 13（范围适配与延期）仍执行但展示确认摘要而非延期建议 — 用户已声明意图在本轮实现所有 FR。
+- **跳过** → 正常进入步骤 13（完整延期分析）。
 
-**Mandatory for both Lite and Expert tracks.**
+**精简和专家模式均为强制步骤。**
 
-### Step 13: Scope Fit & Deferral
+### 步骤 13：范围适配与延期
 
-Assess whether all requirements belong in the current round. Apply scope fit criteria (Priority, Dependency, Completeness, Risk, Scope budget). Present deferral recommendations to user. If deferrals approved, generate `docs/plans/YYYY-MM-DD-<topic>-deferred.md`.
+评估所有需求是否属于当前轮次。应用范围适配标准（优先级、依赖、完整性、风险、范围预算）。向用户展示延期建议。如延期获批，生成 `docs/plans/YYYY-MM-DD-<topic>-deferred.md`。
 
-Rules:
-- Must-priority FRs are NEVER auto-deferred
-- Dependency integrity — if FR-X depends on FR-Y, both stay
-- Deferred backlog preserves EARS + acceptance criteria for increment pickup
+规则：
+- Must 优先级的 FR 永不自动延期
+- 依赖完整性 — 如果 FR-X 依赖 FR-Y，两者均保留
+- 延期积压保留 EARS + 验收标准供增量拾取
 
-**Single-round mode behavior**: If `Single-Round: Yes` was recorded in Step 12c, this step still executes but replaces deferral recommendations with a confirmation summary: list all FRs, confirm all are assigned to wave 0, and present for user acknowledgment. No FRs are deferred.
+**单轮模式行为**：如果步骤 12c 中记录了 `Single-Round: Yes`，此步骤仍执行但将延期建议替换为确认摘要：列出所有 FR，确认全部分配到 wave 0，呈现供用户确认。不延期任何 FR。
 
 ---
 
-## Step 15: SRS Compliance Review
+## 步骤 15：SRS 合规审查
 
-Dispatch a subagent to independently verify the SRS:
+分派 SubAgent 独立验证 SRS：
 
 > **DISPATCH** independent SubAgent — SRS compliance reviewer (ISO/IEC/IEEE 29148)
 > Prompt: Read reviewer instructions at `skills/long-task-multi-repo/prompts/srs-reviewer-prompt.md`
 > Input: Project context, full SRS draft, requirement ID list
 > Execute the review following the prompt exactly.
 
-**ALL checks must PASS to proceed:**
-- Group R (R1-R8): quality attributes
-- Group A (A1-A6): anti-patterns
-- Group C (C1-C4): completeness
-- Group S (S1-S4): structural compliance
-- Group D (D1-D4): diagrams
-- Group G (G1-G3): granularity (over-size detection)
-- Group Z (Z1-Z3): sizing (under-size detection)
-- Group P (P1-P4): problem alignment (Expert track; PASS-SKIPPED for Lite track)
+**所有检查必须 PASS 才能继续：**
+- Group R（R1-R8）：质量属性
+- Group A（A1-A6）：反模式
+- Group C（C1-C4）：完整性
+- Group S（S1-S4）：结构合规
+- Group D（D1-D4）：图表
+- Group G（G1-G3）：粒度（过大检测）
+- Group Z（Z1-Z3）：大小（过小检测）
+- Group P（P1-P4）：问题对齐（专家模式；精简模式为 PASS-SKIPPED）
 
-**On FAIL — two-track resolution:**
+**FAIL 时 — 双轨解决：**
 
-**Track 1: USER-INPUT items → ask immediately**
+**轨道 1：需要用户输入的条目 → 立即提问**
 
-Use `AskUserQuestion` with a targeted questionnaire — do NOT dump the full review report.
+通过 `AskUserQuestion` 发送定向问卷 — 不要倾倒完整的审查报告。
 
-**Track 2: LLM-FIXABLE items → auto-fix**
+**轨道 2：LLM 可修复的条目 → 自动修复**
 
-Fix all LLM-FIXABLE items in parallel. Re-dispatch reviewer (Cycle 2).
+并行修复所有 LLM 可修复的条目。重新分派审查员（第 2 轮）。
 
-**Maximum: 2 re-dispatch cycles.** After Cycle 2 failure → escalate to user.
+**最多 2 轮重新分派。** 第 2 轮仍失败 → 上报用户。
 
-## Steps 16–17: Present, Save
+## 步骤 16-17：展示、保存
 
-### Step 16: Present & Approve Global SRS
+### 步骤 16：展示与批准全局 SRS
 
-- **Lite track**: Present entire SRS in one block. Single approval step.
-- **Expert track (< 5 FR)**: Combined approval step.
-- **Expert track (≥ 5 FR)**: Section by section:
-  1. Purpose, Scope, Problem Statement & Exclusions
-  2. Glossary & User Personas
-  3. Functional Requirements (with repo annotations)
-  4. Constraints, Assumptions & Interfaces
+- **精简模式**：以单个区块展示整个 SRS。一次性批准。
+- **专家模式（< 5 FR）**：合并批准步骤。
+- **专家模式（≥ 5 FR）**：逐节展示：
+  1. 目的、范围、问题陈述与排除项
+  2. 术语表与用户画像
+  3. 功能需求（带仓库标注）
+  4. 约束、假设与接口
 
-Present each section. Wait for user feedback. Incorporate changes before moving to the next.
+展示每节。等待用户反馈。在移到下一节前纳入变更。
 
-### Step 17: Save Global SRS Document & Deferred Backlog
+### 步骤 17：保存全局 SRS 文档与延期积压
 
-Save to `docs/plans/YYYY-MM-DD-<topic>-srs.md` at project root.
+保存到项目根目录的 `docs/plans/YYYY-MM-DD-<topic>-srs.md`。
 
-Read the template found in Step 1:
-1. Preserve the template's heading structure
-2. Replace guidance text under each heading with approved SRS content
-3. Add metadata at top if not already present (`Date`, `Status`, `Standard`, `Template` path)
-4. For uncovered template sections: mark "[Not applicable]"
-5. For approved content without matching template section: append as "Additional Notes"
+读取步骤 1 中找到的模板：
+1. 保留模板的标题结构
+2. 将每个标题下的指导文本替换为已批准的 SRS 内容
+3. 如尚不存在则在顶部添加元数据（`Date`、`Status`、`Standard`、`Template` 路径）
+4. 对模板中未覆盖的节：标记"[Not applicable]"
+5. 对已批准但无匹配模板节的内容：追加为"Additional Notes"
 
-If a deferred backlog was generated in Step 13, save alongside: `docs/plans/YYYY-MM-DD-<topic>-deferred.md`. Commit both.
+如果步骤 13 生成了延期积压，一并保存：`docs/plans/YYYY-MM-DD-<topic>-deferred.md`。提交。
 
 ---
 
-## Step 18: Split Global SRS into Per-Repo SRS
+## 步骤 18：拆分全局 SRS 为各仓库 SRS
 
-**Execution**:
+**执行**：
 
-1. **Group FRs by repo annotation** (from Step 10a):
-   - Single-repo FRs → directly assigned to target repo
-   - Cross-repo FRs → split into per-repo independent FRs:
-     a. Original FR is preserved in the global SRS, marked: "Split: FR-001a (backend), FR-001b (frontend)"
-     b. Each child FR inherits the relevant portion of the original FR's acceptance criteria
-     c. Child FRs are linked via `dependencies` in their respective per-repo SRS
-     d. For each cross-repo boundary, create an IFR (Interface Requirement) documenting the contract:
-        - API endpoint / message format / shared data schema
-        - Dependency repo name: "Depends on: {repo_name}"
-   - Constraints: if repo-specific, assign to that repo; if global, copy to all repos
+1. **按仓库标注分组 FR**（来自步骤 10a）：
+   - 单仓库 FR → 直接分配到目标仓库
+   - 跨仓库 FR → 拆分为各仓库独立 FR：
+     a. 原始 FR 保留在全局 SRS 中，标记："Split: FR-001a (backend), FR-001b (frontend)"
+     b. 每个子 FR 继承原始 FR 验收标准的相关部分
+     c. 子 FR 通过各自各仓库 SRS 中的 `dependencies` 关联
+     d. 对每个跨仓库边界，创建 IFR（接口需求）记录契约：
+        - API 端点 / 消息格式 / 共享数据 Schema
+        - 依赖仓库名称："Depends on: {repo_name}"
+   - 约束：如果是仓库特定的，分配到该仓库；如果是全局的，复制到所有仓库
 
-2. **Generate per-repo SRS documents**:
-   For each repo in `repos-manifest.json`:
+2. **生成各仓库 SRS 文档**：
+   对 `repos-manifest.json` 中的每个仓库：
    a. `mkdir -p <repo_path>/docs/plans/`
-   b. Write `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-srs.md`:
-      - Copy global SRS header sections (Purpose, Scope, Glossary) — adapted for this repo's context
-      - Include only this repo's FRs, CONs, ASMs
-      - Add `## Interface Requirements` section: list all cross-repo IFRs with dependency repo names
-      - Add metadata header: `Global SRS Reference: docs/plans/global-srs.md`
-      - If global SRS metadata contains `Single-Round: Yes`, propagate to per-repo SRS metadata header: `Single-Round: Yes`
-   c. If deferred backlog exists, copy applicable items to `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-deferred.md`
+   b. 写入 `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-srs.md`：
+      - 复制全局 SRS 标题节（目的、范围、术语表）— 适配当前仓库的上下文
+      - 仅包含当前仓库的 FR、CON、ASM
+      - 添加 `## Interface Requirements` 节：列出所有跨仓库 IFR 及依赖仓库名称
+      - 添加元数据头：`Global SRS Reference: docs/plans/global-srs.md`
+      - 如果全局 SRS 元数据包含 `Single-Round: Yes`，传播到各仓库 SRS 元数据头：`Single-Round: Yes`
+   c. 如果存在延期积压，将适用条目复制到 `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-deferred.md`
 
-3. **Per-repo codebase rules**: Do NOT invoke `long-task-codebase-scanner` here.
-   When the user later starts a session in a sub-repo, the router's brownfield detection will invoke `long-task-codebase-scanner` for that repo if `<repo_path>/docs/rules/` does not exist yet. This avoids duplicate scanning.
+3. **各仓库代码库规则**：此处不要调用 `long-task-codebase-scanner`。
+   当用户稍后在子仓库中启动会话时，如果 `<repo_path>/docs/rules/` 尚不存在，路由器的存量项目检测将为该仓库调用 `long-task-codebase-scanner`。这样可避免重复扫描。
 
-4. **Update `repos-manifest.json`**:
+4. **更新 `repos-manifest.json`**：
    ```json
    {
      "detected": "2026-04-08T12:00:00Z",
@@ -614,53 +614,53 @@ If a deferred backlog was generated in Step 13, save alongside: `docs/plans/YYYY
    }
    ```
 
-5. **Per-repo granularity re-check** — after splitting, each repo's FR set may contain under-sized child FRs that were properly sized at the global level but became too small after split. For each repo:
+5. **各仓库粒度复查** — 拆分后，每个仓库的 FR 集可能包含在全局层面粒度适当但拆分后变得过小的子 FR。对每个仓库：
 
-   a. List the repo's FRs with **per-repo LOC estimates** (not global totals)
-   b. Apply S1-S4 under-size heuristics within the repo's FR set:
-      - Child FRs estimated below ~500 LOC are merge candidates with other FRs in the **same repo**
-      - S-heuristic merge rules apply identically to Step 12 (content preservation mandatory, combined ACs ≤ 20, same actor/functional area)
-   c. If merges are applied:
-      - Re-number per-repo FR IDs sequentially
-      - Update per-repo SRS cross-references and IFR dependency links
-      - Update `repos-manifest.json` cross_repo_deps entries accordingly
-   d. Skip this step if the repo has only 1 FR (nothing to merge into)
+   a. 列出仓库的 FR 及**各仓库 LOC 估计**（非全局总量）
+   b. 在仓库的 FR 集内应用 S1-S4 过小启发式：
+      - 预估低于约 500 行的子 FR 为与**同仓库**其他 FR 的合并候选
+      - S 启发式合并规则与步骤 12 完全相同（内容保全强制、合并后 AC ≤ 20、同角色/功能区域）
+   c. 如果应用了合并：
+      - 按顺序重新编号各仓库 FR ID
+      - 更新各仓库 SRS 交叉引用和 IFR 依赖链接
+      - 相应更新 `repos-manifest.json` 的 cross_repo_deps 条目
+   d. 如果仓库只有 1 个 FR 则跳过此步骤（无可合并对象）
 
-6. **Commit** (if project root has git) or skip if no root-level git
+6. **提交**（如果项目根目录有 git）或跳过（无根级 git）
 
-7. **Present split summary** to user for confirmation via `AskUserQuestion`:
-   - Per-repo FR list with per-repo LOC estimates (table format per repo)
-   - Cross-repo dependencies and interface contracts
-   - Any merges applied in step 5 with rationale
-   - Ask: "各仓库 SRS 拆分结果是否正确？是否需要调整？"
+7. **向用户展示拆分摘要**以通过 `AskUserQuestion` 确认：
+   - 各仓库 FR 列表及各仓库 LOC 估计（每仓库表格格式）
+   - 跨仓库依赖和接口契约
+   - 步骤 5 中应用的任何合并及理由
+   - 询问："各仓库 SRS 拆分结果是否正确？是否需要调整？"
 
-## Step 19: Distribute Dependency Files
+## 步骤 19：分发依赖文件
 
-After SRS split is confirmed, distribute all reference and dependency files to each sub-repo so they can work fully independently.
+SRS 拆分确认后，将所有参考和依赖文件分发到各子仓库，使其可完全独立工作。
 
-### 19a. Copy user-provided reference documents
+### 19a. 复制用户提供的参考文档
 
-Scan project root for user-added reference files:
-- `docs/` directory contents **excluding** `docs/plans/` (which are generated artifacts)
-- Root-level reference files: `*.md`, `*.pdf`, `*.json`, `*.yaml`, `*.yml` that are NOT generated artifacts (`repos-manifest.json`, `feature-list.json`, `task-progress.md`, `RELEASE_NOTES.md`, `long-task-guide.md`)
+扫描项目根目录下的用户添加的参考文件：
+- `docs/` 目录内容**不含** `docs/plans/`（为生成产物）
+- 根级参考文件：`*.md`、`*.pdf`、`*.json`、`*.yaml`、`*.yml` 中非生成产物的文件（`repos-manifest.json`、`feature-list.json`、`task-progress.md`、`RELEASE_NOTES.md`、`long-task-guide.md`）
 
-For each repo:
+对每个仓库：
 1. `mkdir -p <repo_path>/docs/references/`
-2. Copy identified reference files to `<repo_path>/docs/references/`
-3. If a reference file is clearly repo-specific (by name containing the repo name, or by content), only copy to that repo; otherwise copy to all repos
+2. 将识别到的参考文件复制到 `<repo_path>/docs/references/`
+3. 如果某参考文件明显属于特定仓库（文件名包含仓库名或内容指向特定仓库），仅复制到该仓库；否则复制到所有仓库
 
-### 19b. Copy global SRS + deferred backlog
+### 19b. 复制全局 SRS + 延期积压
 
-For each repo:
-1. Copy the global SRS → `<repo_path>/docs/plans/global-srs.md`
-2. If deferred backlog exists → copy to `<repo_path>/docs/plans/global-deferred.md`
-3. The per-repo SRS metadata header `Global SRS Reference` already points to `docs/plans/global-srs.md` (local copy)
+对每个仓库：
+1. 复制全局 SRS → `<repo_path>/docs/plans/global-srs.md`
+2. 如果存在延期积压 → 复制到 `<repo_path>/docs/plans/global-deferred.md`
+3. 各仓库 SRS 元数据头中的 `Global SRS Reference` 已指向 `docs/plans/global-srs.md`（本地副本）
 
-### 19c. Generate per-repo cross-repo dependency summary
+### 19c. 生成各仓库跨仓库依赖摘要
 
-For each repo:
-1. Extract entries from `cross_repo_deps` in `repos-manifest.json` where this repo appears as `from_repo` or `to_repo`
-2. Write `<repo_path>/docs/plans/cross-repo-deps.md`:
+对每个仓库：
+1. 从 `repos-manifest.json` 的 `cross_repo_deps` 中提取当前仓库作为 `from_repo` 或 `to_repo` 的条目
+2. 写入 `<repo_path>/docs/plans/cross-repo-deps.md`：
    ```markdown
    # Cross-Repo Dependencies: {repo_name}
 
@@ -681,12 +681,12 @@ For each repo:
    - Complete provider interfaces before consumer implementations
    - If this repo is a consumer: ensure provider repo's interface is stable before integration testing
    ```
-3. Add `## Cross-Repo Dependencies` section to the per-repo SRS, referencing `cross-repo-deps.md`:
+3. 在各仓库 SRS 中添加 `## Cross-Repo Dependencies` 节，引用 `cross-repo-deps.md`：
    > "详见 [cross-repo-deps.md](cross-repo-deps.md) 获取本仓库的跨仓库接口依赖详情。"
 
-### 19d. Add Reference Documents section to per-repo SRS
+### 19d. 在各仓库 SRS 中添加参考文档节
 
-Append `## Reference Documents` section to each per-repo SRS:
+在每个各仓库 SRS 末尾追加 `## Reference Documents` 节：
 ```markdown
 ## Reference Documents
 
@@ -696,21 +696,21 @@ Append `## Reference Documents` section to each per-repo SRS:
 - `docs/references/` — 用户提供的参考文档
 ```
 
-## Step 20: Handoff
+## 步骤 20：交接
 
-Present a structured handoff summary to the user:
+向用户展示结构化交接摘要：
 
-1. **Per-repo summary table**:
-   | Repo | FR Count | Key Requirements | Distributed Files |
+1. **各仓库摘要表**：
+   | 仓库 | FR 数量 | 关键需求 | 已分发文件 |
    |------|----------|-----------------|-------------------|
-   | backend | 8 | Auth, Data API, ... | SRS, global-srs, cross-repo-deps, 2 ref docs |
-   | frontend | 6 | UI, Dashboard, ... | SRS, global-srs, cross-repo-deps, 2 ref docs |
+   | backend | 8 | 认证、数据 API…… | SRS, global-srs, cross-repo-deps, 2 份参考文档 |
+   | frontend | 6 | UI、仪表盘…… | SRS, global-srs, cross-repo-deps, 2 份参考文档 |
 
-2. **Cross-repo dependency summary** (from `repos-manifest.json` `cross_repo_deps`):
-   - List each interface contract with provider and consumer repos
-   - Recommended development order: "建议先完成 {provider_repo}（提供接口方），再进行 {consumer_repo}（消费接口方）。"
+2. **跨仓库依赖摘要**（来自 `repos-manifest.json` 的 `cross_repo_deps`）：
+   - 列出每个接口契约及提供方和消费方仓库
+   - 建议的开发顺序："建议先完成 {provider_repo}（提供接口方），再进行 {consumer_repo}（消费接口方）。"
 
-3. **Distributed files per repo**:
+3. **各仓库已分发文件**：
    ```
    <repo>/docs/plans/
    ├── YYYY-MM-DD-<topic>-srs.md       # 本仓库独立 SRS
@@ -722,42 +722,42 @@ Present a structured handoff summary to the user:
    └── *.md / *.pdf / ...              # 用户参考文档
    ```
 
-4. **Instructions**:
+4. **说明**：
    "全局 SRS 已完成并拆分为各仓库独立 SRS。所有参考文档、全局 SRS、跨仓库依赖信息已复制到各子仓库的 docs/ 目录下。"
    "请分别 cd 到各仓库目录，独立启动新 session 执行后续流程（Design → Init → Worker → ST）。"
-   If cross-repo deps exist: "存在跨仓库依赖，建议先完成接口提供方仓库，再处理接口消费方仓库。具体依赖关系见上方摘要。"
+   如果存在跨仓库依赖："存在跨仓库依赖，建议先完成接口提供方仓库，再处理接口消费方仓库。具体依赖关系见上方摘要。"
 
-5. **End session** — do NOT invoke any other skill.
+5. **结束会话** — 不要调用任何其他 skill。
 
 ---
 
-## Scaling Table
+## 规模适配表
 
-| Tier | Signals | Typical FR Count | Elicitation Depth | Approval |
+| 层级 | 信号 | 典型 FR 数量 | 获取深度 | 批准方式 |
 |---|---|---|---|---|
-| **Lite** | <3 Expert signals | 1–10 | L1-L3 (flat rounds, hidden requirements) | Combined single step |
-| **Expert (Small)** | ≥3 Expert signals | 5–15 | E1-E5 (1–2 walkthroughs, grouped hypothesis) | 2–3 sections |
-| **Expert (Medium)** | ≥3 Expert signals | 15–50 | E1-E5 (2–3 walkthroughs, per-FR hypothesis) | Per-section |
-| **Expert (Large)** | ≥3 Expert signals | 50–200+ | E1-E5 (3–5 walkthroughs, batched hypothesis) | Per-section |
+| **精简** | <3 个专家信号 | 1-10 | L1-L3（扁平轮次、隐性需求） | 合并单步 |
+| **专家（小型）** | ≥3 个专家信号 | 5-15 | E1-E5（1-2 次走查、分组假设） | 2-3 节 |
+| **专家（中型）** | ≥3 个专家信号 | 15-50 | E1-E5（2-3 次走查、逐 FR 假设） | 逐节 |
+| **专家（大型）** | ≥3 个专家信号 | 50-200+ | E1-E5（3-5 次走查、批量假设） | 逐节 |
 
-## Red Flags
+## 危险信号
 
-| Rationalization | Correct Response |
+| 合理化借口 | 正确应对 |
 |---|---|
-| "This is too simple for an SRS" | Lite track IS the simple path. It produces a short SRS in 3–5 rounds. |
-| "The user already described what they want" | User descriptions are raw input; SRS adds structure, completeness, testability |
-| "I can figure out the requirements during design" | Requirements define WHAT; discovering them during HOW causes rework |
-| "The glossary is obvious" | Obvious to whom? Define every term the user and developer might interpret differently |
-| "I'll just start with the happy path" | Error cases, boundaries, and negatives must be captured NOW |
-| "This FR is fine as one big requirement" | Apply the 6 over-size heuristics (G1-G6) — hidden complexity creates oversized features |
-| "This FR is small but clear — leave it" | Apply the 4 under-size heuristics (S1-S4) — trivially small FRs waste full pipeline sessions on fixed overhead |
-| "All requirements belong in this round" | Scope fit assessment ensures focus — defer lower-priority items |
-| "Skip the walkthrough, I have enough FRs" | Walkthroughs find cross-capability gaps that per-FR questioning misses |
-| "Cross-repo interfaces will be figured out during design" | IFR contracts must be in the SRS — design depends on stable interface specifications |
+| "这个项目太简单，不需要 SRS" | 精简模式就是简单路径。它在 3-5 轮内产出简短的 SRS。 |
+| "用户已经描述了他们想要什么" | 用户描述是原始输入；SRS 增加结构、完整性和可测试性 |
+| "我可以在设计阶段搞清需求" | 需求定义做什么；在做怎么做时才发现需求会导致返工 |
+| "术语表很明显" | 对谁明显？定义用户和开发者可能不同理解的每个术语 |
+| "我先从正常路径开始" | 错误情况、边界和否定情况必须现在就捕获 |
+| "这个 FR 作为一个大需求就行" | 应用 6 个过大启发式（G1-G6）— 隐藏的复杂性产生过大的功能特性 |
+| "这个 FR 虽小但清晰 — 保留它" | 应用 4 个过小启发式（S1-S4）— 过于琐碎的 FR 在固定开销上浪费完整的流水线会话 |
+| "所有需求都属于这一轮" | 范围适配评估确保聚焦 — 延期低优先级条目 |
+| "跳过走查，我已有足够 FR" | 走查发现逐 FR 提问遗漏的跨能力缺口 |
+| "跨仓库接口在设计阶段再说" | IFR 契约必须在 SRS 中 — 设计依赖稳定的接口规格 |
 
-## Integration
+## 集成
 
-**Called by:** using-long-task (when `repos-manifest.json` exists)
-**Chains to:** nothing — session ends with handoff (user independently navigates to each repo)
-**References:** `references/problem-framing.md`, `references/scenario-walkthrough.md`, `references/hypothesis-correction.md`, `references/alignment-validation.md`, `prompts/srs-reviewer-prompt.md`
-**Produces:** global SRS (`docs/plans/YYYY-MM-DD-<topic>-srs.md`), per-repo SRS, per-repo dependency files, updated `repos-manifest.json`
+**调用方：** using-long-task（当 `repos-manifest.json` 存在时）
+**链接到：** 无 — 会话以交接结束（用户独立导航到各仓库）
+**引用：** `references/problem-framing.md`、`references/scenario-walkthrough.md`、`references/hypothesis-correction.md`、`references/alignment-validation.md`、`prompts/srs-reviewer-prompt.md`
+**产出：** 全局 SRS（`docs/plans/YYYY-MM-DD-<topic>-srs.md`）、各仓库 SRS、各仓库依赖文件、更新后的 `repos-manifest.json`

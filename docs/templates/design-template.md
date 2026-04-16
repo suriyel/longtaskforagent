@@ -1,34 +1,34 @@
-# <Project Name> — Design Document
+# <Project Name> — 设计文档
 
-**Date**: YYYY-MM-DD
-**Status**: Approved
-**SRS Reference**: docs/plans/YYYY-MM-DD-<topic>-srs.md
+**日期**: YYYY-MM-DD
+**状态**: 已批准
+**SRS 引用**: docs/plans/YYYY-MM-DD-<topic>-srs.md
 
-<!-- Diagram Change Tracking Convention -->
-> **Diagram Change Tracking** — applied only during increment updates (Wave N > 0). Initial design documents do NOT use change markers.
+<!-- 图表变更跟踪约定 -->
+> **图表变更跟踪** -- 仅在增量更新（Wave N > 0）时使用。初始设计文档不使用变更标记。
 >
-> | Diagram Type | New Element | Modified Element | Edge Marking |
+> | 图表类型 | 新增元素 | 修改元素 | 边标记 |
 > |---|---|---|---|
 > | `graph`/`flowchart` | `Node[Label]:::newNode` | `Node[Label]:::modNode` | `A -->\|"label 🟢"\| B` / `🟡` |
-> | `classDiagram` | `<<NEW - Wave N>>` annotation | `<<MODIFIED - Wave N>>` annotation | N/A |
-> | `sequenceDiagram` | `rect rgb(209,250,229)` wrapper + Note | `rect rgb(254,243,199)` wrapper + Note | Wrapped in `rect` |
-> | `erDiagram` | `ENTITY["NEW EntityName"]` alias | `ENTITY["MOD EntityName"]` alias | N/A |
-> | `stateDiagram-v2` | `State:::newNode` | `State:::modNode` | Label with `🟢`/`🟡` |
+> | `classDiagram` | `<<NEW - Wave N>>` 注解 | `<<MODIFIED - Wave N>>` 注解 | 不适用 |
+> | `sequenceDiagram` | `rect rgb(209,250,229)` 包裹 + Note | `rect rgb(254,243,199)` 包裹 + Note | 以 `rect` 包裹 |
+> | `erDiagram` | `ENTITY["NEW EntityName"]` 别名 | `ENTITY["MOD EntityName"]` 别名 | 不适用 |
+> | `stateDiagram-v2` | `State:::newNode` | `State:::modNode` | 标签使用 `🟢`/`🟡` |
 >
-> Standard `classDef` block (for graph/flowchart/stateDiagram-v2):
+> 标准 `classDef` 块（用于 graph/flowchart/stateDiagram-v2）：
 > ```
 > classDef newNode fill:#d1fae5,stroke:#2ea043,stroke-width:2px
 > classDef modNode fill:#fef3c7,stroke:#d4a017,stroke-width:2px
 > ```
 >
-> **Legend**: Each diagram containing change markers MUST include a Markdown note before the code fence:
+> **图例**: 包含变更标记的每张图表必须在代码围栏前附带一条 Markdown 说明：
 > `> **Change Legend (Wave N):** 🟢 = NEW | 🟡 = MODIFIED`
 >
-> **Cleanup rule**: Remove change markers from previous waves before applying new ones. Each diagram shows only current-wave markers.
+> **清理规则**: 在应用新标记之前移除上一波次的变更标记。每张图表仅展示当前波次的标记。
 
-## 0. Project Structure
+## 0. 项目结构
 
-> Target project directory tree. Mark each entry as **[existing]**, **[new]**, or **[modified]** to show the design's footprint on the codebase.
+> 目标项目目录树。将每个条目标记为 **[existing]**、**[new]** 或 **[modified]**，以展示设计对代码库的影响范围。
 
 ```
 project-root/
@@ -44,21 +44,21 @@ project-root/
 └── config.py                [existing]
 ```
 
-[Replace the example above with the actual project directory tree. Include only directories and files that are architecturally significant — omit generated files, caches, and IDE configs. For brownfield projects, focus on areas touched by this design.]
+[将上述示例替换为实际项目目录树。仅包含架构上重要的目录和文件 -- 省略生成文件、缓存和 IDE 配置。对于存量项目，聚焦于本设计涉及的区域。]
 
-## 1. Design Drivers
-[Key SRS inputs: constraints, interface requirements that shaped this design]
+## 1. 设计驱动因素
+[影响本设计的关键 SRS 输入：约束、接口需求]
 
-## 2. Approach Selection
-[Selected approach with justification. Brief mention of alternatives considered.]
+## 2. 方案选择
+[所选方案及其理由。简要提及考虑过的替代方案。]
 
-## 3. Architecture
+## 3. 架构
 
-### 3.1 Architecture Overview
-[High-level system description: key components, their responsibilities, and interactions]
+### 3.1 架构概览
+[高层系统描述：关键组件、职责及交互]
 
-### 3.2 Logical View
-[Describe system decomposition into packages/modules/layers. Show major abstractions and their relationships.]
+### 3.2 逻辑视图
+[描述系统分解为包/模块/层。展示主要抽象及其关系。]
 
 ```mermaid
 graph TB
@@ -80,12 +80,12 @@ graph TB
     REPO --> DB
 ```
 
-[Replace the example above with the actual logical architecture of the project. Show layers, packages, modules, and their dependency directions.]
+[将上述示例替换为项目的实际逻辑架构。展示层、包、模块及其依赖方向。]
 
-### 3.3 Component Diagram
+### 3.3 组件图
 
-[Show major runtime components and their interactions.
- Every edge MUST include: (1) protocol, (2) schema name referencing a §6.2 Contract ID.]
+[展示主要运行时组件及其交互。
+ 每条边必须包含：(1) 协议，(2) 引用 §6.2 Contract ID 的 schema 名称。]
 
 ```mermaid
 graph LR
@@ -94,22 +94,22 @@ graph LR
     B -->|"event: ResourceCreatedEvent (IAPI-002)"| C[Component C]
 ```
 
-[Replace the example above with actual components and interactions. An edge without a Contract ID label is a design defect — add a §6.2 row or justify as a framework-level dependency with no runtime data exchange.]
+[将上述示例替换为实际组件和交互。缺少 Contract ID 标签的边属于设计缺陷 -- 请添加 §6.2 行或说明该边为框架级依赖且无运行时数据交换。]
 
-### 3.4 Tech Stack Decisions
-[Justify against SRS constraints]
+### 3.4 技术栈决策
+[基于 SRS 约束的论证]
 
-## 4. Key Feature Designs
+## 4. 关键功能设计
 
-> **Instructions**: Create one subsection per key feature (or feature group). Each subsection MUST include at least: a class diagram and one behavioral diagram (sequence or flow). For complex features, include all four views.
+> **说明**: 为每个关键功能（或功能组）创建一个子节。每个子节至少必须包含：一张类图和一张行为图（时序图或流程图）。对于复杂功能，应包含全部四个视图。
 
-### 4.N Feature: <Feature Name> (FR-xxx)
+### 4.N 功能: <功能名称> (FR-xxx)
 
-#### 4.N.1 Overview
-[1-2 sentences: what this feature does, which SRS requirements it satisfies]
+#### 4.N.1 概述
+[1-2 句话：该功能做什么，满足哪些 SRS 需求]
 
-#### 4.N.2 Class Diagram
-[Show the classes/modules involved, their attributes, methods, and relationships]
+#### 4.N.2 类图
+[展示涉及的类/模块、属性、方法和关系]
 
 ```mermaid
 classDiagram
@@ -125,8 +125,8 @@ classDiagram
     ClassName --> AnotherClass : uses
 ```
 
-#### 4.N.3 Sequence Diagram
-[Show the interaction between objects/components for the main success scenario]
+#### 4.N.3 时序图
+[展示主成功场景下对象/组件之间的交互]
 
 ```mermaid
 sequenceDiagram
@@ -143,8 +143,8 @@ sequenceDiagram
     Controller-->>User: result
 ```
 
-#### 4.N.4 Flow Diagram
-[Show the process/logic flow including decision points and error paths]
+#### 4.N.4 流程图
+[展示包含决策点和错误路径的流程/逻辑]
 
 ```mermaid
 flowchart TD
@@ -156,30 +156,30 @@ flowchart TD
     D --> E
 ```
 
-#### 4.N.5 Design Notes
-[Key design decisions, edge cases, error handling strategy for this feature]
+#### 4.N.5 设计备注
+[该功能的关键设计决策、边界情况、错误处理策略]
 
-#### 4.N.6 Integration Surface
+#### 4.N.6 集成面
 
-**Provides** (other features depend on this):
+**提供方**（其他功能依赖本功能）：
 
-| Consumer Feature(s) | Contract ID | Endpoint / Method | Response Schema |
+| 消费方功能 | Contract ID | 端点/方法 | 响应 Schema |
 |---------------------|-------------|-------------------|----------------|
 | [#M Feature B] | [IAPI-001] | [`GET /api/resource/:id`] | [`ResourceDTO`] |
 
-**Requires** (this feature depends on):
+**依赖方**（本功能依赖其他功能）：
 
-| Provider Feature | Contract ID | Endpoint / Method | Request Schema |
+| 提供方功能 | Contract ID | 端点/方法 | 请求 Schema |
 |-----------------|-------------|-------------------|---------------|
 | [#K Feature C] | [IAPI-002] | [`POST /api/other`] | [`OtherRequest`] |
 
-[If this feature has no cross-feature dependencies, write:
- "Self-contained — no external integration surface."]
+[若本功能无跨功能依赖，填写：
+ "自包含 -- 无外部集成面。"]
 
-[Repeat section 4.N for each key feature or feature group]
+[对每个关键功能或功能组重复第 4.N 节]
 
-## 5. Data Model
-[Schemas, relationships, storage strategy]
+## 5. 数据模型
+[Schema、关系、存储策略]
 
 ```mermaid
 erDiagram
@@ -195,26 +195,26 @@ erDiagram
     }
 ```
 
-## 6. API / Interface Design
+## 6. API / 接口设计
 
-### 6.1 External Interfaces
-[Endpoints, contracts, protocols for external third-party systems]
-[Trace to SRS IFR-xxx requirements]
+### 6.1 外部接口
+[面向外部第三方系统的端点、契约、协议]
+[追溯至 SRS IFR-xxx 需求]
 
-### 6.2 Internal API Contracts
+### 6.2 内部 API 契约
 
-[For each component-to-component interaction in §3.3, define the contract.
- These are consumed by per-feature design SubAgents to ensure integration coherence.]
+[为 §3.3 中每个组件到组件的交互定义契约。
+ 这些契约供功能设计 SubAgent 消费，以确保集成一致性。]
 
-| Contract ID | Provider Feature | Consumer Feature(s) | Endpoint / Method | Request Schema | Response Schema | Error Codes |
+| Contract ID | 提供方功能 | 消费方功能 | 端点/方法 | 请求 Schema | 响应 Schema | 错误码 |
 |-------------|-----------------|---------------------|-------------------|---------------|----------------|-------------|
 | IAPI-001 | #N Feature A | #M Feature B, #K Feature C | `GET /api/resource/:id` | `{ id: UUID }` | `ResourceDTO { ... }` | 401, 404 |
 
-[Replace the example above with actual internal contracts from §3.3 edges.]
+[将上述示例替换为来自 §3.3 边的实际内部契约。]
 
-**Schema Definitions** (referenced by table above):
+**Schema 定义**（被上表引用）：
 
-[Use the project's primary language syntax. Define each shared schema used in the table.]
+[使用项目的主要语言语法。定义表中使用的每个共享 schema。]
 
 ```
 // Example — replace with actual schemas
@@ -225,28 +225,28 @@ interface ResourceDTO {
 }
 ```
 
-**When to define an internal API contract:**
-1. Any component pair connected by an edge in §3.3 → must have a corresponding row
-2. If feature A's `dependencies[]` in feature-list.json includes feature B, and A calls B's methods/APIs at runtime → must have a corresponding row
-3. Two features sharing persistent state (same DB table/file/cache) → must define the shared schema
-4. **Not required**: Pure framework-level dependencies (e.g., feature B depends on feature A's project skeleton but has no runtime calls)
+**何时定义内部 API 契约：**
+1. §3.3 中由边连接的任意组件对 → 必须有对应行
+2. 若功能 A 的 feature-list.json 中 `dependencies[]` 包含功能 B，且 A 在运行时调用 B 的方法/API → 必须有对应行
+3. 两个功能共享持久化状态（同一 DB 表/文件/缓存） → 必须定义共享 schema
+4. **无需定义**: 纯框架级依赖（如功能 B 依赖功能 A 的项目骨架但无运行时调用）
 
-**Granularity rule:** Define contracts to the level where a Consumer can code independently — i.e., the Consumer can write correct calling code and error handling by reading only this table.
+**粒度规则：** 契约定义需达到消费方可独立编码的程度 -- 即消费方仅通过阅读此表即可编写正确的调用代码和错误处理。
 
-## 7. Third-Party Dependencies
+## 7. 第三方依赖
 
-> **Instructions**: List ALL third-party libraries, frameworks, and tools. Each entry MUST specify an exact version (or version range) and compatibility notes.
+> **说明**: 列出所有第三方库、框架和工具。每个条目必须指定精确版本（或版本范围）和兼容性说明。
 
-| Library / Framework | Version | Purpose | License | Compatibility Notes |
+| 库/框架 | 版本 | 用途 | 许可证 | 兼容性说明 |
 |---|---|---|---|---|
-| example-lib | 2.3.1 | [purpose] | MIT | Compatible with Python >= 3.10 |
-| another-lib | ^4.0.0 | [purpose] | Apache-2.0 | Requires example-lib >= 2.0 |
+| example-lib | 2.3.1 | [用途] | MIT | Compatible with Python >= 3.10 |
+| another-lib | ^4.0.0 | [用途] | Apache-2.0 | Requires example-lib >= 2.0 |
 
-### 7.1 Version Constraints
-[Document any version pinning rationale, known incompatibilities, or upgrade risks]
+### 7.1 版本约束
+[记录版本固定的理由、已知不兼容项或升级风险]
 
-### 7.2 Dependency Graph
-[Show critical dependency relationships if complex]
+### 7.2 依赖关系图
+[若依赖关系复杂，展示关键依赖关系]
 
 ```mermaid
 graph LR
@@ -257,34 +257,34 @@ graph LR
     LibA -.->|"requires >= 2.0"| LibC
 ```
 
-## 8. Testing Strategy
-[Test types, coverage approach, tooling]
-[How SRS acceptance criteria map to test suites]
+## 8. 测试策略
+[测试类型、覆盖率方法、工具]
+[SRS 验收标准如何映射到测试套件]
 
-## 9. Development Plan
+## 9. 开发计划
 
-### 9.1 Milestones
+### 9.1 里程碑
 
-| Milestone | Target | Scope | Exit Criteria |
+| 里程碑 | 目标 | 范围 | 退出标准 |
 |---|---|---|---|
-| M1: Foundation | [date/sprint] | Core infrastructure, project skeleton | Build passes, dev environment reproducible |
-| M2: Core Features | [date/sprint] | [list high-priority features] | All high-priority features passing |
-| M3: Extended Features | [date/sprint] | [list medium-priority features] | All medium-priority features passing |
-| M4: Polish & Release | [date/sprint] | Quality verification, documentation, examples | All quality gates met, release-ready |
+| M1: 基础设施 | [日期/迭代] | 核心基础设施、项目骨架 | 构建通过，开发环境可复现 |
+| M2: 核心功能 | [日期/迭代] | [列出高优先级功能] | 所有高优先级功能通过 |
+| M3: 扩展功能 | [日期/迭代] | [列出中优先级功能] | 所有中优先级功能通过 |
+| M4: 打磨与发布 | [日期/迭代] | 质量验证、文档、示例 | 所有质量门禁通过，可发布 |
 
-### 9.2 Task Decomposition & Priority
+### 9.2 任务分解与优先级
 
-> **Instructions**: Each row becomes one feature in `feature-list.json`. Group related right-sized FRs (already validated by SRS G1-G6 + S1-S4 bidirectional sizing) into vertical slices. Include Mapped FRs for traceability. Each feature should productively fill one Worker session (~50% of model context window, target ~1,000 lines implementation code excluding UT per FR).
+> **说明**: 每行将成为 `feature-list.json` 中的一个功能。将相关的合适粒度 FR（已通过 SRS G1-G6 + S1-S4 双向校准验证）组合为垂直切片。包含映射的 FR 以实现可追溯性。每个功能应充分利用一次工作会话（约占模型上下文窗口的 50%，目标约 1,000 行实现代码（不含 UT）/FR）。
 
-| Priority | Feature | Mapped FRs | Dependencies | Milestone | Rationale |
+| 优先级 | 功能 | 映射 FR | 依赖 | 里程碑 | 理由 |
 |---|---|---|---|---|---|
-| P0 - Critical | [Feature A] | FR-001, FR-002 | None | M1 | Foundation required by all others |
-| P1 - High | [Feature B] | FR-003, FR-004, FR-005 | A | M2 | Core value proposition |
-| P2 - Medium | [Feature C] | FR-008, FR-009 | B | M3 | Extended functionality |
-| P3 - Low | [Feature D] | FR-012 | None | M4 | Nice-to-have |
+| P0 - 关键 | [功能 A] | FR-001, FR-002 | 无 | M1 | 其他所有功能的基础 |
+| P1 - 高 | [功能 B] | FR-003, FR-004, FR-005 | A | M2 | 核心价值主张 |
+| P2 - 中 | [功能 C] | FR-008, FR-009 | B | M3 | 扩展功能 |
+| P3 - 低 | [功能 D] | FR-012 | 无 | M4 | 锦上添花 |
 
-### 9.3 Dependency Chain
-[Show the critical path and feature dependency ordering]
+### 9.3 依赖链
+[展示关键路径和功能依赖顺序]
 
 ```mermaid
 graph LR
@@ -296,67 +296,65 @@ graph LR
     D --> F
 ```
 
-### 9.4 Risk & Mitigation
+### 9.4 风险与缓解
 
-| Risk | Impact | Likelihood | Mitigation |
+| 风险 | 影响 | 可能性 | 缓解策略 |
 |---|---|---|---|
-| [risk description] | High/Med/Low | High/Med/Low | [mitigation strategy] |
+| [风险描述] | 高/中/低 | 高/中/低 | [缓解策略] |
 
-## 10. Open Questions / Risks
-[Any remaining items to resolve during implementation]
+## 10. 待解决问题 / 风险
+[实现过程中需解决的剩余事项]
 
-## 11. Codebase Conventions & Constraints
+## 11. 代码库约定与约束
 
-> *This section is auto-populated from `docs/rules/` during design if the project has an existing codebase (brownfield). For greenfield projects, keep each subsection with empty tables — do NOT mark the entire section "N/A". Downstream skills always read §11; empty tables signal "no constraints" without requiring conditional logic.*
-> *These conventions are binding for all new code unless explicitly overridden elsewhere in this design document. Design overrides are marked with "⚠ Design Override" annotations.*
+> *本节在设计时从 `docs/rules/` 自动填充（适用于有现有代码库的存量项目）。对于新建项目，保留各子节及空表格 -- 不要将整节标记为"不适用"。下游技能始终读取 §11；空表格表示"无约束"，无需条件逻辑。*
+> *除非在本设计文档其他位置明确覆盖，否则这些约定对所有新代码具有约束力。设计覆盖以"⚠ Design Override"注解标记。*
 
-### 11.1 2nd-Party Library Constraints
+### 11.1 二方库约束
 
-> Mandatory internal libraries that replace standard library or 3rd-party alternatives. All new code MUST use these — do not use the replaced APIs directly.
+> 替代标准库或第三方替代方案的强制内部库。所有新代码必须使用这些库 -- 不得直接使用被替代的 API。
 
-| Domain | Internal Library | Replaces | Import Pattern | Notes |
+| 领域 | 内部库 | 替代 | 导入模式 | 备注 |
 |--------|-----------------|----------|---------------|-------|
-| [e.g., HTTP Client] | [e.g., `@company/http`] | [e.g., axios, fetch] | [e.g., `import { get } from '@company/http'`] | [e.g., All external HTTP calls] |
+| [如 HTTP Client] | [如 `@company/http`] | [如 axios, fetch] | [如 `import { get } from '@company/http'`] | [如 所有外部 HTTP 调用] |
 
-### 11.2 Prohibited APIs
+### 11.2 禁用 API
 
-| Prohibited | Reason | Use Instead |
+| 禁用项 | 原因 | 替代方案 |
 |------------|--------|-------------|
-| [e.g., `console.log`] | [e.g., Structured logging required] | [e.g., `internal.logger`] |
+| [如 `console.log`] | [如 要求结构化日志] | [如 `internal.logger`] |
 
-### 11.3 Approved 3rd-Party Libraries
+### 11.3 已批准的第三方库
 
-| Purpose | Library | Version | Pinning Strategy |
+| 用途 | 库 | 版本 | 固定策略 |
 |---------|---------|---------|-----------------|
-| [e.g., Testing] | [e.g., pytest] | [e.g., ^7.4] | [e.g., Range-pinned] |
+| [如 测试] | [如 pytest] | [如 ^7.4] | [如 范围固定] |
 
-### 11.4 Static Analysis Tools
+### 11.4 静态分析工具
 
-> Downstream TDD/Quality skills run these tools directly — the tools read their own config files.
+> 下游 TDD/质量技能直接运行这些工具 -- 工具读取自身的配置文件。
 
-| Tool | Config File | Run Command |
+| 工具 | 配置文件 | 运行命令 |
 |------|------------|-------------|
-| [e.g., eslint] | [e.g., `.eslintrc.json`] | [e.g., `npx eslint .`] |
+| [如 eslint] | [如 `.eslintrc.json`] | [如 `npx eslint .`] |
 
-### 11.5 Coding Style Summary
+### 11.5 编码风格摘要
 
-| Rule | Convention | Source |
+| 规则 | 约定 | 来源 |
 |------|-----------|--------|
-| [e.g., Variable naming] | [e.g., camelCase] | [e.g., Observed 95% consistency] |
-| [e.g., Indentation] | [e.g., 2 spaces] | [e.g., .editorconfig] |
+| [如 变量命名] | [如 camelCase] | [如 观测到 95% 一致性] |
+| [如 缩进] | [如 2 空格] | [如 .editorconfig] |
 
-### 11.6 Error Handling Pattern
+### 11.6 错误处理模式
 
-[Dominant error handling approach: try/catch, Result types, custom Error classes, centralized middleware, etc.]
+[主导错误处理方法：try/catch、Result 类型、自定义 Error 类、集中式中间件等。]
 
-### 11.7 Testing & Quality Tools
+### 11.7 测试与质量工具
 
-> Detected test, coverage, and mutation tools from `build-and-compilation.md`. Downstream TDD/Quality skills use these tool names to derive run commands via `get_tool_commands.py`.
+> 从 `build-and-compilation.md` 中检测到的测试、覆盖率和变异测试工具。下游 TDD/质量技能使用这些工具名称通过 `get_tool_commands.py` 派生运行命令。
 
-| Category | Tool | Config File | Run Command |
+| 类别 | 工具 | 配置文件 | 运行命令 |
 |----------|------|------------|-------------|
-| Test Framework | [e.g., pytest] | [e.g., `pyproject.toml [tool.pytest]`] | [e.g., `pytest`] |
-| Coverage | [e.g., pytest-cov] | [e.g., `.coveragerc`] | [e.g., `pytest --cov=src --cov-branch`] |
-| Mutation | [e.g., mutmut] | [e.g., `pyproject.toml [tool.mutmut]`] | [e.g., `mutmut run`] |
-
-
+| 测试框架 | [如 pytest] | [如 `pyproject.toml [tool.pytest]`] | [如 `pytest`] |
+| 覆盖率 | [如 pytest-cov] | [如 `.coveragerc`] | [如 `pytest --cov=src --cov-branch`] |
+| 变异测试 | [如 mutmut] | [如 `pyproject.toml [tool.mutmut]`] | [如 `mutmut run`] |

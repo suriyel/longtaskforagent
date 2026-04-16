@@ -1,16 +1,16 @@
-# Testing Anti-Patterns
+# 测试反模式
 
-## Purpose
+## 目的
 
-Catalog of common testing mistakes that produce false confidence. Reference this when writing tests or reviewing test quality.
+常见测试错误目录，这些错误会产生虚假信心。编写或审查测试质量时参考此文档。
 
-## Anti-Pattern Catalog
+## 反模式目录
 
-### 1. Testing Mock Behavior Instead of Real Behavior
+### 1. 测试 Mock 行为而非真实行为
 
-**Symptom**: Tests pass but the feature doesn't actually work.
+**症状**：测试通过但功能实际不工作。
 
-**Example (BAD)**:
+**示例（错误）**：
 ```python
 def test_user_login(mock_db):
     mock_db.get_user.return_value = User(id=1, name="test")
@@ -18,34 +18,34 @@ def test_user_login(mock_db):
     mock_db.get_user.assert_called_once_with("test")  # Testing the mock!
 ```
 
-**Why it fails**: You're testing that your code calls the mock correctly, not that the login actually works.
+**原因**：你在测试代码是否正确调用了 mock，而非登录是否真正有效。
 
-**Fix**: Test with real dependencies when possible (test database, in-memory store). Mock only external services you can't control.
+**修复**：尽可能使用真实依赖测试（测试数据库、内存存储）。仅 Mock 无法控制的外部服务。
 
-### 2. Adding Test-Only Methods to Production Code
+### 2. 向生产代码添加仅测试方法
 
-**Symptom**: Production code has `_test_helper()`, `get_for_testing()`, or similar methods.
+**症状**：生产代码中存在 `_test_helper()`、`get_for_testing()` 等方法。
 
-**Why it fails**: Production code should not know about tests. Test-only methods can be called in production, creating maintenance burden and potential bugs.
+**原因**：生产代码不应感知测试。仅测试方法可能在生产中被调用，造成维护负担和潜在 bug。
 
-**Fix**: Test through public interfaces. If you can't test something without a backdoor, the design needs refactoring.
+**修复**：通过公共接口测试。如果必须通过后门才能测试，说明设计需要重构。
 
-### 3. Mocking Without Understanding Dependencies
+### 3. 不理解依赖就盲目 Mock
 
-**Symptom**: Every test mocks everything, and you're not sure what each mock represents.
+**症状**：每个测试 Mock 所有东西，且不确定每个 mock 代表什么。
 
-**Why it fails**: Over-mocking makes tests brittle (break when implementation changes) and meaningless (test mock wiring, not behavior).
+**原因**：过度 Mock 使测试脆弱（实现变更即失败）且无意义（测试 mock 接线而非行为）。
 
-**Fix**:
-- Understand the dependency before mocking it
-- Mock at the boundary (HTTP calls, file system, time) not at internal layers
-- Prefer fakes (in-memory implementations) over mocks for complex dependencies
+**修复**：
+- 在 Mock 之前理解依赖
+- 在边界处 Mock（HTTP 调用、文件系统、时钟），而非内部层
+- 对复杂依赖优先使用 fake（内存实现）而非 mock
 
-### 4. Testing Implementation Details
+### 4. 测试实现细节
 
-**Symptom**: Tests break when you refactor without changing behavior.
+**症状**：重构行为不变时测试却失败。
 
-**Example (BAD)**:
+**示例（错误）**：
 ```python
 def test_sort():
     result = sort_list([3, 1, 2])
@@ -53,31 +53,31 @@ def test_sort():
     assert mock_quicksort.called
 ```
 
-**Fix**: Test the output, not how it was computed:
+**修复**：测试输出，而非计算方式：
 ```python
 def test_sort():
     result = sort_list([3, 1, 2])
     assert result == [1, 2, 3]
 ```
 
-### 5. Non-Deterministic Tests
+### 5. 非确定性测试
 
-**Symptom**: Tests pass sometimes and fail sometimes.
+**症状**：测试时过时不过。
 
-**Common causes**:
-- Depending on current time/date
-- Random values without seeds
-- Race conditions in async code
-- Shared state between tests
-- Network calls to external services
+**常见原因**：
+- 依赖当前时间/日期
+- 无种子的随机值
+- 异步代码中的竞态条件
+- 测试间共享状态
+- 对外部服务的网络调用
 
-**Fix**: Control all sources of non-determinism. Use fixed timestamps, seeded random, proper async handling, test isolation, and mocked network.
+**修复**：控制所有非确定性来源。使用固定时间戳、有种子的随机数、正确的异步处理、测试隔离和 mock 网络。
 
-### 6. Tests That Can't Fail
+### 6. 不会失败的测试
 
-**Symptom**: Test always passes regardless of implementation.
+**症状**：无论实现如何，测试总是通过。
 
-**Example (BAD)**:
+**示例（错误）**：
 ```python
 def test_something():
     try:
@@ -87,36 +87,36 @@ def test_something():
         pass  # Swallowing the failure!
 ```
 
-**Fix**: Always run TDD Red first — if the test passes before implementation, the test is wrong.
+**修复**：始终先执行 TDD Red — 如果实现前测试就通过，说明测试有问题。
 
-### 7. Testing Too Much in One Test
+### 7. 单个测试验证过多
 
-**Symptom**: One test has 20+ assertions covering multiple behaviors.
+**症状**：一个测试有 20+ 个断言覆盖多个行为。
 
-**Why it fails**: When it fails, you don't know which behavior broke. Makes debugging harder.
+**原因**：失败时无法知道哪个行为出错，增加调试难度。
 
-**Fix**: One behavior per test. Use descriptive test names that describe the single behavior being tested.
+**修复**：每个测试一个行为。使用描述性测试名称描述被测试的单一行为。
 
-### 8. Shared Mutable State Between Tests
+### 8. 测试间共享可变状态
 
-**Symptom**: Tests pass in isolation but fail when run together.
+**症状**：测试单独运行通过，一起运行失败。
 
-**Why it fails**: One test modifies shared state that another test depends on.
+**原因**：一个测试修改了另一个测试依赖的共享状态。
 
-**Fix**: Each test sets up and tears down its own state. Use fresh fixtures, database transactions, or isolated test containers.
+**修复**：每个测试自行 setup 和 teardown。使用新的 fixture、数据库事务或隔离的测试容器。
 
-### 9. Assertion-Free Tests
+### 9. 无断言测试
 
-**Symptom**: Test runs code but doesn't assert anything meaningful.
+**症状**：测试运行了代码但不断言任何有意义的结果。
 
-**Example (BAD)**:
+**示例（错误）**：
 ```python
 def test_create_user():
     create_user("test", "test@email.com")
     # No assertion! Just checking it doesn't throw.
 ```
 
-**Fix**: Assert the observable outcome:
+**修复**：断言可观察的结果：
 ```python
 def test_create_user():
     user = create_user("test", "test@email.com")
@@ -124,25 +124,25 @@ def test_create_user():
     assert user.email == "test@email.com"
 ```
 
-### 10. Copy-Paste Test Suites
+### 10. 复制粘贴测试套件
 
-**Symptom**: Tests are duplicated with minor variations, making the suite hard to maintain.
+**症状**：测试被复制且仅有微小变化，使套件难以维护。
 
-**Fix**: Use parameterized tests for variations. Extract shared setup into fixtures. But avoid over-abstracting — tests should be readable without jumping through hoops.
+**修复**：对变体使用参数化测试。将共享 setup 提取到 fixture。但避免过度抽象 — 测试应无需跳转即可阅读。
 
-### 11. Gaming Coverage with Assert-Free Tests
+### 11. 用无断言测试刷覆盖率
 
-**Symptom**: High coverage numbers but tests have weak or no assertions.
+**症状**：覆盖率数字高但测试的断言弱或无断言。
 
-**Example (BAD)**:
+**示例（错误）**：
 ```python
 def test_process_data():
     process_data(sample_input)  # 100% line coverage, 0% verification
 ```
 
-**Why it fails**: Exercising code paths without verifying correctness gives false confidence. Tests will never fail even if the function returns garbage.
+**原因**：执行代码路径但不验证正确性会产生虚假信心。即使函数返回垃圾数据，测试也不会失败。
 
-**Fix**: Every test must assert observable outcomes. Mutation testing exposes this — if a mutant survives, the test isn't actually checking the result.
+**修复**：每个测试必须断言可观察的结果。变异测试可暴露此问题 — 如果变异体存活，说明测试实际未检查结果。
 
 ```python
 def test_process_data():
@@ -151,30 +151,30 @@ def test_process_data():
     assert result.count == 42
 ```
 
-### 12. Ignoring Surviving Mutants
+### 12. 忽略存活的变异体
 
-**Symptom**: Mutation score below threshold but feature is marked as "passing" anyway.
+**症状**：变异分数低于阈值但功能仍被标记为"passing"。
 
-**Why it fails**: Surviving mutants are bugs your tests can't catch. If you change `>` to `>=` and no test fails, your boundary logic is untested.
+**原因**：存活的变异体是测试无法捕获的 bug。如果将 `>` 改为 `>=` 而无测试失败，说明边界逻辑未被测试。
 
-**Fix**: For each surviving mutant:
-- **Real gap**: add a test that kills it
-- **Equivalent mutant**: document why the change produces identical behavior (e.g., `# equivalent mutant: condition is always true due to precondition on line X`)
-- **Never ignore**: every survivor must be addressed (fixed or documented)
+**修复**：对每个存活的变异体：
+- **真实缺口**：添加能杀死它的测试
+- **等价变异体**：记录为何变更产生相同行为（如 `# equivalent mutant: condition is always true due to precondition on line X`）
+- **绝不忽略**：每个存活者必须被处理（修复或记录）
 
-### 13. Running Mutation Tests on Untested Code
+### 13. 对未测试代码运行变异测试
 
-**Symptom**: Running mutation tests before achieving coverage threshold. Many mutants show "no coverage".
+**症状**：在达到覆盖率阈值前运行变异测试。许多变异体显示"no coverage"。
 
-**Why it fails**: Mutation testing on uncovered code produces many false survivors and wastes time — there's no test to kill the mutant in the first place.
+**原因**：对未覆盖代码的变异测试产生大量误报存活者且浪费时间 — 根本没有测试能杀死变异体。
 
-**Fix**: Always pass the coverage gate before running mutation tests. Coverage first, mutation second.
+**修复**：始终先通过覆盖率门禁再运行变异测试。先覆盖率，后变异。
 
-### 14. Low-Value Assertions (Existence/Type/Import Tests)
+### 14. 低价值断言（存在性/类型/导入测试）
 
-**Symptom**: Tests assert existence, type, or import success — things that would only fail if the language runtime itself is broken, not if the implementation has a bug.
+**症状**：测试断言存在性、类型或导入成功 — 这些只有在语言运行时本身出问题时才会失败，而非实现有 bug。
 
-**Examples (ALL BAD)**:
+**示例（全部错误）**：
 
 ```python
 # BAD: Testing that a function returns something (not WHAT it returns)
@@ -212,17 +212,17 @@ def test_process():
     result = process_data(sample)  # No assertion on result at all
 ```
 
-**Why they're harmful**:
-- They pass regardless of what the implementation actually returns, as long as it returns *something*
-- They inflate coverage and test counts with zero bug-finding ability
-- Mutation testing may not catch all of these — some mutations preserve type/existence
-- They crowd out meaningful assertions, creating false confidence in test suite quality
+**危害**：
+- 只要实现返回*任何东西*就通过，不管返回什么
+- 用零缺陷发现能力膨胀覆盖率和测试数量
+- 变异测试不一定能捕获所有这些 — 某些变异保留类型/存在性
+- 排挤有意义的断言，对测试套件质量产生虚假信心
 
-**The "Wrong Implementation" Test**: For each assertion, ask: *"What wrong implementation would this test NOT catch?"* If the answer is "almost any wrong implementation" → the assertion is low-value.
+**"错误实现"测试**：对每个断言问：*"哪种错误实现不会被此测试捕获？"* 如果答案是"几乎任何错误实现" → 该断言是低价值的。
 
-Example: `assert result is not None` — a function returning `User(name="WRONG", email="WRONG")` passes this test. A function returning `42` passes this test. A function returning `""` passes this test. It catches exactly one failure: returning `None`.
+示例：`assert result is not None` — 返回 `User(name="WRONG", email="WRONG")` 的函数通过此测试。返回 `42` 的函数通过此测试。返回 `""` 的函数通过此测试。它只捕获一种失败：返回 `None`。
 
-**Fix — assert specific observable outcomes**:
+**修复 — 断言具体的可观察结果**：
 
 ```python
 # GOOD: Assert specific values
@@ -260,35 +260,35 @@ def test_process():
     assert result.processed_count == 42
 ```
 
-**Quantitative rule**: In any test suite, the ratio of low-value assertions to total assertions must not exceed **20%**:
+**量化规则**：任何测试套件中，低价值断言与总断言的比例不得超过 **20%**：
 
 ```
 low_value_count / total_assertion_count <= 0.20
 ```
 
-Low-value assertion patterns (for counting):
-- `assert x is not None` / `assert x is None` (when testing defaults, not behavior)
+低价值断言模式（用于计数）：
+- `assert x is not None` / `assert x is None`（测试默认值而非行为时）
 - `assert isinstance(x, SomeType)`
-- `assert len(x) > 0` (without checking contents)
-- `assert "key" in dict` (without checking value)
-- `assert bool(x)` / `assert x` (truthiness only)
-- `from module import X; assert X is not None` (import test)
-- Tests with no assertion at all (already covered by anti-pattern #9)
+- `assert len(x) > 0`（不检查内容）
+- `assert "key" in dict`（不检查值）
+- `assert bool(x)` / `assert x`（仅真值性）
+- `from module import X; assert X is not None`（导入测试）
+- 无断言的测试（已被反模式 #9 覆盖）
 
-**Relationship to other anti-patterns**: This is more specific than #9 (assertion-free tests) and #11 (gaming coverage). A test can have assertions and still be low-value if those assertions only verify existence/type. Mutation testing (#12) catches some but not all low-value assertions — the 20% ratio rule provides an additional check during test writing.
+**与其他反模式的关系**：比 #9（无断言测试）和 #11（刷覆盖率）更具体。测试可以有断言但仍是低价值的 — 如果断言仅验证存在性/类型。变异测试（#12）能捕获部分但非全部低价值断言 — 20% 比例规则在编写测试时提供额外检查。
 
-## Quick Reference: Test Writing Checklist
+## 快速参考：测试编写检查清单
 
-Before marking a test as complete:
+标记测试完成前：
 
-- [ ] Test fails without the implementation (TDD Red verified)
-- [ ] Test name describes the behavior being tested
-- [ ] Test has meaningful assertions (not just "no error")
-- [ ] Test is deterministic (passes/fails consistently)
-- [ ] Test is independent (doesn't depend on other tests' state)
-- [ ] Test tests behavior, not implementation details
-- [ ] No test-only methods added to production code
-- [ ] Mocks are at boundaries, not internal layers
-- [ ] No low-value assertions (None checks, isinstance, import, len>0, key-in-dict, truthiness)
-- [ ] Low-value assertion ratio <= 20% of total assertions
-- [ ] Each assertion would fail for a plausible wrong implementation ("wrong implementation" test)
+- [ ] 测试在无实现时失败（TDD Red 已验证）
+- [ ] 测试名称描述被测试的行为
+- [ ] 测试有有意义的断言（不只是"无错误"）
+- [ ] 测试是确定性的（稳定通过/失败）
+- [ ] 测试是独立的（不依赖其他测试的状态）
+- [ ] 测试测试行为，而非实现细节
+- [ ] 未向生产代码添加仅测试方法
+- [ ] Mock 在边界处，而非内部层
+- [ ] 无低价值断言（None 检查、isinstance、import、len>0、key-in-dict、真值性）
+- [ ] 低价值断言比例 <= 总断言的 20%
+- [ ] 每个断言对可能的错误实现会失败（"错误实现"测试）

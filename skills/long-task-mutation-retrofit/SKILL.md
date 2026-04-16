@@ -1,45 +1,45 @@
 ---
 name: long-task-mutation-retrofit
-description: "Retrofit mutation testing for existing/legacy codebases until mutation score threshold is met — standalone, no pipeline dependency. Supports incremental mode via --branch."
+description: "为存量/遗留代码补全变异测试，迭代直至变异分数达标——独立运行，无流水线依赖。支持通过 --branch 进行增量模式。"
 ---
 
-# Mutation Retrofit — 变异测试补全
+# 变异测试补全 — 变异测试补全
 
 为存量/遗留代码补充变异测试，迭代度量->修复->验证，直至变异分数达标。
 
-**Announce at start:** "I'm using the long-task-mutation-retrofit skill to strengthen tests until mutation score threshold is met."
+**在开始时宣告：** "I'm using the long-task-mutation-retrofit skill to strengthen tests until mutation score threshold is met."
 
-## Sole Objective
+## 唯一目标
 
-**Mutation Score -> threshold.** Detect tools, measure, kill surviving mutants, verify, repeat.
+**变异分数 -> 达标。** 检测工具、度量、杀灭存活变异体、验证、重复。
 
-## Invocation
+## 调用方式
 
-**Standalone** — no pipeline dependency, no `feature-list.json` / `long-task-guide.md` required. Can be invoked at any time.
+**独立运行** — 无流水线依赖，不需要 `feature-list.json` / `long-task-guide.md`。可随时调用。
 
-User provides environment info directly in query (language, test commands, mutation commands, etc.). Skill uses what user provides; auto-detects the rest.
+用户在查询中直接提供环境信息（语言、测试命令、变异测试命令等）。Skill 优先使用用户提供的信息；其余自动检测。
 
 ---
 
-## Step 1: Parse Arguments & User Context
+## 第 1 步：解析参数与用户上下文
 
-| Parameter | Values | Default |
-|-----------|--------|---------|
-| `--path` | directory path | `.` |
-| `--files` | comma-separated source file list | empty (all) |
-| `--branch` | branch name for incremental mode | empty (full scan) |
-| `--max-iterations` | integer 1-20 | 20 |
-| `--mutation` | integer 0-100 | 80 |
-| `--skip-coverage-check` | flag | false |
-| `--dry-run` | flag | false |
+| 参数 | 取值 | 默认值 |
+|------|------|--------|
+| `--path` | 目录路径 | `.` |
+| `--files` | 逗号分隔的源文件列表 | 空（全部） |
+| `--branch` | 增量模式的分支名 | 空（全量扫描） |
+| `--max-iterations` | 整数 1-20 | 20 |
+| `--mutation` | 整数 0-100 | 80 |
+| `--skip-coverage-check` | 标志 | false |
+| `--dry-run` | 标志 | false |
 
-Extract from user query any explicitly stated: language, test command, mutation command, test directory, etc. These take priority over auto-detection.
+从用户查询中提取明确声明的：语言、测试命令、变异测试命令、测试目录等。这些优先于自动检测。
 
-Print announcement with selected parameters.
+打印包含所选参数的宣告。
 
-## Step 2: Rules Check
+## 第 2 步：规则检查
 
-Check for project coding conventions:
+检查项目编码惯例：
 
 ```
 IF docs/rules/ does not exist OR is empty:
@@ -53,48 +53,48 @@ IF docs/rules/ exists:
   Read for later use in SubAgent prompts
 ```
 
-## Step 3: Environment Detection
+## 第 3 步：环境检测
 
-Priority: **user-provided > auto-detected**.
+优先级：**用户提供 > 自动检测**。
 
-### 3a: User-Provided Context
+### 3a：用户提供的上下文
 
-If the user explicitly stated language, test command, mutation command, etc. in their query, use those directly. Skip auto-detection for provided items.
+如果用户在查询中明确声明了语言、测试命令、变异测试命令等，直接使用。对已提供的项跳过自动检测。
 
-### 3b: Auto-Detection (for items not provided by user)
+### 3b：自动检测（针对用户未提供的项）
 
-**Language**: Count files by extension (`*.py`, `*.java`, `*.js`, `*.ts`, `*.c`, `*.cpp`), excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`, `__pycache__/`. Primary = highest count.
+**语言**：按扩展名统计文件数（`*.py`、`*.java`、`*.js`、`*.ts`、`*.c`、`*.cpp`），排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/`、`__pycache__/`。主语言 = 最高计数。
 
-**Build system**:
-| File | System |
-|------|--------|
+**构建系统**：
+| 文件 | 系统 |
+|------|------|
 | `pyproject.toml` / `setup.py` / `requirements.txt` | Python (pip/poetry) |
 | `pom.xml` | Maven |
 | `build.gradle` / `build.gradle.kts` | Gradle |
 | `package.json` | npm/yarn |
 | `CMakeLists.txt` / `Makefile` | CMake/Make |
 
-**Test framework**: Grep dependency manifests for `pytest`, `junit`, `jest`, `vitest`, `gtest`, `catch2`.
+**测试框架**：在依赖清单中搜索 `pytest`、`junit`、`jest`、`vitest`、`gtest`、`catch2`。
 
-**Coverage tool** (for prerequisite check): Grep for `pytest-cov`/`coverage`, `jacoco`, `c8`/`nyc`/`istanbul`, `gcov`/`lcov`.
+**覆盖率工具**（用于前置检查）：搜索 `pytest-cov`/`coverage`、`jacoco`、`c8`/`nyc`/`istanbul`、`gcov`/`lcov`。
 
-**Mutation tool**: Grep for `mutmut`, `pitest`, `stryker`, `mull`.
+**变异测试工具**：搜索 `mutmut`、`pitest`、`stryker`、`mull`。
 
-**Command derivation**: Map detected tool names to command templates (see `coverage-recipes.md` for full per-language reference).
+**命令推导**：将检测到的工具名映射到命令模板（完整的按语言参考见 `coverage-recipes.md`）。
 
-**Missing mutation tool**: If mutation tool absent, read `{skill_dir}/references/coverage-recipes.md` for installation recipes. If cannot install: **STOP** — "No mutation tool detected. Install one first." with tool-specific instructions.
+**缺失变异测试工具**：如果变异测试工具不存在，读取 `{skill_dir}/references/coverage-recipes.md` 获取安装方法。如果无法安装：**停止** — "No mutation tool detected. Install one first." 并附带工具专属说明。
 
-### 3c: Test Convention Detection
+### 3c：测试惯例检测
 
-Identify test directory and naming pattern:
-- Python: `tests/test_*.py` or `test/test_*.py`
-- Java: `src/test/java/**/*Test.java`
-- JS/TS: `__tests__/*.test.ts`, `*.spec.ts`, `tests/*.test.js`
-- C/C++: `tests/*.cpp`, `test/*.c`
+识别测试目录和命名模式：
+- Python：`tests/test_*.py` 或 `test/test_*.py`
+- Java：`src/test/java/**/*Test.java`
+- JS/TS：`__tests__/*.test.ts`、`*.spec.ts`、`tests/*.test.js`
+- C/C++：`tests/*.cpp`、`test/*.c`
 
-### 3d: Detection Summary
+### 3d：检测摘要
 
-Print:
+打印：
 
 ```
 ## Environment
@@ -122,93 +122,93 @@ Print:
 | Coverage Prerequisite | 80% line (bypass with --skip-coverage-check) |
 ```
 
-If no test framework detected: **STOP** — "No test framework detected. Install one first."
+如果未检测到测试框架：**停止** — "No test framework detected. Install one first."
 
-If `--dry-run`: proceed to Step 5 (baseline) then STOP after printing results.
+如果 `--dry-run`：进入第 5 步（基线度量）后打印结果即停止。
 
-## Step 4: Incremental Scoping
+## 第 4 步：增量范围界定
 
-**Skip this step if `--branch` is not specified.**
+**如果未指定 `--branch` 则跳过此步。**
 
-### 4a: Get Changed Files
+### 4a：获取变更文件
 
 ```bash
 git diff <branch>...HEAD --diff-filter=ACMRT --name-only -- '*.py' '*.java' '*.js' '*.ts' '*.c' '*.cpp'
 ```
 
-Filter to detected language extensions only.
+仅筛选已检测语言的扩展名。
 
-### 4b: Intersect with --files
+### 4b：与 --files 取交集
 
-If `--files` also specified: intersect changed files with explicit file list.
+如果同时指定了 `--files`：将变更文件与显式文件列表取交集。
 
-### 4c: Derive Changed Modules
+### 4c：推导变更模块
 
-| Language | Mapping | Mutation Scope |
-|----------|---------|---------------|
-| Python | `src/foo/bar.py` -> file path | `--paths-to-mutate=src/foo/bar.py` |
+| 语言 | 映射 | 变异测试范围 |
+|------|------|-------------|
+| Python | `src/foo/bar.py` -> 文件路径 | `--paths-to-mutate=src/foo/bar.py` |
 | Java | `src/main/java/com/foo/Bar.java` -> `com.foo` | `-DtargetClasses=com.foo.*` |
-| JS/TS | file path directly | `--mutate=src/foo.ts` |
+| JS/TS | 文件路径直接使用 | `--mutate=src/foo.ts` |
 
-### 4d: Validate
+### 4d：校验
 
-If zero changed files: **STOP** — "No changed files detected vs branch `<branch>`."
+如果变更文件数为零：**停止** — "No changed files detected vs branch `<branch>`."
 
-Print: `"Incremental mode: {N} changed files from branch {branch}."`
+打印：`"Incremental mode: {N} changed files from branch {branch}."`
 
-Store `changed_files` for subsequent steps.
+存储 `changed_files` 供后续步骤使用。
 
-## Step 5: Prerequisite + Baseline
+## 第 5 步：前置检查 + 基线度量
 
-### 5a: Test Suite Health
+### 5a：测试套件健康检查
 
-Run test-quiet command. If tests **FAIL**: **STOP** — "Existing tests failing. Fix them before retrofitting."
+运行 test-quiet 命令。如果测试**失败**：**停止** — "Existing tests failing. Fix them before retrofitting."
 
-### 5b: Coverage Prerequisite Check
+### 5b：覆盖率前置检查
 
-Unless `--skip-coverage-check` is set:
+除非设置了 `--skip-coverage-check`：
 
-Run coverage (scoped if incremental). If **line coverage < 80%**: **STOP** — "Coverage too low ({X}%). Run `/coverage-retrofit` first to bring coverage above 80%, or use `--skip-coverage-check` to bypass."
+运行覆盖率（增量模式则限定范围）。如果**行覆盖率 < 80%**：**停止** — "Coverage too low ({X}%). Run `/coverage-retrofit` first to bring coverage above 80%, or use `--skip-coverage-check` to bypass."
 
-Rationale: Mutation testing on poorly-covered code wastes time — most mutants survive simply because no test exercises the code at all (anti-pattern #13 in testing-anti-patterns.md).
+原因：对覆盖率不足的代码运行变异测试浪费时间——大多数变异体存活仅仅因为没有测试触及该代码（testing-anti-patterns.md 中的反模式 #13）。
 
-### 5c: Mutation Measurement
+### 5c：变异测试度量
 
-Run mutation command (scoped if incremental).
+运行变异测试命令（增量模式则限定范围）。
 
-Parse mutation report:
-- **Overall**: mutation score %
-- **Per-file**: surviving mutants list
+解析变异测试报告：
+- **总体**：变异分数 %
+- **按文件**：存活变异体列表
 
-Use Output Optimization Protocol:
-1. Run quiet mutation -> exit code + summary
-2. If metrics unclear -> read report file directly (pitest XML, mutmut results, stryker JSON)
+使用输出优化协议：
+1. 运行静默变异测试 -> 退出码 + 摘要
+2. 如果指标不清晰 -> 直接读取报告文件（pitest XML、mutmut results、stryker JSON）
 
-### 5d: Baseline Check
+### 5d：基线检查
 
-- Mutation score >= threshold: **STOP** — "Threshold already met." Print summary.
-- `--dry-run`: print baseline metrics and **STOP**.
-- Otherwise: extract **Surviving Mutants**:
+- 变异分数 >= 阈值：**停止** — "Threshold already met." 打印摘要。
+- `--dry-run`：打印基线指标后**停止**。
+- 否则：提取**存活变异体**：
 
 ```
 Surviving Mutants format:  file:line | mutator | description
 ```
 
-Print: `"Baseline: Mutation {X}%. Surviving mutants: {N} across {M} files."`
+打印：`"Baseline: Mutation {X}%. Surviving mutants: {N} across {M} files."`
 
-## Step 6: Fix Loop
+## 第 6 步：修复循环
 
-Initialize: `iteration = 0`, `stall_count = 0`
+初始化：`iteration = 0`、`stall_count = 0`
 
-### 6a: Prioritize & Chunk
+### 6a：优先级排序与分块
 
-Rank source files by surviving mutants count descending. If incremental: filter to `changed_files` only. Select **top 3-5 files** as iteration target.
+按存活变异体数量降序排列源文件。如果是增量模式：仅筛选 `changed_files`。选择**前 3-5 个文件**作为本轮迭代目标。
 
-### 6b: Mutation Fix
+### 6b：变异修复
 
-> **DISPATCH** create independent SubAgent(use General or Agent) — load then execute skill `long-task:long-task-mutation-fix` in the subagent
+> **分派** 创建独立 SubAgent（使用 General 或 Agent）— 在 SubAgent 中加载并执行 skill `long-task:long-task-mutation-fix`
 
-**Prompt must provide inline context**:
+**提示必须提供内联上下文**：
 
 ```
 You are retrofitting tests for an existing codebase (not a TDD feature cycle).
@@ -236,17 +236,17 @@ You are retrofitting tests for an existing codebase (not a TDD feature cycle).
 - Do NOT run mutation or coverage tools
 ```
 
-**Parse** SubAgent return:
-- Verdict PASS -> proceed to 6c
-- Verdict FAIL / BLOCKED -> log, skip iteration, continue
+**解析** SubAgent 返回：
+- Verdict PASS -> 进入 6c
+- Verdict FAIL / BLOCKED -> 记录日志，跳过本轮迭代，继续
 
-### 6c: Verify All Tests Pass
+### 6c：验证所有测试通过
 
-Run test-quiet command. If FAIL -> run test-detail -> attempt fix (max 2 retries). If still failing -> revert SubAgent's changes for this iteration, log, continue.
+运行 test-quiet 命令。如果 FAIL -> 运行 test-detail -> 尝试修复（最多 2 次重试）。如果仍然失败 -> 回滚 SubAgent 本轮的更改，记录日志，继续。
 
-### 6d: Re-Measure
+### 6d：重新度量
 
-Run mutation again (scoped if incremental). Record:
+再次运行变异测试（增量模式则限定范围）。记录：
 
 ```
 Iteration {N}: Mutation {before}->{after}% (+{delta})
@@ -255,19 +255,19 @@ Iteration {N}: Mutation {before}->{after}% (+{delta})
   Tests strengthened: {count}
 ```
 
-### 6e: Exit Conditions
+### 6e：退出条件
 
-| Condition | Action |
-|-----------|--------|
-| Mutation score >= threshold | **SUCCESS** -> Step 7 |
-| `iteration >= max_iterations` | Cap reached -> Step 7 |
-| Mutation score improved < 0.5% | `stall_count += 1`; if `stall_count >= 2` -> stuck, break -> Step 7 |
-| Otherwise | Reset `stall_count = 0`, `iteration += 1` -> loop to 6a |
+| 条件 | 动作 |
+|------|------|
+| 变异分数 >= 阈值 | **成功** -> 第 7 步 |
+| `iteration >= max_iterations` | 达到上限 -> 第 7 步 |
+| 变异分数提升 < 0.5% | `stall_count += 1`；若 `stall_count >= 2` -> 停滞，中断 -> 第 7 步 |
+| 其他 | 重置 `stall_count = 0`，`iteration += 1` -> 回到 6a |
 
-## Step 7: Final Verification & Summary
+## 第 7 步：最终验证与总结
 
-1. Run full test suite (all tests, not scoped)
-2. Run full-project mutation — record final metrics
+1. 运行完整测试套件（所有测试，非限定范围）
+2. 运行全项目变异测试 — 记录最终指标
 
 ```
 ## Mutation Retrofit Complete
@@ -305,42 +305,42 @@ Iteration {N}: Mutation {before}->{after}% (+{delta})
 | config/bootstrap.py | 5 | Framework hooks — equivalent mutants documented |
 ```
 
-If incremental mode, append note: "Incremental mode: only changed files vs `<branch>` were targeted. Run without `--branch` for full-project metrics."
+如果是增量模式，追加说明："Incremental mode: only changed files vs `<branch>` were targeted. Run without `--branch` for full-project metrics."
 
 ---
 
-## Edge Cases
+## 边界情况
 
-| Condition | Behavior |
-|-----------|----------|
-| No test framework detected | STOP with message |
-| No mutation tool, cannot install | STOP with BLOCKED + installation instructions from coverage-recipes.md |
-| Existing tests fail | STOP — fix first |
-| Coverage too low (< 80%) | STOP — run /coverage-retrofit first (or --skip-coverage-check) |
-| Already meets threshold | STOP with zero-iteration summary |
-| SubAgent fails repeatedly on a file | Skip file, classify as "hard to test", continue |
-| Very large codebase (>500 source files) | Chunk to top 3 files per iteration |
-| `--branch` + zero changed files | STOP with message |
-| `--branch` + `--files` | Intersect: only changed files also in --files list |
-| Multi-module project | Run from root; tools handle recursion |
+| 条件 | 行为 |
+|------|------|
+| 未检测到测试框架 | 停止并提示信息 |
+| 无变异测试工具且无法安装 | 停止并返回 BLOCKED + coverage-recipes.md 中的安装说明 |
+| 现有测试失败 | 停止 — 先修复 |
+| 覆盖率过低（< 80%） | 停止 — 先运行 /coverage-retrofit（或使用 --skip-coverage-check） |
+| 已达到阈值 | 停止并输出零迭代摘要 |
+| SubAgent 对某文件反复失败 | 跳过该文件，归类为"难以测试"，继续 |
+| 超大代码库（>500 源文件） | 每轮迭代分块处理前 3 个文件 |
+| `--branch` + 零变更文件 | 停止并提示信息 |
+| `--branch` + `--files` | 取交集：仅处理同时出现在变更文件和 --files 列表中的文件 |
+| 多模块项目 | 从根目录运行；工具自行处理递归 |
 
-## Rules
+## 规则
 
-- **Only add/strengthen tests or remove dead code** — dead code removal is the sole production code modification allowed
-- **All tests must pass** after every iteration
-- **Git-safe** — do NOT commit. User reviews and commits.
-- **Idempotent** — re-running on a codebase meeting threshold -> zero-iteration summary
-- **No pipeline dependency** — does not read feature-list.json or long-task-guide.md
+- **仅添加/增强测试或移除死代码** — 死代码移除是唯一允许的生产代码修改
+- 每轮迭代后**所有测试必须通过**
+- **Git 安全** — 不要提交。由用户审查并提交。
+- **幂等** — 在已达标的代码库上重新运行 -> 零迭代摘要
+- **无流水线依赖** — 不读取 feature-list.json 或 long-task-guide.md
 
-## Integration
+## 集成
 
-**Called by:** User on-demand (standalone)
-**Requires:** Source code with test framework + mutation tool (or installable)
-**Produces:** Strengthened tests / removed dead code, threshold met (or classified residuals)
-**Does NOT chain to:** Any pipeline skill — fully independent
-**Reuses (via SubAgent dispatch):**
-- `long-task:long-task-mutation-fix` — with inline context override
-**References (via symlinks):**
-- `coverage-recipes.md` — per-language tool setup
-- `iron-law.md` — test quality rules
-- `testing-anti-patterns.md` — anti-pattern catalog
+**调用方：** 用户按需调用（独立运行）
+**前置条件：** 具有测试框架 + 变异测试工具（或可安装）的源代码
+**产出：** 增强的测试 / 移除的死代码，达到阈值（或已归类的残余项）
+**不链接至：** 任何流水线 skill — 完全独立
+**复用（通过 SubAgent 分派）：**
+- `long-task:long-task-mutation-fix` — 附带内联上下文覆盖
+**引用（通过符号链接）：**
+- `coverage-recipes.md` — 按语言的工具配置
+- `iron-law.md` — 测试质量规则
+- `testing-anti-patterns.md` — 反模式目录

@@ -1,17 +1,17 @@
-# Feature Detailed Design: [Feature Title] (Feature #ID)
+# 功能详细设计：[功能标题]（功能 #ID）
 
-**Date**: YYYY-MM-DD
-**Feature**: #ID — [title]
-**Priority**: high/medium/low
-**Dependencies**: [list or "none"]
-**Design Reference**: docs/plans/YYYY-MM-DD-<topic>-design.md § 4.N
-**SRS Reference**: FR-xxx
+**日期**：YYYY-MM-DD
+**功能**：#ID -- [标题]
+**优先级**：high/medium/low
+**依赖**：[列表或 "none"]
+**设计参考**：docs/plans/YYYY-MM-DD-<topic>-design.md § 4.N
+**SRS 参考**：FR-xxx
 
-> **Increment wave change tracking**: When this feature design is produced or updated during an increment wave (feature.wave > 0 and prior design exists), apply visual change markers (green=NEW, amber=MODIFIED) to all Mermaid diagrams per the design template's Diagram Change Tracking Convention. Remove previous-wave markers before applying current-wave markers.
+> **增量批次变更追踪**：当本功能设计在增量批次中生成或更新时（feature.wave > 0 且存在先前设计），按设计模板的图表变更追踪约定对所有 Mermaid 图表应用可视化变更标记（绿色=NEW，琥珀色=MODIFIED）。在应用当前批次标记前移除前一批次的标记。
 
-## Project Structure
+## 项目结构
 
-> Files and directories touched by this feature. Mark as **[existing]**, **[new]**, or **[modified]**.
+> 本功能涉及的文件和目录。标记为 **[existing]**、**[new]** 或 **[modified]**。
 
 ```
 src/
@@ -23,122 +23,122 @@ tests/
 └── test_auth.py             [new]
 ```
 
-[Replace with actual paths for this feature. Show only files this feature creates or modifies.]
+[替换为本功能的实际路径。仅显示本功能创建或修改的文件。]
 
-## Context
+## 上下文
 
-[1-2 sentences: what this feature does and why it matters]
+[1-2 句话：本功能做什么及其重要性]
 
-## Design Alignment
+## 设计对齐
 
-[Copy the FULL design section §4.N content here — including class diagram, sequence diagram, and design decisions. Include Mermaid code blocks verbatim so the design is self-contained for subagent execution.]
+[将完整的设计章节 §4.N 内容复制到此处 -- 包括类图、序列图和设计决策。原样包含 Mermaid 代码块，使设计对 SubAgent 执行是自包含的。]
 
-- **Key classes**: [from class diagram — classes to create/modify with key methods]
-- **Interaction flow**: [from sequence diagram — key call chains]
-- **Third-party deps**: [from dependency table — exact library versions]
-- **Deviations**: [none, or explain deviation with user approval note]
+- **关键类**：[来自类图 -- 要创建/修改的类及关键方法]
+- **交互流程**：[来自序列图 -- 关键调用链]
+- **第三方依赖**：[来自依赖表 -- 精确库版本]
+- **偏差**：[无，或解释偏差并附用户批准说明]
 
-## Existing Code Reuse
+## 现有代码复用
 
-> Code discovered via codebase exploration and passing dependency features that this feature should reuse, extend, or follow as a pattern. Maximize reuse — prefer importing existing code over writing new.
+> 通过代码库探索和已通过依赖功能发现的代码，本功能应复用、扩展或作为模式参考。最大化复用 -- 优先导入现有代码而非编写新代码。
 
-| # | Category | Source File | Name | Signature / Pattern | Action | Rationale |
-|---|----------|------------|------|---------------------|--------|-----------|
-| 1 | [Utility / API Client / Data Access / Error Helper / Library Pattern] | [file path] | [function/class name] | [signature or import pattern] | [REUSE / EXTEND / PATTERN] | [why this is relevant to the current feature] |
+| # | 类别 | 源文件 | 名称 | 签名/模式 | 动作 | 理由 |
+|---|------|--------|------|-----------|------|------|
+| 1 | [工具函数 / API 客户端 / 数据访问 / 错误辅助 / 库模式] | [文件路径] | [函数/类名] | [签名或导入模式] | [REUSE / EXTEND / PATTERN] | [为什么与当前功能相关] |
 
-**§11.1 Library Usage Examples** (concrete usage from passing features):
+**§11.1 库使用示例**（来自已通过功能的具体使用）：
 
-| §11.1 Library | Existing Usage File | Import Statement | Call Pattern |
-|---------------|-------------------|-----------------|-------------|
-| [library name] | [file:line] | [import statement] | [how it's called in practice] |
+| §11.1 库 | 现有使用文件 | 导入语句 | 调用模式 |
+|-----------|--------------|----------|----------|
+| [库名] | [file:line] | [导入语句] | [实际调用方式] |
 
-> If zero passing dependencies AND codebase exploration returned no reusable items: "No reusable code discovered — all library usage follows §11.1 import patterns directly."
+> 如果零个已通过依赖且代码库探索未返回可复用项："未发现可复用代码 -- 所有库使用直接遵循 §11.1 导入模式。"
 
-**Requirement-Related Existing Behavior** (from codebase behavior discovery):
+**需求相关现有行为**（来自代码库行为发现）：
 
-| # | SRS Criterion | Existing Behavior | Source File | Overlap | Design Impact |
-|---|---------------|-------------------|-------------|---------|---------------|
-| 1 | [AC from srs_trace] | [what this code does] | [file:line] | [full/partial/adjacent] | [reuse/extend/pattern — specific recommendation] |
+| # | SRS 标准 | 现有行为 | 源文件 | 重叠度 | 设计影响 |
+|---|----------|----------|--------|--------|----------|
+| 1 | [来自 srs_trace 的 AC] | [这段代码的功能] | [file:line] | [完全/部分/相邻] | [复用/扩展/模式 -- 具体建议] |
 
-> If no requirement-related existing behavior found: "No existing behavior overlaps with this feature's requirements — new implementation required."
+> 如果未发现需求相关现有行为："本功能需求与现有行为无重叠 -- 需要全新实现。"
 
-## SRS Requirement
+## SRS 需求
 
-[Copy the FULL FR-xxx section from SRS — EARS statement, acceptance criteria, Given/When/Then scenarios]
+[从 SRS 复制完整的 FR-xxx 章节 -- EARS 声明、验收标准、Given/When/Then 场景]
 
-## Component Data-Flow Diagram
+## 组件数据流图
 
-[Mermaid `graph` or `flowchart` showing runtime data flow between this feature's internal components. Label edges with data types. Include external dependencies as dashed-border boxes.]
+[Mermaid `graph` 或 `flowchart` 展示本功能内部组件间的运行时数据流。用数据类型标注边。将外部依赖显示为虚线边框框。]
 
-> N/A — [reason, e.g., "single-class feature, see Interface Contract below"]
+> N/A -- [原因，例如 "单类功能，见下方接口契约"]
 
-## Interface Contract
+## 接口契约
 
-| Method | Signature | Preconditions | Postconditions | Raises |
-|--------|-----------|---------------|----------------|--------|
-| `method_name` | `method_name(param: Type, ...) -> ReturnType` | [what must be true before call] | [what is guaranteed after call] | [exception + condition] |
+| 方法 | 签名 | 前置条件 | 后置条件 | 异常 |
+|------|------|----------|----------|------|
+| `method_name` | `method_name(param: Type, ...) -> ReturnType` | [调用前必须为真的条件] | [调用后保证的条件] | [异常 + 条件] |
 
-**Design rationale** (one line per non-obvious decision):
-- [e.g., why threshold defaults to 0.6, why parameter X is optional]
-- **Cross-feature contract alignment**: If this feature appears in Design §6.2 as Provider or Consumer, the corresponding methods' signatures must match the §6.2 schemas. Note the Contract ID (e.g., IAPI-001) for traceability.
+**设计理由**（每个非显而易见的决策一行）：
+- [例如，为什么阈值默认为 0.6，为什么参数 X 是可选的]
+- **跨功能契约对齐**：如果本功能在设计 §6.2 中作为 Provider 或 Consumer，对应方法的签名必须匹配 §6.2 schema。记录契约 ID（例如 IAPI-001）以便追踪。
 
-## Internal Sequence Diagram
+## 内部序列图
 
-[Mermaid `sequenceDiagram` showing method-to-method calls WITHIN this feature's implementation. Cover main success path + at least one error path per Raises entry.]
+[Mermaid `sequenceDiagram` 展示本功能实现内部的方法间调用。覆盖主要成功路径 + 每个 Raises 条目的至少一个错误路径。]
 
-> N/A — [reason, e.g., "single-class implementation, error paths documented in Algorithm error handling table"]
+> N/A -- [原因，例如 "单类实现，错误路径记录在算法错误处理表中"]
 
-#### Boundary Decisions
+#### 边界决策
 
-| Parameter | Min | Max | Empty/Null | At boundary |
-|-----------|-----|-----|------------|-------------|
-| [param]   | [val] | [val] | [behavior] | [behavior] |
+| 参数 | 最小值 | 最大值 | 空/Null | 边界行为 |
+|------|--------|--------|---------|----------|
+| [param] | [val] | [val] | [行为] | [行为] |
 
-## State Diagram
+## 状态图
 
-[Mermaid `stateDiagram-v2` showing all valid states, transitions, triggers, and guard conditions]
+[Mermaid `stateDiagram-v2` 展示所有有效状态、转换、触发器和守卫条件]
 
-> N/A — [reason, e.g., "stateless feature"]
+> N/A -- [原因，例如 "无状态功能"]
 
-## Test Inventory
+## 测试清单
 
-| ID | Category | Traces To | Input / Setup | Expected | Kills Which Bug? |
-|----|----------|-----------|---------------|----------|-----------------|
-| A  | FUNC/happy | FR-xxx AC-1 | [specific values] | [exact result] | [wrong impl this catches] |
-| B  | FUNC/error | §Interface Contract Raises | [trigger condition] | [exception type + msg] | [missing branch] |
-| C  | BNDRY/edge | §Algorithm boundary table | [edge value] | [exact behavior] | [off-by-one or missing guard] |
-| D  | FUNC/state | §State Diagram transition | [pre-state + event] | [post-state] | [missing guard condition] |
-| E  | INTG/db    | §Interface Contract + external dependency | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
-| F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
+| ID | 类别 | 追踪到 | 输入/设置 | 预期 | 杀死哪个缺陷？ |
+|----|------|--------|-----------|------|----------------|
+| A  | FUNC/happy | FR-xxx AC-1 | [具体值] | [精确结果] | [此测试捕获的错误实现] |
+| B  | FUNC/error | §接口契约 Raises | [触发条件] | [异常类型 + 消息] | [缺失分支] |
+| C  | BNDRY/edge | §算法边界表 | [边界值] | [精确行为] | [偏移错误或缺失守卫] |
+| D  | FUNC/state | §状态图转换 | [前状态 + 事件] | [后状态] | [缺失守卫条件] |
+| E  | INTG/db    | §接口契约 + 外部依赖 | [真实 DB 设置] | [数据持久化 + 可查询] | [连接未建立/错误表] |
+| F  | INTG/api   | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点/超时未处理] |
 
-Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, PERF, INTG` and subtag is a free-form label.
+类别格式：`MAIN/subtag`，其中 MAIN 为 `FUNC, BNDRY, SEC, PERF, INTG` 之一，subtag 为自由标签。
 
-If the feature has no external dependencies (pure computation, no IO, no DB, no network), add an explicit note:
-> INTG: N/A — pure function, no external I/O
+如果功能无外部依赖（纯计算、无 IO、无 DB、无网络），添加明确说明：
+> INTG: N/A -- 纯函数，无外部 I/O
 
-## Verification Checklist
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
-- [ ] Algorithm pseudocode covers all non-trivial methods
-- [ ] Boundary table covers all algorithm parameters
-- [ ] Error handling table covers all Raises entries
-- [ ] Test Inventory negative ratio >= 40%
-- [ ] Every skipped section has explicit "N/A — [reason]"
-- [ ] All functions/methods named in §4.N have at least one Test Inventory row
-- [ ] All method/class/parameter names comply with §11.5 naming conventions
-- [ ] All operations covered by §11.1 mandatory libraries use those libraries (no replaced alternatives in Interface Contract or Algorithm)
-- [ ] Existing Code Reuse section documents all discoverable reusable code from codebase exploration and passing dependencies
-- [ ] Requirement-related behavior scan complete — overlapping existing behavior documented or explicitly noted as absent
+## 验证检查清单
+- [ ] 所有 SRS 验收标准（来自 srs_trace）追踪到接口契约后置条件
+- [ ] 所有 SRS 验收标准（来自 srs_trace）追踪到测试清单行
+- [ ] 算法伪代码覆盖所有非平凡方法
+- [ ] 边界表覆盖所有算法参数
+- [ ] 错误处理表覆盖所有 Raises 条目
+- [ ] 测试清单负向测试比例 >= 40%
+- [ ] 每个跳过的章节有明确的 "N/A -- [原因]"
+- [ ] §4.N 中命名的所有函数/方法至少有一个测试清单行
+- [ ] 所有方法/类/参数名符合 §11.5 命名约定
+- [ ] §11.1 强制库覆盖的所有操作使用这些库（接口契约或算法中无被替代的方案）
+- [ ] 现有代码复用章节记录了来自代码库探索和已通过依赖的所有可发现的可复用代码
+- [ ] 需求相关行为扫描完成 -- 重叠的现有行为已记录或明确标注为不存在
 
-## Clarification Addendum
+## 澄清附录
 
-> No clarifications required — all specifications were unambiguous.
+> 无需澄清 -- 所有规格均无歧义。
 
-| # | Category | Original Ambiguity | Resolution | Authority |
-|---|----------|--------------------|------------|-----------|
+| # | 类别 | 原始歧义 | 决议 | 权威 |
+|---|------|----------|------|------|
 | — | — | — | — | user-approved / assumed |
 
-<!-- This section is populated by the SubAgent when:
-     1. Low-impact ambiguities are assumed (Authority = "assumed")
-     2. User-approved resolutions are provided via re-dispatch (Authority = "user-approved")
-     Feature-ST reads this section to avoid re-asking resolved questions. -->
+<!-- 本章节在以下情况由 SubAgent 填充：
+     1. 低影响歧义被假设（Authority = "assumed"）
+     2. 用户批准的决议通过重新分派提供（Authority = "user-approved"）
+     Feature-ST 读取本章节以避免重复询问已解决的问题。 -->

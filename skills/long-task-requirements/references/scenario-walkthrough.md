@@ -1,68 +1,68 @@
-# Scenario Walkthrough Execution Protocol
+# 场景走查执行协议
 
-## When This Runs
+## 运行时机
 
-Expert track Step E3. Called by SKILL.md after Problem Framing (E1) and Enhanced Scope (E2).
+Expert 路线 Step E3。由 SKILL.md 在问题框架化（E1）和增强范围（E2）之后调用。
 
-## Purpose
+## 目的
 
-Discover macro-level flow gaps, integration points, and implicit sequencing before drilling into individual FRs. Question-based elicitation per capability misses cross-capability requirements — walkthroughs expose them by forcing the user to narrate the full journey.
+在深入单个 FR 之前发现宏观级别的流程缺口、集成点和隐式顺序。按能力逐项提问会遗漏跨能力需求 — 走查通过强迫用户叙述完整旅程来暴露它们。
 
-## How Many Walkthroughs
+## 走查数量
 
-One walkthrough per major workflow. Determine major workflows from Pain Map top items and E2 answers.
+每个主要工作流一次走查。从痛点地图排名靠前的项和 E2 回答中确定主要工作流。
 
-| Expert Scale | Walkthroughs |
-|---|---|
-| Small (5–15 FR) | 1–2 |
-| Medium (15–50 FR) | 2–3 |
-| Large (50–200+ FR) | 3–5 (one per epic/domain) |
+| Expert 规模 | 走查数 |
+|------------|--------|
+| 小型（5-15 FR） | 1-2 |
+| 中型（15-50 FR） | 2-3 |
+| 大型（50-200+ FR） | 3-5（每个史诗/领域一个） |
 
-## Walkthrough Prompt (one AskUserQuestion per workflow)
+## 走查提示（每个工作流一次 AskUserQuestion）
 
-> "Walk me through a complete [workflow name] from start to finish. Start from the moment you decide to [trigger]. Tell me each step you'd take, what the system should show or do at each point, and where you'd stop. Include what happens when things go wrong."
+> "带我从头到尾走一遍完整的 [工作流名称]。从你决定 [触发] 的那一刻开始。告诉我你会采取的每一步，系统在每个节点应该显示或做什么，以及你会在哪里停下。包括出错时会发生什么。"
 
-Adapt the trigger to the specific workflow. Examples:
-- "...from the moment you need to onboard a new employee..."
-- "...from the moment a customer places an order..."
-- "...from the moment you notice an anomaly in the data..."
+根据具体工作流调整触发条件。示例：
+- "...从你需要入职一名新员工的那一刻..."
+- "...从客户下订单的那一刻..."
+- "...从你注意到数据异常的那一刻..."
 
-## LLM Extraction (internal, no user interaction)
+## LLM 提取（内部，不与用户交互）
 
-For each narrative answer, extract and categorize:
+对每个叙述回答，提取并分类：
 
-| Category | What to look for | Example | Action |
-|---|---|---|---|
-| **Explicit steps** | Direct statements of desired system behavior | "I click 'Submit' and the system saves the record" | → candidate FR |
-| **Implicit steps** | Actions the user glosses over or considers "obvious" | "then I'd log in" (implies authentication) | → candidate FR, flagged for confirmation in follow-up |
-| **Flow gaps** | Transitions where the user jumped ahead without explaining the mechanism | "then the report appears" (how? triggered manually? auto-generated? scheduled?) | → targeted follow-up question |
-| **Integration points** | Mentions of external systems, data sources, hand-offs to other tools | "I export it to Salesforce" | → candidate IFR |
-| **Error mentions** | Any reference to failures, exceptions, or recovery | "sometimes the API times out" | → candidate acceptance criterion for the relevant FR |
+| 类别 | 寻找什么 | 示例 | 操作 |
+|------|---------|------|------|
+| **显式步骤** | 用户直接陈述的系统行为 | "我点'提交'，系统保存记录" | → 候选 FR |
+| **隐式步骤** | 用户一笔带过或认为"显而易见"的操作 | "然后我会登录"（暗示认证） | → 候选 FR，标记在追问中确认 |
+| **流程缺口** | 用户跳跃且未解释机制的过渡 | "然后报告出现了"（怎么？手动触发？自动生成？定时？） | → 定向追问 |
+| **集成点** | 提及外部系统、数据源、向其他工具的交接 | "我把它导出到 Salesforce" | → 候选 IFR |
+| **错误提及** | 任何关于失败、异常或恢复的引用 | "有时 API 会超时" | → 相关 FR 的候选验收标准 |
 
-## Flow Gap Follow-up (single AskUserQuestion per workflow, if gaps exist)
+## 流程缺口追问（每个工作流单次 AskUserQuestion，若存在缺口）
 
-If the extraction produced flow gaps or implicit steps needing confirmation, ask in a single follow-up:
+若提取产生了需确认的流程缺口或隐式步骤，在单次追问中提出：
 
-> "In your walkthrough of [workflow], I noticed a few points I want to confirm:
-> 1. Between [step A] and [step B], how does [transition] happen — does the user trigger it, or does the system do it automatically?
-> 2. You mentioned [vague step] — what exactly should the screen show at that point?
-> 3. When [error mention] happens, what's the expected recovery path?"
+> "在你的 [工作流] 走查中，我注意到几个想确认的点：
+> 1. 在 [步骤 A] 和 [步骤 B] 之间，[过渡] 是怎么发生的 — 用户触发还是系统自动执行？
+> 2. 你提到 [模糊步骤] — 那个时候屏幕上应该确切显示什么？
+> 3. 当 [错误提及] 发生时，预期的恢复路径是什么？"
 
-Adapt the number of questions to the number of gaps. If no gaps were found, skip the follow-up entirely.
+根据缺口数量调整问题数。若未发现缺口，完全跳过追问。
 
-## Output
+## 输出
 
-- **Candidate FR list** with provenance (which walkthrough, which step, explicit vs implicit)
-- **Candidate IFR list** from integration points
-- **Candidate acceptance criteria** from error mentions
+- **候选 FR 列表**及来源（哪次走查、哪个步骤、显式 vs 隐式）
+- **候选 IFR 列表**来自集成点
+- **候选验收标准**来自错误提及
 
-All outputs feed Hypothesis-Correction (E4) — each candidate FR gets a Behavior Hypothesis Table in the next step.
+所有输出供给假设修正（E4）— 每个候选 FR 在下一步获得一个行为假设表。
 
-## Convergence
+## 收敛
 
-This step is bounded by:
-- Number of major workflows (finite, determined before walkthroughs begin)
-- User narrative length (finite — the user stops when the story ends)
-- Flow gap follow-up count (finite, deterministic list from extraction)
+此步骤受以下约束：
+- 主要工作流数量（有限，走查开始前已确定）
+- 用户叙述长度（有限 — 故事结束时用户停止）
+- 流程缺口追问数（有限，从提取中确定的列表）
 
-No open-ended "what else?" or "anything I missed?" questions. The walkthrough structure itself is exhaustive for its scope.
+不设开放式"还有什么？"或"我遗漏了什么？"问题。走查结构本身对其范围是穷举的。

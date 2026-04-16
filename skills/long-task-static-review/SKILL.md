@@ -1,79 +1,79 @@
 ---
 name: long-task-static-review
-description: "Use for pre-push static analysis — auto-detect and fix Checkstyle (Java) violations until zero remain"
+description: "用于预提交静态分析——自动检测并修复 Checkstyle（Java）违规直到零违规"
 ---
 
-# Pre-Push Static Analysis Review
+# 预提交静态分析审查
 
-Auto-detect static analysis tool configuration, iteratively scan and fix violations until zero remain, with quality gates per iteration to prevent regressions.
+自动检测静态分析工具配置，迭代扫描并修复违规直到零违规，每次迭代设有质量门禁以防止回归。
 
-**Announce at start:** "I'm using the long-task-static-review skill to run static analysis and fix all violations to zero."
+**启动时公告：** "我正在使用 long-task-static-review skill 运行静态分析并将所有违规修复到零。"
 
-## Sole Objective
+## 唯一目标
 
-**Static analysis violations → 0.** Detect tool, scan, fix, verify quality, repeat until clean.
+**静态分析违规 -> 0。** 检测工具、扫描、修复、验证质量、重复直到清零。
 
-## Invocation
+## 调用
 
-This skill is **standalone** — no pipeline dependency, no `feature-list.json` required. Can be invoked at any time (pre-push, pre-PR, on demand).
+本 skill 是**独立的** —— 不依赖流水线，不需要 `feature-list.json`。可随时调用（预提交、预 PR、按需）。
 
-Currently supports: **Checkstyle (Java)**. Architecture supports future tool expansion via `references/tool-profiles.md`.
+目前支持：**Checkstyle（Java）**。架构通过 `references/tool-profiles.md` 支持未来扩展更多工具。
 
 ---
 
-## Step 1: Parse Arguments & Announce
+## 步骤 1：解析参数并公告
 
-Parse user input for optional parameters:
+解析用户输入的可选参数：
 
-| Parameter | Values | Default |
+| 参数 | 取值 | 默认值 |
 |-----------|--------|---------|
-| `--tool` | `checkstyle` / `all` | `all` (auto-detect all supported tools) |
-| `--max-iterations` | integer 1–20 | 10 |
-| `--path` | directory path | `.` (project root) |
-| `--dry-run` | flag | false (when set, detect only — no fixing) |
+| `--tool` | `checkstyle` / `all` | `all`（自动检测所有支持的工具） |
+| `--max-iterations` | 整数 1-20 | 10 |
+| `--path` | 目录路径 | `.`（项目根目录） |
+| `--dry-run` | 标志 | false（设置时仅检测，不修复） |
 
-Print announcement with selected parameters.
+打印公告及所选参数。
 
-## Step 2: Tool Detection (Read-Only)
+## 步骤 2：工具检测（只读）
 
-Read the tool profiles reference at `{plugin_root}/skills/long-task-static-review/references/tool-profiles.md`. For each tool profile whose `--tool` filter matches, execute its detection sequence.
+读取 `{plugin_root}/skills/long-task-static-review/references/tool-profiles.md` 中的工具配置文件。对于 `--tool` 过滤器匹配的每个工具配置，执行其检测序列。
 
-### 2a: Build Tool Detection
+### 2a：构建工具检测
 
-Check for build system files in `--path`:
+检查 `--path` 中的构建系统文件：
 
-| File | Build System |
+| 文件 | 构建系统 |
 |------|-------------|
 | `pom.xml` | Maven |
 | `build.gradle` / `build.gradle.kts` | Gradle |
 
-If both exist: check both for Checkstyle configuration and use whichever has it. If neither exists: print "No supported build system found." and **stop**.
+如果两者都存在：检查两者的 Checkstyle 配置，使用有配置的那个。如果都不存在：打印"未找到支持的构建系统。"并**停止**。
 
-### 2b: Checkstyle Detection (per tool-profiles.md)
+### 2b：Checkstyle 检测（按 tool-profiles.md）
 
-1. **Config file**: Glob for `**/checkstyle*.xml` — check standard locations: `checkstyle.xml`, `config/checkstyle/checkstyle.xml`, `src/main/resources/checkstyle.xml`. Do **NOT** read the config file contents — Checkstyle reads its own config at runtime.
-2. **Maven plugin**: Grep `pom.xml` for `maven-checkstyle-plugin`. If found, check for `<checkstyle.version>` property or `<version>` inside the plugin `<dependency>` block.
-3. **Gradle plugin**: Grep `build.gradle` / `build.gradle.kts` for `id 'checkstyle'` or `id("checkstyle")` or `apply plugin: 'checkstyle'`. Check for `checkstyle { toolVersion = '...' }`.
-4. **Run command**: Maven → `mvn checkstyle:check`; Gradle → `gradle checkstyleMain`.
-5. **Multi-module**: Check for `<modules>` in `pom.xml` or `include` in `settings.gradle`. Maven `mvn checkstyle:check` runs recursively by default.
+1. **配置文件**：Glob 搜索 `**/checkstyle*.xml` —— 检查标准位置：`checkstyle.xml`、`config/checkstyle/checkstyle.xml`、`src/main/resources/checkstyle.xml`。**不读取**配置文件内容 —— Checkstyle 在运行时自行读取其配置。
+2. **Maven 插件**：在 `pom.xml` 中 Grep 搜索 `maven-checkstyle-plugin`。如果找到，检查 `<checkstyle.version>` 属性或插件 `<dependency>` 块中的 `<version>`。
+3. **Gradle 插件**：在 `build.gradle` / `build.gradle.kts` 中 Grep 搜索 `id 'checkstyle'` 或 `id("checkstyle")` 或 `apply plugin: 'checkstyle'`。检查 `checkstyle { toolVersion = '...' }`。
+4. **运行命令**：Maven -> `mvn checkstyle:check`；Gradle -> `gradle checkstyleMain`。
+5. **多模块**：检查 `pom.xml` 中的 `<modules>` 或 `settings.gradle` 中的 `include`。Maven `mvn checkstyle:check` 默认递归运行。
 
-### 2c: Pipeline Integration Check
+### 2c：流水线集成检查
 
-If `docs/plans/*-design.md` exists and contains a §11.4 section listing Checkstyle with a run command, use that command as authoritative (user-approved in the pipeline). This prevents drift between pipeline and standalone execution.
+如果 `docs/plans/*-design.md` 存在且包含 S11.4 章节列出了带运行命令的 Checkstyle，使用该命令作为权威来源（用户在流水线中已批准）。这防止流水线与独立执行之间的偏差。
 
-### 2d: Quality Command Detection
+### 2d：质量命令检测
 
-Detect test/coverage/mutation commands for the quality gates in Step 4. Priority order:
+检测步骤 4 中质量门禁的测试/覆盖率/变异测试命令。优先顺序：
 
-1. **`long-task-guide.md`** (if exists in project): read `test`, `coverage`, `mutation_feature`, `mutation_full` commands directly — these are already validated by the pipeline
-2. **`feature-list.json`** (if exists): read `tech_stack` for test framework, coverage tool, mutation tool; derive commands per `references/tool-profiles.md`
-3. **Build tool convention**: Maven → `mvn test`, `mvn test jacoco:report`; Gradle → `gradle test`, `gradle jacocoTestReport`. For mutation: Maven → `mvn org.pitest:pitest-maven:mutationCoverage`; Gradle → `gradle pitest`
-4. **Quality thresholds**: read from `feature-list.json` → `quality_gates` if available; otherwise use defaults: line_coverage_min=90, branch_coverage_min=80, mutation_score_min=80
-5. **Unavailable tools**: if no mutation tool is detected in the build config (no pitest plugin, no stryker, etc.), record mutation as "unavailable" — Gate 3 will be skipped with a warning. Same for test framework — if absent, Gate 2 and Gate 3 are both skipped.
+1. **`long-task-guide.md`**（如果项目中存在）：直接读取 `test`、`coverage`、`mutation_feature`、`mutation_full` 命令 —— 这些已被流水线验证
+2. **`feature-list.json`**（如果存在）：读取 `tech_stack` 获取测试框架、覆盖率工具、变异测试工具；按 `references/tool-profiles.md` 推导命令
+3. **构建工具约定**：Maven -> `mvn test`、`mvn test jacoco:report`；Gradle -> `gradle test`、`gradle jacocoTestReport`。变异测试：Maven -> `mvn org.pitest:pitest-maven:mutationCoverage`；Gradle -> `gradle pitest`
+4. **质量阈值**：从 `feature-list.json` -> `quality_gates` 读取（如可用）；否则使用默认值：line_coverage_min=90、branch_coverage_min=80、mutation_score_min=80
+5. **不可用的工具**：如果构建配置中未检测到变异测试工具（无 pitest 插件、无 stryker 等），将变异测试记录为"不可用" —— Gate 3 将被跳过并发出警告。测试框架同理 —— 如果缺失，Gate 2 和 Gate 3 都将被跳过。
 
-### 2e: Detection Summary
+### 2e：检测摘要
 
-Print a summary:
+打印摘要：
 
 ```
 ## Detected Static Analysis Tools
@@ -90,76 +90,76 @@ Print a summary:
 | Mutation | mvn org.pitest:pitest-maven:mutationCoverage -DtargetClasses=... |
 ```
 
-If no supported tools detected: print "No static analysis tools detected in this project." and **stop**.
+如果未检测到支持的工具：打印"此项目未检测到静态分析工具。"并**停止**。
 
-If `--dry-run`: print detection results and **stop** (no fixing).
+如果 `--dry-run`：打印检测结果并**停止**（不修复）。
 
-## Step 3: Baseline Scan
+## 步骤 3：基线扫描
 
-Run the detected tool to establish a violation baseline.
+运行检测到的工具以建立违规基线。
 
-### 3a: Execute
+### 3a：执行
 
 ```bash
 {run_command} 2>&1 || true
 ```
 
-The `|| true` prevents the build failure exit code from stopping execution — Checkstyle is expected to fail when violations exist.
+`|| true` 防止构建失败退出码中断执行 —— 当存在违规时，Checkstyle 预期会失败。
 
-### 3b: Parse Violations
+### 3b：解析违规
 
-Read command output and extract violations. Per tool-profiles.md, Checkstyle formats:
+读取命令输出并提取违规。按 tool-profiles.md，Checkstyle 格式：
 
-- Maven: `[ERROR] /path/File.java:[line,col]: message [RuleName]`
-- Gradle: `build/reports/checkstyle/main.xml` or console `[ant:checkstyle]` lines
+- Maven：`[ERROR] /path/File.java:[line,col]: message [RuleName]`
+- Gradle：`build/reports/checkstyle/main.xml` 或控制台 `[ant:checkstyle]` 行
 
-For each violation extract: **file path**, **line number**, **column** (if available), **rule name**, **severity**, **message**.
+对每个违规提取：**文件路径**、**行号**、**列号**（如有）、**规则名称**、**严重级别**、**消息**。
 
-### 3c: Group and Report
+### 3c：分组并报告
 
-Group violations by file, sort by line number within each file. Record baseline:
+按文件分组违规，每个文件内按行号排序。记录基线：
 
 ```
 Baseline: N violations in M files
 ```
 
-If **zero violations**: print "No violations found. Codebase is clean." → skip to Step 6 with zero-iteration summary.
+如果**零违规**：打印"未发现违规。代码库是干净的。" -> 跳至步骤 6 输出零迭代摘要。
 
-## Step 4: Scan-Fix Loop
+## 步骤 4：扫描-修复循环
 
-**Objective: violations → 0.**
+**目标：违规 -> 0。**
 
-Repeat until zero violations or exit conditions met.
+重复直到零违规或满足退出条件。
 
-### Per-Iteration Flow
+### 每次迭代流程
 
-#### 4a: Select Files
+#### 4a：选择文件
 
-Sort files by violation count descending. Select top 5 files (or fewer if less remain). Prioritize files with the most violations for maximum impact per iteration.
+按违规数降序排列文件。选择前 5 个文件（如果剩余不足则更少）。优先选择违规最多的文件，以最大化每次迭代的效果。
 
-#### 4b: Fix Violations
+#### 4b：修复违规
 
-For each selected file:
+对每个选中的文件：
 
-1. Read the file
-2. Apply fixes for each violation, following the fix strategies in `references/tool-profiles.md`:
-   - **Safe fixes** (no behavioral risk): Whitespace, Indentation, Imports, Javadoc, Braces, LineLength, ModifierOrder, CodingStyle — apply directly
-   - **Low-risk fixes**: Naming, EmptyBlock, ClassDesign, MagicNumber — apply with care, watch for reflection/serialization dependencies
-   - **Medium-risk fixes**: MethodLength (extract methods) — apply conservatively
-   - **Unfixable**: violations requiring complex refactoring or design decisions → log as "manual review needed" and skip
-3. Group related fixes within each file into a single Edit operation
+1. 读取文件
+2. 按 `references/tool-profiles.md` 中的修复策略修复每个违规：
+   - **安全修复**（无行为风险）：空白、缩进、导入、Javadoc、花括号、行长度、修饰符顺序、编码风格 —— 直接应用
+   - **低风险修复**：命名、空块、类设计、魔法数字 —— 谨慎应用，注意反射/序列化依赖
+   - **中等风险修复**：方法长度（提取方法） —— 保守应用
+   - **无法修复的**：需要复杂重构或设计决策的违规 -> 记录为"需要人工审查"并跳过
+3. 将每个文件内的相关修复合并为单次 Edit 操作
 
-**Constraints:**
-- Do **NOT** modify any Checkstyle/tool configuration files — fix code to comply with existing rules
-- Only non-behavioral changes: formatting, naming, import order, javadoc, annotation placement, braces, modifiers
-- Follow the dominant pattern in each file when fixing (indentation style, naming convention in context)
-- Do NOT add new imports or dependencies that did not previously exist (except expanding star imports)
+**约束：**
+- **不修改**任何 Checkstyle/工具配置文件 —— 修复代码以符合现有规则
+- 仅做非行为变更：格式化、命名、导入顺序、javadoc、注解位置、花括号、修饰符顺序等
+- 修复时遵循每个文件中的主导模式（缩进风格、上下文中的命名约定）
+- 不添加之前不存在的新导入或依赖（展开星号导入除外）
 
-#### 4c: Quality Gates (mandatory, in order)
+#### 4c：质量门禁（强制，按顺序）
 
-After fixing files in this iteration, run all 4 gates sequentially. Every gate must pass before proceeding to the next iteration.
+本次迭代修复文件后，按顺序运行全部 4 个门禁。每个门禁必须通过后才能进入下一次迭代。
 
-**Gate 1 — Compile**
+**Gate 1 —— 编译**
 
 ```bash
 # Maven (3-stage: sed clean → grep keep → tail cap)
@@ -169,11 +169,11 @@ mvn compile -B -q 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9]
 gradle compileJava -q 2>&1 | tail -20
 ```
 
-If compilation fails: the fix introduced a compile error. Diagnose which fix caused it, revert or correct that fix, and re-run compile. Do not proceed until compile passes.
+如果编译失败：修复引入了编译错误。诊断哪个修复导致了问题，回退或纠正该修复，然后重新运行编译。编译通过前不继续。
 
-**Gate 2 — Incremental Unit Tests**
+**Gate 2 —— 增量单元测试**
 
-Run only tests affected by the files modified in this iteration:
+仅运行本次迭代中修改文件影响的测试：
 
 ```bash
 # Maven (3-stage: sed clean → grep keep → tail cap)
@@ -183,13 +183,13 @@ mvn test -B -q -Dsurefire.redirectTestOutputToFile=true -Dtest={AffectedTest1,Af
 gradle test --tests "{AffectedTestPattern}" -q 2>&1 | tail -30
 ```
 
-Determine affected tests by: matching source file name to test file name convention (e.g., `Foo.java` → `FooTest.java`), or running module-scoped tests for the modified module.
+通过以下方式确定受影响的测试：将源文件名与测试文件命名约定匹配（例如 `Foo.java` -> `FooTest.java`），或运行修改模块范围内的测试。
 
-If tests fail: diagnose whether the fix changed behavior (naming change broke reflection, import change broke classpath, etc.). Fix the issue — either adjust the source fix or update the test. Re-run until green.
+如果测试失败：诊断修复是否改变了行为（命名更改破坏了反射、导入更改破坏了类路径等）。修复问题 —— 调整源码修复或更新测试。重新运行直到通过。
 
-**Gate 3 — Incremental Mutation Testing**
+**Gate 3 —— 增量变异测试**
 
-Run mutation testing scoped to the files modified in this iteration:
+对本次迭代中修改的文件运行变异测试：
 
 ```bash
 # Maven (3-stage: sed clean → grep keep → tail cap; ^>> for PIT summary lines)
@@ -201,15 +201,15 @@ gradle pitest -DtargetClasses={changed.package.ClassName,...} -q 2>&1 | tail -30
 # Or use the mutation_feature command from long-task-guide.md with changed files substituted
 ```
 
-Mutation score must meet the project threshold (`quality_gates.mutation_score_min`, default 80%). If below threshold: add or strengthen tests for the modified files, then re-run.
+变异测试分数必须满足项目阈值（`quality_gates.mutation_score_min`，默认 80%）。如果低于阈值：为修改的文件添加或强化测试，然后重新运行。
 
-**Gate 4 — Checkstyle Re-scan**
+**Gate 4 —— Checkstyle 重新扫描**
 
 ```bash
 {run_command} 2>&1 || true
 ```
 
-Parse new violation count. Record:
+解析新的违规数量。记录：
 
 ```
 Iteration N: violations_before → violations_after (delta: -X)
@@ -218,62 +218,62 @@ Iteration N: violations_before → violations_after (delta: -X)
   Remaining: Y violations in Z files
 ```
 
-#### 4d: Exit Conditions
+#### 4d：退出条件
 
-- **violations_after == 0**: objective achieved → proceed to Step 5
-- **iteration >= max_iterations**: cap reached → proceed to Step 5
-- **Stuck**: violations_after >= violations_before for **2 consecutive iterations** → the fixes are oscillating or introducing new violations → break and proceed to Step 5
+- **violations_after == 0**：目标达成 -> 进入步骤 5
+- **iteration >= max_iterations**：达到上限 -> 进入步骤 5
+- **卡住**：**连续 2 次迭代** violations_after >= violations_before -> 修复在振荡或引入新违规 -> 中断并进入步骤 5
 
-## Step 5: Final Verification
+## 步骤 5：最终验证
 
-Run full-scope quality verification (not incremental) to confirm overall project health.
+运行全范围质量验证（非增量）以确认整体项目健康。
 
-### 5a: Full Compile
+### 5a：完整编译
 
 ```bash
 mvn compile -B -q 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|BUILD ' | tail -20
 ```
 
-### 5b: Full Unit Tests
+### 5b：完整单元测试
 
 ```bash
 mvn test -B -q -Dsurefire.redirectTestOutputToFile=true 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|Tests run:|BUILD |<<<' | tail -30
 ```
 
-Run the complete test suite, not just affected tests. On FAIL re-run without pipe for full details.
+运行完整测试套件，不仅是受影响的测试。如果失败，不带管道重新运行以获取完整详情。
 
-### 5c: Full Mutation Testing
+### 5c：完整变异测试
 
 ```bash
 # Use mutation_full_quiet command from long-task-guide.md, or:
 mvn org.pitest:pitest-maven:mutationCoverage -B -q 2>&1 | sed 's/\x1b\[[0-9;]*m//g; /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/d; /^[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d; /^Downloading:/d; /^Downloaded:/d; /^Progress/d' | grep -E '\[ERROR\]|\[WARNING\]|Tests run:|BUILD |<<<|^>>' | tail -30
 ```
 
-Full project-scope mutation. Score must meet threshold.
+全项目范围变异测试。分数必须满足阈值。
 
-### 5d: Final Checkstyle Scan
+### 5d：最终 Checkstyle 扫描
 
 ```bash
 {run_command} 2>&1 || true
 ```
 
-Confirm final violation count.
+确认最终违规数量。
 
-### 5e: Residual Classification
+### 5e：残留分类
 
-If violations remain after the loop, classify each:
+如果循环结束后仍有违规，对每个违规分类：
 
-| Classification | Description |
+| 分类 | 描述 |
 |----------------|-------------|
-| **Manual review needed** | Requires human judgment — complex refactoring, design decisions, method decomposition |
-| **Oscillating** | Fix for rule A introduces violation of rule B and vice versa |
-| **New** | Introduced by prior fixes (net negative on that specific rule) |
+| **需要人工审查** | 需要人工判断 —— 复杂重构、设计决策、方法拆分 |
+| **振荡** | 修复规则 A 引入规则 B 的违规，反之亦然 |
+| **新增** | 由先前修复引入（该特定规则净增） |
 
-List each residual violation with its classification.
+列出每个残留违规及其分类。
 
-## Step 6: Summary Report
+## 步骤 6：摘要报告
 
-Print the final summary:
+打印最终摘要：
 
 ```
 ## Static Analysis Review Complete
@@ -313,42 +313,42 @@ Print the final summary:
 | ... | ... | ... | ... | Manual review needed |
 ```
 
-If `task-progress.md` exists in the project, append a one-line entry:
+如果项目中存在 `task-progress.md`，追加一行记录：
 ```
 - Static Review: Checkstyle — {violations_fixed} violations fixed in {iterations} iterations ({files_modified} files), quality gates passed
 ```
 
 ---
 
-## Edge Cases
+## 边界情况
 
-| Condition | Behavior |
+| 条件 | 行为 |
 |-----------|----------|
-| No `pom.xml` or `build.gradle` | Stop: "No supported build system found." |
-| Checkstyle not configured in build | Stop: "No static analysis tools detected." |
-| Build fails before scan (compilation error) | Diagnose and stop. Do not attempt to fix pre-existing build errors — only style violations. |
-| Zero violations on baseline | Stop with clean summary (Step 6, zero iterations). |
-| Max iterations reached with violations remaining | Report remaining violations with classification. |
-| Stuck (2 consecutive iterations with no progress) | Break early, report remaining as oscillating/unfixable. |
-| Multi-module project | Run at project root; violations across all modules tracked together. |
-| Design doc §11.4 exists with Checkstyle | Use §11.4 run command as authoritative. |
-| `long-task-guide.md` exists | Use its test/coverage/mutation commands for quality gates. |
-| No mutation tool configured | Skip Gate 3 (mutation) with warning; other gates still enforced. |
-| No test framework detected | Skip Gate 2 (UT) and Gate 3 (mutation) with warning; compile + scan still enforced. |
+| 无 `pom.xml` 或 `build.gradle` | 停止："未找到支持的构建系统。" |
+| 构建中未配置 Checkstyle | 停止："未检测到静态分析工具。" |
+| 扫描前构建失败（编译错误） | 诊断并停止。不尝试修复预先存在的构建错误 —— 仅修复样式违规。 |
+| 基线零违规 | 以零迭代的清洁摘要停止（步骤 6）。 |
+| 达到最大迭代次数仍有违规 | 报告残留违规及其分类。 |
+| 卡住（连续 2 次迭代无进展） | 提前中断，将残留报告为振荡/无法修复。 |
+| 多模块项目 | 在项目根目录运行；跨所有模块统一追踪违规。 |
+| 设计文档 S11.4 存在且有 Checkstyle | 使用 S11.4 运行命令作为权威来源。 |
+| `long-task-guide.md` 存在 | 使用其测试/覆盖率/变异测试命令作为质量门禁。 |
+| 未配置变异测试工具 | 跳过 Gate 3（变异测试）并发出警告；其他门禁仍然执行。 |
+| 未检测到测试框架 | 跳过 Gate 2（单元测试）和 Gate 3（变异测试）并发出警告；编译 + 扫描仍然执行。 |
 
-## Rules
+## 规则
 
-- **Config files are read-only** — never modify Checkstyle config, `pom.xml` plugin config, or Gradle checkstyle block. The skill fixes source code to comply with existing rules.
-- **Behavioral preservation** — fixes must not change program behavior. Only formatting, naming, import order, javadoc, annotation placement, brace style, modifier order, and similar non-behavioral changes.
-- **Quality gates are non-negotiable** — every iteration must pass compile + UT + mutation before proceeding. No shortcuts, no "probably fine."
-- **No new dependencies** — fixes must not add imports or dependencies that did not previously exist (expanding star imports is allowed).
-- **Git-safe** — do NOT commit changes. The user reviews and commits after the skill completes.
-- **Idempotent** — re-running the skill on an already-clean codebase produces zero-iteration clean summary.
-- **Pipeline-compatible** — when used alongside the long-task pipeline, respects Design §11.4 and `long-task-guide.md` as authoritative sources for commands and thresholds.
+- **配置文件只读** —— 绝不修改 Checkstyle 配置、`pom.xml` 插件配置或 Gradle checkstyle 块。本 skill 修复源代码以符合现有规则。
+- **行为保持** —— 修复不得改变程序行为。仅限格式化、命名、导入顺序、javadoc、注解位置、花括号风格、修饰符顺序等非行为变更。
+- **质量门禁不可协商** —— 每次迭代必须通过编译 + 单元测试 + 变异测试后才能继续。不走捷径，不"应该没问题"。
+- **不添加新依赖** —— 修复不得添加之前不存在的导入或依赖（展开星号导入除外）。
+- **对 Git 安全** —— 不提交变更。用户在 skill 完成后审查并提交。
+- **幂等性** —— 在已经干净的代码库上重新运行会产生零迭代的清洁摘要。
+- **与流水线兼容** —— 与 long-task 流水线配合使用时，以设计文档 S11.4 和 `long-task-guide.md` 作为命令和阈值的权威来源。
 
-## Integration
+## 集成
 
-**Called by:** User on-demand (standalone)
-**Requires:** Java project with Checkstyle configured via Maven or Gradle
-**Produces:** Source code with zero Checkstyle violations (or classified residuals), all quality gates passing
-**Does NOT chain to:** Any pipeline skill — fully independent
+**调用方：** 用户按需调用（独立）
+**前置条件：** 通过 Maven 或 Gradle 配置了 Checkstyle 的 Java 项目
+**产出：** 零 Checkstyle 违规的源代码（或已分类的残留违规），所有质量门禁通过
+**不链接到：** 任何流水线 skill —— 完全独立

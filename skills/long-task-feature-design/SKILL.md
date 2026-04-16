@@ -1,37 +1,37 @@
 ---
 name: long-task-feature-design
-description: "Use before TDD in a long-task project — produce feature-level detailed design with interface contracts, algorithm pseudocode, diagrams, test inventory, and existing behavior analysis"
+description: "在 long-task 项目中 TDD 之前使用 -- 生成功能级详细设计，包含接口契约、算法伪代码、图表、测试清单和现有行为分析"
 ---
 
-# Feature-Level Detailed Design
+# 功能级详细设计
 
-Produce the feature detailed design document. Read all documents yourself.
+生成功能详细设计文档。请自行读取所有文档。
 
-> **For `category: "bugfix"` features**: Focus on: (1) root cause documentation, (2) targeted fix approach, (3) regression test inventory. Skip full diagrams unless the bug directly touches those surfaces.
+> **对于 `category: "bugfix"` 功能**：重点关注：(1) 根因文档，(2) 定向修复方案，(3) 回归测试清单。除非缺陷直接涉及相关界面，否则跳过完整图表。
 
-## Your Task
+## 你的任务
 
-1. Read execution rules: `skills/long-task-feature-design/references/feature-design-execution.md`
-2. Read template: `skills/long-task-feature-design/references/feature-design-template.md`
+1. 读取执行规则：`skills/long-task-feature-design/references/feature-design-execution.md`
+2. 读取模板：`skills/long-task-feature-design/references/feature-design-template.md`
 
-## Key Constraints
+## 关键约束
 
-- Write complete design document to `docs/features/YYYY-MM-DD-<feature-name>.md`
-- Every section (§2-§6) must be COMPLETE or "N/A — [reason]"
-- Test Inventory negative ratio >= 40%
-- Test Inventory categories should cover FUNC, BNDRY, SEC as appropriate based on SRS acceptance criteria
-- §11 compliance: names follow §11.5, operations use §11.1 libraries, error handling per §11.6
-- **Maximize reuse**: Step 1c explores the codebase before design — understand existing behavior related to requirements, prefer reusing existing logic over writing new
-- No TDD Task Decomposition in design output — TDD execution handled by dedicated sub-skills
-- Do NOT start TDD
+- 将完整设计文档写入 `docs/features/YYYY-MM-DD-<feature-name>.md`
+- 每个章节（§2-§6）必须完整填写或标注 "N/A — [原因]"
+- 测试清单负向测试比例 >= 40%
+- 测试清单类别应根据 SRS 验收标准覆盖 FUNC、BNDRY、SEC
+- §11 合规：命名遵循 §11.5，操作使用 §11.1 库，错误处理遵循 §11.6
+- **最大化复用**：步骤 1c 在设计前探索代码库 -- 理解与需求相关的现有行为，优先复用现有逻辑而非编写新代码
+- 设计输出中不包含 TDD 任务分解 -- TDD 执行由专用子技能处理
+- 不要开始 TDD
 
-Report summary using Structured Return Contract from `feature-design-execution.md`.
+使用 `feature-design-execution.md` 中的结构化返回契约报告摘要。
 
 ---
 
-## Integration
+## 集成
 
-**Called by:** long-task-work (Step 2) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline
-**Requires:** System design doc, SRS, feature-list.json
-**Produces:** `docs/features/YYYY-MM-DD-<feature-name>.md`
-**Chains to:** long-task-tdd-red (Step 3)
+**调用方：** long-task-work（步骤 2）-- Worker 分派 SubAgent，SubAgent 加载此 Skill 并内联执行
+**依赖：** 系统设计文档、SRS、feature-list.json
+**产出：** `docs/features/YYYY-MM-DD-<feature-name>.md`
+**后续：** long-task-tdd-red（步骤 3）

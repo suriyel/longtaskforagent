@@ -1,31 +1,31 @@
 ---
 name: long-task-coverage-fix
-description: "Fix coverage gaps by adding tests for uncovered lines/branches. Input: feature_id."
+description: "修复覆盖率缺口——为未覆盖的行/分支补充测试。输入：feature_id。"
 ---
 
-# Coverage Fix — Add Tests for Uncovered Code
+# 覆盖率修复 — 为未覆盖代码补充测试
 
-Receive coverage gap details from the Worker prompt. Write tests to close the gaps.
+从 Worker 提示中接收覆盖率缺口详情，编写测试来消除缺口。
 
-## Your Task
+## 你的任务
 
-1. Read execution rules: `skills/long-task-coverage-fix/references/coverage-fix-execution.md`
-2. Read shared rules: `skills/long-task-coverage-fix/references/iron-law.md`
-3. Read anti-patterns: `skills/long-task-coverage-fix/references/testing-anti-patterns.md`
+1. 阅读执行规则：`skills/long-task-coverage-fix/references/coverage-fix-execution.md`
+2. 阅读共享规则：`skills/long-task-coverage-fix/references/iron-law.md`
+3. 阅读反模式：`skills/long-task-coverage-fix/references/testing-anti-patterns.md`
 
-## Key Constraints
+## 关键约束
 
-- Input: `Coverage Gaps` section passed in the Agent prompt (file:line-range | type | description)
-- Write tests to cover the identified gaps
-- Run `[test-quiet]` to confirm all tests pass — no broken code
-- **Do NOT run** coverage or mutation tools — the caller measures after you return
-- **Do NOT mark** feature as "passing" in feature-list.json
+- 输入：Agent 提示中传入的 `Coverage Gaps` 段落（file:line-range | type | description）
+- 编写测试以覆盖已识别的缺口
+- 运行 `[test-quiet]` 确认所有测试通过——不可破坏代码
+- **不要运行**覆盖率或变异测试工具——调用方会在你返回后度量
+- **不要标记** feature-list.json 中的特性为 "passing"
 
-Return result using the Structured Return Contract below.
+使用下方的结构化返回契约返回结果。
 
 ---
 
-## Structured Return Contract
+## 结构化返回契约
 
 ```markdown
 ## SubAgent Result: Coverage Fix
@@ -42,8 +42,8 @@ tests_added=N, gaps_addressed=N/M, all_tests_pass=true/false
 
 ---
 
-## Integration
+## 集成
 
-**Called by:** long-task-coverage-retrofit — dispatches SubAgent with Coverage Gaps
-**Requires:** Coverage measurement returned FAIL with gap details
-**Produces:** Additional tests covering identified gaps
+**调用方：** long-task-coverage-retrofit — 分派 SubAgent 并附带覆盖率缺口
+**前置条件：** 覆盖率度量返回 FAIL 且包含缺口详情
+**产出：** 覆盖已识别缺口的额外测试

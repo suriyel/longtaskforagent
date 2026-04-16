@@ -1,40 +1,40 @@
-# Problem Framing Execution Protocol
+# 问题框架化执行协议
 
-## When This Runs
+## 运行时机
 
-Expert track Step E1. Called by SKILL.md. Do NOT run in Lite track.
+Expert 路线 Step E1。由 SKILL.md 调用。不在 Lite 路线中运行。
 
-## E1a. Derive from Context (internal, no user interaction)
+## E1a. 从上下文推导（内部，不与用户交互）
 
-Before asking anything, derive from the user's initial description:
-- Draft a one-sentence problem statement
-- List the actors whose lives change if the system is built
-- Hypothesize 2–3 current-state pain points
-- Flag if the user stated a **solution** ("build me X") rather than a **problem** ("I can't do Y") — solution-anchored requests must be challenged in E1b
+提问之前，从用户初始描述中推导：
+- 草拟一句话问题陈述
+- 列出系统建成后生活会改变的角色
+- 假设 2-3 个当前痛点
+- 标记用户是否陈述了**方案**（"给我构建 X"）而非**问题**（"我无法做 Y"）— 方案锚定的请求必须在 E1b 中挑战
 
-## E1b. Problem Framing Round (single AskUserQuestion, ≤4 questions)
+## E1b. 问题框架化轮次（单次 AskUserQuestion，≤4 个问题）
 
-Adapt phrasing to project context. Skip any question whose answer is already unambiguously clear from Step 1 context.
+根据项目上下文调整措辞。跳过任何答案已从 Step 1 上下文中明确的问题。
 
-1. **5-Whys seed**: "What goes wrong today without this system? Walk me through a real recent example — what happened, what did you have to do instead, and what was the cost (time, money, errors, frustration)?"
-   - Derive the WHY chain internally from the answer (up to 3 levels). Stop at the deepest cause supported by the user's answer. Do NOT invent causes beyond what was stated or clearly implied.
+1. **5-Whys 种子**："今天没有这个系统会出什么问题？给我讲一个最近的真实例子 — 发生了什么，你不得不做什么替代方案，代价是什么（时间、金钱、错误、挫折）？"
+   - 从答案中内部推导 WHY 链（最多 3 层）。在用户答案支持的最深原因处停止。不要编造超出陈述或明确暗示的原因。
 
-2. **JTBD probe**: "What outcome are you ultimately trying to achieve — not the tool you want, but what success looks like in your world?"
-   - Target answer shape: "I want to [motivation] so I can [outcome]"
-   - If the answer is still solution-shaped ("I want a dashboard"), follow up once: "And what does having that let you do that you can't do today?"
+2. **JTBD 探测**："你最终要达成什么结果 — 不是你想要的工具，而是在你的世界里成功是什么样的？"
+   - 目标答案形式："我想要 [动机] 以便 [结果]"
+   - 若答案仍是方案形式（"我要一个仪表板"），追问一次："有了它之后你能做什么今天做不到的事？"
 
-3. **Pain ranking**: "Of the problems you described, which one costs you the most — and how often does it happen? (daily / weekly / monthly)"
-   - Accept qualitative ranking; do NOT force numbers the user doesn't have.
+3. **痛点排名**："你描述的问题中，哪个代价最高 — 多频繁发生？（每天 / 每周 / 每月）"
+   - 接受定性排名；不要强迫用户提供他们没有的数字。
 
-4. **Solution challenge** *(only ask if the user proposed a specific solution in their original description)*: "Is that the only way to solve this, or would you also be satisfied if [JTBD outcome] was achieved some other way?"
-   - Purpose: detect when the user is anchored on a particular implementation when a simpler solution would satisfy the JTBD.
-   - If the user has NOT proposed a specific solution, skip this question entirely.
+4. **方案挑战** *（仅在用户原始描述中提出了具体方案时才问）*："这是解决此问题的唯一方式，还是如果以其他方式实现 [JTBD 结果] 你也满意？"
+   - 目的：检测用户是否锚定于特定实现，而更简单的方案就能满足 JTBD。
+   - 若用户未提出具体方案，完全跳过此问题。
 
-## E1c. Build Artifacts (internal, no further user questions)
+## E1c. 构建产物（内部，无更多用户提问）
 
-From the answers, produce three artifacts to be embedded in SRS Section 1.3:
+从答案中产出三个产物，嵌入 SRS 第 1.3 节：
 
-**5-Whys Chain**:
+**5-Whys 链**：
 ```
 Symptom: [user-stated problem in their words]
 Why 1: [first cause]
@@ -42,32 +42,32 @@ Why 2: [cause of Why 1]
 Why 3: [deepest supported cause — stop here unless answer goes further]
 Root Cause: [systemic cause that requirements must address]
 ```
-Stop at the deepest WHY supported by the user's answer. Mark the stopping point.
+在用户答案支持的最深 WHY 处停止。标记停止点。
 
-**JTBD Statement**:
+**JTBD 声明**：
 ```
 When [situation], I want to [motivation], so I can [outcome].
 ```
-Construct from the user's JTBD probe answer. Use their words as much as possible.
+从用户 JTBD 探测答案构建。尽可能使用他们的原话。
 
-**Pain Map**:
-| Pain Point | Current Workaround | Frequency | Severity (H/M/L) | Score (F×S) |
-|---|---|---|---|---|
-| [pain 1] | [what they do today] | Daily/Weekly/Monthly | H/M/L | 3/2/1 × 3/2/1 |
+**痛点地图**：
+| 痛点 | 当前变通方案 | 频率 | 严重度（H/M/L） | 得分（F×S） |
+|------|------------|------|-----------------|------------|
+| [痛点 1] | [他们今天的做法] | 每天/每周/每月 | H/M/L | 3/2/1 × 3/2/1 |
 
-Score: Frequency (Daily=3, Weekly=2, Monthly=1) × Severity (H=3, M=2, L=1). Highest scores = highest-priority pain to address.
+得分：频率（每天=3, 每周=2, 每月=1）× 严重度（H=3, M=2, L=1）。最高分 = 最优先解决的痛点。
 
-## E1d. Internal Checkpoint
+## E1d. 内部检查点
 
-Before proceeding to E2, verify: can you state **WHY** the system needs to exist, **WHO** suffers most from the current state, and **WHAT** the minimum outcome is that would constitute success — without guessing?
+进入 E2 前验证：你能否在不猜测的情况下陈述系统**为什么**需要存在、**谁**最受当前状态之苦、**什么**是构成成功的最低结果？
 
-- **YES** → proceed to E2
-- **NO** → open one more targeted AskUserQuestion to resolve the gap
+- **是** → 进入 E2
+- **否** → 再开一次针对性 AskUserQuestion 解决缺口
 
-## Output
+## 输出
 
-All three artifacts → written into SRS Section 1.3 (Problem Statement).
-These feed:
-- E2 (workaround probe uses Pain Map)
-- E3 (walkthrough workflows derived from Pain Map)
-- E10 (alignment validation checks backward from Pain Map and JTBD)
+三个产物全部 → 写入 SRS 第 1.3 节（问题陈述）。
+这些供给：
+- E2（变通方案探测使用痛点地图）
+- E3（走查工作流源自痛点地图）
+- E10（对齐验证从痛点地图和 JTBD 反向检查）
