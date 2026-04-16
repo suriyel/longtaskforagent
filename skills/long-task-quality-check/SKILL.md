@@ -11,6 +11,7 @@ Run coverage and mutation gates. Report results with gap details. **You MUST NOT
 
 1. Read execution rules: `skills/long-task-quality-check/references/quality-check-execution.md`
 2. Read coverage recipes (if needed): `skills/long-task-quality-check/references/coverage-recipes.md`
+3. Read rules : `docs/rules`
 
 ## Key Constraints
 
