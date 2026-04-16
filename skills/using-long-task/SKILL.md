@@ -77,12 +77,12 @@ digraph phase_detection {
 4. 检查 `docs/plans/*-srs.md` → 若匹配：
    a. 检查 `docs/rules/` — 若存在且包含 ≥1 个 `.md` 文件（非新建项目桩） → `long-task-design`（规则已就绪，进入设计）
    b. 存量项目启发式：统计排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/` 的源文件数；检查 `git rev-list --count HEAD 2>/dev/null || echo 0`
-      - 若源文件 > 3 且（git 提交数 ≥ 5 或 cwd 中无 `.git`） → **分派独立 SubAgent 执行 `long-task:long-task-codebase-scanner`**（无参数）。解析返回：Verdict DONE → 从头重新执行检测规则；Verdict FAIL → 上报用户。
+      - 若源文件 > 3 且（git 提交数 ≥ 5 或 cwd 中无 `.git`） → **分派独立 SubAgent 执行 `long-task:long-task-codebase-scanner`**。解析返回：Verdict DONE → 从头重新执行检测规则；Verdict FAIL → 上报用户。
    c. 否则（新建项目或无源文件） → 若缺失则创建 `docs/rules/README.md` 桩（"Greenfield — no conventions to extract"） → `long-task-design`
 5. 否则 → 检查代码库约定：
    a. 检查 `docs/rules/` — 若存在且包含 ≥1 个 `.md` 文件（非新建项目桩） → `long-task-requirements`（规则已扫描）
    b. 存量项目启发式：统计源文件（`*.py`、`*.js`、`*.ts`、`*.java`、`*.c`、`*.cpp`、`*.go`、`*.rs` 等）排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/`；检查 `git rev-list --count HEAD 2>/dev/null || echo 0`
-      - 若源文件 > 3 且（git 提交数 ≥ 5 或 cwd 中无 `.git`） → **分派独立 SubAgent 执行 `long-task:long-task-codebase-scanner`**（无参数）。解析返回：Verdict DONE → 从头重新执行检测规则；Verdict FAIL → 上报用户。
+      - 若源文件 > 3 且（git 提交数 ≥ 5 或 cwd 中无 `.git`） → **分派独立 SubAgent 执行 `long-task:long-task-codebase-scanner`**。解析返回：Verdict DONE → 从头重新执行检测规则；Verdict FAIL → 上报用户。
       - 否则（新建项目） → 创建 `docs/rules/README.md` 桩（"Greenfield — no conventions to extract"） → `long-task-requirements`
 
 ## Skill 目录
