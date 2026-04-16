@@ -194,7 +194,7 @@ Rank source files by `(uncovered_lines + uncovered_branches)` descending. If inc
 
 ### 6b: Coverage Fix
 
-> **DISPATCH** independent SubAgent(Task or Agent tool) — load then execute skill `long-task:long-task-coverage-fix`
+> **DISPATCH** create independent SubAgent(use General or Agent) — load then execute skill `long-task:long-task-coverage-fix` in the subagent
 
 **Prompt must provide inline context**:
 
