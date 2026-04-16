@@ -154,11 +154,13 @@ This is the **most critical** output. Focus on constraints that would cause non-
 - Python: type hints usage frequency
 
 **Testing Conventions** — detect:
-- Test framework (from imports)
-- Fixture/setup patterns
-- Assertion style (assert, expect, should)
-- Mock framework
+- Test framework (from imports AND config files — see Testing & Quality Tools in Step 6)
+- Fixture/setup patterns (shared fixtures, setup/teardown, factory functions)
+- Assertion style (assert, expect, should) — with consistency %
+- Mock framework (from imports: unittest.mock, Mockito, jest.fn, vi.fn, gmock)
 - Test grouping (describe/it, test classes, flat functions)
+- Test naming convention: `test_*.py` / `*.test.ts` / `*Test.java` / `*_test.go`
+- Test directory structure: co-located vs separate `tests/` / `test/` / `__tests__` / `src/test/java/`
 
 ### Step 6: Build & Compilation Analysis → `docs/rules/build-and-compilation.md`
 
@@ -183,6 +185,39 @@ This is the **most critical** output. Focus on constraints that would cause non-
 **Code Generation** — detect directories/configs for:
 - protobuf, OpenAPI/Swagger, GraphQL codegen, database migration generators
 - **Mark generated directories** — downstream skills should exclude these from convention checks
+
+**Testing & Quality Tools** — detect config files for test frameworks, coverage tools, and mutation testing tools. For each found:
+- Record: Tool name, Category (test-framework / coverage / mutation), Config file path, Run command (inferred from build scripts or standard invocation)
+- **Do NOT open or read the config file contents** — the tool reads its own config at runtime
+- Additionally detect test runner commands from build scripts (`package.json "scripts.test"`, Makefile `test:` target, `pom.xml` surefire-plugin, etc.)
+- Common configs to detect:
+
+| Category | Tool | Config Files | Typical Run Command |
+|----------|------|-------------|---------------------|
+| Test Framework | pytest | `pyproject.toml [tool.pytest]`, `pytest.ini`, `setup.cfg [tool:pytest]`, `conftest.py` | `pytest` |
+| Test Framework | JUnit | `pom.xml (surefire-plugin)`, `build.gradle (test task)` | `mvn test` / `gradle test` |
+| Test Framework | Jest | `jest.config.*`, `package.json [jest]` | `npx jest` |
+| Test Framework | Vitest | `vitest.config.*`, `vite.config.* [test]` | `npx vitest run` |
+| Test Framework | gtest/Catch2 | `CMakeLists.txt (GTest/Catch2)` | `ctest --test-dir build` |
+| Coverage | pytest-cov | `pyproject.toml [tool.coverage]`, `.coveragerc` | `pytest --cov=src --cov-branch` |
+| Coverage | JaCoCo | `pom.xml (jacoco-maven-plugin)`, `build.gradle (jacoco)` | `mvn test jacoco:report` |
+| Coverage | c8 | `package.json [c8]`, `.c8rc.json` | `npx c8 ...` |
+| Coverage | nyc/Istanbul | `.nycrc`, `.nycrc.json`, `package.json [nyc]` | `npx nyc ...` |
+| Coverage | gcov/lcov | `Makefile (--coverage)`, `CMakeLists.txt (ENABLE_COVERAGE)` | `gcov + lcov` |
+| Mutation | mutmut | `pyproject.toml [tool.mutmut]`, `setup.cfg [mutmut]` | `mutmut run` |
+| Mutation | pitest/PIT | `pom.xml (pitest-maven)`, `build.gradle (pitest)` | `mvn pitest:mutationCoverage` |
+| Mutation | Stryker | `stryker.conf.json`, `stryker.conf.js`, `stryker.conf.mjs` | `npx stryker run` |
+| Mutation | Mull | `mull.yml` | `mull-runner ./test-binary` |
+
+**Test Runner Commands** — extract from build scripts:
+
+| Build System | Where to Look | Example |
+|-------------|--------------|---------|
+| npm/yarn/pnpm | `package.json` → `scripts.test`, `scripts.test:cov`, `scripts.test:mutation` | `"test": "vitest run"` |
+| Maven | `pom.xml` → surefire plugin config | `mvn test` |
+| Gradle | `build.gradle` → `test` task | `gradle test` |
+| Make | `Makefile` → `test:` target | `make test` |
+| CMake/CTest | `CMakeLists.txt` → `add_test()` / `enable_testing()` | `ctest --test-dir build` |
 
 ### Step 7: Generate Index → `docs/rules/README.md`
 
@@ -209,6 +244,9 @@ Create an index file linking all 3 documents with a scan summary:
 - **Internal Libraries (2nd-party)**: [count] found — [brief list]
 - **Prohibited APIs**: [count] detected
 - **Static Analysis Tools**: [list]
+- **Test Framework**: [detected name or "none detected"]
+- **Coverage Tool**: [detected name or "none detected"]
+- **Mutation Tool**: [detected name or "none detected"]
 - **Build System**: [name]
 ```
 
@@ -273,4 +311,4 @@ Each output file follows this structure:
 - **Reads**: Source files, dependency manifests, git history
 - **Chains to**: `long-task-requirements` (rule 7b) or `long-task-design` (rule 5b) — in pipeline mode; nothing in standalone mode
 - **Produces**: `docs/rules/coding-style.md`, `docs/rules/coding-constraints.md`, `docs/rules/build-and-compilation.md`, `docs/rules/README.md`
-- **Downstream consumers**: Design skill merges rules into Design §11; Worker skill references Design §11 during TDD
+- **Downstream consumers**: Design skill merges rules into Design §11; Init skill cross-checks tech_stack against build-and-compilation.md Testing & Quality Tools table; Worker skill references Design §11 during TDD

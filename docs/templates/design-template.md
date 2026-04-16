@@ -349,4 +349,14 @@ graph LR
 
 [Dominant error handling approach: try/catch, Result types, custom Error classes, centralized middleware, etc.]
 
+### 11.7 Testing & Quality Tools
+
+> Detected test, coverage, and mutation tools from `build-and-compilation.md`. Downstream TDD/Quality skills use these tool names to derive run commands via `get_tool_commands.py`.
+
+| Category | Tool | Config File | Run Command |
+|----------|------|------------|-------------|
+| Test Framework | [e.g., pytest] | [e.g., `pyproject.toml [tool.pytest]`] | [e.g., `pytest`] |
+| Coverage | [e.g., pytest-cov] | [e.g., `.coveragerc`] | [e.g., `pytest --cov=src --cov-branch`] |
+| Mutation | [e.g., mutmut] | [e.g., `pyproject.toml [tool.mutmut]`] | [e.g., `mutmut run`] |
+
 

@@ -38,7 +38,12 @@ You MUST create a TodoWrite task for each step and complete them in order:
 
 3. **Verify `tech_stack`** in `feature-list.json`:
    - Confirm `language`, `test_framework`, `coverage_tool`, `mutation_tool` match the design doc
-   - If `docs/rules/build-and-compilation.md` exists: cross-check `tech_stack` against scanned build/test config; on conflict, prefer scanned values and update `feature-list.json`
+   - If `docs/rules/build-and-compilation.md` exists: cross-check `tech_stack` against the "Testing & Quality Tools" table in the scanned document:
+     - Match `test_framework` against detected Test Framework tool name
+     - Match `coverage_tool` against detected Coverage tool name
+     - Match `mutation_tool` against detected Mutation tool name
+     - On conflict, prefer scanned values (actual project state) and update `feature-list.json`
+     - If a tool category shows "none detected" in the scanned doc, keep the design doc / language preset value
    - Verify tool commands resolve correctly:
      ```bash
      python scripts/get_tool_commands.py feature-list.json

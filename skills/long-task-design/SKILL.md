@@ -130,6 +130,7 @@ Present each section. Wait for user feedback. Incorporate changes before moving 
    - §11.4: Extract "Static Analysis Tools" table from `coding-constraints.md` (tool name + config path + run command only — do not read config contents)
    - §11.5: Extract key naming and formatting rules from `coding-style.md` (summary table)
    - §11.6: Extract error handling pattern from `coding-constraints.md`
+   - §11.7: Extract "Testing & Quality Tools" table from `build-and-compilation.md` (test framework, coverage tool, mutation tool — tool name + config path + run command only)
 3. **Cross-verify** — check for conflicts between scanned conventions and design decisions:
    - §8 (Third-Party Dependencies): new dependencies must not conflict with §11.2 prohibited list
    - §6.2 (Internal API Contracts): libraries used must comply with §11.1 internal library mandates
@@ -138,7 +139,7 @@ Present each section. Wait for user feedback. Incorporate changes before moving 
 
 **Greenfield** (if `docs/rules/` does not exist or is empty):
 
-1. **Populate §11 with empty tables** (column headers + zero rows) for each subsection §11.1–§11.6, using the design template's §11 structure
+1. **Populate §11 with empty tables** (column headers + zero rows) for each subsection §11.1–§11.7, using the design template's §11 structure
 2. **Present to user**: "§11 created with empty convention tables. Add constraints now if known, or leave empty — downstream skills read §11 unconditionally."
 3. If user adds constraints: incorporate and re-present for approval
 4. If user leaves empty: proceed — empty tables signal "no constraints" to downstream skills

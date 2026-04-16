@@ -18,6 +18,9 @@
 - **Internal Libraries (2nd-party)**: {{internal_lib_count}} found — {{internal_lib_list}}
 - **Prohibited APIs**: {{prohibited_count}} detected
 - **Static Analysis Tools**: {{static_tools}}
+- **Test Framework**: {{test_framework}}
+- **Coverage Tool**: {{coverage_tool}}
+- **Mutation Tool**: {{mutation_tool}}
 - **Build System**: {{build_system}}
 
 ## Usage
