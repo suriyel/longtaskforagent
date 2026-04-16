@@ -138,19 +138,15 @@ def test_feature_list_has_tech_stack():
         shutil.rmtree(tmp)
 
 
-def test_feature_list_has_quality_gates():
-    """feature-list.json should contain quality_gates with default thresholds."""
+def test_feature_list_has_no_quality_gates():
+    """feature-list.json should NOT contain quality_gates (removed from pipeline)."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp)
         fl_path = os.path.join(tmp, "feature-list.json")
         with open(fl_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        assert "quality_gates" in data, "Missing 'quality_gates' key"
-        qg = data["quality_gates"]
-        assert qg["line_coverage_min"] == 90
-        assert qg["branch_coverage_min"] == 80
-        assert qg["mutation_score_min"] == 80
+        assert "quality_gates" not in data, "quality_gates should not be present"
     finally:
         shutil.rmtree(tmp)
 
@@ -212,33 +208,6 @@ def test_lang_preset_fills_tools():
         assert ts["test_framework"] == "pytest"
         assert ts["coverage_tool"] == "pytest-cov"
         assert ts["mutation_tool"] == "mutmut"
-    finally:
-        shutil.rmtree(tmp)
-
-
-def test_custom_thresholds():
-    """--line-cov, --branch-cov, --mutation-score should override defaults."""
-    tmp = tempfile.mkdtemp()
-    try:
-        run_init("test-project", tmp, [
-            "--lang", "java",
-            "--line-cov", "85",
-            "--branch-cov", "75",
-            "--mutation-score", "70"
-        ])
-        fl_path = os.path.join(tmp, "feature-list.json")
-        with open(fl_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        qg = data["quality_gates"]
-        assert qg["line_coverage_min"] == 85, f"Expected 85, got {qg['line_coverage_min']}"
-        assert qg["branch_coverage_min"] == 75, f"Expected 75, got {qg['branch_coverage_min']}"
-        assert qg["mutation_score_min"] == 70, f"Expected 70, got {qg['mutation_score_min']}"
-        # Also verify Java preset was applied
-        ts = data["tech_stack"]
-        assert ts["language"] == "java"
-        assert ts["test_framework"] == "junit"
-        assert ts["coverage_tool"] == "jacoco"
-        assert ts["mutation_tool"] == "pitest"
     finally:
         shutil.rmtree(tmp)
 
@@ -437,10 +406,9 @@ if __name__ == "__main__":
         test_docs_plans_dir_created,
         test_examples_dir_created,
         test_feature_list_has_tech_stack,
-        test_feature_list_has_quality_gates,
+        test_feature_list_has_no_quality_gates,
         test_lang_preset_fills_tools,
         test_lang_preset_javascript,
-        test_custom_thresholds,
         test_tool_override_with_preset,
         test_creates_claude_md,
         test_appends_to_existing_claude_md,

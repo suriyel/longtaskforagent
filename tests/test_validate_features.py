@@ -152,11 +152,6 @@ def test_valid_tech_stack():
             "coverage_tool": "pytest-cov",
             "mutation_tool": "mutmut"
         },
-        "quality_gates": {
-            "line_coverage_min": 90,
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
-        },
         "features": [
             {
                 "id": 1, "category": "core", "title": "A",
@@ -207,69 +202,6 @@ def test_todo_language_is_valid():
     }
     code, stdout, _ = run_validator(data)
     assert code == 0, f"Expected exit 0 for TODO language: {stdout}"
-
-
-def test_invalid_quality_gate_value():
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "quality_gates": {
-            "line_coverage_min": 150,
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
-        },
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "verification_steps": ["Step 1"], "dependencies": []
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero exit for quality gate > 100: {stdout}"
-
-
-def test_negative_quality_gate_value():
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "quality_gates": {
-            "line_coverage_min": -10,
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
-        },
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "verification_steps": ["Step 1"], "dependencies": []
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero exit for negative quality gate: {stdout}"
-
-
-def test_quality_gate_string_value():
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "quality_gates": {
-            "line_coverage_min": "high",
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
-        },
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "failing",
-                "verification_steps": ["Step 1"], "dependencies": []
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero exit for string quality gate: {stdout}"
 
 
 def test_all_supported_languages():
@@ -960,9 +892,6 @@ if __name__ == "__main__":
         test_valid_tech_stack,
         test_invalid_language,
         test_todo_language_is_valid,
-        test_invalid_quality_gate_value,
-        test_negative_quality_gate_value,
-        test_quality_gate_string_value,
         test_all_supported_languages,
         test_valid_constraints,
         test_constraints_not_array_fails,

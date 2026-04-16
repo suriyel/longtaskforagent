@@ -55,7 +55,7 @@ For each surviving mutant, read the source code at the specified line and classi
 2. If FAIL → run `[test-detail]` → fix the failing test → re-run
 3. After 3 failed fix attempts → set Verdict to FAIL with details
 
-**Do NOT run mutation or coverage tools.** Quality Check will re-measure after you return.
+**Do NOT run mutation or coverage tools.** The caller will re-measure after you return.
 
 ## Red Flag Words
 
@@ -71,6 +71,6 @@ For each surviving mutant, read the source code at the specified line and classi
 |---|---|
 | Write tautological assertions to "kill" mutants | Assert on meaningful behavior boundaries |
 | Add redundant tests that duplicate existing ones | Target the specific mutation the test must detect |
-| Run mutation tools | NOT your job — Quality Check measures |
+| Run mutation tools | NOT your job — the caller measures |
 | Ignore equivalent mutants | Document with justification |
 | Remove non-dead code to avoid mutant | Only remove code that is truly unreachable |

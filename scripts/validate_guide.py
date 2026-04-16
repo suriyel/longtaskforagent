@@ -26,10 +26,6 @@ import sys
 REQUIRED_SECTIONS = [
     ("Test commands",
      [r"test-quiet", r"test-detail", r"test.*command"]),
-    ("Coverage commands",
-     [r"coverage-quiet", r"coverage-feature-quiet", r"coverage.*command"]),
-    ("Mutation commands",
-     [r"mutation-feature-quiet", r"mutation-full-quiet", r"mutation.*command"]),
 ]
 
 

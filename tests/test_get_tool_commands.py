@@ -2,7 +2,7 @@
 """
 Unit tests for get_tool_commands.py
 
-Tests command lookup from tech_stack and quality_gates in feature-list.json.
+Tests command lookup from tech_stack in feature-list.json.
 """
 
 import json
@@ -23,7 +23,7 @@ from get_tool_commands import (get_commands, format_text, MUTATION_COMMANDS,
 
 
 def make_feature_list(language="python", test_fw="pytest", cov_tool="pytest-cov",
-                      mut_tool="mutmut", line_cov=90, branch_cov=80, mut_score=80):
+                      mut_tool="mutmut"):
     """Build a minimal feature-list.json dict."""
     return {
         "project": "test-project",
@@ -33,11 +33,6 @@ def make_feature_list(language="python", test_fw="pytest", cov_tool="pytest-cov"
             "test_framework": test_fw,
             "coverage_tool": cov_tool,
             "mutation_tool": mut_tool,
-        },
-        "quality_gates": {
-            "line_coverage_min": line_cov,
-            "branch_coverage_min": branch_cov,
-            "mutation_score_min": mut_score,
         },
         "features": [],
     }
@@ -117,24 +112,6 @@ def test_unknown_tool_returns_unknown_prefix():
     assert cmds["mutation_full"].startswith("UNKNOWN:")
 
 
-def test_thresholds_from_quality_gates():
-    """Thresholds should come from quality_gates."""
-    cmds = get_commands(make_feature_list(line_cov=85, branch_cov=75, mut_score=70))
-    assert cmds["thresholds"]["line_coverage_min"] == 85
-    assert cmds["thresholds"]["branch_coverage_min"] == 75
-    assert cmds["thresholds"]["mutation_score_min"] == 70
-
-
-def test_default_thresholds():
-    """Missing quality_gates should fall back to defaults."""
-    data = {"tech_stack": {"test_framework": "pytest", "coverage_tool": "pytest-cov",
-                           "mutation_tool": "mutmut", "language": "python"}}
-    cmds = get_commands(data)
-    assert cmds["thresholds"]["line_coverage_min"] == 90
-    assert cmds["thresholds"]["branch_coverage_min"] == 80
-    assert cmds["thresholds"]["mutation_score_min"] == 80
-
-
 def test_tech_stack_in_output():
     """Output should include the tech_stack metadata."""
     cmds = get_commands(make_feature_list("python", "pytest", "pytest-cov", "mutmut"))
@@ -195,7 +172,6 @@ def test_format_text_contains_sections():
     assert "[mutation-feature-quiet]" in text
     assert "[mutation-feature-detail]" in text
     assert "[mutation-results-quiet]" in text
-    assert "[thresholds]" in text
 
 
 # --- Feature-scoped command tests ---
@@ -446,7 +422,6 @@ def test_cli_json_output():
         assert "test" in data
         assert "coverage" in data
         assert "mutation_feature" in data
-        assert "thresholds" in data
         # Verify quiet entries are structured dicts
         assert isinstance(data["test_quiet"], dict)
         assert "cmd" in data["test_quiet"]
@@ -498,8 +473,6 @@ if __name__ == "__main__":
         test_c_commands,
         test_cpp_commands,
         test_unknown_tool_returns_unknown_prefix,
-        test_thresholds_from_quality_gates,
-        test_default_thresholds,
         test_tech_stack_in_output,
         test_mutation_feature_key_present,
         test_mutation_feature_distinct_from_others,

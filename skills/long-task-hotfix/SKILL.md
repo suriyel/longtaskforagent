@@ -7,7 +7,7 @@ description: "Use when bugfix-request.json exists - validate, reproduce, root-ca
 You are using the long-task-hotfix skill. This skill handles bugs found during user manual testing.
 
 Your job is ONLY: validate → reproduce → root cause → enqueue → chain to Worker.
-The actual fix (TDD, quality gates, ST, review) is handled by the Worker pipeline — do NOT implement fixes here.
+The actual fix (TDD) is handled by the Worker pipeline — do NOT implement fixes here.
 </EXTREMELY-IMPORTANT>
 
 ## Step 1: Announce
@@ -37,7 +37,7 @@ If validation fails:
 
 Read these files in order:
 1. `bugfix-request.json` — understand title, description, severity, feature_id, reproduction steps
-2. `feature-list.json` — find the linked feature (if `feature_id` non-null), read `tech_stack`, `quality_gates`; determine next available feature `id`
+2. `feature-list.json` — find the linked feature (if `feature_id` non-null), read `tech_stack`; determine next available feature `id`
 3. `long-task-guide.md` — environment activation commands
 4. `task-progress.md` `## Current State` section — recent session history
 6. `git log --oneline -10` — recent commit context
@@ -132,7 +132,7 @@ Append a hotfix session entry after the current `## Current State` content:
 - **Bugfix Feature ID**: #<new id>
 - **Fixed Feature**: #<fixed_feature_id> <feature title> (or "Unlinked")
 - **Root Cause**: <one sentence>
-- **Status**: Enqueued — Worker will handle TDD/Quality/ST/Review
+- **Status**: Enqueued — Worker will handle TDD
 ```
 
 Also update the `## Current State` header to reflect the new failing feature.
@@ -148,7 +148,7 @@ Also update the `## Current State` header to reflect the new failing feature.
    Title: Fix: <title>
    Severity: <severity>
    Root cause: <one sentence>
-   Worker will handle: TDD → Quality → Review
+   Worker will handle: TDD
    ```
 4. Chain to: `long-task:long-task-work`
 
@@ -161,7 +161,7 @@ Also update the `## Current State` header to reflect the new failing feature.
 - **Root cause confirmed before enqueuing** — systematic debugging 4-phase process is mandatory; no guess-and-enqueue
 - **Signal file deleted LAST** — deletion is the final irreversible action; `validate_features.py` must pass first
 - **If both `bugfix-request.json` AND `increment-request.json` exist**: process this hotfix fully first; do NOT delete `increment-request.json`; it will be processed in the next session
-- **This skill does NOT implement the fix** — Worker owns TDD/Quality/ST/Review; this skill only validates, diagnoses, and enqueues
+- **This skill does NOT implement the fix** — Worker owns TDD; this skill only validates, diagnoses, and enqueues
 - **No ad-hoc code edits here** — do not write tests or fix code during this skill; that is Worker's job
 
 ## Red Flags
@@ -176,7 +176,7 @@ These thoughts mean STOP — you're rationalizing:
 | "I'll skip the feature-list.json entry, fix it directly" | Every fix must be traceable in feature-list.json as category=bugfix |
 | "Signal file has errors but the intent is clear" | Validator must pass; ask user to fix the file |
 | "I'll delete the signal file first, then clean up" | Signal file deletion is the LAST step after everything is verified |
-| "The fix is simple, Worker pipeline is overkill" | Worker ensures regression tests, coverage, and review — all required |
+| "The fix is simple, Worker pipeline is overkill" | Worker ensures regression tests via TDD — required |
 
 ## Integration
 
@@ -184,4 +184,4 @@ This skill is invoked by the `using-long-task` router when `bugfix-request.json`
 - `bugfix-request.json` is deleted
 - A new `category: "bugfix"` feature is in `feature-list.json` with `status: "failing"`
 - The router's next detection: `feature-list.json` exists with failing features → `long-task-work`
-- Worker picks up the bugfix feature and runs the full TDD → Quality → Review pipeline
+- Worker picks up the bugfix feature and runs the full TDD pipeline

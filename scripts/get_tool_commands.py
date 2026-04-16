@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Read tech_stack and quality_gates from feature-list.json, output the exact
+Read tech_stack from feature-list.json, output the exact
 shell commands for test, coverage, and mutation tooling.
 
 Eliminates the need for the LLM to look up per-language command syntax.
@@ -333,12 +333,11 @@ def get_commands(feature_list: dict) -> dict:
     """Extract tool commands from feature-list.json structure.
 
     Returns a dict with keys: test, coverage, mutation_incremental,
-    mutation_full, mutation_results, mutation_show, thresholds, tech_stack.
+    mutation_full, mutation_results, mutation_show, tech_stack.
     Quiet/detail values are structured {"cmd": ..., "instruction": ...} dicts.
     Plain commands are concrete strings (or 'UNKNOWN: <tool>' if unmapped).
     """
     ts = feature_list.get("tech_stack", {})
-    qg = feature_list.get("quality_gates", {})
 
     test_fw = ts.get("test_framework", "TODO")
     cov_tool = ts.get("coverage_tool", "TODO")
@@ -417,11 +416,6 @@ def get_commands(feature_list: dict) -> dict:
         "mutation_results_quiet": mut_results_quiet,
         "compile_quiet": compile_quiet,
         "compile_detail": compile_detail,
-        "thresholds": {
-            "line_coverage_min": qg.get("line_coverage_min", 90),
-            "branch_coverage_min": qg.get("branch_coverage_min", 80),
-            "mutation_score_min": qg.get("mutation_score_min", 80),
-        },
         "tech_stack": {
             "language": ts.get("language", "TODO"),
             "test_framework": test_fw,
@@ -449,7 +443,6 @@ def _format_recipe(label: str, recipe) -> list:
 def format_text(cmds: dict) -> str:
     """Format commands as human-readable text output."""
     ts = cmds["tech_stack"]
-    th = cmds["thresholds"]
     lines = [
         f"Language: {ts['language']}",
         f"Test framework: {ts['test_framework']}",
@@ -510,12 +503,6 @@ def format_text(cmds: dict) -> str:
         lines.append("")
         lines += _format_recipe("compile-detail", cmds["compile_detail"])
         lines.append("")
-    lines += [
-        "[thresholds]",
-        f"  line_coverage  >= {th['line_coverage_min']}%",
-        f"  branch_coverage >= {th['branch_coverage_min']}%",
-        f"  mutation_score  >= {th['mutation_score_min']}%",
-    ]
     return "\n".join(lines)
 
 

@@ -1,6 +1,6 @@
 # Coverage Fix — SubAgent Execution Reference
 
-You are a Coverage Fix SubAgent. Your job: write tests to close coverage gaps identified by Quality Check. Follow these rules exactly.
+You are a Coverage Fix SubAgent. Your job: write tests to close coverage gaps identified by the caller. Follow these rules exactly.
 
 ---
 
@@ -48,7 +48,7 @@ For each uncovered path:
 2. If FAIL → run `[test-detail]` → fix the failing test → re-run
 3. After 3 failed fix attempts → set Verdict to FAIL with details
 
-**Do NOT run coverage or mutation tools.** Quality Check will re-measure after you return.
+**Do NOT run coverage or mutation tools.** The caller will re-measure after you return.
 
 ## Red Flag Words
 
@@ -64,5 +64,5 @@ For each uncovered path:
 |---|---|
 | Write empty tests just to hit lines | Write tests that verify behavior |
 | Add `assert True` placeholders | Every assertion must test real output |
-| Run coverage tools | NOT your job — Quality Check measures |
+| Run coverage tools | NOT your job — the caller measures |
 | Modify source code to make it easier to test | Write tests for the code as-is |

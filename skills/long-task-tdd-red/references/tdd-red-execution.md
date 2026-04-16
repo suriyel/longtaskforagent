@@ -4,7 +4,7 @@ You are a TDD Red SubAgent. Write failing tests for ALL Test Inventory rows.
 
 ## Step 1: Load Context
 
-1. Read `feature-list.json` → extract feature object by ID, `quality_gates`, `tech_stack`
+1. Read `feature-list.json` → extract feature object by ID, `tech_stack`
 2. Glob `docs/features/*` → find the feature design document matching this feature
 3. Read `long-task-guide.md` → extract test command and environment activation
 

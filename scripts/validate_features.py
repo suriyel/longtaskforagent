@@ -11,7 +11,6 @@ Checks:
 - Verification steps are non-empty (if present — field is optional)
 - srs_trace is a valid array of requirement IDs (if present)
 - tech_stack.language is a supported value (if present)
-- quality_gates values are numbers between 0 and 100 (if present)
 Usage:
     python validate_features.py <path/to/feature-list.json>
 """
@@ -27,8 +26,6 @@ SRS_TRACE_PATTERN = re.compile(r"^(?:FR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
-QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min", "mutation_score_min"}
-
 def validate(path: str) -> tuple[list[str], list[str]]:
     """Validate feature-list.json. Returns (errors, warnings)."""
     errors = []
@@ -55,19 +52,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                     f"tech_stack.language '{lang}' not in supported: {sorted(VALID_LANGUAGES)}"
                 )
 
-    # Validate quality_gates if present
-    quality_gates = data.get("quality_gates")
-    if quality_gates:
-        if not isinstance(quality_gates, dict):
-            errors.append("quality_gates must be an object")
-        else:
-            for key in QUALITY_GATE_KEYS:
-                val = quality_gates.get(key)
-                if val is not None:
-                    if not isinstance(val, (int, float)) or val < 0 or val > 100:
-                        errors.append(
-                            f"quality_gates.{key} must be a number between 0 and 100, got {val!r}"
-                        )
     # Validate single_round if present
     single_round = data.get("single_round")
     if single_round is not None and not isinstance(single_round, bool):
@@ -272,14 +256,6 @@ def main():
         if deprecated_count > 0:
             summary += f", {deprecated_count} deprecated"
         summary += ")"
-
-        # Show quality gates if configured
-        qg = data.get("quality_gates")
-        if qg:
-            line_min = qg.get("line_coverage_min", "N/A")
-            branch_min = qg.get("branch_coverage_min", "N/A")
-            mutation_min = qg.get("mutation_score_min", "N/A")
-            summary += f" | Quality gates: line>={line_min}%, branch>={branch_min}%, mutation>={mutation_min}%"
 
         # Show constraints/assumptions counts
         ct = data.get("constraints", [])

@@ -33,14 +33,12 @@ You MUST create a TodoWrite task for each step and complete them in order:
    ```
    - `<project-name>` — from the SRS title
    - `<language>` — one of `python|java|typescript|c|cpp` from the design doc tech stack
-   - Use `--line-cov`, `--branch-cov`, `--mutation-score` to override thresholds (defaults: 90/80/80)
    - Creates: `feature-list.json`, `CLAUDE.md` (appended), `task-progress.md`, `RELEASE_NOTES.md`, `examples/`, `docs/plans/`
    - Auto-copies helper scripts (`validate_features.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_increment_request.py`, `validate_bugfix_request.py`) into project `scripts/`
 
-3. **Verify `tech_stack` and `quality_gates`** in `feature-list.json`:
+3. **Verify `tech_stack`** in `feature-list.json`:
    - Confirm `language`, `test_framework`, `coverage_tool`, `mutation_tool` match the design doc
    - If `docs/rules/build-and-compilation.md` exists: cross-check `tech_stack` against scanned build/test config; on conflict, prefer scanned values and update `feature-list.json`
-   - Adjust `quality_gates` thresholds if needed (defaults: line 90%, branch 80%, mutation 80%)
    - Verify tool commands resolve correctly:
      ```bash
      python scripts/get_tool_commands.py feature-list.json
@@ -49,12 +47,9 @@ You MUST create a TodoWrite task for each step and complete them in order:
    a. **Collect configuration sources** (priority order):
       - `docs/rules/build-and-compilation.md` (if exists) — extract build command, test command, package manager
       - `python scripts/get_tool_commands.py feature-list.json` — get all `[*-quiet]`/`[*-detail]` recipes
-      - `skills/long-task-quality/coverage-recipes.md` — tool setup reference (fallback only)
    b. **Guide content — ONLY these sections**:
       1. **Test Commands** — `[test-quiet]`, `[test-detail]`, full test command
-      2. **Coverage Commands** — `[coverage-quiet]`, `[coverage-feature-quiet]`, `[coverage-feature-detail]`, full coverage command
-      3. **Mutation Commands** — `[mutation-feature-quiet]`, `[mutation-feature-detail]`, `[mutation-full-quiet]`, full mutation command
-   c. **Do NOT include**: TDD workflow, quality gate process, verification rules, critical rules, static analysis, persist steps — these exist in sub-skill files
+   c. **Do NOT include**: TDD workflow, verification rules, critical rules, static analysis, persist steps — these exist in sub-skill files
    d. **User preview** — present guide content to user; proceed only after approval
    e. **Validate**:
      ```bash
@@ -81,7 +76,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - **Validation gate**: after populating all features, verify:
      - Every FR-xxx from SRS appears in at least one feature's `srs_trace` (no orphaned requirements)
      - Every feature's `srs_trace` contains at least one FR (no empty traces)
-   - **Single-round flag propagation**: If the SRS document metadata contains `Single-Round: Yes`, set `"single_round": true` at the root level of `feature-list.json`. This is an informational flag — all Worker steps (feature-design, TDD, quality gates, feature-ST) execute their full standard flow regardless of this flag.
+   - **Single-round flag propagation**: If the SRS document metadata contains `Single-Round: Yes`, set `"single_round": true` at the root level of `feature-list.json`. This is an informational flag — all Worker steps execute their full standard flow regardless of this flag.
 7. **Validate**:
     ```bash
     python scripts/validate_features.py feature-list.json
@@ -102,11 +97,6 @@ Root structure:
     "test_framework": "pytest|junit|vitest|gtest|...",
     "coverage_tool": "pytest-cov|jacoco|c8|gcov|...",
     "mutation_tool": "mutmut|pitest|stryker|mull|..."
-  },
-  "quality_gates": {
-    "line_coverage_min": 90,
-    "branch_coverage_min": 80,
-    "mutation_score_min": 80
   },
   "constraints": ["Hard limit — one string per item"],
   "assumptions": ["Implicit belief — one string per item"],

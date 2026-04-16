@@ -18,7 +18,7 @@ Receive surviving mutant details from the Worker prompt. Strengthen tests or rem
 - Input: `Surviving Mutants` section passed in the Agent prompt (file:line | mutator | description)
 - Classify each mutant: equivalent → document, real gap → strengthen test, unreachable → remove dead code
 - Run `[test-quiet]` to confirm all tests pass — no broken code
-- **Do NOT run** mutation or coverage tools — that is Quality Check's responsibility
+- **Do NOT run** mutation or coverage tools — the caller measures after you return
 - **Do NOT mark** feature as "passing" in feature-list.json
 
 Return result using the Structured Return Contract below.
@@ -44,7 +44,6 @@ mutants_addressed=N/M, equivalent_mutants=N, tests_strengthened=N, dead_code_rem
 
 ## Integration
 
-**Called by:** long-task-work (Step 6c) — Worker dispatches SubAgent with Surviving Mutants
-**Requires:** Quality Check returned mutation FAIL with mutant details; Coverage Fix completed (if needed)
+**Called by:** long-task-test-retrofit — dispatches SubAgent with Surviving Mutants
+**Requires:** Mutation measurement returned FAIL with mutant details
 **Produces:** Strengthened tests / removed dead code
-**Chains to:** Recheck (Step 6d)

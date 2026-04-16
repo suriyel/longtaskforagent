@@ -404,7 +404,7 @@ After FR granularity confirmation, present via `AskUserQuestion`:
 
 > "The finalized FR list contains {N} functional requirement(s).
 >
-> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD, quality gates) run normally — no steps are skipped.
+> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD) run normally — no steps are skipped.
 >
 > **Context overflow risk**: If any single FR is estimated to exceed ~1,000 lines of implementation code (excluding unit tests), consider splitting it further (return to Step 10).
 >

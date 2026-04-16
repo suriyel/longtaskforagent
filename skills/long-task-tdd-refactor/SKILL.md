@@ -51,4 +51,4 @@ static_analysis=CLEAN|N_violations, section11_compliance=CLEAN|N_violations, tes
 **Called by:** long-task-work (Step 5) — Worker dispatches SubAgent, SubAgent loads this Skill and executes inline
 **Requires:** TDD Green completed (tests passing)
 **Produces:** Refactored code + static analysis clean + §11 compliant
-**Chains to:** long-task-quality-gates (Step 6)
+**Chains to:** Persist (Step 6)

@@ -476,7 +476,7 @@ After FR granularity confirmation, present via `AskUserQuestion`:
 
 > "The finalized FR list contains {N} functional requirement(s).
 >
-> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD, quality gates) run normally — no steps are skipped.
+> **Single-round mode available**: All FRs will be implemented in this development round (wave 0) without deferral. Each FR maps to one feature; the Worker processes one feature per session. All pipeline steps (feature-design, TDD) run normally — no steps are skipped.
 >
 > **Multi-repo scope**: This decision applies at the global SRS level. When the global SRS is split into per-repo SRS documents (Step 18), each per-repo SRS inherits `Single-Round: Yes` — all per-repo pipelines will set `single_round: true` in their `feature-list.json` and skip deferral analysis.
 >

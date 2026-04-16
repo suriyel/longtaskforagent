@@ -100,7 +100,7 @@ For non-trivial projects, break the design into sections and get approval per se
    - Must note license type for each dependency
    - Must include a dependency graph (Mermaid) for non-trivial dependency chains
 6. **Testing strategy** — high-level test approach decisions only
-   - Test philosophy: TDD with quality gates (Red → Green → Refactor → Coverage → Mutation)
+   - Test philosophy: TDD (Red → Green → Refactor)
    - Tool selections: test framework, coverage tool, mutation tool (with versions — these are design decisions)
    - Coverage thresholds: line >= X%, branch >= Y%, mutation >= Z%
    - **Boundary**: "Detailed test scenarios are defined during feature design and TDD phases — not here."

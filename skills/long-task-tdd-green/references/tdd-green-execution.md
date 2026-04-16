@@ -4,7 +4,7 @@ You are a TDD Green SubAgent. Write MINIMAL code to make all tests pass.
 
 ## Step 1: Load Context
 
-1. Read `feature-list.json` → extract feature object by ID, `quality_gates`, `tech_stack`
+1. Read `feature-list.json` → extract feature object by ID, `tech_stack`
 2. Glob `docs/features/*` → find the feature design document
 3. Read `long-task-guide.md` → extract test command, full test command
 4. Find test files created by TDD Red (recent test files matching the feature)

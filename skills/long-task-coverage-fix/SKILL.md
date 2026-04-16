@@ -18,7 +18,7 @@ Receive coverage gap details from the Worker prompt. Write tests to close the ga
 - Input: `Coverage Gaps` section passed in the Agent prompt (file:line-range | type | description)
 - Write tests to cover the identified gaps
 - Run `[test-quiet]` to confirm all tests pass — no broken code
-- **Do NOT run** coverage or mutation tools — that is Quality Check's responsibility
+- **Do NOT run** coverage or mutation tools — the caller measures after you return
 - **Do NOT mark** feature as "passing" in feature-list.json
 
 Return result using the Structured Return Contract below.
@@ -44,7 +44,6 @@ tests_added=N, gaps_addressed=N/M, all_tests_pass=true/false
 
 ## Integration
 
-**Called by:** long-task-work (Step 6b) — Worker dispatches SubAgent with Coverage Gaps
-**Requires:** Quality Check returned coverage FAIL with gap details
+**Called by:** long-task-test-retrofit — dispatches SubAgent with Coverage Gaps
+**Requires:** Coverage measurement returned FAIL with gap details
 **Produces:** Additional tests covering identified gaps
-**Chains to:** Mutation Fix (Step 6c) or Recheck (Step 6d)

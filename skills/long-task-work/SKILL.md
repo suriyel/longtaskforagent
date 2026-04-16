@@ -1,6 +1,6 @@
 ---
 name: long-task-work
-description: "Use when feature-list.json exists - orchestrate features through the full TDD pipeline with quality gates and code review"
+description: "Use when feature-list.json exists - orchestrate features through the full TDD pipeline"
 ---
 
 # Worker — One Feature Per Cycle
@@ -51,47 +51,7 @@ Update pipeline marker: `Feature #{id} → Step 4 (TDD Green)`
 **Parse:** Clean (zero violations, §11 compliant) → proceed to Step 6. Failure → escalate.
 Update pipeline marker: `Feature #{id} → Step 5 (TDD Refactor)`
 
-## Step 6: Quality Gates (gate-fix-recheck loop, max 20 rounds)
-
-Initialize: `retry_count = 0`
-
-### Step 6a: Quality Check (hard gate — measurement only)
-
-> **DISPATCH** create independent SubAgent(use General or Agent) args=`{id}`— load then execute skill `long-task:long-task-quality-check` in the subagent
-
-**Parse:** Parse SubAgent return text (Structured Return Contract).
-- Verdict PASS → proceed to Step 7.
-- Verdict BLOCKED → escalate to user.
-- Verdict FAIL → save `Coverage Gaps` and/or `Surviving Mutants` sections → proceed to Step 6b.
-
-### Step 6b: Coverage Fix (MUST run before mutation fix)
-
-**Skip if coverage PASS.** Otherwise:
-> **DISPATCH** create independent SubAgent(use General or Agent) args=`{id}`— load then execute skill `long-task:long-task-coverage-fix` in the subagent
-> Append to prompt: Coverage Gaps section from Quality Check result
-
-**Parse:** Verdict PASS → proceed to Step 6c. Verdict FAIL / BLOCKED → escalate to user.
-
-**Rationale**: Running mutation on uncovered code is wasteful — coverage gaps must be closed first.
-
-### Step 6c: Mutation Fix
-
-**Skip if mutation PASS.** Otherwise:
-> **DISPATCH** create independent SubAgent(use General or Agent)  args=`{id}` — load then execute skill `long-task:long-task-mutation-fix` in the subagent
-> Append to prompt: Surviving Mutants section from Quality Check result
-
-**Parse:** Verdict PASS → proceed to Step 6d. Verdict FAIL / BLOCKED → escalate to user.
-
-### Step 6d: Recheck
-
-`retry_count += 1`. Re run Step 6a:Quality Check
-- Verdict PASS → proceed to Step 7.
-- Verdict FAIL + `retry_count < 20` → loop back to Step 6b.
-- Verdict FAIL + `retry_count >= 20` → escalate to user.
-
-Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates) [round {retry_count}]`
-
-## Step 7: Persist (inline)
+## Step 6: Persist (inline)
 
 - Update `RELEASE_NOTES.md` (Keep a Changelog format; bugfix → `### Fixed`)
 - Update `task-progress.md`:
@@ -101,12 +61,11 @@ Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates) [round {retry_
     ### Feature #id: Title — PASS
     - Completed: YYYY-MM-DD
     - TDD: green ✓
-    - Quality Gates: N% line, N% branch, N% mutation
     ```
 - Mark feature `"status": "passing"` in `feature-list.json`
 - Validate: `python scripts/validate_features.py feature-list.json`
 
-## Step 8: End Session
+## Step 7: End Session
 
 - Output: **Feature #\<id\> (\<title\>) — DONE.** Next: Feature #\<next_id\> (\<next_title\>)
 - If no failing non-deprecated features remain: "All active features passing — development complete."
@@ -130,7 +89,4 @@ Update pipeline marker: `Feature #{id} → Step 6 (Quality Gates) [round {retry_
 2. `long-task:long-task-tdd-red` (Step 3)
 3. `long-task:long-task-tdd-green` (Step 4)
 4. `long-task:long-task-tdd-refactor` (Step 5)
-5. `long-task:long-task-quality-check` (Step 6a)
-6. `long-task:long-task-coverage-fix` (Step 6b, if needed)
-7. `long-task:long-task-mutation-fix` (Step 6c, if needed)
 **Reads/Writes:** feature-list.json, task-progress.md, RELEASE_NOTES.md

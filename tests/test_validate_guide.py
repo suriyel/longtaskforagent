@@ -38,37 +38,7 @@ COMPLETE_GUIDE = """# My Project — Tool Command Reference
 [test-detail]
   instruction: search temp file for 'FAILED', 'ERROR'; show first 30 matches
 
-Full: pytest --cov=src tests/
-
-## Coverage Commands
-
-[coverage-quiet]
-  cmd: pytest --cov=src --cov-branch --cov-report=term-missing -q --tb=line
-  instruction: capture output to temp file; print exit code; show last 10 lines
-
-[coverage-feature-quiet]
-  cmd: pytest --cov={changed_modules} --cov-branch --cov-report=term-missing -q --tb=line {test_files}
-  instruction: capture output to temp file; print exit code; show last 10 lines
-
-[coverage-feature-detail]
-  instruction: search temp file for coverage summary lines; show first 30 matches
-
-Full: pytest --cov=src --cov-branch --cov-report=term-missing
-
-## Mutation Commands
-
-[mutation-feature-quiet]
-  cmd: mutmut run --paths-to-mutate={changed_files} --tests-dir={test_files}
-  instruction: capture output to temp file; print exit code; show last 10 lines
-
-[mutation-feature-detail]
-  instruction: search temp file for 'survived' or 'timeout'; show first 30 matches
-
-[mutation-full-quiet]
-  cmd: mutmut run
-  instruction: capture output to temp file; print exit code; show last 10 lines
-
-Full: mutmut run
+Full: pytest tests/
 """
 
 
@@ -95,26 +65,6 @@ def test_missing_test_commands_fails():
     assert code != 0, f"Expected non-zero when test commands missing: {stdout}"
 
 
-def test_missing_coverage_commands_fails():
-    """A guide missing coverage commands should fail."""
-    content = COMPLETE_GUIDE.replace("coverage-quiet", "xxx-quiet")
-    content = content.replace("coverage-feature-quiet", "xxx-feature-quiet")
-    content = content.replace("Coverage Commands", "XXX Section")
-    content = content.replace("coverage command", "xxx")
-    code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when coverage commands missing: {stdout}"
-
-
-def test_missing_mutation_commands_fails():
-    """A guide missing mutation commands should fail."""
-    content = COMPLETE_GUIDE.replace("mutation-feature-quiet", "xxx-feature-quiet")
-    content = content.replace("mutation-full-quiet", "xxx-full-quiet")
-    content = content.replace("Mutation Commands", "XXX Section")
-    content = content.replace("mutation command", "xxx")
-    code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when mutation commands missing: {stdout}"
-
-
 def test_alternative_wording_passes():
     """A guide using alternative but equivalent wording should still pass."""
     content = """# Project Tool Reference
@@ -127,26 +77,6 @@ def test_alternative_wording_passes():
 
 [test-detail]
   instruction: search for FAIL; show first 30
-
-## Coverage command recipes
-
-[coverage-quiet]
-  cmd: npx c8 npx jest
-  instruction: capture; show last 10 lines
-
-[coverage-feature-quiet]
-  cmd: npx c8 --include={changed_modules} npx jest
-  instruction: capture; show last 10 lines
-
-## Mutation command recipes
-
-[mutation-feature-quiet]
-  cmd: npx stryker run --mutate={changed_files}
-  instruction: capture; show last 10 lines
-
-[mutation-full-quiet]
-  cmd: npx stryker run
-  instruction: capture; show last 10 lines
 """
     code, stdout, _ = run_validator(content)
     assert code == 0, f"Expected exit 0 for alternative wording: {stdout}"
@@ -174,8 +104,6 @@ if __name__ == "__main__":
         test_complete_guide_passes,
         test_empty_guide_fails,
         test_missing_test_commands_fails,
-        test_missing_coverage_commands_fails,
-        test_missing_mutation_commands_fails,
         test_alternative_wording_passes,
         test_nonexistent_file,
         test_error_count_in_output,

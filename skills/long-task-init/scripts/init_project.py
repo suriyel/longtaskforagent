@@ -3,7 +3,7 @@
 Initialize a long-task-agent project structure.
 
 Creates the deterministic scaffold artifacts needed for multi-session agent work:
-- feature-list.json (empty template with tech_stack, quality_gates)
+- feature-list.json (empty template with tech_stack)
 - task-progress.md (empty progress log)
 - RELEASE_NOTES.md (living release notes, Keep a Changelog format)
 - CLAUDE.md (appended with long-task-agent reference for cross-session continuity)
@@ -19,7 +19,6 @@ Usage:
     python scripts/init_project.py <project-name> [--path <output-dir>]
            [--lang <language>] [--test-framework <framework>]
            [--coverage-tool <tool>] [--mutation-tool <tool>]
-           [--line-cov <0-100>] [--branch-cov <0-100>] [--mutation-score <0-100>]
 """
 
 import argparse
@@ -91,9 +90,6 @@ def create_feature_list(
     test_framework: str = "TODO",
     coverage_tool: str = "TODO",
     mutation_tool: str = "TODO",
-    line_coverage_min: int = 90,
-    branch_coverage_min: int = 80,
-    mutation_score_min: int = 80,
 ) -> dict:
     return {
         "project": project_name,
@@ -103,11 +99,6 @@ def create_feature_list(
             "test_framework": test_framework,
             "coverage_tool": coverage_tool,
             "mutation_tool": mutation_tool
-        },
-        "quality_gates": {
-            "line_coverage_min": line_coverage_min,
-            "branch_coverage_min": branch_coverage_min,
-            "mutation_score_min": mutation_score_min
         },
         "constraints": [],
         "assumptions": [],
@@ -221,13 +212,6 @@ def main():
     parser.add_argument("--mutation-tool", default=None,
                         help="Mutation tool (e.g., mutmut, pitest, stryker, mull)")
 
-    # Quality gate thresholds
-    parser.add_argument("--line-cov", type=int, default=90,
-                        help="Min line coverage %% (default: 90)")
-    parser.add_argument("--branch-cov", type=int, default=80,
-                        help="Min branch coverage %% (default: 80)")
-    parser.add_argument("--mutation-score", type=int, default=80,
-                        help="Min mutation score %% (default: 80)")
     args = parser.parse_args()
 
     out_dir = os.path.abspath(args.path)
@@ -249,9 +233,6 @@ def main():
             test_framework=test_framework,
             coverage_tool=coverage_tool,
             mutation_tool=mutation_tool,
-            line_coverage_min=args.line_cov,
-            branch_coverage_min=args.branch_cov,
-            mutation_score_min=args.mutation_score,
         ), f, indent=2, ensure_ascii=False)
     print(f"Created: {fl_path}")
 

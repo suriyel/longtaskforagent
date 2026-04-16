@@ -126,10 +126,6 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 | `long-task:long-task-tdd-red` | TDD Red — write failing tests for Test Inventory |
 | `long-task:long-task-tdd-green` | TDD Green — minimal implementation to pass all tests |
 | `long-task:long-task-tdd-refactor` | TDD Refactor — clean up + static analysis + §11 compliance |
-| `long-task:long-task-quality-check` | Quality Check — hard gate, measurement only (coverage + mutation) |
-| `long-task:long-task-coverage-fix` | Coverage Fix — add tests to close coverage gaps |
-| `long-task:long-task-mutation-fix` | Mutation Fix — strengthen tests to kill surviving mutants |
-| `long-task:long-task-quality-gates` | DEPRECATED — split into quality-check + coverage-fix + mutation-fix |
 
 ## Key Files (shared contract)
 
@@ -156,7 +152,7 @@ These thoughts mean STOP — you're rationalizing:
 | "Let me just look at the code first" | Invoke phase skill first. It tells you HOW to orient. |
 | "I know which feature to work on" | Worker skill has Orient step. Follow it. |
 | "This feature is simple, skip TDD" | long-task-tdd is non-negotiable. |
-| "Tests pass, I can mark it done" | Quality gates (Worker Step 8) MUST pass first. |
+| "Tests pass, I can mark it done" | TDD Refactor (Worker Step 5) MUST pass first. |
 | "I remember the workflow" | Skills evolve. Load current version via Skill tool. |
 | "I need more context first" | Skill check comes BEFORE exploration. |
 | "I'll just do this one thing first" | Check BEFORE doing anything. |
@@ -171,7 +167,7 @@ These thoughts mean STOP — you're rationalizing:
 ## Skill Priority
 
 1. **Phase skill first** — determines the entire session workflow
-2. **Discipline skills second** — invoked by Worker in strict order (tdd → quality → review)
+2. **Discipline skills second** — invoked by Worker in strict order (feature-design → tdd → persist)
 3. **On error** — follow systematic-debugging approach in `skills/long-task-work/references/systematic-debugging.md` before any fix
 
 ## Phase 0-pre: Codebase Convention Scan (Brownfield Only)
