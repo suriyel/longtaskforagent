@@ -206,7 +206,7 @@ Rank source files by surviving mutants count descending. If incremental: filter 
 
 ### 6b: Mutation Fix
 
-> **DISPATCH** independent SubAgent(Task or Agent tool) — load then execute skill `long-task:long-task-mutation-fix`
+> **DISPATCH** create independent SubAgent(use General or Agent) — load then execute skill `long-task:long-task-mutation-fix` in the subagent
 
 **Prompt must provide inline context**:
 
