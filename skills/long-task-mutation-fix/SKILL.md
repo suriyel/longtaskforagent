@@ -10,7 +10,7 @@ Receive surviving mutant details from the Worker prompt. Strengthen tests or rem
 ## Your Task
 
 1. Read execution rules: `skills/long-task-mutation-fix/references/mutation-fix-execution.md`
-2. Read shared rules: `skills/long-task-mutation-fix/references/iron-law.md`
+2. Read shared rules: `skills/long-task-mutation-fix/references/iron-law.md`, `docs/rules`
 3. Read anti-patterns: `skills/long-task-mutation-fix/references/testing-anti-patterns.md`
 
 ## Key Constraints
