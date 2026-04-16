@@ -117,7 +117,8 @@ If `repos-manifest.json` does NOT exist → **single-repo project** → proceed 
 | Skill | Purpose | Trigger |
 |-------|---------|---------|
 | `long-task:long-task-explore` | Deep codebase exploration — architecture, data flow, domain model, API surface, dependencies, code health | On-demand via `/deep-explore [quick\|standard\|deep] [--focus area] [--path dir]` |
-| `long-task:long-task-test-retrofit` | Retrofit tests for existing/legacy codebases until coverage + mutation thresholds are met | On-demand via `/test-retrofit [--path dir] [--files list] [--max-iterations N] [--coverage-only] [--dry-run]` |
+| `long-task:long-task-coverage-retrofit` | Retrofit UT coverage for existing/legacy codebases until line + branch thresholds are met | On-demand via `/coverage-retrofit [--path dir] [--files list] [--branch <branch>] [--max-iterations N] [--line-cov N] [--branch-cov N] [--dry-run]` |
+| `long-task:long-task-mutation-retrofit` | Retrofit mutation testing for existing/legacy codebases until mutation score threshold is met | On-demand via `/mutation-retrofit [--path dir] [--files list] [--branch <branch>] [--max-iterations N] [--mutation N] [--skip-coverage-check] [--dry-run]` |
 
 ### Discipline Skills (invoked by long-task-work as sub-skills — do NOT invoke directly)
 | Skill | Purpose |

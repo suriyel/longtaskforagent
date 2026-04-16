@@ -44,6 +44,6 @@ mutants_addressed=N/M, equivalent_mutants=N, tests_strengthened=N, dead_code_rem
 
 ## Integration
 
-**Called by:** long-task-test-retrofit — dispatches SubAgent with Surviving Mutants
+**Called by:** long-task-mutation-retrofit — dispatches SubAgent with Surviving Mutants
 **Requires:** Mutation measurement returned FAIL with mutant details
 **Produces:** Strengthened tests / removed dead code

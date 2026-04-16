@@ -44,6 +44,6 @@ tests_added=N, gaps_addressed=N/M, all_tests_pass=true/false
 
 ## Integration
 
-**Called by:** long-task-test-retrofit — dispatches SubAgent with Coverage Gaps
+**Called by:** long-task-coverage-retrofit — dispatches SubAgent with Coverage Gaps
 **Requires:** Coverage measurement returned FAIL with gap details
 **Produces:** Additional tests covering identified gaps
