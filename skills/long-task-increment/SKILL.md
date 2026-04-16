@@ -102,9 +102,9 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
    不确定时省略 `--depth`，让 explore 的基于 LOC 的自动检测决定。
 
 4. 分派 `long-task-explore`：
-   > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore`
+   > **DISPATCH** independent SubAgent(use General or Agent) — load and execute `long-task:long-task-explore`
    > Depth: {determined_depth or omit for auto-detect}
-   > Focus: architecture,dataflow,deps
+   > Focus: 存量相关架构,数据流,依赖,代码
    > Path: {inferred_path_from_affected_features or "."}
    > User question: "Understand modules affected by: {increment_scope_summary}. Affected features: {hard_impact_feature_titles}."
 5. 使用探索输出指导步骤 4（设计修订）：
