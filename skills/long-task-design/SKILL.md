@@ -207,7 +207,7 @@ SRS 描述系统必须做什么（WHAT）。设计文档描述如何做（HOW）
 [Provides/Requires tables referencing §6.2]
 ```
 
-这是安全的，因为 feature-design SubAgent（Worker Step 4）能访问 §6.2 契约并产出完整的类/序列/流程/算法设计。精简 §4.N 作为**集成规格**而非完整设计。
+这是安全的，因为 feature-design SubAgent（Worker Step 2）能访问 §6.2 契约并产出接口契约、实现摘要和测试清单。精简 §4.N 作为**集成规格**而非完整设计。
 
 ## 危险信号
 

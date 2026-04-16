@@ -13,7 +13,7 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 ## 第 1 步：加载上下文
 
 1. 读取 `feature-list.json` — 按 ID 查找目标特性
-2. 读取 `docs/features/` 中的特性设计文档 — 理解特性的接口契约、算法、错误表
+2. 读取 `docs/features/` 中的特性设计文档 — 理解特性的接口契约（含边界/错误表）、实现摘要
 3. 读取 `long-task-guide.md` — 获取测试命令（`[test-quiet]`、`[test-detail]`）
 4. 读取该特性的现有测试文件 — 了解惯例、fixtures、imports
 

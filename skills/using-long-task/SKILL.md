@@ -108,7 +108,7 @@ digraph phase_detection {
 ### 学科 Skill（由 long-task-work 作为子 skill 调用 — 不可直接调用）
 | Skill | 用途 |
 |-------|------|
-| `long-task:long-task-feature-design` | 功能详细设计 — 接口契约、伪代码、测试清单 |
+| `long-task:long-task-feature-design` | 功能详细设计 — 接口契约、实现摘要、测试清单 |
 | `long-task:long-task-tdd-red` | TDD Red — 为 Test Inventory 编写失败测试 |
 | `long-task:long-task-tdd-green` | TDD Green — 最小实现使所有测试通过 |
 | `long-task:long-task-tdd-refactor` | TDD Refactor — 清理 + 静态分析 + §11 合规 |
