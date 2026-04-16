@@ -10,7 +10,7 @@ Refactor code, run static analysis, and verify codebase compliance. Read all doc
 ## Your Task
 
 1. Read execution rules: `skills/long-task-tdd-refactor/references/tdd-refactor-execution.md`
-2. Read shared rules: `skills/long-task-tdd-shared/references/iron-law.md`
+2. Read rules: `skills/long-task-tdd-shared/references/iron-law.md`,`docs/rules`
 
 ## Key Constraints
 
