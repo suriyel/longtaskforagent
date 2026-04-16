@@ -10,7 +10,7 @@ Write minimal code to make all tests pass. Read all documents yourself.
 ## Your Task
 
 1. Read execution rules: `skills/long-task-tdd-green/references/tdd-green-execution.md`
-2. Read shared rules: `skills/long-task-tdd-shared/references/iron-law.md`,`docs/rules`
+2. Read rules: `skills/long-task-tdd-shared/references/iron-law.md`,`docs/rules`
 ## Implementation Constraints (from feature design doc)
 
 Read these sections:
