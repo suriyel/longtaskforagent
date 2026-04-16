@@ -81,8 +81,9 @@
 | A4 | Passive without agent | 无无明确角色的被动句："shall be validated"、"shall be stored"、"shall be processed" — 每个"shall"必须有"The system shall"或命名角色 | | | |
 | A5 | TBD / TBC | 需求文本中无未解决占位符："TBD"、"TBC"、"to be determined"、"to be confirmed"、"N/A (to be filled)" | | | |
 | A6 | Missing negatives | 每个功能需求区域在其验收标准中至少有一个错误/边界/失败情况 | | | |
+| A7 | Verbose writing | 无多余修饰语、背景解释或重复信息 — 每个需求声明 ≤2 行，验收标准 Given/When/Then 每段 ≤1 行，无"为了...所以..."式动机解释 | | | |
 
-**判决规则**：A1-A6 全部 YES 方可 PASS 此组。
+**判决规则**：A1-A7 全部 YES 方可 PASS 此组。
 
 ### Group C: Completeness Checks (C1-C4)
 
@@ -105,6 +106,20 @@
 | S4 | 第 11 节开放问题存在；若无开放问题则明确声明"None" | | |
 
 **判决规则**：S1-S4 全部 YES 方可 PASS 此组。
+
+### Group B: Brownfield Consistency Checks (B1-B3)
+
+仅当 SRS 中存在第 1.4 节（存量系统上下文）时应用。
+
+| # | Check | YES/NO | Evidence |
+|---|-------|--------|----------|
+| B1 | 第 1.4 节变更摘要与 FR 列表一致 — 无 FR 与第 1.4 节中标记"不变"的维度重复 | | |
+| B2 | 每个 FR 有明确的变更类型分类（NEW/MODIFY/EXTEND）— 无 FR 被分类为 REUSE | | |
+| B3 | 第 1.4 节涉及模块列表覆盖所有 FR 涉及的现有模块 — 无遗漏 | | |
+
+**判决规则**：B1-B3 全部 YES 方可 PASS 此组。
+
+**跳过规则**：若第 1.4 节不存在或标记"[不适用]"（新建项目），将整组标记为 **PASS-SKIPPED**。
 
 ### Group D: Diagram Presence and Validity Checks (D1-D4)
 
@@ -172,9 +187,10 @@
 | Group | Checks | PASS/FAIL | Failing Checks |
 |-------|--------|-----------|----------------|
 | R: Per-Requirement Quality | R1-R8 | | |
-| A: Anti-Pattern Scan | A1-A6 | | |
+| A: Anti-Pattern Scan | A1-A7 | | |
 | C: Completeness | C1-C4 | | |
 | S: Structural Compliance | S1-S4 | | |
+| B: Brownfield Consistency | B1-B3 | | |
 | D: Diagram Presence & Validity | D1-D4 | | |
 | G: Granularity | G1-G3 | | |
 | Z: Sizing | Z1-Z3 | | |
@@ -253,9 +269,11 @@
 - 复合需求拆分（A2）：机械式在"and"/"or"处拆分为独立需求
 - 设计泄漏重写（A3）：使用现有上下文将实现词汇改写为可观察行为
 - 无主语被动句（A4）：添加"The system shall"或命名角色
+- 冗余表述（A7）：删除修饰语、背景解释和重复信息，精简至 ≤2 行
 - 缺失唯一 ID（R8）：从 SRS 中建立的序列分配
 - 章节结构：用"[Not applicable]"自动填充缺失章节（S2-S4）
 - 可追溯矩阵：从需求 ID 列表自动填充（S3）
+- 存量一致性（B1-B3）：更新第 1.4 节表格/模块列表使其与 FR 列表一致；将 REUSE 类型 FR 转为 ASM-xxx
 - 图表生成（D1-D4）：从 SRS 中现有角色和 FR 列表生成
 - 单 FR 多角色（G1）：按角色机械式拆分 — 每个角色的不同操作成为独立 FR
 - CRUD 捆绑（G2）：机械式拆分为独立操作（Create, Read, Update, Delete）作为独立 FR

@@ -61,6 +61,16 @@ description: "当无 SRS、无设计文档、无 feature-list.json 时使用 —
    - 否则 → 读取 `docs/templates/srs-template.md`（此 skill 附带的默认模板）
    - **验证**：模板必须是包含至少一个 `## ` 标题的 `.md` 文件
 
+## Step 1.4：存量系统检测（内部 — 不与用户交互）
+
+评估项目是否为存量系统。检测信号（满足任意 2 个即判定为存量）：
+1. `docs/rules/` 存在且含 ≥1 个非桩 `.md` 文件
+2. `docs/explore/codebase-research.md` 存在
+3. 用户描述含存量语言："现有"、"已有"、"扩展"、"修改"、具体模块名/文件路径
+4. Git 历史 ≥5 commits 且源文件 >3 个
+
+置信度：信号 1 或 2 → 高；仅 3 和/或 4 → 中。内部记录 `is_brownfield` 和置信度，不询问用户。
+
 ## Step 1.5：复杂度评估（内部 — 不与用户交互）
 
 Step 1 之后，根据用户描述和项目上下文评估 5 个复杂度信号：
@@ -122,6 +132,7 @@ Lite 获取过程中，若出现以下任一情况，无缝切换到 Expert 路�
    - 在问题中引用发现的模块、API、数据模型（如"我发现 `src/auth/` 使用 JWT 认证 — 你想扩展还是替换？"）
    - 使用发现的架构模式提出更有针对性的集成点问题
 5. 若 explore 返回 BLOCKED 或无可用发现 → 静默跳过，进入 L1/E1
+6. 若 `is_brownfield = true`，从 explore 结果和 `docs/rules/` 构建存量系统清单（ESI）。阅读 `references/brownfield-adaptation.md` §A 并严格遵循。
 
 **此步骤非阻塞** — 失败或缺乏有用结果绝不阻止进入获取阶段。
 
@@ -133,6 +144,8 @@ Lite 获取过程中，若出现以下任一情况，无缝切换到 Expert 路�
 
 ### L1：聚焦问题与范围（单次 AskUserQuestion，≤4 个问题）
 
+若 `is_brownfield = true`：阅读 `references/brownfield-adaptation.md` §B，用存量版问题替换以下四个问题。
+
 1. "这个项目解决什么问题？正常工作时成功是什么样的？"
 2. "谁使用它？在什么环境下（桌面/移动/CLI/API）？"
 3. "这个版本明确不包含什么？"
@@ -143,6 +156,8 @@ Lite 获取过程中，若出现以下任一情况，无缝切换到 Expert 路�
 若 Q1 回答模糊或问题导向 → 升级触发器触发 → 切换到 Expert。
 
 ### L2：扁平能力获取（1-3 轮，每轮 ≤4 个问题）
+
+若 `is_brownfield = true`：阅读 `references/brownfield-adaptation.md` §C，提问前应用 ESI 过滤规则。
 
 对每个能力区域，每轮提问（最多 4 个问题）：
 - 用户做什么？（触发/动作）
@@ -259,6 +274,16 @@ Lite 获取后，进入**共享步骤**（检查清单中的 Steps 7-16）：
 **用例视图**（第 3.1 节）：`graph LR`，所有角色为 `Actor((Name))`，所有 FR-xxx 作为 `subgraph System Boundary` 内的用例节点，按角色到用例的参与关系绘制有向边。
 
 **流程图**（第 4.1 节）：每个有 3+ 个顺序步骤或分支的功能区域一个 `flowchart TD`。起止为 `([label])`，决策为 `{condition?}`，标注 `-- YES -->` / `-- NO -->`。
+
+#### 8c. 语言精炼要求
+
+SRS 全文遵循以下原则：
+- 一句话能说清的不用两句话，一个词能表达的不用一个短语
+- EARS 声明直达行为本质，不加修饰语和背景解释
+- 验收标准 Given/When/Then 每段 ≤1 行，条件精确、无冗余上下文
+- 排除"为了...所以..."式动机解释——动机在 §1.3，需求只写 WHAT
+- 术语表仅收录有歧义的术语，不收录业界通用术语
+- 存量项目：不重复描述 ESI 中已确立的现有能力，仅写增量变化
 
 ### Step 9：验证 SRS 质量
 
@@ -408,9 +433,10 @@ FR 粒度确认后，通过 `AskUserQuestion` 呈现：
 
 **所有检查必须 PASS 方可继续：**
 - Group R（R1-R8）：质量属性
-- Group A（A1-A6）：反模式
+- Group A（A1-A7）：反模式（含 A7 冗余表述）
 - Group C（C1-C4）：完整性
 - Group S（S1-S4）：结构合规
+- Group B（B1-B3）：存量一致性（存量项目；新建项目为 PASS-SKIPPED）
 - Group D（D1-D4）：图表
 - Group G（G1-G3）：粒度（过大检测）
 - Group Z（Z1-Z3）：定量（过小检测）
