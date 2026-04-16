@@ -249,6 +249,23 @@ mkdir -p docs/rules/
 - 关键发现的简明摘要（尤其是二方/三方约束和禁止的 API）
 - 请用户确认或编辑 `docs/rules/` 文件后再继续
 
+---
+
+## 结构化返回契约
+
+扫描完成且用户确认后，严格按以下格式返回：
+
+```markdown
+## SubAgent Result: Codebase Scanner
+### Verdict: DONE | FAIL
+### Summary
+[1-2 sentences — detected languages, key constraints, output file count]
+### Artifacts
+[docs/rules/ files, one per line]
+### Issues
+[Omit if DONE. One line per issue: severity | description]
+```
+
 ## 输出文件格式
 
 每个输出文件遵循以下结构：
@@ -289,7 +306,7 @@ mkdir -p docs/rules/
 
 ## 集成
 
-- **被调用方**：`using-long-task` 路由器（存量项目检测规则 4b/5b 触发时），或用户直接调用
+- **被调用方**：`using-long-task` 路由器作为独立 SubAgent 分派（存量项目检测规则 4b/5b 触发时），或用户直接调用
 - **读取**：源文件、依赖清单、git 历史
 - **链接到**：无 — 扫描完成后停止。调用方负责后续路由。
 - **产出**：`docs/rules/coding-style.md`、`docs/rules/coding-constraints.md`、`docs/rules/build-and-compilation.md`、`docs/rules/README.md`
