@@ -138,7 +138,7 @@ description: "当 repos-manifest.json 存在时使用 - 处理多仓库探索、
 3. **与步骤 2 去重**：如果步骤 2 已探索了某仓库，复用其发现而非重新分派探索。仅对推断的焦点维度与步骤 2 所用维度（`architecture,api,deps`）显著不同的仓库，或步骤 2 失败/无结果的仓库，分派探索。
 
    对需要新探索的仓库并行分派：
-   > **DISPATCH** independent SubAgent — load and execute `long-task:long-task-explore` (per repo not covered by Step 2)
+   > **DISPATCH** create independent SubAgent(use General or Agent) — load and execute `long-task:long-task-explore` (per repo not covered by Step 2) in subagent
    > Path: {repo_path}
    > Depth: {determined_depth or omit for auto-detect}
    > Focus: {inferred_dimensions}
