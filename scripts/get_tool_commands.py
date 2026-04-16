@@ -276,6 +276,36 @@ MUTATION_COMMANDS_DETAIL = {
     "mull":    "search temp file for 'kill', 'surviv', 'fail', or 'error' (case-insensitive); show first 30 matches",
 }
 
+# ---------------------------------------------------------------------------
+# UT Style — project-specific test writing conventions.
+#
+# Two flat dicts keyed by test_framework (same pattern as TEST_COMMANDS etc.)
+# plus one fixed string for conventions.
+# ---------------------------------------------------------------------------
+
+UT_STYLE_FRAMEWORK = {
+    "pytest":  "pytest + unittest.mock",
+    "junit":   "JUnit + Mockito",
+    "jest":    "Jest + jest.fn/jest.mock",
+    "vitest":  "vitest + vi.fn/vi.mock",
+    "gtest":   "gtest + gmock",
+    "ctest":   "ctest + manual stubs",
+}
+
+UT_STYLE_MOCK = {
+    "pytest":  "patch/Mock (boundary-only); prefer fakes for internal deps",
+    "junit":   "Mockito.mock/when/verify (boundary-only); prefer fakes for internal deps",
+    "jest":    "jest.fn()/jest.mock() (boundary-only); prefer manual stubs for internal deps",
+    "vitest":  "vi.fn()/vi.mock() (boundary-only); prefer manual stubs for internal deps",
+    "gtest":   "EXPECT_CALL (boundary-only); prefer fakes for internal deps",
+    "ctest":   "function pointer stubs (boundary-only)",
+}
+
+UT_STYLE_CONVENTIONS = (
+    "explore related existing tests + source code before writing; "
+    "reuse discovered fixtures/helpers"
+)
+
 COMPILE_COMMANDS_QUIET = {
     "mvn": (
         "mvn compile -B -q",
@@ -394,6 +424,10 @@ def get_commands(feature_list: dict) -> dict:
     compile_quiet = _pack_quiet(compile_quiet_raw) if compile_quiet_raw else {}
     compile_detail = _pack_detail(COMPILE_COMMANDS_DETAIL.get(build_tool, "")) if build_tool else {"instruction": ""}
 
+    # UT Style defaults
+    ut_framework = UT_STYLE_FRAMEWORK.get(test_fw, f"UNKNOWN: {test_fw}")
+    ut_mock = UT_STYLE_MOCK.get(test_fw, f"UNKNOWN: {test_fw}")
+
     return {
         "test": test_cmd,
         "coverage": cov_cmd,
@@ -416,6 +450,9 @@ def get_commands(feature_list: dict) -> dict:
         "mutation_results_quiet": mut_results_quiet,
         "compile_quiet": compile_quiet,
         "compile_detail": compile_detail,
+        "ut_style_framework": ut_framework,
+        "ut_style_mock": ut_mock,
+        "ut_style_conventions": UT_STYLE_CONVENTIONS,
         "tech_stack": {
             "language": ts.get("language", "TODO"),
             "test_framework": test_fw,
@@ -503,6 +540,15 @@ def format_text(cmds: dict) -> str:
         lines.append("")
         lines += _format_recipe("compile-detail", cmds["compile_detail"])
         lines.append("")
+    # UT Style
+    lines += [
+        "## UT Style",
+        "",
+        f"[test-framework]  {cmds['ut_style_framework']}",
+        f"[mock-style]      {cmds['ut_style_mock']}",
+        f"[conventions]     {cmds['ut_style_conventions']}",
+        "",
+    ]
     return "\n".join(lines)
 
 

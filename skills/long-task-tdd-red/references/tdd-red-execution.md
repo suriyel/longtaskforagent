@@ -6,7 +6,7 @@ You are a TDD Red SubAgent. Write failing tests for ALL Test Inventory rows.
 
 1. Read `feature-list.json` → extract feature object by ID, `tech_stack`
 2. Glob `docs/features/*` → find the feature design document matching this feature
-3. Read `long-task-guide.md` → extract test command and environment activation
+3. Read `long-task-guide.md` → extract test command, environment activation, and UT Style (`[test-framework]`, `[mock-style]`, `[conventions]`)
 
 ### Step 1b: Explore Related Existing Tests
 
@@ -23,6 +23,8 @@ Discover test conventions and reusable test infrastructure in modules related to
 5. If zero test files found → skip, proceed to Step 2
 
 Apply discovered conventions in Step 3. §11.5 and Test Inventory rules take precedence.
+Precedence: discovered conventions from existing tests > UT Style from guide.
+If no test files found, use UT Style from guide as baseline.
 
 ## Step 2: Read Specification
 

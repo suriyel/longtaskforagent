@@ -39,6 +39,12 @@ COMPLETE_GUIDE = """# My Project — Tool Command Reference
   instruction: search temp file for 'FAILED', 'ERROR'; show first 30 matches
 
 Full: pytest tests/
+
+## UT Style
+
+[test-framework]  pytest + unittest.mock
+[mock-style]      patch/Mock (boundary-only); prefer fakes for internal deps
+[conventions]     explore related existing tests + source code before writing; reuse discovered fixtures/helpers
 """
 
 
@@ -77,9 +83,54 @@ def test_alternative_wording_passes():
 
 [test-detail]
   instruction: search for FAIL; show first 30
+
+## UT Style
+
+[test-framework]  Jest + jest.fn/jest.mock
+[mock-style]      jest.fn()/jest.mock() (boundary-only)
+[conventions]     explore existing tests before writing
 """
     code, stdout, _ = run_validator(content)
     assert code == 0, f"Expected exit 0 for alternative wording: {stdout}"
+
+
+def test_missing_ut_style_fails():
+    """A guide missing UT Style section should fail."""
+    content = """# Project Tool Reference
+
+## Test Commands
+
+[test-quiet]
+  cmd: pytest -q --tb=line
+  instruction: capture output; show last 5 lines
+
+[test-detail]
+  instruction: search for FAIL; show first 30
+"""
+    code, stdout, _ = run_validator(content)
+    assert code != 0, f"Expected non-zero when UT Style missing: {stdout}"
+    assert "UT Style" in stdout
+
+
+def test_ut_style_with_tag_only_passes():
+    """A guide with [test-framework] tag but no 'UT Style' heading should still pass."""
+    content = """# Project Tool Reference
+
+## Test Commands
+
+[test-quiet]
+  cmd: npx jest --verbose=false
+  instruction: capture output; show last 5 lines
+
+[test-detail]
+  instruction: search for FAIL; show first 30
+
+[test-framework]  Jest + jest.fn/jest.mock
+[mock-style]      jest.fn()/jest.mock() (boundary-only)
+[conventions]     explore existing tests before writing
+"""
+    code, stdout, _ = run_validator(content)
+    assert code == 0, f"Expected exit 0 for tag-only UT Style: {stdout}"
 
 
 def test_nonexistent_file():
@@ -105,6 +156,8 @@ if __name__ == "__main__":
         test_empty_guide_fails,
         test_missing_test_commands_fails,
         test_alternative_wording_passes,
+        test_missing_ut_style_fails,
+        test_ut_style_with_tag_only_passes,
         test_nonexistent_file,
         test_error_count_in_output,
     ]

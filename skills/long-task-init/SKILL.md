@@ -49,6 +49,11 @@ You MUST create a TodoWrite task for each step and complete them in order:
       - `python scripts/get_tool_commands.py feature-list.json` — get all `[*-quiet]`/`[*-detail]` recipes
    b. **Guide content — ONLY these sections**:
       1. **Test Commands** — `[test-quiet]`, `[test-detail]`, full test command
+      2. **UT Style** — project-specific UT conventions (from `get_tool_commands.py` output):
+         - `[test-framework]` — UT + mock framework
+         - `[mock-style]` — mock approach
+         - `[conventions]` — fixed: explore existing tests + source before writing; reuse fixtures
+         - If `docs/rules/coding-constraints.md` exists: override `[test-framework]`/`[mock-style]` with scanned values
    c. **Do NOT include**: TDD workflow, verification rules, critical rules, static analysis, persist steps — these exist in sub-skill files
    d. **User preview** — present guide content to user; proceed only after approval
    e. **Validate**:

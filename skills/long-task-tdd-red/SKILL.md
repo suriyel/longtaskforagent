@@ -21,7 +21,8 @@ Read these sections in order:
 3. Existing Code Reuse — utilities, API clients, §11.1 library usage examples.
 4. §5 Algorithm / Core Logic — boundary matrix (§5c), error table (§5d).
 5. Clarification Addendum (if present) — user-approved resolutions.
-6. Related existing tests (Step 1b) — explore dependency features' test files for assertion style, fixtures, imports, mock patterns.
+6. UT Style from `long-task-guide.md` — UT/mock framework, mock style, exploration conventions
+7. Related existing tests (Step 1b) — explore dependency features' test files for assertion style, fixtures, imports, mock patterns. Overrides UT Style where they differ.
 
 ## Key Constraints
 
