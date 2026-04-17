@@ -9,6 +9,9 @@ description: "当 feature-list.json 存在时使用 — 通过完整 TDD 流水�
 
 **启动时宣告：** "我正在使用 long-task-work skill。让我定位当前状态。"
 
+## 注意
+1.不要自行解决问题，跳转到对应Step，启动SubAgent执行对应SKILL来解决，你的职责是执行流程
+
 ## Step 1：Orient（内联）
 
 - 在 `feature-list.json` 中 Grep `"status": "failing"` 的功能 — 跳过 `"deprecated": true`
