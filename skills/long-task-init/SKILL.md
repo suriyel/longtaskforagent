@@ -118,16 +118,6 @@ python scripts/check_retro_auth.py feature-list.json
 
 **必需子 skill：** 调用 `long-task:long-task-work`。主 agent 在此保留 handoff 控制权（不在任何 sub-skill 内自动触发）。
 
-## 服务 Config 维护（Worker 循环期间）
-
-当 Worker 循环引入新后端服务、变更服务端口或发现实际 start/stop 命令与 env-guide.md 不一致时，更新 `env-guide.md`：
-- 新增/更新 Services 表行（服务名、端口、start/stop/verify 命令）
-- 新增/更新对应的 Start / Verify / Stop / Restart 命令
-- 启停序列 >2 shell 步 → 抽到 `scripts/svc-<slug>-start.sh` / `scripts/svc-<slug>-stop.sh` 并更新 env-guide.md 引用
-- env-guide.md 与任何 `scripts/svc-*` 变更随特性同一 git commit 提交
-
-**env-guide.md 必须始终反映实际能工作的命令。** 每当一条命令被证实正确（TDD Green 期间或修复失败后），env-guide.md 必须更新以匹配。
-
 ## Feature List Schema
 
 根结构：

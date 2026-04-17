@@ -170,6 +170,39 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 2. "这张表的字段是否在 DISPATCH stub 的 `expect:` 里已声明？" 是 → 删。
 3. "同样的信息在 CLAUDE.md 是否已有权威版？" 是 → 删主 SKILL.md 的那份，避免双源漂移。
 
+#### 坑 4 的高发子类：跨 phase 生命周期错位指令
+
+比产物索引表更隐蔽的一类：**把 "后续阶段该如何做" 的指令写在 "前一阶段" 的 SKILL.md 里**。本次 `long-task-init` 重构踩到：主 SKILL.md 有一节 `## 服务 Config 维护（Worker 循环期间）`，指导 Worker 在引入新服务时更新 `env-guide.md`。
+
+问题：Worker 阶段**从不加载** `long-task-init/SKILL.md`。Worker 会话只加载 `long-task-work/SKILL.md`（及其按需分发的 sub-skill），且 Worker 循环间可能反复 clear 会话上下文。init 的 SKILL.md 写给 Worker 看的指令是**永不执行的死代码**。
+
+更坏的情况：同一指令在两处 SKILL.md **双写**（本次 `long-task-tdd/SKILL.md:282-286` 已有更详细的 "env-guide.md 同步规则" 权威版；init 的那份只是陈旧拷贝）。双写 → 漂移风险，修一处忘另一处。
+
+**判定规则**：skill 生命周期是非对称的：
+
+| 写指令的位置 | 读取时机 | 可以规定的行为 |
+|---|---|---|
+| `long-task-init/SKILL.md` | **仅** init 会话一次 | init 阶段的产物与 handoff |
+| `long-task-work/SKILL.md` | 每次 Worker 循环 | Worker 阶段的 TDD/Quality/Feature-ST 编排 |
+| `long-task-{tdd, feature-design, ...}/SKILL.md` | SubAgent 分发时 | 本 sub-skill 的具体算法 |
+| `env-guide.md` | 下游按路径读 `§N` | 命令/端口/约束的运行时权威源（数据，不是执行指令）|
+
+**反模式示例**：
+
+| 错位形态 | 典型位置 | 为什么失败 | 正确位置 |
+|---|---|---|---|
+| "Worker 循环期间如何更新 X" | init SKILL.md | Worker 不读 init | `long-task-work` 或对应 sub-skill（tdd / feature-design 等）|
+| "ST 阶段若遇到 Y 则..." | work SKILL.md | ST 会话不读 work（两者平级）| `long-task-st/SKILL.md` |
+| "下次 init 时记得..." | work / increment SKILL.md | init 结束后那份 SKILL.md 已不再加载；下次 init 用的是最新版 init SKILL.md | 放 `docs/*-lessons.md` 或直接改 init 模板 |
+| "增量时保持 §X 兼容" | design SKILL.md（一次性生成） | design 只在 phase 0c 跑一次；增量走 `long-task-increment-design` | 放 `long-task-increment-design/SKILL.md` |
+
+**自检问句**（适配跨 phase 错位）：
+1. "这段指令描述的动作发生在**哪个 skill 的会话里**？" 不是本 skill → 迁到那个 skill。
+2. "用户 clear 会话后重进 Worker，本指令还能被读到吗？" 不能 → 是死代码，迁走。
+3. "权威版是否已在目标 skill？" 是 → 删本处，避免双源漂移；否 → 迁移而非拷贝。
+
+**与产物索引表子类的区别**：产物表是"把给人看的放进 AI 文档"；跨 phase 错位是"把给后来人的放进最早人的指令里"——前者读者错，后者时机错。两者都靠"执行路径消费者清单"识别，但修法不同：前者删到 CLAUDE.md / lessons；后者**迁移**到正确的 phase SKILL.md。
+
 ### 坑 5：DISPATCH 语法偏离既有约定
 
 初版把 DISPATCH 简化成 `> execute skill xxx`，丢失了"启动独立 SubAgent"的隔离语义。
