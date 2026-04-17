@@ -11,6 +11,7 @@ description: "TDD Green 阶段 -- 编写最小实现使所有测试通过。输�
 
 1. 读取执行规则：`skills/long-task-tdd-green/references/tdd-green-execution.md`
 2. 读取规则：`skills/long-task-tdd-shared/references/iron-law.md`，`docs/rules`
+3. 读取 `long-task-guide.md` → 提取测试命令、完整测试命令
 ## 实现约束（来自功能设计文档）
 
 读取以下章节：
