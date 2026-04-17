@@ -31,7 +31,7 @@ description: "Use when no SRS doc and no design doc and no feature-list.json exi
    - Expert：E3（场景走查，参考 `references/scenario-walkthrough.md`）+ E4（假设-纠正，参考 `references/hypothesis-correction.md`）
 5. **NFR + 隐藏需求**
    - Lite：L3（合并，1 轮）
-   - Expert：E5（隐藏需求）+ E6（NFR 量化）
+   - Expert：E6（NFR + 隐藏需求统一量化）
 6. **约束、假设、术语表** —— 两条轨道相同
 7. **分类需求** —— functional / NFR / constraint / assumption / interface / exclusion
 8. **撰写需求** —— 应用 EARS 模板、分配 ID、撰写验收标准、生成图表
@@ -86,6 +86,10 @@ Lite 挖掘期间，如出现下列任一，无缝切换至 Expert 轨道：
 - 挖掘后 FR 数量超过 10
 
 升级时：迄今收集的所有 Lite 产物成为 Expert 输入。不要重启或宣布破坏性切换——只是开始问更深的问题（E1 问题框架、E3 走查等）。
+
+### 降档触发（Expert → Condensed，E1/E2 后）
+
+完成 E1+E2 后用新信息重估 5 信号。若降至 <3（典型：JTBD 明确、单角色确认、无监管暴露）：跳过 E3 走查；E4 直接用 Archetype 批处理（见 `references/hypothesis-correction.md`）；E10 保留。目标 7–10 轮。防止 3 信号边界项目被锁死完整 Expert 路径。
 
 ## Step 1.6：定向代码库探索（仅存量项目——无用户交互）
 
@@ -222,7 +226,7 @@ Lite 挖掘后，进入**共享步骤**（checklist 中的 Step 7–16）：
 
 结构与标准挖掘相同：
 
-**E6（NFR 量化）**：使用与当前 Round N+1 相同的探针。把 E5 候选吸收为预填行——量化它们的阈值。
+**E6（NFR + 隐藏需求量化）**：先以单次 AskUserQuestion 快速探针隐藏需求（性能目标 / PII 与监管 / 无障碍 / i18n / 额外安全），YES 回答作为预填行纳入下表量化阈值。
 
 | 类别（ISO 25010）| 探针 |
 |---|---|
@@ -494,9 +498,9 @@ Task(
 | 档位 | 信号 | 典型 FR 数 | 挖掘深度 | 审批 |
 |---|---|---|---|---|
 | **Lite** | <3 个 Expert 信号 | 1–10 | L1-L3（扁平轮次、合并 NFR）| 合并单一步骤 |
-| **Expert (Small)** | ≥3 个 Expert 信号 | 5–15 | E1-E5（1–2 次走查、分组假设）| 2–3 节 |
-| **Expert (Medium)** | ≥3 个 Expert 信号 | 15–50 | E1-E5（2–3 次走查、逐 FR 假设）| 逐节 |
-| **Expert (Large)** | ≥3 个 Expert 信号 | 50–200+ | E1-E5（3–5 次走查、分批假设）| 逐节 |
+| **Expert (Small)** | ≥3 个 Expert 信号 | 5–15 | E1-E6（1–2 次走查、分组假设）| 2–3 节 |
+| **Expert (Medium)** | ≥3 个 Expert 信号 | 15–50 | E1-E6（2–3 次走查、逐 FR 假设）| 逐节 |
+| **Expert (Large)** | ≥3 个 Expert 信号 | 50–200+ | E1-E6（3–5 次走查、分批假设）| 逐节 |
 
 ## 红旗信号
 

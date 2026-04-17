@@ -155,7 +155,7 @@ Apply only if Section 1.3 (Problem Statement) is present in the SRS. This sectio
 |---|-------|--------|----------|
 | P1 | Every Pain Map row in Section 1.3 is addressed by ≥1 FR in Section 4 OR explicitly listed in Section 1.2 Out-of-Scope with a reason — no pain point is unacknowledged | | |
 | P2 | The JTBD statement in Section 1.3 is achievable by completing all Must-priority FRs in Section 4 — the stated "so I can [outcome]" is fully covered | | |
-| P3 | No FR in Section 4 has no traceable origin: no Pain Map row, no JTBD link, no scenario walkthrough step, no Hidden Requirements (E5) source — no untraced gold-plating | | |
+| P3 | No FR in Section 4 has no traceable origin: no Pain Map row, no JTBD link, no scenario walkthrough step, no Hidden Requirements probe (E6) source — no untraced gold-plating | | |
 | P4 | Section 1.3 Alignment Validation field is populated (PASS or PARTIAL with summary) — FAIL is not acceptable at this stage | | |
 
 **Verdict rule**: ALL P1-P4 must be YES to PASS this group.

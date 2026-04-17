@@ -47,9 +47,13 @@ Expert track Step E4。由 SKILL.md 在 Scenario Walkthrough（E3）之后调用
 
 ## 批处理规则
 
-- 当 2–3 条 FR 共享工作流或数据模型时，可在一次 AskUserQuestion 中合并
-- 若单条 FR 需要全部 8 个维度，独立一次呈现
-- 优先"少量 FR × 多个维度"而非"多条 FR × 少量维度" — 每轮重深度而非广度
+**默认按 Archetype 批处理**：把 FR 按类型（read-only / data-entry / state-changing / background / integration）分桶。每桶一张规范假设表：用户先对该类型默认行为标 ✓/✗/+，再逐条列桶内 FR 的**偏离点**（仅不同处需展开）。Medium 项目（15–50 FR）可从 15+ 表压至 5–8 表。
+
+**独立呈现条件**：FR 行为与同桶显著不同，或需全部 8 维度（通常是复杂 state-changing）。
+
+**回退**：Archetype 无法清晰分桶时，退回"2–3 条相关 FR 合并呈现"。
+
+**深度优先**：任何呈现都应深挖维度，而非堆叠更多 FR。
 
 ## 收敛机制
 
