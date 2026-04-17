@@ -6,7 +6,6 @@
 
 1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`
 2. Glob `docs/features/*` → 找到匹配本功能的功能设计文档
-3. 读取 `long-task-guide.md` → 提取测试命令、环境激活和 UT 风格（`[test-framework]`、`[mock-style]`、`[conventions]`）
 
 ### 步骤 1b：探索相关现有测试
 
