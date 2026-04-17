@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 25 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills + 3 requirements sub-skills); bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 28 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills); bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -37,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 25-Skill System (17 top-level + 5 increment sub-skills + 3 requirements sub-skills)
+### 28-Skill System (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills)
 
 #### Phase Skills
 
@@ -92,6 +92,16 @@ All dispatched by `long-task-requirements` orchestrator; each returns a Structur
 | `long-task-requirements-alignment` | Expert E10 — root-cause traceability, JTBD verification, pre-mortem, orphan FR detection |
 | `long-task-requirements-finalize` | Step 15 — save SRS + optional deferred backlog + git commit |
 
+#### Discipline Skills (sub-skills of long-task-init)
+
+All dispatched by `long-task-init` orchestrator; each returns a Structured Return Contract; main agent handles approval via `skills/long-task-init/references/approval-revise-loop.md`.
+
+| Skill | Purpose |
+|-------|---------|
+| `long-task-init-env` | Step 3 — generate `env-guide.md` (§1–§6) from template + `docs/rules/*.md` + design; §3/§4 dual approval gate |
+| `long-task-init-bootstrap` | Step 4 — generate `init.sh` / `init.ps1` from recipes + tech_stack; zero-approval with internal `bash -n` + PowerShell syntax self-check |
+| `long-task-init-features` | Step 5 — generate `long-task-guide.md` + populate `feature-list.json` + `.env.example` + project-specific `scripts/check_configs.py` + validate; returns LOC distribution for sizing gate |
+
 #### Meta Skills
 
 | Skill | Purpose |
@@ -109,6 +119,11 @@ using-long-task (router)
    │      ├─→ long-task-requirements-alignment (Expert E10; auto-skip for Lite)
    │      └─→ long-task-requirements-finalize (Step 15)
    │                              (auto-skip: no UI)               (auto-skip: ≤5 FR)
+   │                                                                                   │
+   │                                                                    long-task-init orchestrator:
+   │                                                                    ├─→ long-task-init-env (Step 3)
+   │                                                                    ├─→ long-task-init-bootstrap (Step 4)
+   │                                                                    └─→ long-task-init-features (Step 5) → long-task-work
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
    │      └─→ validate → reproduce → root cause → enqueue as category=bugfix → long-task-work
    ├─→ long-task-increment (increment-request.json)
@@ -267,7 +282,10 @@ long-task-agent/
 │   ├── long-task-increment-srs/SKILL.md
 │   ├── long-task-design/SKILL.md
 │   ├── long-task-ats/SKILL.md
-│   ├── long-task-init/SKILL.md + scripts/init_project.py + references/init-script-recipes.md
+│   ├── long-task-init/SKILL.md + scripts/init_project.py + references/approval-revise-loop.md
+│   ├── long-task-init-env/SKILL.md
+│   ├── long-task-init-bootstrap/SKILL.md + references/init-script-recipes.md
+│   ├── long-task-init-features/SKILL.md
 │   ├── long-task-feature-design/SKILL.md + references/feature-design-template.md
 │   ├── long-task-work/SKILL.md + references/{systematic-debugging,subagent-development,worktree-isolation}.md
 │   ├── long-task-feature-st/SKILL.md + prompts/e2e-scenario-prompt.md
@@ -309,7 +327,7 @@ long-task-agent/
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 25 skills loaded on-demand (17 top-level + 5 increment sub-skills + 3 requirements sub-skills).
+This project uses a multi-session agent workflow with 28 skills loaded on-demand (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills).
 The `using-long-task` skill routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS/UCD in place → new features appended → Worker cycles → ST.

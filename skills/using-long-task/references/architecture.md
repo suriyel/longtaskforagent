@@ -101,7 +101,7 @@ Created: [date]
 
 环境启动脚本。**由 LLM 在 Initializer 阶段依据设计文档的技术栈生成** — 并非由 `init_project.py` 硬编码。必须包含真实可运行的命令（非注释残留）。
 
-必须支持项目实际使用的环境管理器（conda/miniconda/mamba、venv、poetry、uv、nvm、fnm、sdkman、docker 等）。按工具模板请见 `skills/long-task-init/references/init-script-recipes.md`。
+必须支持项目实际使用的环境管理器（conda/miniconda/mamba、venv、poetry、uv、nvm、fnm、sdkman、docker 等）。按工具模板请见 `skills/long-task-init-bootstrap/references/init-script-recipes.md`。
 
 **要求**：幂等、跨平台（`init.sh` + `init.ps1`）、快速失败、版本锁定、无交互式提示。
 
@@ -249,7 +249,7 @@ Initializer 在 SRS 与设计都批准后**运行一次**。它读取**两份**�
 1. **读取批准的 SRS + 设计文档** — 来自 `docs/plans/`
 2. **运行 `init_project.py`** — 搭建确定性产物：`feature-list.json`、`task-progress.md`、`RELEASE_NOTES.md`、`examples/`、`scripts/`、`docs/plans/`
 3. **LLM 生成 `long-task-guide.md`** — 基于 SKILL.md + references + 设计文档的项目裁剪 Worker 指南；只包含项目所用语言的命令；由 `validate_guide.py` 校验
-4. **LLM 生成 `init.sh`/`init.ps1`** — 基于设计文档技术栈的真实可运行 bootstrap 脚本；必须支持项目的环境管理器（conda/miniconda/mamba、venv、poetry、uv、nvm、fnm、sdkman、docker 等）；按工具模板见 `skills/long-task-init/references/init-script-recipes.md`；必须幂等、跨平台
+4. **LLM 生成 `init.sh`/`init.ps1`** — 基于设计文档技术栈的真实可运行 bootstrap 脚本；必须支持项目的环境管理器（conda/miniconda/mamba、venv、poetry、uv、nvm、fnm、sdkman、docker 等）；按工具模板见 `skills/long-task-init-bootstrap/references/init-script-recipes.md`；必须幂等、跨平台
 5. **填充 `feature-list.json`** — 来自 SRS：`constraints[]`（CON-xxx）、`assumptions[]`（ASM-xxx）、NFR-xxx → 非功能 feature、FR-xxx → 带 `srs_trace`（需求 ID）与可选 `verification_steps` 的功能 feature；来自设计：外部依赖的 `required_configs`
 7. **建立项目骨架** — 目录结构、配置文件、package.json / pyproject.toml 等（基于设计文档架构）
 8. **初始 git commit** — 建立基线
