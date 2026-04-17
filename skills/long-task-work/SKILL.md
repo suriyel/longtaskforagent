@@ -9,7 +9,7 @@ description: "Use when feature-list.json exists - orchestrate features through t
 
 **开始时宣告：** "I'm using the long-task-work skill. Let me orient myself."
 
-**核心原则：** 每个子步在**独立 SubAgent**中运行，SubAgent 自己加载 skill。主 Agent 仅分发并消费 **Structured Return Contract** —— 永不读取 SubAgent 的内部输出。契约与 DISPATCH 语法参见 `references/structured-return-contract.md`。
+**核心原则：** 每个子步在**独立 SubAgent**中运行，SubAgent 自己加载 skill。主 Agent 仅分发并消费 **Structured Return Contract** —— 永不读取 SubAgent 的内部输出。契约与 DISPATCH 语法参见 `references/structured-return-contract.md`；所有 Step 4/5-7/8/9 的 SubAgent 返回统一按 `references/approval-revise-loop.md` 处理（blockers 前缀分流 + Clarification/Failure/Revision Addendum + 2 轮返工封顶）。sub-skill **绝不**自行发起 AskUserQuestion——用户裁决一律由本主 agent 按 loop.md 组装。
 
 **静默执行协议（所有 SubAgent 与 inline 检查强制）：** 每一次构建、测试、覆盖率、静态分析命令都**必须**把输出重定向到 `$$`-作用域的临时文件（`<cmd> > /tmp/<slug>-$$.log 2>&1; echo $? > /tmp/<slug>-$$.exit`）。成功路径仅读取 exit 文件。失败路径提取最后 100 行 + 匹配 `FAIL|ERROR|Exception` —— 永不向主 agent 倾倒完整输出。权威命令（带静默封装）位于 `env-guide.md` §3；SubAgent 从那里读取命令，而不是就地拼接。**Re-check 协议**：任何失败时，修复具体问题并**仅按名字重跑失败步骤或失败测试**（不跑完整套件）。完整重跑保留给最终校验步骤。
 
@@ -138,66 +138,74 @@ python scripts/check_configs.py feature-list.json --feature <id>
 ### 4. Feature 详细设计
 
 > **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-feature-design`
-> **with input**: feature_id=<id>, feature=<compact-json>, design_doc_path=<docs/plans/*-design.md §2.N>, srs_doc_path=<docs/plans/*-srs.md FR-xxx>, ucd_doc_path=<docs/plans/*-ucd.md> (if ui:true), ats_doc_path=<docs/plans/*-ats.md> (if exists), quality_gates=<compact-json>, tech_stack=<compact-json>, constraints=<list>, assumptions=<list>, output_path=`docs/features/YYYY-MM-DD-<feature-name>.md`
+> **with input**: `feature_id`, `feature_list_path`, `design_section=<§2.N start/end from Orient>`, `srs_section=<FR-xxx start/end from Orient>`, `ucd_section=<start/end if ui:true, else null>`, `output_path=docs/features/YYYY-MM-DD-<slug>.md`
 > **expect**: Structured Return Contract (`status` / `artifacts_written` / `next_step_input` / `blockers` / `evidence`) 按 `references/structured-return-contract.md`
+
+> Sub-skill 自行从 `feature_list_path` 读取 feature / quality_gates / tech_stack / constraints / assumptions，并 glob `docs/plans/*-design.md` / `*-srs.md` / `*-ucd.md` / `*-ats.md`。
 
 Feature Design SubAgent 在自己的新鲜上下文中读取 design/SRS/UCD 文档节并写详细设计文档。主 Agent **不** 读文档节或草稿内容——只消费结构化返回。
 
 > **对 `category: "bugfix"` 特性**：feature-design 精简。SubAgent 聚焦：(1) 根因记录、(2) 定向修复方式、(3) 回归测试清单。除非 bug 直接触达相关面，否则跳过完整图表。
 
-需向前传递的上下文（仅路径——SubAgent 自己读内容）：
-- Feature 对象（紧凑 JSON）
-- `quality_gates` 与 `tech_stack`（紧凑 JSON）
-- 文件路径 + 节行区间：设计文档（§2.N）、SRS 文档（FR-xxx）、UCD 文档（如 ui:true）
-- ATS 文档路径：`docs/plans/*-ats.md`（如存在）—— SubAgent 用 ATS 映射对齐 Test Inventory 类别
-- 设计文档 §4 路径 —— SubAgent 读取本特性为 Provider 或 Consumer 的 Internal API Contracts 行
-- feature-list.json 根的 constraints 与 assumptions
-- 输出路径：`docs/features/YYYY-MM-DD-<feature-name>.md`
+需向前传递的最小上下文（动态字段；其余由 sub-skill 内部解析）：
+- `feature_id` —— 目标特性编号
+- `feature_list_path` —— `feature-list.json` 的绝对/相对路径
+- `design_section` / `srs_section` —— 来自 Orient Document Lookup 的行号起止；供 SubAgent 精准读取 `§2.N` / `FR-xxx`，无须全文扫描
+- `ucd_section` —— 仅 `ui: true` 时传递，否则置 null
+- `output_path` —— `docs/features/YYYY-MM-DD-<feature-name>.md`
+
+Sub-skill 内部自行完成：
+- 从 `feature_list_path` 读取 feature 对象、`quality_gates`、`tech_stack`、`constraints`、`assumptions`、`real_test`（无需主 agent 重复打包）
+- Glob `docs/plans/*-design.md`、`*-srs.md`、`*-ucd.md`（若 ui:true）、`*-ats.md`（若存在）—— 固定模式无主 agent 传递价值
+- 读取设计文档 `§4` 定位本特性为 Provider/Consumer 的 Internal API Contracts 行
 
 输出：`docs/features/YYYY-MM-DD-<feature-name>.md`（由 SubAgent 写）—— 特性详细设计文档，含 Interface Contract、Visual Rendering Contract（ui:true）、Implementation Summary（散文 + Boundary Conditions + Existing Code Reuse）、Test Inventory。
 
-**契约偏离处理**：如 SubAgent 返回 `BLOCKED` 且 issue 含 "Contract deviation"：
-1. 通过 `AskUserQuestion` 向用户呈现偏离细节（Contract ID、原 schema vs 提议 schema、理由）
-2. 如审批通过：更新设计文档 §4 以反映新契约，然后重新分发 feature-design SubAgent
-3. 传播影响：从 §4 Consumer 列识别可能受影响的 Consumer 特性；如任何已 `"passing"`，警告用户可能需要重新校验
-
-**歧义澄清处理**：如 Feature Design SubAgent 返回 `CLARIFY`：
-- feature-design skill 的 CLARIFY handler 在内部管理完整澄清循环（AskUserQuestion → 收集回答 → 审批关卡 → 带 Clarification Addendum 重分发）
-- Worker 不需要单独处理—— feature-design skill 解决 CLARIFY 并返回 PASS（已解决）或 BLOCKED（2 轮后无法解决）
-- 若澄清揭示 SRS 缺陷（用户说 "SRS needs updating"）：
-  1. 在 `task-progress.md` 记录缺口："SRS gap identified during Feature Design for #{id} — user directed to long-task-increment"
-  2. 向用户建议："Consider placing an `increment-request.json` to update the SRS before continuing with this feature"
-  3. 如用户同意：跳过此特性，进入下一个符合条件的特性（或无则结束会话）
-  4. 如用户说 "proceed with current interpretation"：用已解决的澄清继续
-- **同一模式适用于 Feature-ST**（Step 9）：feature-st skill 的 CLARIFY handler 管理自己的循环（最多 1 轮）；Worker 看到 PASS 或 BLOCKED。
+**返回处理**：按 `references/approval-revise-loop.md` 统一处理：
+- `status: blocked` → 读 blockers[] 前缀（`[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[ATS-MISMATCH]` / `[ATS-BUGFIX-REGRESSION-MISSING]` / `[UCD-VAGUE]` / `[DEP-AMBIGUOUS]` / `[NFR-GAP]` / `[CONTRACT-DEVIATION]` / ...），按 loop.md 的前缀表组装 AskUserQuestion A/B/C 选项；收集裁决后以 Clarification Addendum 重分发（不计入 revise 上限）。
+- `status: fail` → Failure Addendum 重分发（计入 revise 上限 2 轮）。
+- `status: pass` 且 `next_step_input.assumption_count > 0` → 进入审批关卡（approve / revise / skip-feature / escalate），供用户确认 assumptions 是否可接受。
+- `status: pass` 且 `assumption_count == 0` → 直接进入 TDD。
+- SRS/Design 缺口后用户若选择 C（打回 SRS 侧）：task-progress.md 记录缺口 + 建议 `long-task-increment`，本 feature skip-feature（回到下次 Worker 循环）。
+- 同一前缀 3 次 blocked 自动 escalate（避免上游文档与澄清失配导致的死循环）。
 
 ### 5-7. TDD 循环（Red → Green → Refactor）
 
 > **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-tdd`
-> **with input**: feature_id=<id>, feature=<compact-json>, quality_gates=<compact-json>, tech_stack=<compact-json>, feature_design_path=`docs/features/YYYY-MM-DD-<feature-name>.md` (from Step 4), srs_section_path=`docs/plans/*-srs.md#FR-xxx`, design_section_path=`docs/plans/*-design.md#4.N`, env_guide_path=`env-guide.md` (§2 activation + §3 test commands)
+> **with input**: `feature_id`, `feature_list_path`, `feature_design_path=docs/features/YYYY-MM-DD-<slug>.md` (from Step 4 next_step_input)
 > **expect**: Structured Return Contract 按 `references/structured-return-contract.md` —— TDD 保持为单个 skill（Red → Green → Refactor 在 SubAgent 内顺序运行，不拆为三个 SubAgent）
 
-**重要—— TDD 不拆分**：SubAgent 加载 `long-task-tdd` 并在自己的新鲜上下文中运行完整 Red → Green → Refactor 循环。主 Agent 在最后收到一个结构化返回，而非逐阶段返回。
+> Sub-skill 自行：从 `feature_list_path` 读取 feature / quality_gates / tech_stack；glob `env-guide.md` 与 `docs/plans/*-srs.md` / `*-design.md`；用 `feature.srs_trace` 定位 FR-xxx 节与 §4.N。
+
+**重要—— TDD 不拆分**：SubAgent 加载 `long-task-tdd` 并在自己的新鲜上下文中运行完整 Red → Green → Refactor 循环。主 Agent 在最后收到一个结构化返回，而非逐阶段返回。返回按 `references/approval-revise-loop.md`：`status: fail` 走 Failure Addendum（2 轮）；`status: blocked` 带 `[INSUFFICIENT_EVIDENCE]` / `[ENV-ERROR]` 走 Clarification Addendum；`status: pass` 直接进入 Step 8。
 
 ### 8. Quality Gates
 
 > **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-quality`
-> **with input**: feature_id=<id>, quality_gates=<compact-json>, tech_stack=<compact-json>, working_dir=<path>, feature_test_files=<paths-from-TDD-return>, env_guide_path=`env-guide.md` (§3 coverage + test commands)
-> **expect**: Structured Return Contract 按 `references/structured-return-contract.md` —— `next_step_input` 必须含 `coverage_line` 与 `coverage_branch` 百分比
+> **with input**: `feature_id`, `feature_list_path`, `feature_test_files=<paths-from-TDD-return>`, `working_dir`
+> **expect**: Structured Return Contract 按 `references/structured-return-contract.md` —— `next_step_input` 必须含 `coverage_line` / `coverage_branch` / `srs_trace_coverage.uncovered_fr_ids`（数组，Gate 0.5 通过时为空）
 
-Quality SubAgent 在自己的新鲜上下文中运行所有 3 个关卡（Real Test → Coverage → Verify）。主 Agent **不** 读覆盖率报告或测试 runner 输出——只消费结构化返回。
+> Sub-skill 自行：从 `feature_list_path` 读取 feature.srs_trace / quality_gates / tech_stack / required_configs / real_test；glob `env-guide.md` §3（build/test/coverage 命令）。
+
+Quality SubAgent 在自己的新鲜上下文中运行全部 4 个关卡（Real Test → SRS Trace → Coverage → Verify）。主 Agent **不** 读覆盖率报告或测试 runner 输出——只消费结构化返回。按 `references/approval-revise-loop.md` 处理：
+- `status: fail`（含 `srs_trace_coverage.uncovered_fr_ids` 非空）→ Failure Addendum 重分发（最多 2 轮）；超限 → AskUserQuestion 呈 A/B/C：扩测 / 修订 feature.srs_trace / escalate。
+- `status: blocked` 带 `[INSUFFICIENT_EVIDENCE]` / `[ENV-ERROR]` → Clarification Addendum 重分发。
+- `status: pass` → 直接进入 Step 9（无审批关卡）。
 
 ### 9. ST 验收测试用例
 
 > **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-feature-st`
-> **with input**: feature_id=<id>, feature=<compact-json>, quality_gates=<compact-json>, tech_stack=<compact-json>, design_doc_path, srs_doc_path, ucd_doc_path (if ui:true), ats_doc_path (if exists), feature_design_doc_path (from Step 4), env_guide_path=`env-guide.md` (§1 service lifecycle), working_dir=<path>, st_case_template_path (if set), st_case_example_path (if set)
+> **with input**: `feature_id`, `feature_list_path`, `feature_design_doc_path=docs/features/YYYY-MM-DD-<slug>.md` (from Step 4), `working_dir`
 > **expect**: Structured Return Contract 按 `references/structured-return-contract.md` —— `artifacts_written` 必须含 `docs/test-cases/feature-{id}-{slug}.md`
 
-Feature-ST SubAgent 在 TDD 与 quality gates 通过**之后** 执行黑盒验收测试：在自己的新鲜上下文中读取 SRS/Design/UCD/ATS，生成 ISO/IEC/IEEE 29119 合规测试用例，执行它们，并管理服务生命周期。主 Agent 仅消费结构化返回。
+> Sub-skill 自行：从 `feature_list_path` 读取 feature / quality_gates / tech_stack / st_case_template_path / st_case_example_path；glob `docs/plans/*-design.md` / `*-srs.md` / `*-ucd.md`（若 ui:true）/ `*-ats.md`（若存在）与 `env-guide.md` §1 服务生命周期。
+
+Feature-ST SubAgent 在 TDD 与 quality gates 通过**之后** 执行黑盒验收测试：在自己的新鲜上下文中读取 SRS/Design/UCD/ATS，生成 ISO/IEC/IEEE 29119 合规测试用例，执行它们，并管理服务生命周期。主 Agent 仅消费结构化返回，按 `references/approval-revise-loop.md` 处理。
 
 **硬关卡：**
 - **不可绕过** —— 任何原因都不能跳过 ST
-- 主 Agent 按 feature-st SKILL.md 分类失败：AI 可自修的问题（代码 bug、环境问题）自主解决，无重试上限；只有需要人类手工测试的问题（缺凭据、物理设备、视觉判断）通过 `AskUserQuestion` 升级
+- AI 可自修的问题（代码 bug、环境问题）→ Feature-ST SubAgent 内部自动修复，无重试上限（不返 fail）
+- 需要人类介入的问题 → `status: blocked` 带前缀 blocker：`[MANUAL_TEST_REQUIRED]`（缺凭据/物理设备/视觉判断）/ `[SRS-MISSING]`（规范缺口）/ `[ATS-CATEGORY-MISSING-ST]`（ATS 必须类别无 ST 用例）。主 agent 按 loop.md 前缀表组装 AskUserQuestion，收集裁决后以 Clarification Addendum 重分发。
 
 ### 10. Inline 合规检查（无 SubAgent）
 
@@ -224,18 +232,31 @@ grep CSS/样式文件查找不在 UCD 色板 token 中的硬编码颜色 hex 值
 确认 `validate_st_cases.py` 已在 Feature-ST（Step 9）通过。
 无需重校验—— Feature-ST Step 5b + Step 6 已覆盖 T1。
 
-**f) 存量约定抽查（建议性、非阻塞——若无 `env-guide.md §4` 则跳过）：**
-抽查 2-3 个新/修改文件对照 `env-guide.md §4`：
-- §4.1：新 import 在有内部库替代时不使用禁用的标准/2/3方件 API
-- §4.3：命名约定匹配成文模式（变量/函数/类名）
-如发现偏离：作为建议性注记记录到 `task-progress.md`。**非阻塞关卡** —— 设计 / 框架约定优先于 scanner 观察。
+**e2) ATS 类别覆盖卫生（阻塞 —— 若无 `docs/plans/*-ats.md` 则跳过）：**
+对当前 feature 执行：
+```bash
+python scripts/check_ats_coverage.py docs/plans/*-ats.md --feature-list feature-list.json --feature <id>
+```
+- 退出码 0 → 通过
+- 退出码 1 → Inline Check **FAIL**。读错误输出定位缺失类别，回到 Step 9（feature-st）以 `[ATS-CATEGORY-MISSING-ST]` 前缀 blocker 触发 Clarification Addendum（扩 ST 用例）或 approval-revise-loop 的 escalate（修 ATS 映射）。
+
+**f) §4 存量约定全差异扫描（阻塞 —— 若无 `env-guide.md §4` 则跳过）：**
+静态分析在 TDD Refactor 已跑；此处对本 feature **新增/修改的所有文件**做二次核查以防 refactor 后回滚：
+```bash
+git diff HEAD~1 --name-only
+```
+对清单中每个源文件核查：
+- §4.1：内部库强制——新 import 若有对应内部库，必须使用内部库而非标准/2/3方件等价物
+- §4.2：禁用 API——新 code 不得引用 §4.2 列出的 API
+- §4.3：命名约定——新命名符合成文模式
+任意违规 → Inline Check **FAIL**，就地修复重跑。
 
 若所有检查通过 → 进入 Persist。
-若任何检查失败 → 就地修复，重新校验。不分发 SubAgent。
+若任何检查失败：a/b/c/d/e2/f 就地修复重校；e（ST 文档）必须回到 Step 9。**不分发 SubAgent**。
 
 在 `task-progress.md` 记录：
 ```
-- Inline Check: PASS (P2: N/N methods verified, T2: N/N tests found, D3: OK)
+- Inline Check: PASS (P2: N/N methods, T2: N/N tests, D3: OK, ATS Category: N/N covered, §4: N files scanned 0 violations)
 ```
 
 ### 11. Persist
@@ -324,7 +345,7 @@ auto-loop 脚本（`scripts/auto_loop.py`）在外部处理多特性自动化—
 | "这个弃用特性还要做" | 跳过。弃用特性被排除。|
 | "后端没好但我先 mock" | 依赖检查存在是有原因的。先做后端特性。|
 | "这次跳过依赖检查" | 永不跳过。重排特性让依赖满足。|
-| "SRS 模糊但我就假设……" | SubAgent 应标 CLARIFY。关键路径（Interface Contract、Test Inventory expected results、跨特性契约）上的假设会造成后期返工。只有低影响歧义可假设。|
+| "SRS 模糊但我就假设……" | sub-skill 应返 `status: blocked` 带 `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]` 前缀 blocker。关键路径（Interface Contract、Test Inventory expected results、跨特性契约）上的假设会造成后期返工。只有低影响歧义允许 pass + Clarification Addendum 记录的 assumption。|
 
 ## 出错时
 

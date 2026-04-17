@@ -6,7 +6,7 @@
 
 # Quality Gates & Verification（关卡与验证）
 
-三道顺序关卡，在特性被标记为 "passing" 之前**必须**全部通过。无捷径，无例外。
+四道顺序关卡（Gate 0 → 0.5 → 1 → 2），在特性被标记为 "passing" 之前**必须**全部通过。无捷径，无例外。
 
 ## 铁律
 
@@ -48,7 +48,7 @@ python scripts/check_real_tests.py feature-list.json --feature {current_feature_
 若 Gate 0 FAIL 原因含 "has external dependencies but no real tests"：
 1. 这**不是**代码问题 — 是基础设施 / 配置问题
 2. 运行：`python scripts/check_configs.py feature-list.json --feature {current_feature_id}`
-3. 若配置缺失 → 将 Verdict 设为 **BLOCKED**，信息："Feature #{id} requires external dependencies ({config_names}) but configs are not provided. Use AskUserQuestion to request the user to provide the missing configs."
+3. 若配置缺失 → 返 `status: blocked`，追加 blocker `[ENV-ERROR] Feature #{id} requires external dependencies ({config_names}) but configs are not provided | Suggested: none | Q: please provide the listed configs in .env or env-guide §3`。主 agent 按 `skills/long-task-work/references/approval-revise-loop.md` 组装 AskUserQuestion 收集缺失值。
 4. 若配置齐备但服务未运行 → 阅读 `env-guide.md`，启动服务，重跑 Gate 0
 5. 对有外部依赖的特性**绝不**无真实测试就继续
 6. 对含连接串 `required_configs[]` 的特性**绝不**声称纯函数豁免
@@ -89,6 +89,56 @@ Required action:
 2. Re-run TDD Red verification (real tests must FAIL first, then PASS after Green)
 3. Return to Gate 0
 Do NOT skip Gate 0 and proceed to coverage.
+```
+
+## Gate 0.5：SRS Trace Coverage（需求追溯）
+
+**动机**：覆盖率 100% 不等于"需求被测试锚定"。SRS 验收准则若在迭代中修改而测试未同步补齐，单看覆盖率会静默放行。本关卡强制每个 `srs_trace` 中的需求 ID 都在本 feature 的测试工件（文件名 / 函数名 / docstring / 注释 / 断言字符串）中字面出现。
+
+### Step 1：运行脚本
+
+```bash
+python scripts/check_srs_trace_coverage.py {feature_list_path} \
+  --feature {feature_id} \
+  --test-files {feature_test_files}
+```
+
+- `{feature_test_files}` 是 TDD 阶段为本 feature 写入/修改的测试文件清单。传入 `--test-files` 将作用域限定为这些文件；不传则脚本按 `feature_ref_pattern` 自行推导。
+- 脚本使用 hyphen↔underscore 等价规则：`FR-001` 会匹配 `test_fr_001_...`、`fr_001`、`FR_001` 与 `FR-001`。
+- 需要非字面别名（如 `@srs-login`）时，在 feature-list.json 的 feature 对象添加：
+  ```json
+  "srs_trace_aliases": { "FR-001": ["@srs-login", "legacy-login-id"] }
+  ```
+
+### Step 2：解读退出码
+
+| Exit | 含义 | 动作 |
+|------|------|------|
+| 0 | 全部 `srs_trace` ID 均有字面命中 | Gate 0.5 PASS，进入 Gate 1 |
+| 1 | 至少 1 个 ID 未命中 | Gate 0.5 FAIL，取 `--json` 输出的 `per_feature[0].uncovered_fr_ids`；返回 `status: fail` |
+| 2 | 输入错误（feature-list 缺失 / feature id 不存在 / 指定的 test-files 不存在）| 视为 blocked；返回 `status: blocked` |
+
+### Step 3：FAIL 处理
+
+Gate 0.5 FAIL 不回到 TDD Red —— 已有测试在运行，只是**没有锚定 FR-ID**。动作顺序：
+
+1. 读 `uncovered_fr_ids` 列表；
+2. 在现有测试里为每个未覆盖 ID 追加字面引用（推荐：写入最相关 test 的 docstring 或注释；或重命名函数为 `test_fr_001_*` 形式）；
+3. 重跑脚本（Gate 0.5）；
+4. 若 3 次重试仍 FAIL（例如 `srs_trace` 与本 feature 实际测试范围不匹配），返 `status: fail` + `evidence: { uncovered_fr_ids: [...] }` 并由主 agent 以 Clarification Addendum 分流至用户：是扩测还是修订 `srs_trace`。
+
+### Step 4：豁免
+
+feature 的 `srs_trace` 为空时，脚本输出中会记录 "no srs_trace declared"，Gate 0.5 自动 PASS。这对应 `category=bugfix` 尚未完成根因追溯或 srs_trace 尚未回填的早期状态。orchestrator 层应另有断路（不允许空 `srs_trace` 进入 quality），此关卡不承担该职责。
+
+### 所需证据
+
+```
+Gate 0.5 Result:
+- Script exit: 0 | 1 | 2
+- srs_trace count: N
+- Uncovered IDs: [FR-xxx, ...] (empty if PASS)
+- Gate 0.5: PASS/FAIL
 ```
 
 ## Gate 1：Coverage（覆盖率）
@@ -165,9 +215,10 @@ TDD Green 之后（全部测试通过），运行覆盖率工具。
 |-------|---------------|
 | TDD Green + Refactor 之后 | `check_real_tests.py` 输出 PASS，所有真实测试通过 |
 | TDD Green 之后 | 完整测试套件输出 |
+| Gate 0.5 | `check_srs_trace_coverage.py --feature {id}` 返回 PASS；每个 `srs_trace` ID 至少 1 处字面命中 |
 | Coverage Gate 之后 | 覆盖率报告（line% + branch%） |
 | TDD Refactor 之后 | 完整测试套件（仍通过） |
-| 标记 "passing" 之前 | 上述全部 + SRS 验收准则（经 srs_trace） |
+| 标记 "passing" 之前 | 上述全部（Gate 0.5 已对 srs_trace 做字面锚定验证）|
 | git commit 之前 | 完整测试套件（不提交损坏代码） |
 
 ## 反模式
@@ -196,11 +247,17 @@ TDD Green 之后（全部测试通过），运行覆盖率工具。
   "coverage_line": <actual line coverage %>,
   "coverage_branch": <actual branch coverage %>,
   "all_tests_pass": true | false,
-  "test_count": <total test count>
+  "test_count": <total test count>,
+  "srs_trace_coverage": {
+    "total": <len(srs_trace)>,
+    "covered": <number of FR-IDs literally referenced in feature test files>,
+    "uncovered_fr_ids": [<FR-IDs with zero test references; empty if PASS>]
+  }
 }
 **blockers**: [one-sentence strings if status=blocked; otherwise empty array]
 **evidence**: [
   "Gate 0 (Real Test): PASS/FAIL — N real tests executed, 0 skipped",
+  "Gate 0.5 (SRS Trace): C/N FR-IDs covered; uncovered=[...]",
   "Line coverage: N% (threshold X%)",
   "Branch coverage: N% (threshold X%)"
 ]
@@ -209,6 +266,7 @@ TDD Green 之后（全部测试通过），运行覆盖率工具。
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
 | Gate 0 (Real Test) | PASS/FAIL | PASS | PASS/FAIL |
+| Gate 0.5 (SRS Trace) | C/N covered | N/N | PASS/FAIL |
 | Line Coverage | N% | ≥X% | PASS/FAIL |
 | Branch Coverage | N% | ≥X% | PASS/FAIL |
 

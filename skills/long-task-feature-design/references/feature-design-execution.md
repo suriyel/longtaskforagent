@@ -49,6 +49,7 @@
 | `SRS-DESIGN-CONFLICT` | SRS 需求与 Design §2.N 在接口类型、数据格式、行为或错误处理上矛盾 |
 | `SRS-MISSING` | 验收准则无 Given/When/Then 或未指定预期结果 |
 | `ATS-MISMATCH` | ATS 要求某测试类别（例如 SEC）但特性的可观察行为无对应表面 |
+| `ATS-BUGFIX-REGRESSION-MISSING` | `category: "bugfix"` 特性，但 ATS 文档内无任何映射行的 `REQ-ID` 命中本特性 `srs_trace` 的任意 FR/NFR/IFR 编号（bugfix 必须有回归测试策略锚点） |
 | `UCD-VAGUE` | 视觉需求不够具体，无法推导 DOM 选择器或可测试断言（仅 ui:true） |
 | `DEP-AMBIGUOUS` | 跨特性接口不清晰 — 依赖的 §4 条目缺失或不完整 |
 | `NFR-GAP` | 引用的 NFR 无可度量阈值（如 "should scale" 而无数字） |
@@ -59,6 +60,7 @@
 2. 对映射到本特性的每条 SRS 需求：与 Design §2.N 交叉核对。标记接口类型、数据格式、行为或错误处理上的矛盾 → `SRS-DESIGN-CONFLICT`
 3. 对每条 SRS 验收准则：验证 Given/When/Then 存在且显式给出预期结果 → `SRS-MISSING`
 4. 对每个 ATS 要求的类别（若提供了 ATS 文档）：检查特性可观察行为是否具备该类别的可测表面 → `ATS-MISMATCH`
+4b. 若 `category == "bugfix"` 且 ATS 文档存在：在 ATS 映射表中查找本特性 `srs_trace` 中的任一 FR/NFR/IFR ID。零命中 → `ATS-BUGFIX-REGRESSION-MISSING`。这是硬关卡：bugfix 必须绑定到回归测试策略，否则无法保证同类缺陷不再复现。
 5. 对 UCD 章节（若 ui:true）：检查视觉需求是否指定具体颜色、字体、间距或选择器 → `UCD-VAGUE`
 6. 对本特性为 Provider 或 Consumer 的 §4 契约：检查 schema 是否完整（无缺失字段、无歧义类型） → `DEP-AMBIGUOUS`
 7. 对引用的 NFR：验证是否存在可度量阈值 → `NFR-GAP`
@@ -73,12 +75,44 @@
 - Question for user: [specific, actionable question that would resolve the ambiguity]
 ```
 
-**对 `category: "bugfix"` 特性**：仅对 bug 的验收准则扫描 `SRS-VAGUE` 与 `SRS-DESIGN-CONFLICT`。跳过 `UCD-VAGUE`、`ATS-MISMATCH`、`NFR-GAP`（bugfix 聚焦根因，而非全量规格覆盖）。
+**对 `category: "bugfix"` 特性**：
+- 扫描 `SRS-VAGUE`、`SRS-DESIGN-CONFLICT`（同 core 特性）。
+- **强制**扫描 `ATS-BUGFIX-REGRESSION-MISSING`（若 ATS 文档存在）—— bugfix 没有回归锚点即违反"同类缺陷不再复现"原则。
+- 跳过 `UCD-VAGUE`、`ATS-MISMATCH`（ATS 类别全覆盖）、`NFR-GAP`（bugfix 聚焦根因，而非全量规格覆盖）。
 
 **决策关卡：**
 - **未检测到歧义** → 正常进入 Step 1c。无额外摩擦。
-- **所有歧义均有合理的建议解释，且影响仅限于非关键章节**（**不**影响 Interface Contract 签名、Test Inventory 预期结果、跨特性 §4 契约） → 以假设继续。将每条假设记录在设计文档的 `## Clarification Addendum` 章节，Authority = "assumed"。Verdict 设为 `PASS`。在 `### Next Step Inputs` 中包含 assumption 数量。
-- **任一歧义有高影响**（影响 Interface Contract 签名、Test Inventory 预期结果或跨特性契约） **或无合理的建议解释** → Verdict 设为 `CLARIFY`。在 Structured Return Contract 中包含完整 Ambiguities 表。**不**要进入 Step 1c — orchestrator 会收集用户回答并重新分发。
+- **所有歧义均有合理的建议解释，且影响仅限于非关键章节**（**不**影响 Interface Contract 签名、Test Inventory 预期结果、跨特性 §4 契约） → 以假设继续。将每条假设记录在设计文档的 `## Clarification Addendum` 章节，Authority = "assumed"。`status` 设为 `pass`。在 `next_step_input.assumption_count` 中包含 assumption 数量（主 agent 用该字段决定是否触发审批关卡）。
+- **任一歧义有高影响**（影响 Interface Contract 签名、Test Inventory 预期结果或跨特性契约） **或无合理的建议解释** → `status` 设为 `blocked`。为每条高影响歧义追加一条 blockers[] 条目，严格使用前缀约定（见下表）。**不**要进入 Step 1c — orchestrator 会按 `skills/long-task-work/references/approval-revise-loop.md` 收集用户裁决并以 Clarification Addendum 重分发。
+- **任一歧义类别为 `ATS-BUGFIX-REGRESSION-MISSING`** → 此类不可以 assumption 绕过。`status` 必须为 `blocked`（不能 `pass`），对应 blocker 的建议解释为 `"none — bugfix regression anchor required"`，主 agent 会呈 A/B/C 选项给用户。
+
+### blockers[] 前缀约定（本 sub-skill）
+
+返 `status: blocked` 时，每条 blockers[i] 应为**单行字符串**，格式：
+
+```
+[<PREFIX>] <Source §line>: <one-line description> | Suggested: <best-guess or "none"> | Q: <specific question>
+```
+
+| Prefix | 对应扫描类别 |
+|--------|-------------|
+| `[SRS-VAGUE]` | SRS-VAGUE |
+| `[SRS-DESIGN-CONFLICT]` | SRS-DESIGN-CONFLICT |
+| `[SRS-MISSING]` | SRS-MISSING |
+| `[ATS-MISMATCH]` | ATS-MISMATCH |
+| `[ATS-BUGFIX-REGRESSION-MISSING]` | ATS-BUGFIX-REGRESSION-MISSING |
+| `[UCD-VAGUE]` | UCD-VAGUE |
+| `[DEP-AMBIGUOUS]` | DEP-AMBIGUOUS |
+| `[NFR-GAP]` | NFR-GAP |
+| `[CONTRACT-DEVIATION]` | 发现 §4 契约技术不可行（Step 2 Contract Deviation Protocol）|
+
+示例：
+```
+[SRS-VAGUE] SRS §5.1 FR-012: "should be fast" — no numeric threshold for login latency | Suggested: p95 < 500ms | Q: confirm latency budget or provide alternative
+[ATS-BUGFIX-REGRESSION-MISSING] ATS mapping: srs_trace=[FR-201,NFR-004] has 0 rows in ATS table | Suggested: none — bugfix regression anchor required | Q: (A) add ATS mapping row / (B) re-categorize as core / (C) waive regression anchor
+```
+
+完整的 Ambiguities 扩展表仍输出（见下方 Return Contract），作为主 agent 为 AskUserQuestion 组装 A/B/C 选项时的补充参考，但 **blockers[] 是主 agent 分流的权威字段**。
 
 > **携带 Clarification Addendum 重新分发时**：若 SubAgent 提示词含 `## Clarification Addendum (user-approved resolutions)` 章节，将这些处置视为权威约束。**不**要再把它们标记为歧义。按其已在原 SRS / Design 文档中存在那样纳入设计。
 
@@ -133,10 +167,10 @@
    - 原始 schema vs. 建议变更
    - 变更的技术原因
    - 对 Consumer 特性的影响（列出受影响的 feature ID）
-3. Verdict 设为 **BLOCKED**，Issue："Contract deviation requires design update"
-4. orchestrator（long-task-work）通过 AskUserQuestion 升级给用户
-5. 若批准：用户更新设计文档中的 §4；orchestrator 重新分发 SubAgent
-6. 若拒绝：SubAgent 必须遵循原契约
+3. `status` 设为 **blocked**；追加 blocker：`[CONTRACT-DEVIATION] §4 <Contract ID>: <原 schema 摘要> → <建议变更> | 影响 Consumer=[<feature IDs>] | Q: (A) approve schema change / (B) keep original and SubAgent will comply`
+4. orchestrator（long-task-work）按 `skills/long-task-work/references/approval-revise-loop.md` 处理，向用户呈 A/B 选项
+5. 若批准：用户（或 orchestrator 在授权下）更新设计文档的 §4；orchestrator 以 Clarification Addendum 重分发 SubAgent
+6. 若拒绝：Clarification Addendum 指令 "comply with original §4"，SubAgent 必须遵循原契约
 
 ### 2b. Visual Rendering Contract（`"ui": true` 强制）
 
@@ -266,16 +300,19 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 ```markdown
 ## SubAgent Result: long-task-feature-design
 
-**status**: pass | fail | blocked | clarify
-**artifacts_written**: ["docs/features/YYYY-MM-DD-<feature-name>.md"]
+**status**: pass | fail | blocked
+**artifacts_written**: ["docs/features/YYYY-MM-DD-<feature-name>.md"] (omit if status=blocked before any draft was written)
 **next_step_input**: {
   "feature_design_doc": "<path to the design document>",
   "test_inventory_count": <number of test inventory rows>,
   "existing_code_reuse_count": <number of reused symbols, 0 if greenfield>,
-  "ambiguity_count": <number of unresolved ambiguities, 0 if pass>,
   "assumption_count": <number of assumptions made, 0 if none>
 }
-**blockers**: [one-sentence strings if status=blocked; otherwise empty array]
+**blockers**: [
+  "若 status=blocked：每条为单行字符串，以前缀开头（见上方前缀约定），格式：",
+  "[<PREFIX>] <Source §line>: <desc> | Suggested: <best-guess or none> | Q: <question>",
+  "若 status≠blocked：空数组"
+]
 **evidence**: [
   "Test Inventory: N rows covering <categories>",
   "Interface Contract: M public methods matched to <srs_trace> acceptance criteria",
@@ -298,7 +335,9 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 | # | Severity | Description |
 |---|----------|-------------|
 
-### Ambiguities (extension — only if status=clarify)
+### Ambiguities (extension — only if status=blocked with spec-gap prefixes)
+Parallel to `blockers[]`; each row corresponds to one blocker entry. Use this table when the one-line blocker string can't carry enough detail for the user. Main agent may include it verbatim in the AskUserQuestion context.
+
 | # | Category | Source | Description | Impact | Suggested Interpretation | Question |
 |---|----------|--------|-------------|--------|--------------------------|----------|
 | 1 | [code] | [doc § section] | [what is ambiguous] | [affected design sections] | [best guess or "none"] | [specific question for user] |

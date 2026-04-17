@@ -9,23 +9,14 @@ description: "Use after quality gates pass in a long-task project — independen
 
 **开始时声明：** "I'm using the long-task-feature-st skill to run acceptance testing via SubAgent."
 
-## Step 1: 收集路径参数
+## Step 1: 收集动态字段（最小输入集）
 
-从当前会话状态中收集文件路径（**不要**自行读取文件内容）：
+固定路径 / feature-list 派生数据由 SubAgent 自行解析；主 agent 仅传动态字段：
 
 - `feature_id` —— 当前特性 ID
-- `feature_json` —— feature-list.json 中当前的 feature 对象（紧凑 JSON）
-- `design_doc_path` —— `docs/plans/*-design.md` 的路径
-- `srs_doc_path` —— `docs/plans/*-srs.md` 的路径
-- `ucd_doc_path` —— `docs/plans/*-ucd.md` 的路径（仅 `"ui": true` 时；否则省略）
-- `ats_doc_path` —— `docs/plans/*-ats.md` 的路径（存在则提供；否则省略）
-- `plan_doc_path` —— `docs/features/YYYY-MM-DD-<feature-name>.md` 的路径（来自 Feature Design 步骤）
-- `env_guide_path` —— `env-guide.md`（若存在）
-- `quality_gates_json` —— feature-list.json 中的 quality_gates 阈值
-- `tech_stack_json` —— feature-list.json 中的 tech_stack
+- `feature_list_path` —— `feature-list.json` 路径
+- `feature_design_doc_path` —— `docs/features/YYYY-MM-DD-<slug>.md`（来自 Feature Design 步骤；动态日期）
 - `working_dir` —— 项目工作目录
-- `st_case_template_path` —— 来自 feature-list.json 根级（可选）
-- `st_case_example_path` —— 来自 feature-list.json 根级（可选）
 
 ## Step 2: 构建 SubAgent 提示词
 
@@ -34,35 +25,29 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-feature-st/references/feature-st-execution.md
-2. Follow the checklist exactly (Steps 1-8): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Visual Assessment (ui:true) → Cleanup
-3. Return your result using the Structured Return Contract at the end of the execution rules
+2. Self-resolve fixed inputs:
+   a. Read {feature_list_path} → parse JSON; pick features[i] with id == {feature_id} → derive `feature` (含 srs_trace / ui / category) + 根级 `quality_gates` / `tech_stack` / `st_case_template_path` / `st_case_example_path` (optional root fields)
+   b. Glob `docs/plans/*-design.md` → `design_doc_path`
+   c. Glob `docs/plans/*-srs.md` → `srs_doc_path`
+   d. Glob `docs/plans/*-ucd.md` → `ucd_doc_path` (only if feature.ui == true; else skip)
+   e. Glob `docs/plans/*-ats.md` → `ats_doc_path` (if no match, proceed without ATS category enforcement but emit a blocker `[ATS-MISSING]` warning if feature requires it)
+   f. Glob `env-guide.md` → §1 服务生命周期、§2 激活、§3 命令
+3. Follow the checklist exactly (Steps 1-8): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Visual Assessment (ui:true) → Cleanup
+4. Return your result using the Structured Return Contract at the end of the execution rules
 
-## Input Parameters
-- Feature ID: {feature_id}
-- Feature: {feature_json}
-- quality_gates: {quality_gates_json}
-- tech_stack: {tech_stack_json}
-- Working directory: {working_dir}
-
-## Document Paths (read these yourself using the Read tool)
-- Design doc: {design_doc_path}
-- SRS doc: {srs_doc_path}
-- UCD doc: {ucd_doc_path} (omit if not UI)
-- ATS doc: {ats_doc_path} (omit if not present)
-- Feature design plan: {plan_doc_path}
-- Environment guide: {env_guide_path}
-
-## Template/Example (optional)
-- ST case template: {st_case_template_path} (omit if not set)
-- ST case example: {st_case_example_path} (omit if not set)
+## Input Parameters (minimal; derive the rest yourself)
+- feature_id: {feature_id}
+- feature_list_path: {feature_list_path}
+- feature_design_doc_path: {feature_design_doc_path}
+- working_dir: {working_dir}
 
 ## Key Constraints
 - Do NOT mark the feature as "passing" in feature-list.json — only report results
 - You MUST manage service lifecycle: start before tests, cleanup after all tests
 - UI test cases require browser-based verification — no skip
-- If environment cannot start after 3 attempts, set Verdict to BLOCKED
+- If environment cannot start after 3 attempts, set status=blocked with blocker `[ENV-ERROR] ...`
 - ALL automated test cases must be executed one by one — no skipping
-- Manual test cases (已自动化: No) must NOT be executed by SubAgent — mark as PENDING-MANUAL in the traceability matrix and include full case details in the Manual Test Cases section of the return contract
+- Manual test cases (已自动化: No) must NOT be executed by SubAgent — return them as blocker `[MANUAL_TEST_REQUIRED] case_id=... | reason=... | steps_summary=...` entries so the main agent can organize the hand-off to the user
 - For `"ui": true` features: after scripted tests, you MUST perform the Exploratory Visual Assessment (Step 8). Navigate the live application yourself via Chrome DevTools MCP, screenshot every page, click every interactive element, and grade against the 4 visual quality criteria. You are an independent QA evaluator, not the developer — be skeptical. A blank canvas with working buttons is a FAIL. "Display-only" elements that render but don't respond to interaction are Major defects.
 ```
 
@@ -89,53 +74,20 @@ Agent(
   4. 若 `environment_cleaned` 为 false，按 `env-guide.md` 自行执行清理
   5. 进入下一步（Inline Check + Persist）
 
-- **`**status**: fail`** 或 **`**status**: blocked`**（遗留：`### Verdict: FAIL` / `### Verdict: BLOCKED`）
-  1. 阅读 Issues 表 —— 识别失败细节
-  2. **主 agent 将每个问题归类**为以下两类之一：
-     - **需人工手动测试**（立即通过 `AskUserQuestion` 升级）：AI 无法提供的 `required_configs[]` 密钥或凭据缺失；需要物理设备或超出 Chrome DevTools MCP 能力的视觉判断的 UI 校验；需要外部人工动作（第三方审批、手动账号设置、硬件交互）
-     - **AI 自行修复**（其他一切）：导致测试失败的代码 bug、环境启动问题、端口冲突、依赖错误、外部服务错误、因实现问题导致的测试执行失败
-  3. 对于 AI 自行修复的问题：在 `task-progress.md` 记录，修复代码或环境，重新分发 SubAgent。**无重试次数限制** —— AI 必须持续修复直到解决。
-  4. 对于需人工手动测试的问题：通过 `AskUserQuestion` 携带问题细节升级。特性保持 BLOCKED 直到人工响应。
-  5. **禁止绕过** —— 每个失败都必须被解决（由 AI 或人工）才能进入 Persist。
+- **`**status**: fail`**
+  1. 读 evidence 定位代码 bug / 环境问题 —— 这些由 SubAgent 内部修复，不应返 fail；出现 fail 意味着 SubAgent 已超出自修能力或 ST 策略决定上报。
+  2. 按 `skills/long-task-work/references/approval-revise-loop.md` 的 Failure Addendum 规则重分发（计入 revise 上限 2 轮）。
+  3. 超限 → escalate，AskUserQuestion 收集手工诊断后重分发。
 
-- **`**status**: clarify`**（遗留：`### Verdict: CLARIFY`）
-  1. 阅读 Specification Gaps 表 —— 提取所有分类问题
-  2. **交叉核对**：阅读特性设计文档的 `## Clarification Addendum` 章节（位于 `plan_doc_path`）。过滤掉其中已解决的任何缺口 —— **不要**重复提问。
-  3. 对真正新增的缺口：通过 `AskUserQuestion` 呈现给用户：
-     ```
-     Feature-ST Specification Gap: Feature #{feature_id} ({title})
+- **`**status**: blocked`**
+  1. 读 blockers[]。每条以前缀开头，按 `long-task-work/references/approval-revise-loop.md` 的前缀表分流：
+     - `[MANUAL_TEST_REQUIRED]` —— 缺凭据、需物理设备、需人工视觉判断。主 agent 展示测试步骤，AskUserQuestion 等待用户手工完成并回报结果。
+     - `[SRS-MISSING]` / `[SRS-VAGUE]` —— 规范缺口，Feature Design 未捕获。主 agent 呈 A/B/C：(A) 补 SRS / (B) 以建议解释作 assumption / (C) 打回 `long-task-increment`。
+     - `[ATS-CATEGORY-MISSING-ST]` —— ATS 必须类别无 ST 用例。主 agent 呈 A/B：(A) 扩 ST 用例（Clarification Addendum 重分发） / (B) 豁免该类别（需显式授权，留痕）。
+     - `[ENV-ERROR]` —— 环境/服务启动故障超 SubAgent 自修。主 agent 展示故障详情，用户修复后回应 retry。
+  2. 按 loop.md 以 Clarification Addendum 重分发（不计入 revise 上限）；同一前缀 3 次仍 blocked → escalate。
 
-     While deriving acceptance test cases, {N} specification gap(s) were found
-     that prevent writing correct expected results. For each, a suggested interpretation
-     is provided — you may accept it, provide a different answer, or say "skip".
-
-     Gap 1 [{category}]: {description}
-       Source: {source}
-       Impact on test cases: {impact_on_test_cases}
-       Suggested: {suggested_interpretation}
-       → Your answer (or "accept" / "skip"):
-
-     Gap 2 [{category}]: ...
-     ```
-  4. 解析用户响应并呈现审批摘要：
-     ```
-     Specification Gap Summary for Feature #{feature_id}:
-     1. [{category}] {description} → Resolution: {answer}
-
-     Proceed with these resolutions? (yes / revise #N)
-     ```
-  5. 若批准：构造 **Specification Gap Addendum**，携带原提示词 **加上** 以下内容重新分发 SubAgent：
-     ```
-     ## Specification Gap Addendum (user-approved resolutions)
-     | # | Category | Original Gap | Resolution | Authority |
-     |---|----------|-------------|------------|-----------|
-     | 1 | {category} | {description} | {resolution} | user-approved / assumed |
-
-     Apply these resolutions as authoritative. Derive test case expected results
-     from these resolutions. Do NOT re-flag them as gaps.
-     ```
-  6. 在 `task-progress.md` 中记录："Feature-ST: CLARIFY ({N} gaps resolved) → re-dispatching"
-  7. Feature-ST **最多 1 轮澄清**（设计级歧义应已在 Feature Design 阶段捕获；ST 缺口通常较小）。若 SubAgent 收到 addendum 后仍返回 `CLARIFY`，置为 BLOCKED 并升级："Persistent specification gaps in Feature-ST. Consider using `long-task-increment` to update source documents."
+**交叉核对（重分发前）**：主 agent 在组装 Clarification Addendum 之前，先读 Feature Design 文档的 `## Clarification Addendum` 章节，过滤已在 Feature Design 阶段解决的同类规范条目——不要重复提问。
 
 ### Step 4b: 手工测试评审关卡
 

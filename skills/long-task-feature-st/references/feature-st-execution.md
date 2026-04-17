@@ -139,9 +139,25 @@ TDD（long-task-tdd）已从内部验证实现：
 - **无缺口** → 正常进入 Step 2（加载模板）。无额外摩擦。
 - **所有缺口由 Feature Design Clarification Addendum 解决** → 按处置继续。在测试用例文档头部注记："Specification resolutions applied from Feature Design Clarification Addendum."
 - **存在新缺口但均有合理建议解释** → 以假设继续。在测试用例文档头部按此记录每条："Assumed: [interpretation] (not user-approved)."
-- **新缺口对预期结果有高影响且无合理解释** → Verdict 设为 `CLARIFY`。在 Structured Return Contract 中包含完整 Specification Gaps 表。**不**要进入 Step 2。
+- **新缺口对预期结果有高影响且无合理解释** → `status` 设为 `blocked`。为每条高影响缺口追加一条 blockers[] 条目，使用 `[SRS-MISSING]` / `[SRS-VAGUE]` / `[ATS-CATEGORY-MISSING-ST]` 前缀（详见下方前缀约定）。**不**要进入 Step 2 —— orchestrator 会按 `skills/long-task-work/references/approval-revise-loop.md` 收集用户裁决并以 Clarification Addendum 重分发。
 
-> **携带 Specification Gap Addendum 重新分发时**：若 SubAgent 提示词含 `## Specification Gap Addendum (user-approved resolutions)` 章节，将其处置视为权威。**不**要再次标记。依此派生测试用例的预期结果。
+> **携带 Clarification Addendum 重新分发时**：若 SubAgent 提示词含 `## Clarification Addendum (from blocked return)` 或 `## Specification Gap Addendum (user-approved resolutions)` 章节，将其处置视为权威。**不**要再次标记。依此派生测试用例的预期结果。
+
+### blockers[] 前缀约定（本 sub-skill）
+
+返 `status: blocked` 时，每条 blockers[i] 为单行字符串，格式：
+
+```
+[<PREFIX>] <Source §line>: <one-line description> | Suggested: <best-guess or "none"> | Q: <specific question>
+```
+
+| Prefix | 场景 |
+|--------|-----|
+| `[SRS-MISSING]` | SRS 验收准则无 Given/When/Then 或未指定预期结果 |
+| `[SRS-VAGUE]` | SRS 验收准则含模糊语言（"fast" 等无阈值词） |
+| `[ATS-CATEGORY-MISSING-ST]` | ATS 必须类别（来自 srs_trace 的 ATS 映射行）在本 feature 的 ST 用例中零覆盖 |
+| `[MANUAL_TEST_REQUIRED]` | 需人工手动测试（缺凭据、物理设备、AI 无法判断的视觉细节） |
+| `[ENV-ERROR]` | 环境/服务启动故障超 SubAgent 自修能力 |
 
 ### 2. 加载模板
 
@@ -483,7 +499,7 @@ Display-Only Defects: [count]
 ```markdown
 ## SubAgent Result: long-task-feature-st
 
-**status**: pass | fail | blocked | clarify
+**status**: pass | fail | blocked
 **artifacts_written**: [
   "docs/test-cases/feature-{id}-{slug}.md",
   <any other files created or modified>
@@ -494,7 +510,11 @@ Display-Only Defects: [count]
   "manual_case_count": <number of manual test cases, 0 if none>,
   "environment_cleaned": true | false
 }
-**blockers**: [one-sentence strings if status=blocked; otherwise empty array]
+**blockers**: [
+  "若 status=blocked：每条为单行字符串，以前缀开头（见上方前缀约定），格式：",
+  "[<PREFIX>] <Source §line>: <desc> | Suggested: <best-guess or none> | Q: <question>",
+  "若 status≠blocked：空数组"
+]
 **evidence**: [
   "Derived N test cases from SRS/Design/UCD/ATS",
   "Executed M/N cases — pass rate K%",
@@ -533,7 +553,9 @@ Display-Only Defects: [count]
 |---------|---------------|---------------|---------------|-------------------|---------------------|
 | ST-FUNC-005-003 | {objective} | visual-judgment | {preconditions} | {summarized steps} | {verification points} |
 
-### Specification Gaps (extension — only if status=clarify)
+### Specification Gaps (extension — only if status=blocked with spec-gap prefixes)
+Parallel to `blockers[]`; each row corresponds to one blocker entry. Use when the one-line blocker string can't carry enough detail for the user. Main agent may include it verbatim in the AskUserQuestion context.
+
 | # | Category | Source | Description | Impact on Test Cases | Suggested Interpretation | Question |
 |---|----------|--------|-------------|---------------------|--------------------------|----------|
 | 1 | [code] | [doc § section] | [what is missing/vague] | [which test cases affected] | [best guess or "none"] | [specific question for user] |

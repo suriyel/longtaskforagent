@@ -13,6 +13,23 @@ description: "Use when implementing a feature through TDD in a long-task project
 
 本 skill 由 `long-task-work` Step 5-7 以 **独立 SubAgent（全新上下文）** 方式分发。SubAgent 加载此 SKILL.md，一次性完成 Red → Green → Refactor 循环，并在文档末尾返回 **Structured Return Contract**。主 Worker agent 不消费 TDD 的中间输出 —— 只消费最终契约。契约定义见 `skills/long-task-work/references/structured-return-contract.md`。
 
+## Input Contract & Self-Resolution
+
+主 agent 传入的最小动态字段（其余 SubAgent 自行解析）：
+
+- `feature_id` —— 目标特性 ID
+- `feature_list_path` —— `feature-list.json` 路径
+- `feature_design_path` —— 上游 Feature Design 文档路径（`docs/features/YYYY-MM-DD-<slug>.md`）
+
+SubAgent 启动后自行完成：
+1. 读 `{feature_list_path}` 解析 JSON；取 `features[i]` 中 `id == {feature_id}` 的对象，得到 `feature`（含 `srs_trace`、`ui`、`category` 等）+ 根级 `tech_stack` / `quality_gates` / `real_test` / `required_configs`
+2. Glob `docs/plans/*-srs.md` → `srs_doc_path`；用 `feature.srs_trace` 定位对应 FR/NFR/IFR 节作为 `{srs_section}`
+3. Glob `docs/plans/*-design.md` → `design_doc_path`；定位 §2.N（通过 feature 名或 srs_trace）与 §4.N（Internal API Contracts）作为 `{design_section}`
+4. Glob `env-guide.md` → §2 激活、§3 测试/覆盖率命令、§4 codebase constraints
+5. 读 `{feature_design_path}`（必读，主要测试来源）
+
+下文所有 `{srs_section}` / `{design_section}` / `{tech_stack}` 占位符都指向以上自行解析的值。
+
 ## 铁律
 
 ```
@@ -335,8 +352,8 @@ subagent 模式下使用 `skills/long-task-tdd/prompts/implementer-prompt.md` �
 - 重构引入了无法修复的回归
 
 **阻塞条件**（`status: blocked`）：
-- 测试框架未安装 / 环境未初始化
-- 规约歧义在无用户输入时无法解决（通过 CLARIFY 升级）
-- 外部依赖不可用（数据库宕机、API 凭据缺失）
+- 测试框架未安装 / 环境未初始化 → `[ENV-ERROR]`
+- 规约歧义在无用户输入时无法解决 → `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]`（按 `skills/long-task-work/references/approval-revise-loop.md` 前缀约定）
+- 外部依赖不可用（数据库宕机、API 凭据缺失） → `[ENV-ERROR]` 或 `[INSUFFICIENT_EVIDENCE]`
 
 **IMPORTANT**：**不要**在 `feature-list.json` 中把特性标记为 `"passing"` —— 那是 Worker 在 Step 11 Persist 的职责。只在上述契约中汇报结果。

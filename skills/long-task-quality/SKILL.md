@@ -19,18 +19,22 @@ You are a Quality Gates execution SubAgent.
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-quality/references/quality-execution.md
 2. Read `env-guide.md` §3 (Build & Execution Commands) for test/coverage/static-analysis commands. Read `env-guide.md` §2 for environment activation. Both are the **single source of truth** — do NOT derive commands from long-task-guide.md (it only navigates; env-guide.md §3 owns commands).
-3. Execute all 3 gates in order (Gate 0 → 1 → 2)
+3. Execute all 4 gates in order (Gate 0 → 0.5 → 1 → 2)
    - **Note**: Static analysis tools (listed in `env-guide.md §3` / `docs/rules/coding-constraints.md` "Static Analysis Tools" table) are enforced during TDD Refactor, not here. If `docs/rules/build-and-compilation.md` documents code generation directories, exclude them from coverage measurement in Gate 1.
+   - **Gate 0.5 (SRS Trace)**: runs `python scripts/check_srs_trace_coverage.py feature-list.json --feature {feature_id} --test-files {feature_test_files}`; fails if any FR-ID in `srs_trace` is not literally referenced in any of the feature's test artifacts. Returns `next_step_input.uncovered_fr_ids` listing the gaps.
 4. If a gate fails, fix and retry per the rules (max 3 attempts per gate)
 5. Return your result using the Structured Return Contract at the end of the execution rules
 
-## Input Parameters
-- Feature ID: {feature_id}
-- Feature: {feature_json}
-- quality_gates thresholds: {quality_gates_json}
-- tech_stack: {tech_stack_json}
-- Working directory: {working_dir}
-- Feature test files: {feature_test_files}  (test files written/modified during TDD for this feature)
+## Input Parameters (minimal; derive the rest yourself)
+- feature_id: {feature_id}
+- feature_list_path: {feature_list_path}  (resolved path to feature-list.json)
+- feature_test_files: {feature_test_files}  (paths written/modified during TDD for this feature)
+- working_dir: {working_dir}
+
+## Self-Resolution (before running gates)
+1. Read {feature_list_path}; pick features[i] with id == {feature_id} → derive `feature` (含 srs_trace / ui / required_configs 引用)、根级 `quality_gates` / `tech_stack` / `real_test`
+2. Glob `env-guide.md` → §2 (activation) + §3 (build/test/coverage/static-analysis commands); §3 是命令的权威源，禁从 long-task-guide.md 派生
+3. 用 feature.srs_trace 作为 Gate 0.5 的 FR-ID 目标集（脚本参数 --feature {feature_id} 已足够；脚本会自行读 feature-list.json 的 srs_trace）
 
 ## Key Constraint
 - Do NOT mark the feature as "passing" in feature-list.json — only report results
@@ -56,9 +60,9 @@ Agent(
 读取 SubAgent 返回的文本，定位 `**status**:` 行（统一契约字段）。为向后兼容，可能同时存在遗留的 `### Verdict:` 行，但权威字段是 `**status**`。
 
 - **`**status**: pass`**
-  1. 提取 `**next_step_input**`（coverage_line、coverage_branch、all_tests_pass、test_count）
+  1. 提取 `**next_step_input**`（coverage_line、coverage_branch、all_tests_pass、test_count、srs_trace_coverage）
   2. 可选：读取 Metrics 表以补充 task-progress.md 详情
-  3. 在 `task-progress.md` 中记录："Quality Gates: PASS (line {X}%, branch {Y}%)"
+  3. 在 `task-progress.md` 中记录："Quality Gates: PASS (line {X}%, branch {Y}%, srs_trace {C}/{N} covered)"
   4. 进入下一步（Feature-ST）
 
 - **`**status**: fail`**
