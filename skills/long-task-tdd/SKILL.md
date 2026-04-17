@@ -307,14 +307,6 @@ subagent 模式下使用 `skills/long-task-tdd/prompts/implementer-prompt.md` �
 
 15 条反模式完整清单：阅读 `skills/long-task-tdd/testing-anti-patterns.md`。
 
-## 集成
-
-**调用方：** long-task-work（Steps 5-7）—— 依据 `references/structured-return-contract.md` 作为独立 SubAgent 分发
-**内部分发：** implementer subagent（`skills/long-task-tdd/prompts/implementer-prompt.md`）
-**依赖：** 已存在特性详细设计（来自 Work Step 4，通过 `long-task:long-task-feature-design`）
-**产出：** 通过的测试 + 实现代码 + Structured Return Contract
-**下游：** long-task-quality（通过 Work Step 8）
-
 ## Structured Return Contract
 
 当完整的 Red → Green → Refactor 循环完成（或被阻塞）时，**严格**按以下格式返回结果：

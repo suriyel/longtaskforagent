@@ -204,15 +204,3 @@ ATS 文档保存并提交后：
 | "本项目太小不需要 ATS" | 查 Scaling 指南——微型项目自动跳过；小型项目得到轻量 ATS |
 | "NFR 测试在 ST 阶段决定" | NFR 测试方法必须前置指定工具与阈值 |
 | "评审太过头" | 独立评审能捕捉作者漏看的覆盖缺口 |
-
-## 集成
-
-**被调用方：** using-long-task（设计文档存在、无 ATS 文档、无 feature-list.json 时）或 long-task-design（Step 6）
-**依赖：** `docs/plans/*-srs.md` 已审批 SRS；`docs/plans/*-design.md` 已审批 Design；可选 `docs/plans/*-ucd.md` 已审批 UCD
-**衔接到：** long-task-init（ATS 审批后）
-**产出：** `docs/plans/YYYY-MM-DD-<topic>-ats.md`
-**下游消费方：**
-- `long-task-init` —— 读取 ATS 基于类别分配设置 `ui` 标记
-- `long-task-feature-st` —— 读取 ATS 强制类别要求（经由 srs_trace 查询）
-- `long-task-st` —— 以 ATS 作为 RTM 校验基线
-- `long-task-increment` —— 需求变更时就地更新 ATS

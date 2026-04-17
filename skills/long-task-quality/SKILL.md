@@ -69,10 +69,3 @@ Agent(
 - **`**status**: blocked`**
   1. 阅读 `**blockers**` 数组 —— 识别阻塞原因（工具未安装、环境错误等）
   2. 通过 `AskUserQuestion` 携带阻塞细节与已尝试的动作升级给用户
-
-## 集成
-
-**调用方：** long-task-work（Step 8）
-**依赖：** TDD 循环已完成（long-task-tdd 已通过 —— 测试存在并通过）
-**产出：** 结构化摘要（覆盖率 %、每个关卡 pass/fail）
-**下游：** long-task-feature-st（通过 Work Step 9）

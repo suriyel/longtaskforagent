@@ -198,10 +198,3 @@ Agent(
      - 若任一手工用例为 `BLOCKED` → 最终判定 **BLOCKED**
 
 5. 以最终判定进入 Step 4 的后续处理（上面既有 PASS/FAIL/BLOCKED 逻辑）。
-
-## 集成
-
-**调用方：** `long-task-work`（Step 9）
-**依赖：** Quality Gates 已通过（long-task-quality 完成）
-**产出：** `docs/test-cases/feature-{id}-{slug}.md` 含执行结果 + 结构化摘要
-**下游：** Inline Check + Persist（Worker Step 10 + 11）

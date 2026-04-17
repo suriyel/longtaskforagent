@@ -217,14 +217,25 @@ Skill 模板里几乎每份 SKILL.md 结尾都有一节 `## 集成`（调用方 
 
 **结论**：`## 集成` 是纯"给人看的导航索引"，每次主 agent 循环白白灌入 5-10 行 token。CLAUDE.md 已有更完整的权威版（Phase Workflow Summary 表 + Skill Call Graph + Generated Persistent Artifacts 表）。**删**。
 
-**本次处置**：
-- `long-task-init/SKILL.md` / `long-task-increment/SKILL.md` / `long-task-requirements/SKILL.md` 三份 orchestrator 的 `## 集成` 节全删。
-- 其他 skill（`long-task-work` / `long-task-tdd` / `long-task-design` / `long-task-feature-design` / ... 约 12 份）同款待清理——后续 Occam 轮次批处理。
+**处置范围（已全量清理完毕）**：
+- 第一轮（orchestrator）：`long-task-init` / `long-task-increment` / `long-task-requirements`
+- 第二轮（其余 12 份）：`long-task-work` / `long-task-tdd` / `long-task-quality` / `long-task-feature-design` / `long-task-feature-st` / `long-task-design` / `long-task-ats` / `long-task-ucd` / `long-task-st` / `long-task-hotfix` / `long-task-finalize` / `long-task-retrospective`
+- **结果**：全仓 `grep '^## 集成' skills/` 应零命中。若后续新 skill 引入 `## 集成` 尾节视为回归，PR review 应拒绝。
+
+**tdd 特殊处理记录**：`long-task-tdd/SKILL.md` 的 `## 集成` 紧邻 `## Structured Return Contract`。前者删，**后者保留**——它定义 SubAgent 返回的 5 字段契约，是主 agent 解析 tdd 结果的硬依赖，不是开发者导航。此区分印证了坑 4 的核心判定："执行路径要/不要"——返回契约规范是**要**，集成索引是**不要**。
 
 **规则**：
-- 新 skill 模板**不再添加** `## 集成` 尾节。
+- 新 skill 模板**不再添加** `## 集成` 尾节（合入 skill 脚手架生成器的默认模板禁令）。
 - 若某项集成语义确实需要 AI 运行时消费（如条件路由），应直接写进触发它的那一个 Step，而不是事后索引。
-- 开发者导航需求由 `CLAUDE.md` + `docs/*-lessons.md` 统一承担。
+- 开发者导航需求由 `CLAUDE.md`（Phase Workflow Summary / Skill Call Graph / Generated Persistent Artifacts）+ `docs/*-lessons.md` 统一承担。
+
+**识别启发式**（给未来清理轮次用）：尾节标题若属以下形态，多半是给人看的索引而非 AI 指令，需按消费者清单复核：
+- `## 集成` / `## Integration`
+- `## 调用关系` / `## Caller-Callee`
+- `## 下游消费方` / `## Downstream Consumers`
+- `## 相关文档` / `## See Also`
+
+反例（**不要**误删）：`## Structured Return Contract` / `## Return Schema` / `## 输入契约` —— 这些是 AI 执行硬依赖。
 
 ### 坑 5：DISPATCH 语法偏离既有约定
 

@@ -197,10 +197,3 @@ SRS 描述系统必须做什么（WHAT）。设计文档描述怎么做（HOW）
 2. 每个关键依赖与目标 runtime 版本兼容。
 3. 对 copyleft license（GPL/AGPL）必须显式与用户确认。
 4. brownfield：新选型不得与 `docs/rules/coding-constraints.md` 的禁用清单冲突；如必须冲突，在 §1.4 "Rejected Alternatives" 列或以 `⚠ Design Override: [reason]` 标注。
-
-## 集成
-
-**被调用方：** using-long-task（SRS + UCD 存在、无设计文档、无 feature-list.json 时）或 long-task-ucd（Step 8）
-**依赖：** `docs/plans/*-srs.md`（必需）；`docs/plans/*-ucd.md`（可选，UI 项目）；`docs/rules/*.md`（可选，brownfield 约束背景）
-**衔接到：** long-task-ats
-**产出：** `docs/plans/YYYY-MM-DD-<topic>-design.md`

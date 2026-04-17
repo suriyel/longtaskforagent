@@ -287,14 +287,3 @@ UCD 文档保存并提交后：
 4. **描述状态，不只是默认** —— 每个可交互元素都需要 hover、active、disabled、error 状态
 5. **指定响应式意图** —— 组件/页面在每个断点如何适配
 6. **锚定到 SRS 角色** —— 提示词应服务定义的用户类型（例如面向移动优先用户的更大触控目标）
-
-## 集成
-
-**被调用方：** using-long-task（SRS 存在、无 UCD 文档、无设计文档、无 feature-list.json，且 SRS 含 UI 特性时）或 long-task-requirements（Step 8 衔接到此）
-**依赖：** `docs/plans/*-srs.md` 中已审批的 SRS
-**衔接到：** long-task-design（UCD 审批后）
-**产出：** `docs/plans/YYYY-MM-DD-<topic>-ucd.md`
-**被引用方：**
-- long-task-design（UI/UX 节引用 UCD 样式 token 与组件目录）
-- long-task-work（前端特性引用 UCD 保持风格一致）
-- Inline Check（Worker Step 10 中的 UCD token grep）

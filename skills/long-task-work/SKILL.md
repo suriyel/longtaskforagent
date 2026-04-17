@@ -345,13 +345,3 @@ auto-loop 脚本（`scripts/auto_loop.py`）在外部处理多特性自动化—
 4. 为 bug 写失败测试
 5. 用单一定向变更修复
 6. 3 次尝试后放弃 → 升级给用户
-
-## 集成
-
-**被调用方：** using-long-task（feature-list.json 存在时）或 long-task-init（Step 16）
-**调用（严格顺序）：**
-1. `long-task:long-task-tdd`（Step 5-7）—— TDD Red-Green-Refactor
-2. `long-task:long-task-quality`（Step 8）—— 覆盖率关卡
-3. `long-task:long-task-feature-st`（Step 9）—— 黑盒 Feature 验收测试（ISO/IEC/IEEE 29119，自管生命周期）
-**读/写：** feature-list.json、task-progress.md（含 `## Current State`）、RELEASE_NOTES.md
-**按需读取（通过 Read 工具，不是 Skill 工具）：** `references/systematic-debugging.md`

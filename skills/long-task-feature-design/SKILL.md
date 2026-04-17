@@ -160,10 +160,3 @@ Agent(
 - **`**status**: blocked`**（遗留：`### Verdict: BLOCKED`）
   1. 读取 Issues 表 —— 识别阻塞原因
   2. 通过 `AskUserQuestion` 升级给用户
-
-## 集成
-
-**调用方：** long-task-work（Step 4）
-**依赖：** 系统设计文档、SRS、feature-list.json
-**产出：** `docs/features/YYYY-MM-DD-<feature-name>.md`（由 SubAgent 写入）
-**下游：** long-task-tdd（通过 Work 的 Steps 5-7）

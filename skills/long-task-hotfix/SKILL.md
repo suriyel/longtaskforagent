@@ -184,11 +184,3 @@ python scripts/validate_features.py feature-list.json
 | "信号文件有错但意图很清楚" | 校验器必须通过；请用户修文件 |
 | "先删除信号文件，再清理" | 信号文件删除是**最后**一步，前提是一切都已校验通过 |
 | "修复很简单，Worker 流水线大材小用" | Worker 确保回归测试、覆盖率、ST 用例与评审 —— 全部必要 |
-
-## 集成
-
-当项目根存在 `bugfix-request.json` 时，本 skill 由 `using-long-task` 路由调用（最高优先级 —— 高于 increment）。本 skill 完成后：
-- `bugfix-request.json` 已删除
-- `feature-list.json` 中新增一条 `category: "bugfix"` 的特性，`status: "failing"`
-- 路由下一次检测：`feature-list.json` 存在且有 failing 特性 → `long-task-work`
-- Worker 拾取该 bugfix 特性并运行完整的 TDD → Quality → ST → Review 流水线
