@@ -6,8 +6,7 @@
 
 1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`
 2. Glob `docs/features/*` → 找到功能设计文档
-3. 读取 `long-task-guide.md` → 提取测试命令、完整测试命令
-4. 找到 TDD Red 创建的测试文件（匹配该功能的最近测试文件）
+3. 找到 TDD Red 创建的测试文件（匹配该功能的最近测试文件）
 
 ## 步骤 2：读取实现约束
 
