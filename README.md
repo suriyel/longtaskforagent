@@ -449,7 +449,7 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 
 ```
 long-task-agent/
-├── skills/                          # 13 个技能（按需加载）
+├── skills/                          # 25 个技能（按需加载；详见 CLAUDE.md Skill System 段）
 │   ├── using-long-task/             # 引导路由器
 │   ├── long-task-requirements/      # 阶段 0a：需求和 SRS
 │   ├── long-task-ucd/               # 阶段 0b：UCD 风格指南

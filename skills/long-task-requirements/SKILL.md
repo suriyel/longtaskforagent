@@ -33,16 +33,13 @@ description: "Use when no SRS doc and no design doc and no feature-list.json exi
    - Lite：L3（合并，1 轮）
    - Expert：E6（NFR + 隐藏需求统一量化）
 6. **约束、假设、术语表** —— 两条轨道相同
-7. **分类需求** —— functional / NFR / constraint / assumption / interface / exclusion
-8. **撰写需求** —— 应用 EARS 模板、分配 ID、撰写验收标准、生成图表
-9. **校验 SRS** —— 检查 8 个质量属性，检测反模式，验证可测试性
-10. **粒度分析** —— 双向 sizing：检测过大 FR（G1-G6 拆分）与过小 FR（S1-S4 合并）以匹配上下文预算；非平凡变更需要用户审批
-11. **范围契合与延后** —— 评估本轮 vs 下一轮，如适用则生成延后待办清单
-12. **[仅 Expert] 一致性校验** —— 参考 `references/alignment-validation.md`
-13. **SRS 合规评审** —— 分发 srs-reviewer subagent；关卡：所有检查 PASS 后才能继续
-14. **呈现并审批 SRS** —— Lite：单一合并步骤；Expert：按章节逐段
-15. **保存 SRS 与待办清单** —— `docs/plans/YYYY-MM-DD-<topic>-srs.md` + 延后待办清单（如有）并提交
-16. **衔接到 UCD** —— **必需子 skill：** 调用 `long-task:long-task-ucd`
+7. **共享质量流水线（Step 7–11）** —— DISPATCH `long-task-requirements-quality`（分类 / EARS / 图表 / 8 属性校验 / 粒度 / 延后候选）；主 agent 按返回驱动 user-input-required 审批
+8. **单轮模式声明（Step 11b）** —— AskUserQuestion 可选标记 `Single-Round: Yes`
+9. **[仅 Expert] 一致性校验（E10）** —— DISPATCH `long-task-requirements-alignment`
+10. **SRS 合规评审（Step 13）** —— DISPATCH reviewer（加载 `prompts/srs-reviewer-prompt.md`）；关卡：所有检查 PASS
+11. **呈现并审批 SRS（Step 14）** —— Lite：单一合并；Expert：按章节逐段
+12. **保存（Step 15）** —— DISPATCH `long-task-requirements-finalize`（写 `docs/plans/YYYY-MM-DD-<topic>-srs.md` + 可选 deferred + git commit）
+13. **衔接到 UCD（Step 16）** —— **必需子 skill：** 调用 `long-task:long-task-ucd`
 
 **终态是调用 long-task-ucd。** 不要调用任何其他 skill。
 
@@ -127,13 +124,18 @@ Lite 挖掘期间，如出现下列任一，无缝切换至 Expert 轨道：
      - Focus: {inferred_dimensions}
      - Path: {inferred_path or "."}
      - User question: "{user_description_summary}"
-     Execute the skill and return the exploration results.
+
+     Return ONLY a structured summary with these JSON-like keys:
+     - `modules[]`: module/package names relevant to focus
+     - `integration_points[]`: external systems / APIs / data stores touched
+     - `architectural_patterns[]`: frameworks / layering / conventions in use
+     - `api_surface[]`: public functions/classes/endpoints relevant to focus (signature + location)
+     - `narrative_insights[]`: ≤5 bullets of non-obvious findings
+     Do NOT return full exploration prose, file dumps, or architectural diagrams.
      """
    )
    ```
-4. 如果 explore 返回有用发现 → 纳入你对 L1/E1 提问的心智模型：
-   - 在问题中引用发现的模块、API、数据模型（例如："我在 `src/auth/` 发现了基于 JWT 的认证——你是想扩展它还是替换它？"）
-   - 利用发现的架构模式，就集成点提出更具信息量的问题
+4. 如果 explore 返回有用发现 → 引用结构化摘要中的模块/API 为 L1/E1 提问增加精准度（例如："我在 `src/auth/` 发现了基于 JWT 的认证——你是想扩展它还是替换它？"）
 5. 如果 explore 返回 BLOCKED 或无可操作发现 → 静默跳过，继续到 L1/E1
 
 **本步骤非阻塞** —— 失败或无有用结果都不应阻止进入挖掘。
@@ -174,12 +176,11 @@ Lite 挖掘期间，如出现下列任一，无缝切换至 Expert 轨道：
 
 Q2 任何 YES → 内联生成 EARS 格式的 NFR 候选。如果 Q2 揭示重大监管暴露 → 升级触发。
 
-### L4–L6：分类、撰写、校验、呈现、保存
+### L4–L6：共享质量流水线
 
-Lite 挖掘后，进入**共享步骤**（checklist 中的 Step 7–16）：
-- L4 = Step 7–8（分类、EARS、图表）
-- L5 = Step 9–11 + Step 13（校验、粒度、延后、SRS reviewer，Group P = PASS-SKIPPED）
-- L6 = Step 14–16（整段 SRS 作为单一审批呈现，保存，衔接到 UCD）
+Lite 挖掘后，进入 Step 7–11（DISPATCH quality sub-skill）→ Step 11b → Step 13（DISPATCH reviewer，`track=lite` 使 Group P = PASS-SKIPPED）→ Step 14（整段 SRS 单一审批）→ Step 15（DISPATCH finalize）→ Step 16（衔接 UCD）。
+
+**Lite 轨道跳过 E10**（一致性校验仅 Expert）。
 
 ---
 
@@ -244,157 +245,50 @@ Lite 挖掘后，进入**共享步骤**（checklist 中的 Step 7–16）：
 
 **E8（术语表）**：具有潜在歧义的领域术语。
 
-### E9：分类、撰写、校验、粒度、延后
+### E9：共享质量流水线
 
-与 checklist 中共享 Step 7–11 相同。无差异。
+进入 Step 7–11（DISPATCH quality sub-skill；与 Lite 共享）。
 
 ### E10：一致性校验 [仅 Expert]
 
-阅读 `references/alignment-validation.md` 并严格执行。
+> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-requirements-alignment`
+> **input**: `pain_map`, `jtbd`, `workarounds`, `walkthrough_findings`, `hidden_reqs_yes_answers`,
+>   `fr_list`, `nfr_list`（从 quality 的 `draft_sections` 提取）
+> **expect**: Structured Return Contract；`next_step_input` 含 `alignment_report` /
+>   `alignment_summary_text` / `new_requirements` / `open_questions`
 
-**摘要**：根因可追溯性（Pain Map → FR 覆盖）、JTBD 产出验证（**关卡——失败时阻塞 E11**）、事前复盘、孤立 FR 检测。输出 → SRS 第 1.3 节 Alignment Validation 字段。
+按 `references/approval-revise-loop.md` 处理返回。`blocked` 时主 agent 按 `blockers` 驱动 AskUserQuestion（≥3 追溯性缺口逐项决策 / JTBD 未覆盖方面选择），Clarification Addendum 重分发。
+
+pass 后：`new_requirements` 并入 SRS FR/NFR 列表；`open_questions` 进 §11；`alignment_summary_text` 待 Step 15 由 finalize 写入 §1.3。
 
 ### E11：SRS Reviewer、呈现、保存
 
-与共享 Step 13–16 相同，两点差异：
-- SRS reviewer 包含 **Group P**（激活，而非 PASS-SKIPPED）
-- 非平凡项目按章节逐段呈现（不使用单一合并审批）
+进入 Step 13（DISPATCH reviewer，`track=expert`，Group P 激活）→ Step 14（非平凡项目按章节逐段呈现，不使用单一合并审批）→ Step 15（DISPATCH finalize，传入 `alignment_summary_text`）→ Step 16。
 
 ---
 
 ## Step 7–11：共享质量流水线（两条轨道）
 
-### Step 7：分类需求
-
-组织到以下类别：
-
-| 类别 | ID 前缀 | 说明 |
-|---|---|---|
-| Functional | FR-001 | 可观察系统行为 |
-| Non-Functional | NFR-001 | 带可度量标准的质量属性 |
-| Constraint | CON-001 | 限制方案空间的硬限 |
-| Assumption | ASM-001 | 假定为真的信念；记录失效风险 |
-| Interface | IFR-001 | 外部系统契约 |
-| Exclusion | EXC-001 | 明确不在范围 |
-
-### Step 8：用 EARS 模板撰写需求
-
-对每条功能需求应用 EARS 模板：
-
-| 模式 | 模板 | 何时使用 |
-|---|---|---|
-| **Ubiquitous** | The system shall `<action>`. | 始终在线的行为 |
-| **Event-driven** | When `<trigger>`, the system shall `<action>`. | 对事件的响应 |
-| **State-driven** | While `<state>`, the system shall `<action>`. | 行为依赖模式/状态 |
-| **Unwanted behavior** | If `<condition>`, then the system shall `<action>`. | 错误处理、容错 |
-| **Optional** | Where `<feature/config>`, the system shall `<action>`. | 可配置能力 |
-
-对每条需求，还要写明：
-- **验收标准** —— 至少一个具体的 Given/When/Then 场景
-- **视觉输出**（如面向 UI）—— 一句描述用户所见变化（渲染意图，不是渲染规范）。例如："蛇在棋盘上的位置每 tick 视觉更新。"对于无用户可见输出的 FR 写 "N/A — backend-only"。本字段为下游阶段（Feature Design、TDD）提供显式视觉语言以派生渲染契约。
-- **优先级** —— Must / Should / Could / Won't（MoSCoW）
-- **来源** —— 追溯到哪个利益相关者需求或用户故事
-
-#### 8c. 生成图表
-
-所有需求撰写完毕后，生成可视化辅助：
-
-**Use Case 视图**（第 3.1 节）：`graph LR`，所有角色用 `Actor((Name))`，所有 FR-xxx 作为用例节点放在 `subgraph System Boundary` 内，按角色-用例参与绘制有向边。
-
-**流程图**（第 4.1 节）：每个含 3+ 顺序步骤或分支的功能区域一张 `flowchart TD`。Start/End 用 `([label])`，判定用 `{condition?}` 搭配 `-- YES -->` / `-- NO -->` 标签。
-
-### Step 9：校验 SRS 质量
-
-#### 9a. 逐需求检查（8 个质量属性）
-
-| # | 属性 | 检查 | 红旗 |
-|---|---|---|---|
-| 1 | **Correct** | 是否追溯到已确认的利益相关者需求？| 孤立需求（镀金）|
-| 2 | **Unambiguous** | 两个读者会写出相同的测试用例吗？| 模糊措辞："快"、"健壮"、"用户友好" |
-| 3 | **Complete** | 所有输入、输出、错误情况、边界都定义了？| "包括但不限于……" |
-| 4 | **Consistent** | 与其他需求无矛盾？| 时序冲突、格式冲突 |
-| 5 | **Ranked** | 有 MoSCoW 优先级？| 所有都是"高优先级" |
-| 6 | **Verifiable** | 能写出通过/失败测试？| "系统应易于使用" |
-| 7 | **Modifiable** | 在且仅在一个地方陈述？| 跨章节重复 |
-| 8 | **Traceable** | 有唯一 ID + 来源链接？| 缺 ID 或孤立 |
-
-#### 9b. 反模式检测
-
-| 反模式 | 检测信号 | 修正 |
-|---|---|---|
-| **模糊形容词** | "快"、"大"、"可扩展"而无数字 | 量化 |
-| **复合需求** | "and" / "or" 连接两项能力 | 拆分 |
-| **设计泄漏** | "class"、"table"、"endpoint" | 重写为行为 |
-| **被动无主语** | "数据应被校验"——由谁？| 加入角色 |
-| **TBD / TBC** | 未解决占位 | 解决或记为 Open Question |
-| **缺少反例** | 只规定正向情况 | 加入错误/边界情况 |
-| **不可测 NFR** | NFR 无可度量阈值 | 加入度量 |
-
-#### 9c. 完备性交叉检查
-
-- 每个功能区域至少有一个错误/边界情况
-- 所有外部接口有数据格式 + 协议
-- 所有 NFR 有度量方法，不只是目标
-- 术语表覆盖所有领域术语
-- Out-of-Scope 节列出延后特性
-
-### Step 10：粒度分析——双向 sizing
-
-把每条 FR 调整到一次 Worker 会话的合适大小。应用过大（G）与过小（S）两种启发式。目标：每条 FR 所产生的特性要能高效使用模型上下文窗口的约 50%。
-
-**Step 10.0 —— 选择你的 sizing 档位：** 你知道自己的最大上下文窗口。对下文所有 G/S 决定应用对应行。
+**Step 10.0 —— 选定 sizing 档位（在 DISPATCH 前由主 agent 决定）**：
 
 | 上下文窗口 | 档位 | 每 FR 目标 AC 数 | 单特性实现范围 |
 |---|---|---|---|
-| ≤ 200K tokens | **Standard** | 3-12 | 约 200-600 行代码 + 测试 |
-| > 200K tokens | **Extended** | 5-20 | 约 500-3000 行代码 + 测试 |
+| ≤ 200K tokens | `standard` | 3-12 | 约 200-600 行代码 + 测试 |
+| > 200K tokens | `extended` | 5-20 | 约 500-3000 行代码 + 测试 |
 
-AC 数低于档位最小值的 FR 是过小（S 启发式候选）。高于档位最大值的 FR 是过大（G 启发式候选）。
+> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-requirements-quality`
+> **input**: `raw_requirements`, `raw_nfrs`, `roles`, `constraints`, `glossary_terms`,
+>   `interfaces`, `exclusions`, `sizing_tier`, `srs_template_path`
+> **expect**: Structured Return Contract；`next_step_input` 含 `draft_sections` /
+>   `granularity_candidates` / `deferral_candidates` / `quality_report` / `diagrams`
 
-**阶段 1 —— 过大检测（G1-G6）：** 拆分对单一会话过粗的 FR。
+按 `references/approval-revise-loop.md` 处理返回。pass 时由主 agent 驱动下列交互（顺序固定）：
 
-| # | 启发式 | 检测信号 |
-|---|---|---|
-| G1 | **多角色** | 2+ 个不同角色执行不同动作 |
-| G2 | **CRUD 捆绑** | Create + Read + Update + Delete 作为单一需求 |
-| G3 | **场景爆炸** | 4+ 条验收标准覆盖不同行为路径 |
-| G4 | **跨层关注** | 同一 FR 中既有后端逻辑又有面向用户 UI |
-| G5 | **多状态行为** | 3+ 个不同系统状态或模式 |
-| G6 | **时序耦合** | 触发事件 + 延后/计划中的后果 |
+1. `quality_report.user_input_required[]` — 每条模糊项 AskUserQuestion 收澄清 → Revision Addendum 重分发
+2. `granularity_candidates.user_input_required[]` — 4+ G/S 候选审批 → Revision Addendum 重分发
+3. `deferral_candidates[]` 非空 → AskUserQuestion 确认延后清单
 
-对分解候选：识别原子行为，应用单一职责测试，保持可追溯性（FR-003 → FR-003a、FR-003b），重新校验子项。
-
-**阶段 2 —— 过小检测（S1-S4）：** 合并对专属会话过琐碎的 FR。
-
-| # | 启发式 | 检测信号 | 动作 |
-|---|---|---|---|
-| S1 | **琐碎新增** | 单一字段/常量/配置，无行为逻辑，≤1 AC | 与父实体/端点 FR 合并 |
-| S2 | **单一断言测试** | 仅 1 条 AC 且无错误/边界情况 | 增补错误/边界 AC，或与共享同一实体/端点的相关 FR 合并 |
-| S3 | **纯数据回显** | 显示/返回另一 FR 产生的数据，无转换 | 与产出 FR 合并为垂直切片 |
-| S4 | **仅 config/setup** | 环境配置、依赖安装、脚手架，无业务逻辑 | 所有 S4 FR 合并为单一 Foundation FR |
-
-**合并规则：**
-- 合并后的 FR 保留主 FR 的 ID；描述中注明 "Incorporates: [列表]"
-- 合并后 AC 总数须 ≤ 20（如超过，G3 再触发——沿更好的缝隙拆分）
-- 合并 FR 必须共享主角色与功能区域
-- 若同一 FR 同时触发 G 与 S：G 优先（先拆分，然后 S 再检查子项）
-
-**决策阈值：**
-
-| 候选数（G 或 S）| 动作 |
-|---|---|
-| 0 | 跳过 |
-| 1-3 | 自动应用；行内呈现理由 |
-| 4+ | 通过 AskUserQuestion 呈现给用户审批 |
-
-### Step 11：范围契合与延后
-
-评估所有需求是否属于本轮。应用范围契合标准（优先级、依赖、完备性、风险、范围预算）。向用户呈现延后建议。若延后获批，生成 `docs/plans/YYYY-MM-DD-<topic>-deferred.md`。
-
-规则：
-- Must 优先级的 FR 永不自动延后
-- 依赖完整性——如果 FR-X 依赖 FR-Y，两者都保留
-- 延后待办清单保留 EARS + 验收标准供 increment 捡起
+全部裁决完进入 Step 11b。
 
 ### Step 11b：单轮模式声明（可选）
 
@@ -413,50 +307,20 @@ AC 数低于档位最小值的 FR 是过小（S 启发式候选）。高于档�
 
 ## Step 13：SRS 合规评审
 
-分发一个 subagent 独立校验 SRS：
+> **DISPATCH** → 启动独立 SubAgent 执行 reviewer（加载 `prompts/srs-reviewer-prompt.md`）
+> **input**: `project_context`, `srs_draft`（来自 quality 的 `next_step_input.draft_sections`），
+>   `requirement_id_list`, `track`（`lite` / `expert`，决定 Group P 是否 PASS-SKIPPED）
+> **expect**: Structured Return Contract；`evidence` 含 Group R/A/C/S/D/G/Z/P 裁决列表；
+>   FAIL 时 `next_step_input` 含 `user_input_items[]` 与 `llm_fixable_items[]` 两类
 
-```
-Task(
-  subagent_type="general-purpose",
-  prompt="""
-  You are an SRS compliance reviewer aligned with ISO/IEC/IEEE 29148.
-  Read the reviewer prompt at: skills/long-task-requirements/prompts/srs-reviewer-prompt.md
+检查组：Group R (R1-R8 质量属性) / A (A1-A6 反模式) / C (C1-C5 完备性) / S (S1-S4 结构) / D (D1-D4 图表) / G (G1-G3 过大) / Z (Z1-Z3 过小) / P (P1-P4 问题一致性；Lite 轨道 PASS-SKIPPED)。
 
-  Project context:
-  {project_context}
+按 `references/approval-revise-loop.md` 处理返回。`fail` 时双轨解决：
 
-  Full SRS draft (all sections):
-  {srs_draft}
+- **Track 1（USER-INPUT）**：对 `user_input_items[]` 用 AskUserQuestion 定向收集（不倾倒完整报告）
+- **Track 2（LLM-FIXABLE）**：并行修复 `llm_fixable_items[]`，合并用户澄清后 Revision Addendum 重分发（Cycle 2）
 
-  Requirement ID list:
-  {requirement_id_list}
-
-  Perform the review following the prompt exactly.
-  """
-)
-```
-
-**所有检查必须 PASS 才能继续：**
-- Group R (R1-R8)：质量属性
-- Group A (A1-A6)：反模式
-- Group C (C1-C5)：完备性
-- Group S (S1-S4)：结构合规
-- Group D (D1-D4)：图表
-- Group G (G1-G3)：粒度（过大检测）
-- Group Z (Z1-Z3)：sizing（过小检测）
-- Group P (P1-P4)：问题一致性（Expert 轨道；Lite 轨道 PASS-SKIPPED）
-
-**FAIL 时——双轨解决：**
-
-**Track 1：USER-INPUT 项 → 立即询问**
-
-使用 `AskUserQuestion` 搭配定向问卷——不要倾倒完整评审报告。
-
-**Track 2：LLM-FIXABLE 项 → 自动修复**
-
-并行修复所有 LLM-FIXABLE 项。重新分发 reviewer（Cycle 2）。
-
-**最多：2 次重分发循环。** Cycle 2 仍失败 → 升级给用户。
+Cycle 2 仍 fail → escalate。
 
 ## Step 14–16：呈现、保存、衔接
 
@@ -475,20 +339,15 @@ Task(
 
 ### Step 15：保存 SRS 文档与延后待办清单
 
-保存到 `docs/plans/YYYY-MM-DD-<topic>-srs.md`。
+> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-requirements-finalize`
+> **input**: `approved_srs_sections`（Step 14 审批通过的章节 map）, `deferred_items`（Step 7–11 第 3 步确认的延后清单，可空）, `topic_name`, `single_round_flag`, `alignment_summary_text`（Expert 轨道；Lite 省略）, `srs_template_path`
+> **expect**: Structured Return Contract；`artifacts_written` 含 SRS 路径 + 可选 deferred 路径；`next_step_input` 含 `srs_path` / `topic`
 
-读取 Step 1 找到的模板：
-1. 保留模板的标题结构
-2. 用已审批 SRS 内容替换每个标题下的指引文字
-3. 如顶部尚无元数据则添加（`Date`、`Status`、`Standard`、`Template` 路径）
-4. 对未覆盖的模板章节：标"[Not applicable]"
-5. 对已审批但无匹配模板章节的内容：追加为"Additional Notes"
-
-如果 Step 11 生成了延后待办清单，一并保存：`docs/plans/YYYY-MM-DD-<topic>-deferred.md`。一起提交。
+按 `references/approval-revise-loop.md` 处理返回。pass 后进 Step 16。
 
 ### Step 16：衔接到 UCD
 
-1. 为下一阶段总结关键输入
+1. 为下一阶段总结关键输入（引用 finalize 返回的 `srs_path`）
 2. **必需子 skill：** 调用 `long-task:long-task-ucd`
 
 ---
@@ -527,5 +386,6 @@ Task(
 
 **被调用方：** using-long-task（无 SRS 文档、无设计文档、无 feature-list.json 时）
 **衔接到：** long-task-ucd（SRS 审批后；无 UI 特性时自动跳到 design）
-**参考：** `references/problem-framing.md`、`references/scenario-walkthrough.md`、`references/hypothesis-correction.md`、`references/alignment-validation.md`
+**参考：** `references/problem-framing.md`、`references/scenario-walkthrough.md`、`references/hypothesis-correction.md`、`references/approval-revise-loop.md`
+**Sub-skills：** `long-task-requirements-quality`（Step 7–11）、`long-task-requirements-alignment`（Expert E10）、`long-task-requirements-finalize`（Step 15）
 **产出：** `docs/plans/YYYY-MM-DD-<topic>-srs.md`，可选 `docs/plans/YYYY-MM-DD-<topic>-deferred.md`

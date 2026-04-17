@@ -119,7 +119,19 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 
 初稿每个 sub-skill SKILL.md 都有"为什么存在"、"主 agent 只消费..."、"本 SubAgent 不发起 AskUserQuestion"等段落。这些是**设计意图**，不是执行指令，SubAgent 读了也不会据此改行为 —— 删。
 
-**规则**：sub-skill 写"怎么做"和"怎么返回"；设计意图放共享引用（如 approval-revise-loop.md 的背景段）或 CLAUDE.md。
+**执行路径 vs 开发经验**：判断某段文字该不该留，看读者是谁。
+
+| 读者 | 文档类型 | 是否允许元叙述 |
+|---|---|---|
+| AI Agent 执行时 | `SKILL.md` + 被 skill 加载的 `references/*.md` | ❌ 只写"怎么做"和"怎么返回" |
+| 开发者（人） | `docs/*.md`（本文档这类经验总结）、`CLAUDE.md` | ✅ 可以写背景、拆分逻辑、历史沿革 |
+
+**常见误区**（后续重构 `long-task-requirements` 时踩到过）：把"此次拆分涉及的 sub-skill 清单"、"本模板复用了 X"、"为什么存在"这类元叙述塞进 `references/approval-revise-loop.md`。这份文件在主 agent 每次循环都会被读入执行上下文 —— 元叙述对 AI 的动作没有影响，只是纯消耗 token。
+
+**规则**：
+- 执行路径文档里，每一句都应该是 AI 在判断分支 / 组装 prompt / 校验输出时会用到的信息
+- 拆分背景、"本次从 X 重构到 Y"、"复用了 Z"这些话只写在开发经验文档（`docs/*-lessons.md`）或 commit message
+- 初稿写完后自检：把每段话代入"如果删了这段，AI 行为会不会变？"—— 不会变就删
 
 ### 坑 5：DISPATCH 语法偏离既有约定
 
@@ -145,11 +157,34 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 
 **关键**：总行数变多不是回归 —— 主 agent 单次循环接触的行数才是上下文窗口消耗指标。713 行分散在 7 个文件，主 agent 只读其中 330 行（SKILL.md 162 + loop 168），sub-skill 的 60-100 行在独立 SubAgent 窗口中。
 
+## 保守拆分（交互 vs 非交互）：long-task-requirements 经验
+
+经验文档最初把该 skill 列为 ❌（整体不拆）。重构实践表明整体结论正确，但**拆分粒度可以更细**——按"交互 vs 非交互"分界而不是整体判断：
+
+**保留主 agent**（多轮 AskUserQuestion 密集）：
+- Lite L1/L2/L3、Expert E1-E4 / E6-E8 的所有挖掘轮次
+- Step 14 章节审批（Expert 逐节呈现）
+- Step 11b 单轮模式声明
+- quality sub-skill 返回的 user-input-required 候选（粒度 4+ 审批、模糊项澄清、延后清单确认）
+
+**下沉 sub-skill**（纯算法 / 校验 / 落盘）：
+- Step 7-11 → `long-task-requirements-quality`（分类 + EARS + 图表 + 8 属性 + G/S 粒度 + 延后候选）
+- Expert E10 → `long-task-requirements-alignment`（根因 / JTBD / pre-mortem / 孤儿 FR）
+- Step 13 reviewer → DISPATCH 直接加载 `prompts/srs-reviewer-prompt.md`（不新建 sub-skill）
+- Step 15 → `long-task-requirements-finalize`（保存 + commit）
+
+**关键设计决策**：
+- sub-skill **绝不发起 AskUserQuestion**；需要用户决定的场景统一转 `blockers` 返回，主 agent 按 Clarification Addendum 重分发
+- 主 agent 保留 **Step 16 衔接下一 skill 的控制权**；finalize 只返回 `srs_path`，不在 sub-skill 里触发 `long-task-ucd`
+- `approval-revise-loop.md` 各自维护一份（不跨 skill 共享）——避免跨 skill 耦合风险
+
+**Step 1.6 代码探索不拆，改返回契约**：原先 explore 返回全文污染主 context；改为要求返回结构化摘要（`modules[] / integration_points[] / architectural_patterns[] / api_surface[] / narrative_insights[]`），主 agent 从摘要引用模块/API 做提问。
+
 ## 复用到其他 skill 的判断表
 
 | Skill | 是否适合拆分 | 理由 |
 |---|---|---|
-| `long-task-requirements` | ❌ | 多轮 AskUserQuestion 驱动，拆分后主 agent 要反复跨 SubAgent 边界 |
+| `long-task-requirements` | ⚠️ 部分（已拆） | 多轮 AskUserQuestion 挖掘留主 agent；尾部 Step 7-11（质量流水线）/ E10（一致性校验）/ Step 15（落盘）可拆，以交互 vs 非交互为分界 |
 | `long-task-design` | ⚠️ 部分 | 评审可拆（类似 ats-reviewer），但设计本体仍以主 agent 交互为主 |
 | `long-task-work` | ✅ 已拆 | 参考项目：feature-design / tdd / quality / feature-st 已是 SubAgent-per-Step |
 | `long-task-hotfix` | ❌ | 复现 + 根因分析强依赖主 agent 的代码理解与交互 |

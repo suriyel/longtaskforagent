@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 22 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills); bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 25 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills + 3 requirements sub-skills); bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -37,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 22-Skill System (17 top-level + 5 increment sub-skills)
+### 25-Skill System (17 top-level + 5 increment sub-skills + 3 requirements sub-skills)
 
 #### Phase Skills
 
@@ -82,6 +82,16 @@ All dispatched by `long-task-increment` orchestrator; each returns a Structured 
 | `long-task-increment-ucd` | Step 5 — in-place UCD style guide revision; auto-skip if no UI reqs |
 | `long-task-increment-srs` | Step 6 — in-place SRS update + §1.4 ESI backfill + feature-list.json decomposition + validate |
 
+#### Discipline Skills (sub-skills of long-task-requirements)
+
+All dispatched by `long-task-requirements` orchestrator; each returns a Structured Return Contract; main agent handles approval via `skills/long-task-requirements/references/approval-revise-loop.md`.
+
+| Skill | Purpose |
+|-------|---------|
+| `long-task-requirements-quality` | Step 7–11 — classify, write EARS, generate diagrams, quality-validate, granularity size (G1-G6/S1-S4), propose deferrals |
+| `long-task-requirements-alignment` | Expert E10 — root-cause traceability, JTBD verification, pre-mortem, orphan FR detection |
+| `long-task-requirements-finalize` | Step 15 — save SRS + optional deferred backlog + git commit |
+
 #### Meta Skills
 
 | Skill | Purpose |
@@ -95,6 +105,9 @@ All dispatched by `long-task-increment` orchestrator; each returns a Structured 
 using-long-task (router)
    ├─→ codebase-scanner SubAgent (brownfield, no docs/rules/) ──→ long-task-requirements
    ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ long-task-work
+   │      ├─→ long-task-requirements-quality (Step 7–11)
+   │      ├─→ long-task-requirements-alignment (Expert E10; auto-skip for Lite)
+   │      └─→ long-task-requirements-finalize (Step 15)
    │                              (auto-skip: no UI)               (auto-skip: ≤5 FR)
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
    │      └─→ validate → reproduce → root cause → enqueue as category=bugfix → long-task-work
@@ -240,7 +253,10 @@ Key field notes:
 long-task-agent/
 ├── skills/
 │   ├── using-long-task/SKILL.md + references/{architecture,roadmap}.md
-│   ├── long-task-requirements/SKILL.md + references/{problem-framing,scenario-walkthrough,hypothesis-correction,alignment-validation}.md
+│   ├── long-task-requirements/SKILL.md + references/{problem-framing,scenario-walkthrough,hypothesis-correction,approval-revise-loop}.md
+│   ├── long-task-requirements-quality/SKILL.md
+│   ├── long-task-requirements-alignment/SKILL.md + references/alignment-validation.md
+│   ├── long-task-requirements-finalize/SKILL.md
 │   ├── long-task-ucd/SKILL.md
 │   ├── long-task-hotfix/SKILL.md
 │   ├── long-task-increment/SKILL.md + references/{brownfield-adaptation,approval-revise-loop}.md
@@ -293,7 +309,7 @@ long-task-agent/
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 22 skills loaded on-demand (17 top-level + 5 increment sub-skills).
+This project uses a multi-session agent workflow with 25 skills loaded on-demand (17 top-level + 5 increment sub-skills + 3 requirements sub-skills).
 The `using-long-task` skill routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS/UCD in place → new features appended → Worker cycles → ST.
