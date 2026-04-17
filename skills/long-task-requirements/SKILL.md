@@ -114,27 +114,18 @@ Lite 挖掘期间，如出现下列任一，无缝切换至 Expert 轨道：
    拿不准时，省略 `--depth`，让 explore 的 LOC 自动检测决定（<1K→quick，1K-10K→standard，>10K→deep）。
 
 3. 以上下文驱动的参数分发 `long-task-explore`：
-   ```
-   Agent(
-     subagent_type="general-purpose",
-     description="Targeted codebase exploration for requirements context",
-     prompt="""
-     Invoke the long-task:long-task-explore skill with these parameters:
-     - Depth: {determined_depth or omit for auto-detect}
-     - Focus: {inferred_dimensions}
-     - Path: {inferred_path or "."}
-     - User question: "{user_description_summary}"
 
-     Return ONLY a structured summary with these JSON-like keys:
-     - `modules[]`: module/package names relevant to focus
-     - `integration_points[]`: external systems / APIs / data stores touched
-     - `architectural_patterns[]`: frameworks / layering / conventions in use
-     - `api_surface[]`: public functions/classes/endpoints relevant to focus (signature + location)
-     - `narrative_insights[]`: ≤5 bullets of non-obvious findings
-     Do NOT return full exploration prose, file dumps, or architectural diagrams.
-     """
-   )
-   ```
+   > **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-explore`
+   > **input**: `depth`（由上文档位决定，或省略触发自动检测）, `focus`（推断的维度列表）,
+   >   `path`（推断路径或 `.`）, `user_question`（用户描述摘要）
+   > **expect**: 仅结构化摘要，含下列 JSON-like keys —
+   >   - `modules[]`：与 focus 相关的模块 / 包名
+   >   - `integration_points[]`：外部系统 / API / 数据存储
+   >   - `architectural_patterns[]`：框架 / 分层 / 约定
+   >   - `api_surface[]`：与 focus 相关的公共函数 / 类 / 端点（签名 + 位置）
+   >   - `narrative_insights[]`：≤5 条非显而易见的发现
+   >
+   > 禁止返回完整探索叙述 / 文件倾倒 / 架构图。
 4. 如果 explore 返回有用发现 → 引用结构化摘要中的模块/API 为 L1/E1 提问增加精准度（例如："我在 `src/auth/` 发现了基于 JWT 的认证——你是想扩展它还是替换它？"）
 5. 如果 explore 返回 BLOCKED 或无可操作发现 → 静默跳过，继续到 L1/E1
 
