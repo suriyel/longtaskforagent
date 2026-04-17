@@ -203,6 +203,29 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 
 **与产物索引表子类的区别**：产物表是"把给人看的放进 AI 文档"；跨 phase 错位是"把给后来人的放进最早人的指令里"——前者读者错，后者时机错。两者都靠"执行路径消费者清单"识别，但修法不同：前者删到 CLAUDE.md / lessons；后者**迁移**到正确的 phase SKILL.md。
 
+#### 坑 4 的高发子类：`## 集成` / `## Integration` 尾节
+
+Skill 模板里几乎每份 SKILL.md 结尾都有一节 `## 集成`（调用方 / 读取 / 写入 / 下游 / 子 skill），是本项目早期模板遗留。本次对 `long-task-init` / `long-task-increment` / `long-task-requirements` 三个 orchestrator 清理时发现：该节 5 条字段**逐条都零执行消费者**。
+
+| 字段 | 主 agent 是否读取并分支 | 真正的权威源 |
+|---|---|---|
+| 调用方（被谁调用） | ❌ 路由已在本 skill 启动时完成；主 agent 不回溯来源 | Claude Code 按 frontmatter `description:` 路由；CLAUDE.md Phase Workflow Summary |
+| 读取（消费哪些文件） | ❌ 每步 Step 1 / DISPATCH stub 已自行声明所需路径 | 各 Step 的执行文本 |
+| 写入（产出哪些文件） | ❌ 每个 DISPATCH 的 `expect: artifacts_written=...` 已声明 | DISPATCH stubs + `structured-return-contract.md` |
+| 下游（衔接到哪个 skill）| ❌ 最后一 Step 的 handoff 句已明示 | 最后一 Step |
+| 子 skill 列表 | ❌ 各 DISPATCH stub 自己点名；Skill Call Graph 是索引 | DISPATCH stubs + CLAUDE.md Skill Call Graph |
+
+**结论**：`## 集成` 是纯"给人看的导航索引"，每次主 agent 循环白白灌入 5-10 行 token。CLAUDE.md 已有更完整的权威版（Phase Workflow Summary 表 + Skill Call Graph + Generated Persistent Artifacts 表）。**删**。
+
+**本次处置**：
+- `long-task-init/SKILL.md` / `long-task-increment/SKILL.md` / `long-task-requirements/SKILL.md` 三份 orchestrator 的 `## 集成` 节全删。
+- 其他 skill（`long-task-work` / `long-task-tdd` / `long-task-design` / `long-task-feature-design` / ... 约 12 份）同款待清理——后续 Occam 轮次批处理。
+
+**规则**：
+- 新 skill 模板**不再添加** `## 集成` 尾节。
+- 若某项集成语义确实需要 AI 运行时消费（如条件路由），应直接写进触发它的那一个 Step，而不是事后索引。
+- 开发者导航需求由 `CLAUDE.md` + `docs/*-lessons.md` 统一承担。
+
 ### 坑 5：DISPATCH 语法偏离既有约定
 
 初版把 DISPATCH 简化成 `> execute skill xxx`，丢失了"启动独立 SubAgent"的隔离语义。

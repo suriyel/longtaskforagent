@@ -152,11 +152,3 @@ New features: <ids>  Modified: <ids>  Deprecated: <ids>
 | "这次改动很小，跳过影响评估" | Step 3 捕捉隐藏依赖，不可跳过 |
 | "我另建一份 SRS 文档" | 原地更新主 SRS；git 跟踪历史 |
 | "sub-skill 返回了，直接下一步吧" | 所有 pass 返回都要过审批关卡 |
-
-## 集成
-
-- **调用方**：`using-long-task`（当 `increment-request.json` 存在）
-- **读取**：SRS、Design、ATS、UCD、feature-list.json、increment-request.json
-- **写入**（通过 sub-skill 原地）：SRS、Design、ATS、UCD、feature-list.json
-- **下游**：`long-task-work`（路由检测到 failing 特性触发）
-- **子 skill**：`long-task-increment-impact` / `-design` / `-ats` / `-ucd` / `-srs`

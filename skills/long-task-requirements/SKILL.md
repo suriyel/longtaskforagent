@@ -372,11 +372,3 @@ Cycle 2 仍 fail → escalate。
 | "无障碍不适用于本项目" | 任何用户界面都有无障碍含义。WCAG 2.1 AA 是基线。|
 | "我们在设计里处理 GDPR/隐私" | 隐私需求必须在 SRS 中。数据模型和同意流依赖它们。|
 | "Expert 路径太多轮，跳过一些步骤" | 每个 Expert 步骤都防止下游返工。如果项目真的更简单，它应该走 Lite。|
-
-## 集成
-
-**被调用方：** using-long-task（无 SRS 文档、无设计文档、无 feature-list.json 时）
-**衔接到：** long-task-ucd（SRS 审批后；无 UI 特性时自动跳到 design）
-**参考：** `references/problem-framing.md`、`references/scenario-walkthrough.md`、`references/hypothesis-correction.md`、`references/approval-revise-loop.md`
-**Sub-skills：** `long-task-requirements-quality`（Step 7–11）、`long-task-requirements-alignment`（Expert E10）、`long-task-requirements-finalize`（Step 15）
-**产出：** `docs/plans/YYYY-MM-DD-<topic>-srs.md`，可选 `docs/plans/YYYY-MM-DD-<topic>-deferred.md`
