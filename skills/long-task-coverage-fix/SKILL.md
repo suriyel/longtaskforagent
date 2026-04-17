@@ -11,7 +11,8 @@ description: "修复覆盖率缺口——为未覆盖的行/分支补充测试�
 
 1. 阅读执行规则：`skills/long-task-coverage-fix/references/coverage-fix-execution.md`
 2. 阅读共享规则：`skills/long-task-coverage-fix/references/iron-law.md`
-3. 阅读反模式：`skills/long-task-coverage-fix/references/testing-anti-patterns.md`
+3. 读取 `long-task-guide.md` — 获取测试命令（`[test-quiet]`、`[test-detail]`）
+4. 阅读反模式：`skills/long-task-coverage-fix/references/testing-anti-patterns.md`
 
 ## 关键约束
 
