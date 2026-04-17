@@ -61,7 +61,7 @@ python scripts/check_st_readiness.py feature-list.json
   - **记录信息**：在 `task-progress.md` 记录 PID 与端口——Step 11 清理必需
 - 读取 `feature-list.json` —— 注意 `tech_stack`、`quality_gates`、`constraints[]`、`assumptions[]`
 - 读取 SRS —— 抽取所有 FR-xxx、NFR-xxx、IFR-xxx、CON-xxx 需求；读取 Stakeholders、User Personas 与 Glossary 节
-- 读取 Design 文档 —— 抽取架构、API 设计、测试策略（§9）、2/3方件（§8）
+- 读取 Design 文档 —— 抽取架构（§1）、Internal API Contracts（§4）、External Interfaces（§5 若存在）；测试框架与阈值读 `feature-list.json.tech_stack` + `.quality_gates`；依赖版本读包清单文件
 - 若存在 UI 特性：读取 UCD 文档（`docs/plans/*-ucd.md`）
 - 读取 `task-progress.md` —— 会话历史上下文
 

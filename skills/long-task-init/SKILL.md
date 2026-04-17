@@ -1,11 +1,11 @@
 ---
 name: long-task-init
-description: "Use when ATS doc exists (or auto-skipped) but feature-list.json not yet created - scaffold project artifacts and populate features from Design §10.2"
+description: "Use when ATS doc exists (or auto-skipped) but feature-list.json not yet created - scaffold project artifacts and populate features from Design §6.1"
 ---
 
 # 初始化 Long-Task 项目
 
-在 SRS 与设计都获批后运行一次。打包所有持久化工件，从 Design §10.2（FR 已在需求阶段调整到合适大小）填充特性，并为迭代 Worker 循环准备项目。
+在 SRS 与设计都获批后运行一次。打包所有持久化工件，从 Design §6.1 任务分解（FR 已在需求阶段调整到合适大小）填充特性，并为迭代 Worker 循环准备项目。
 
 **开始时宣告：** "I'm using the long-task-init skill to scaffold the project."
 
@@ -114,22 +114,21 @@ description: "Use when ATS doc exists (or auto-skipped) but feature-list.json no
    # Coverage
    <coverage-cmd> > /tmp/cov-$$.log 2>&1; echo $? > /tmp/cov-$$.exit
 
-   # Static analysis (if Design §13.4 documents a tool)
+   # Static analysis (if docs/rules/coding-constraints.md lists a tool)
    <static-analysis-cmd> > /tmp/static-$$.log 2>&1; echo $? > /tmp/static-$$.exit
    ```
    - 包含**工具版本锁**条目（例如 Python ≥ 3.11、Node ≥ 20）。
    - 包含 **Re-check 协议**：任何失败 → 修复并**仅按名字** 重跑失败的步骤/测试，永不全量重跑。
    - **初次生成后对 §3 的任何修改都需人类审批**（frontmatter `approved_by` / `approved_date` 更新）。
 
-   **§4 存量代码库约束** —— 把存量项目扫描（`docs/rules/`）的关键内容合并到此：
-   - §4.1 强制内部库（必须使用、禁止重实现）
-   - §4.2 禁用 API（来自 scanner §13.2 等价内容）
-   - §4.3 代码样式基线（命名、布局、错误处理）
-   - §4.4 构建系统约定（产物目录、lockfile）
-   - **如果设计文档有 §13 存量代码库约定与约束**：§13 是规范摘要；把 §13.1/§13.2/§13.5/§13.7 分别复制到 env-guide.md §4.1/§4.2/§4.3/§4.4。§4 成为 Worker 循环的强制源（Design §13 + `docs/rules/` 作为溯源保留）。
-   - 如 `docs/rules/*.md` 存在但尚无 Design §13：阅读这些文件并提炼具约束力的约束到 §4。`docs/rules/` 作为可追溯扫描记录保留。
+   **§4 存量代码库约束** —— 从 `docs/rules/*.md` 直接提取：
+   - §4.1 强制内部库 ← `docs/rules/coding-constraints.md` 的 "Mandatory Internal Libraries" 表
+   - §4.2 禁用 API ← `docs/rules/coding-constraints.md` 的 "Prohibited APIs / Libraries" 表
+   - §4.3 代码样式基线 ← `docs/rules/coding-style.md`
+   - §4.4 构建系统约定 ← `docs/rules/build-and-compilation.md`
+   - 若 `docs/rules/coding-constraints.md` 含 "Static Analysis Tools" 表：对应命令写入 §3 静态分析位，不进 §4。
    - **初次生成后对 §4 的任何修改都需人类审批**（Worker Step 0 `check_env_guide_approval.py` 强制）。
-   - 如无存量项目扫描输出，把表保留为 "_(empty — greenfield project)_"。
+   - greenfield（无 `docs/rules/` 或仅含占位）：§4 各表写 "_(empty — greenfield project)_"。
 
    **§5 测试环境依赖**：
    - 数据库、消息队列、2/3方件 服务本地副本配置
@@ -164,13 +163,13 @@ description: "Use when ATS doc exists (or auto-skipped) but feature-list.json no
    - `constraints[]` —— 从 SRS "Constraints" 节复制 CON-xxx 项；每条一个简洁字符串
    - `assumptions[]` —— 从 SRS "Assumptions & Dependencies" 节复制 ASM-xxx 项；每条一个简洁字符串
    - NFR-xxx 行 → 创建 `category: "non-functional"` 特性，带 `srs_trace`（例如 `["NFR-001"]`）与可选的可度量 `verification_steps`；覆盖率关卡不适用于 NFR 特性
-8. **从 Design §10.2 填充特性** —— FR 已在需求阶段调整到合适大小（G1-G6 过大 + S1-S4 过小启发式）。设计文档的任务分解表（§10.2）把合适大小的 FR 映射到按依赖排序的优先特性。填充 `feature-list.json` `features[]`：
-   - 每个 §10.2 行 → 一个特性。**不要**进一步拆分或合并——粒度已在 SRS 阶段敲定。
-   - **FR 直接合并规则**：共享同一模块/实体/角色的相邻 FR 应当已在 Design §10.2 合并为单一特性（取代旧的 FR-grouping 启发式）。若 Design §10.2 仍含碎片化的单 FR 行，在本填充步骤期间优先直接合并——目标是每特性约 1000 LOC（±500）。见 Step 8b 的粒度确认关卡强制此要求。
-   - `srs_trace`：复制 "Mapped FRs" 列——本特性实现的 FR ID 数组（例如 `["FR-003", "FR-004", "FR-005"]`）
-   - `title` + `description`：从 §10.2 特性名 + 被分组 FR 的描述派生
+8. **从 Design §6.1 填充特性** —— FR 已在需求阶段调整到合适大小（G1-G6 过大 + S1-S4 过小启发式）。设计文档的任务分解表（§6.1）把合适大小的 FR 映射到按依赖排序的优先特性。填充 `feature-list.json` `features[]`：
+   - 每个 §6.1 行 → 一个特性。**不要**进一步拆分或合并——粒度已在 SRS 阶段敲定。
+   - **FR 直接合并规则**：共享同一模块/实体/角色的相邻 FR 应当已在 Design §6.1 合并为单一特性。若 Design §6.1 仍含碎片化的单 FR 行，在本填充步骤期间优先直接合并——目标是每特性约 1000 LOC（±500）。见 Step 8b 的粒度确认关卡强制此要求。
+   - `srs_trace`：复制 "Mapped FRs" 列
+   - `title` + `description`：从 §6.1 特性名 + 被分组 FR 的描述派生
    - `priority`：P0/P1 → `"high"`，P2 → `"medium"`，P3 → `"low"`
-   - `dependencies`：来自 §10.3 依赖链图
+   - `dependencies`：来自 §6.2 依赖链图
    - `status`：始终为 `"failing"`
    - UI 特性：设 `"ui": true`、`"ui_entry": "/path"`（强制——指定本特性 UI 访问的 URL）；至少包含一个带 `[devtools]` 前缀的校验步断言特性主渲染输出的**正面视觉存在**（不仅是错误缺失）。例：`"[devtools] /game | EXPECT: canvas#game-board with rendered game elements (snake segments, food item, score display), game board grid visible | REJECT: blank canvas, empty game container, 'undefined' in score"`
    - `verification_steps` 是可选的 —— 如提供，把所有映射 FR 的验收标准整合为行为场景（Given/When/Then）：
@@ -183,7 +182,7 @@ description: "Use when ATS doc exists (or auto-skipped) but feature-list.json no
      - **最小复杂度**：每个特性**应当**有 ≥ 1 条含 3+ 链式动作的 verification_step
    - **ATS 类别约束**（如 ATS 文档存在）：对每个特性，用 srs_trace 查询 ATS 所需类别。如任何 srs_trace 需求的 ATS 类别含 UI，设 `ui: true`。
    - **后端-前端配对规则**：前端特性（`"ui": true`）**必须**在 `dependencies[]` 列出后端 API 依赖特性。
-   - **排序**：遵循 §10.2 行顺序（Design 已按优先级排序并配对 backend/frontend）
+   - **排序**：遵循 §6.1 行顺序（Design 已按优先级排序并配对 backend/frontend）
    - 每个特性**必须**能独立校验且在一次会话内完成
    - **校验关卡**：填充所有特性后，核对：
      - SRS 的每个 FR-xxx 都出现在至少一个特性的 `srs_trace`（无孤立需求）

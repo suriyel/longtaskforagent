@@ -1,6 +1,6 @@
 ---
 name: long-task-increment-ats
-description: "Use when dispatched by long-task-increment Step 4b — revise ATS mapping table in place for new/modified/deprecated requirements and §6.2 contract changes"
+description: "Use when dispatched by long-task-increment Step 4b — revise ATS mapping table in place for new/modified/deprecated requirements and §4 Internal API Contract changes"
 ---
 
 # 增量 ATS 修订

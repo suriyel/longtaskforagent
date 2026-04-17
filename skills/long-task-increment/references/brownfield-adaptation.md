@@ -15,8 +15,8 @@
 
 **数据来源**（按优先级）：
 1. `docs/explore/codebase-research.md`（如存在，来自之前的 explore 输出）
-2. `docs/rules/*.md` / `env-guide.md` §4（存量代码库约束）
-3. `docs/plans/*-design.md` §4（Key Feature Designs，存量已实现的特性）
+2. `docs/rules/*.md` / `env-guide.md §4`（存量代码库约束）
+3. `docs/plans/*-design.md` §2（Feature Integration Specs，存量已实现的特性）
 4. `feature-list.json` 已 `passing` 的 features（已在线能力）
 
 **ESI 表格式**：
@@ -24,10 +24,10 @@
 | 维度 | 现有实现 | 证据来源 | 状态 |
 |------|---------|---------|------|
 | 鉴权 | JWT, `src/auth/` | explore:api | 已确立 |
-| 权限 | RBAC 中间件 | design §4.3 | 已确立 |
+| 权限 | RBAC 中间件 | env-guide §4.3 | 已确立 |
 | 错误处理 | 全局异常处理器 | rules/error-handling.md | 已确立 |
-| 日志 | structured-logger | env-guide §4.2 | 已确立 |
-| 数据验证 | Pydantic schemas | design §5 | 已确立 |
+| 日志 | structured-logger | env-guide §4.1 | 已确立 |
+| 数据验证 | Pydantic schemas | design §3 | 已确立 |
 | ... | ... | ... | ... |
 
 **状态值**：
@@ -95,9 +95,9 @@ REUSE 类型意味着采集过程将已有能力重复当成新需求。应从�
 
 ## §E. 设计修订存量适配（Step 4 Design Revision 增强）
 
-- **§13 / env-guide §4 约束继承**：如 `env-guide.md` §4 Codebase Constraints 存在，新 feature 的 Interface Contract、Algorithm、Dependencies 均必须遵守（不能引入 §4.2 禁用 API、必须使用 §4.1 强制内部库）。
-- **§6.2 Internal API Contracts 更新**：若 §D 表中有 Breaking 策略的 API，必须同步更新 Design §6.2；否则消费方 feature 会在 TDD 阶段发现 contract 不一致。
-- **§0 Project Structure 对齐**：若 Design 含 §0，新增模块必须放入现有目录结构；如必须新增顶层目录，需在 §0 更新并经用户审批。
+- **env-guide §4 约束继承**：如 `env-guide.md §4` 存在，新 feature 的 Interface Contract、Key Types、Dependencies 均必须遵守（不能引入 §4.2 禁用 API、必须使用 §4.1 强制内部库）。
+- **§4 Internal API Contracts 更新**：若 §D 表中有 Breaking 策略的 API，必须同步更新 Design §4；否则消费方 feature 会在 TDD 阶段发现 contract 不一致。
+- **目录结构对齐**：新增模块必须放入 `docs/explore/codebase-research.md` 标注的既有目录结构；如必须新增顶层目录，需在探索报告与 `docs/rules/` 更新并经用户审批。
 
 ---
 

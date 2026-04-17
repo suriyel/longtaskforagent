@@ -50,8 +50,8 @@ python scripts/check_env_guide_approval.py env-guide.md
   3. 设计节（`{design_section}`）指明外部服务交互（DB 查询、对自有服务的 HTTP 调用、消息队列操作）
 
   在 `task-progress.md` 当前特性标题下记录判定（yes/no + 哪些服务）。本判定驱动 Bootstrap Step 2 与 Config Gate Step 3。
-- 读取设计文档 **第 1 节**（`docs/plans/*-design.md`）—— 项目概要与架构全局快照
-- 读取设计文档 **§13**（存量代码库约定与约束，如存在）—— 注意 2/3方件 库约束（§13.1）、禁用 API（§13.2）、静态分析工具（§13.4）、命名约定（§13.5）、错误处理模式（§13.6）、commit 约定（§13.8）。这些对所有新代码具约束力。
+- 读取设计文档 **§1 架构**（`docs/plans/*-design.md`）—— 项目概要与架构全局快照
+- 读取 `env-guide.md §4`（存量代码库约束，如存在）—— 强制内部库（§4.1）、禁用 API（§4.2）、代码样式基线（§4.3）、构建约定（§4.4）。这些对所有新代码具约束力；静态分析命令位于 `env-guide.md §3`。
 - 运行 `git log --oneline -10` —— 最近 commit 上下文
 - 按优先级、再按 `features[]` 数组位置挑选下一个 `"status": "failing"` 特性（第一个符合条件的胜出）—— **跳过 `"deprecated": true` 的特性**
 - **依赖满足检查**：选中候选特性后，核对其 `dependencies[]` 中所有特性 ID 在 `feature-list.json` 中都是 `"status": "passing"`。若任何依赖仍 `"failing"`：
@@ -66,9 +66,9 @@ python scripts/check_env_guide_approval.py env-guide.md
 当你需要某特性的设计节或 SRS 需求时，**不要** grep 特性标题。改为：
 
 1. **设计文档**（`docs/plans/*-design.md`）：
-   - 读取设计文档**第 4 节标题区**（使用 Read 工具搭配 offset/limit 扫描 section 4 标题——查找匹配 `### 4.N Feature:` 的行）
-   - 通过匹配特性标题或 FR-ID 识别哪个 `### 4.N` 子节对应目标特性
-   - 读取**整段子节**，从 `### 4.N` 到 `### 4.(N+1)` 前一行（或第 4 节结尾）—— 包含 Overview、类图、时序图、流程图、设计决策
+   - 读取设计文档**第 2 节标题区**（使用 Read 工具搭配 offset/limit 扫描 section 2 标题——查找匹配 `### 2.N Feature:` 的行）
+   - 通过匹配特性标题或 FR-ID 识别哪个 `### 2.N` 子节对应目标特性
+   - 读取**整段子节**，从 `### 2.N` 到 `### 2.(N+1)` 前一行（或第 2 节结尾）—— 包含 Overview、Key Types、Integration Surface
    - 存为 `{design_section}` 供 Plan（Step 5）与 ST Acceptance（Step 9）使用
 
 2. **SRS 文档**（`docs/plans/*-srs.md`）：
@@ -81,7 +81,7 @@ python scripts/check_env_guide_approval.py env-guide.md
    - 找到引用目标特性 UI 组件或页面的章节
    - 读取**完整相关章节**，含样式 token、组件提示词、页面提示词
 
-**为什么重要：** Grep 返回孤立匹配行而无周围上下文。设计节包含跨数十行的类图、时序图、流程图与设计理由——这些对正确实现与 inline 合规检查都是必需的。
+**为什么重要：** Grep 返回孤立匹配行而无周围上下文。设计节的 Integration Surface 含 Contract ID、Provides/Requires schema——这些对正确实现与 inline 合规检查都是必需的。
 
 ### 2. Bootstrap
 - **开发环境就绪**：检查环境是否已设置
@@ -138,7 +138,7 @@ python scripts/check_configs.py feature-list.json --feature <id>
 ### 4. Feature 详细设计
 
 > **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-feature-design`
-> **with input**: feature_id=<id>, feature=<compact-json>, design_doc_path=<docs/plans/*-design.md §4.N>, srs_doc_path=<docs/plans/*-srs.md FR-xxx>, ucd_doc_path=<docs/plans/*-ucd.md> (if ui:true), ats_doc_path=<docs/plans/*-ats.md> (if exists), quality_gates=<compact-json>, tech_stack=<compact-json>, constraints=<list>, assumptions=<list>, output_path=`docs/features/YYYY-MM-DD-<feature-name>.md`
+> **with input**: feature_id=<id>, feature=<compact-json>, design_doc_path=<docs/plans/*-design.md §2.N>, srs_doc_path=<docs/plans/*-srs.md FR-xxx>, ucd_doc_path=<docs/plans/*-ucd.md> (if ui:true), ats_doc_path=<docs/plans/*-ats.md> (if exists), quality_gates=<compact-json>, tech_stack=<compact-json>, constraints=<list>, assumptions=<list>, output_path=`docs/features/YYYY-MM-DD-<feature-name>.md`
 > **expect**: Structured Return Contract (`status` / `artifacts_written` / `next_step_input` / `blockers` / `evidence`) 按 `references/structured-return-contract.md`
 
 Feature Design SubAgent 在自己的新鲜上下文中读取 design/SRS/UCD 文档节并写详细设计文档。主 Agent **不** 读文档节或草稿内容——只消费结构化返回。
@@ -148,9 +148,9 @@ Feature Design SubAgent 在自己的新鲜上下文中读取 design/SRS/UCD 文�
 需向前传递的上下文（仅路径——SubAgent 自己读内容）：
 - Feature 对象（紧凑 JSON）
 - `quality_gates` 与 `tech_stack`（紧凑 JSON）
-- 文件路径 + 节行区间：设计文档（§4.N）、SRS 文档（FR-xxx）、UCD 文档（如 ui:true）
+- 文件路径 + 节行区间：设计文档（§2.N）、SRS 文档（FR-xxx）、UCD 文档（如 ui:true）
 - ATS 文档路径：`docs/plans/*-ats.md`（如存在）—— SubAgent 用 ATS 映射对齐 Test Inventory 类别
-- 设计文档 §6.2 路径 —— SubAgent 读取本特性为 Provider 或 Consumer 的 Internal API Contracts 行
+- 设计文档 §4 路径 —— SubAgent 读取本特性为 Provider 或 Consumer 的 Internal API Contracts 行
 - feature-list.json 根的 constraints 与 assumptions
 - 输出路径：`docs/features/YYYY-MM-DD-<feature-name>.md`
 
@@ -158,8 +158,8 @@ Feature Design SubAgent 在自己的新鲜上下文中读取 design/SRS/UCD 文�
 
 **契约偏离处理**：如 SubAgent 返回 `BLOCKED` 且 issue 含 "Contract deviation"：
 1. 通过 `AskUserQuestion` 向用户呈现偏离细节（Contract ID、原 schema vs 提议 schema、理由）
-2. 如审批通过：更新设计文档 §6.2 以反映新契约，然后重新分发 feature-design SubAgent
-3. 传播影响：从 §6.2 Consumer 列识别可能受影响的 Consumer 特性；如任何已 `"passing"`，警告用户可能需要重新校验
+2. 如审批通过：更新设计文档 §4 以反映新契约，然后重新分发 feature-design SubAgent
+3. 传播影响：从 §4 Consumer 列识别可能受影响的 Consumer 特性；如任何已 `"passing"`，警告用户可能需要重新校验
 
 **歧义澄清处理**：如 Feature Design SubAgent 返回 `CLARIFY`：
 - feature-design skill 的 CLARIFY handler 在内部管理完整澄清循环（AskUserQuestion → 收集回答 → 审批关卡 → 带 Clarification Addendum 重分发）
@@ -224,11 +224,11 @@ grep CSS/样式文件查找不在 UCD 色板 token 中的硬编码颜色 hex 值
 确认 `validate_st_cases.py` 已在 Feature-ST（Step 9）通过。
 无需重校验—— Feature-ST Step 5b + Step 6 已覆盖 T1。
 
-**f) 存量约定抽查（建议性、非阻塞——若无 Design §13 则跳过）：**
-抽查 2-3 个新/修改文件对照 Design 文档 §13：
-- §13.1：新 import 在有内部库替代时不使用禁用的标准/2/3方件 API
-- §13.5：命名约定匹配成文模式（变量/函数/类名）
-如发现偏离：作为建议性注记记录到 `task-progress.md`。**非阻塞关卡** —— 设计文档 / 框架约定优先于 scanner 观察。
+**f) 存量约定抽查（建议性、非阻塞——若无 `env-guide.md §4` 则跳过）：**
+抽查 2-3 个新/修改文件对照 `env-guide.md §4`：
+- §4.1：新 import 在有内部库替代时不使用禁用的标准/2/3方件 API
+- §4.3：命名约定匹配成文模式（变量/函数/类名）
+如发现偏离：作为建议性注记记录到 `task-progress.md`。**非阻塞关卡** —— 设计 / 框架约定优先于 scanner 观察。
 
 若所有检查通过 → 进入 Persist。
 若任何检查失败 → 就地修复，重新校验。不分发 SubAgent。
@@ -240,7 +240,7 @@ grep CSS/样式文件查找不在 UCD 色板 token 中的硬编码颜色 hex 值
 
 ### 11. Persist
 - Git commit（包含实现、测试、**测试用例文档**）
-  > **Commit 格式**：若 Design §13.8 成文 commit 约定，遵循该格式。否则用下方默认。
+  > **Commit 格式**：若 `docs/rules/commit-conventions.md` 存在，遵循该格式。否则用下方默认。
   > **对 `category: "bugfix"` 特性**：用 commit 前缀 `"fix:"` 而非 `"feat:"`。
   > 格式：`fix: <feature title without the "Fix: " prefix> (#<fixed_feature_id>)`
 - commit 后立即抓取 commit SHA：

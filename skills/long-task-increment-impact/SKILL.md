@@ -8,14 +8,14 @@ description: "Use when dispatched by long-task-increment Step 3 — build impact
 ## 步骤
 
 1. 读 `feature-list.json`，构建反向依赖图 `{feature_id: [consumers]}`
-2. 读 `docs/plans/*-design.md` §6.2 Internal API Contracts 表
+2. 读 `docs/plans/*-design.md` §4 Internal API Contracts 表
 3. 加载 `skills/long-task-increment/references/brownfield-adaptation.md` §D
 4. 对 prompt 中的 `new_reqs` 每条：
    - **NEW**：识别依赖的既有特性（通常无 Hard Impact）
    - **MODIFY / EXTEND**：通过 `affects_req_id` 反查 `srs_trace` 包含该 ID 的特性（直接受影响）
    - **DEPRECATED**：同上反查；这些特性将被 deprecate
 5. 传递级联（BFS 深度 ≤ 2）：
-   - **Hard**：契约签名变化（Breaking 或 MODIFY §6.2）→ 消费者重新实现
+   - **Hard**：契约签名变化（Breaking 或 MODIFY §4）→ 消费者重新实现
    - **Soft**：契约未变 → 消费者仅回归
 6. 构建 API 影响 + 兼容性表（依 brownfield-adaptation.md §D）：
    - 每行含 file:line 或完整签名
@@ -59,6 +59,6 @@ description: "Use when dispatched by long-task-increment Step 3 — build impact
 
 ## 阻塞 / 失败
 
-- Design §6.2 缺失 → `blocked`，blocker 指明需补 §6.2
+- Design §4 缺失 → `blocked`，blocker 指明需补 §4
 - `affects_req_id` 在 SRS 中不存在 → `blocked`
 - `feature-list.json` 解析失败 → `fail`，evidence 附解析错误

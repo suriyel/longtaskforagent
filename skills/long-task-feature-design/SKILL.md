@@ -25,7 +25,7 @@ description: "Use before TDD in a long-task project — produce feature-level de
 - `quality_gates_json` —— feature-list.json 中的 quality_gates（紧凑 JSON）
 - `tech_stack_json` —— feature-list.json 中的 tech_stack（紧凑 JSON）
 - `design_doc_path` —— 设计文档路径（`docs/plans/*-design.md`）
-- `design_start` / `design_end` —— §4.N 子节的行号范围（来自 Orient Document Lookup）
+- `design_start` / `design_end` —— §2.N 子节的行号范围（来自 Orient Document Lookup）
 - `srs_doc_path` —— SRS 文档路径（`docs/plans/*-srs.md`）
 - `srs_start` / `srs_end` —— FR-xxx 子节的行号范围（来自 Orient Document Lookup）
 - `ucd_doc_path` —— UCD 文档路径（仅当 `"ui": true` 时；否则省略）
@@ -48,7 +48,7 @@ You are a Feature Design execution SubAgent.
 4. Read SRS section: Read {srs_doc_path} lines {srs_start} to {srs_end}
 5. Read UCD sections: Read {ucd_doc_path} lines {ucd_start} to {ucd_end} (only if ui:true)
 5b. Read ATS mapping table: Read {ats_doc_path} (only if ATS doc exists) — locate the mapping rows for the feature's requirement ID(s) (from srs_trace); extract required categories
-5c. Read internal API contracts: Read {design_doc_path} Section 6.2 — locate rows where this feature appears as Provider or Consumer. These define the exact schemas this feature must produce or consume.
+5c. Read internal API contracts: Read {design_doc_path} Section 4 — locate rows where this feature appears as Provider or Consumer. These define the exact schemas this feature must produce or consume.
 6. Follow the execution rules to produce the detailed design document
 7. Write the document to: {output_path}
 8. Return your result using the Structured Return Contract in the execution rules
@@ -70,7 +70,7 @@ You are a Feature Design execution SubAgent.
 - Test Inventory main categories (FUNC/BNDRY/SEC/UI/PERF/INTG) must cover all ATS-required categories for this feature's requirement(s)
 - Features with external dependencies must have ≥1 INTG row per dependency type; pure-computation features: "INTG: N/A"
 - Features with `"ui": true` MUST have a complete Visual Rendering Contract (§Visual Rendering Contract): all visual elements listed, rendering technology specified, positive rendering assertions defined. "N/A" is only valid for `"ui": false`. For each positive rendering assertion, at least one `UI/render` Test Inventory row must exist. Missing rows → FAIL.
-- **Codebase constraints** (if Design doc §13 OR `env-guide.md` §4 exists): Interface Contract method names must follow §13.5 / §4.3 naming conventions. Error handling must follow §13.6 pattern. Dependencies must use §13.1 / §4.1 internal libraries where applicable. Do not reference prohibited APIs from §13.2 / §4.2.
+- **Codebase constraints** (if `env-guide.md` §4 exists): Interface Contract method names must follow §4.3 naming conventions. Dependencies must use §4.1 internal libraries where applicable. Do not reference prohibited APIs from §4.2.
 - Do NOT start TDD — only produce the design document
 ```
 

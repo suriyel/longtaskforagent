@@ -80,12 +80,12 @@ last_reviewed: 2026-04-17
 |---|---|---|
 | Brownfield / Greenfield | 存量项目 / 全新项目 | 首次注英文 |
 | Existing System Inventory (ESI) | 存量系统清单（ESI） | brownfield-adaptation.md 术语 |
-| Mandatory internal library | 强制内部库 | §13.1 约束 |
-| Prohibited API | 禁用 API | §13.2 约束 |
-| Codebase constraints | 存量代码库约束 | Design §13 / env-guide §4 |
+| Mandatory internal library | 强制内部库 | env-guide §4.1 约束 |
+| Prohibited API | 禁用 API | env-guide §4.2 约束 |
+| Codebase constraints | 存量代码库约束 | `docs/rules/*.md` → env-guide §4 |
 | Existing code reuse | 存量代码复用 | Feature Design Step 1c |
-| Internal API contract | 内部 API 契约 | Design §6.2 |
-| Project structure | 项目结构 | Design §0 |
+| Internal API contract | 内部 API 契约 | Design §4 |
+| Project structure | 项目结构 | docs/explore/codebase-research.md |
 | Interface contract | 接口契约 | Feature Design 下游消费 |
 | Test inventory | 测试清单 | Feature Design → TDD Red 消费 |
 | Implementation Summary | 实现摘要 | Feature Design 替代 pseudocode/diagrams |
@@ -168,7 +168,7 @@ last_reviewed: 2026-04-17
 3. 文件路径：`docs/plans/*-srs.md`、`feature-list.json` 等
 4. 命令示例：`python scripts/validate_features.py`、`mvn test` 等
 5. 工具名：`Skill`、`Agent`、`Grep`、`Glob`、`Read`、`Edit`、`Write`、`Bash`、`TaskCreate`
-6. 架构标识符：`Red → Green → Refactor`、`Step 1a`、`§13.1`、`FR-001`
+6. 架构标识符：`Red → Green → Refactor`、`Step 1a`、`§4.1`、`FR-001`
 7. 缩写（首次出现可加中文注释，后续保留缩写）：`SRS`、`FR`、`NFR`、`ATS`、`UCD`、`ST`、`TDD`、`UT`、`E2E`、`ESI`
 8. Commit message 示例（保留英文便于自动化）
 9. 代码块内全部内容

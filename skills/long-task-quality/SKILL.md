@@ -20,7 +20,7 @@ You are a Quality Gates execution SubAgent.
 1. Read the execution rules: Read {skills_root}/long-task-quality/references/quality-execution.md
 2. Read `env-guide.md` §3 (Build & Execution Commands) for test/coverage/static-analysis commands. Read `env-guide.md` §2 for environment activation. Both are the **single source of truth** — do NOT derive commands from long-task-guide.md (it only navigates; env-guide.md §3 owns commands).
 3. Execute all 3 gates in order (Gate 0 → 1 → 2)
-   - **Note**: Static analysis tools (Design §13.4) are enforced during TDD Refactor, not here. If Design doc §13.7 documents code generation directories, exclude them from coverage measurement in Gate 1.
+   - **Note**: Static analysis tools (listed in `env-guide.md §3` / `docs/rules/coding-constraints.md` "Static Analysis Tools" table) are enforced during TDD Refactor, not here. If `docs/rules/build-and-compilation.md` documents code generation directories, exclude them from coverage measurement in Gate 1.
 4. If a gate fails, fix and retry per the rules (max 3 attempts per gate)
 5. Return your result using the Structured Return Contract at the end of the execution rules
 

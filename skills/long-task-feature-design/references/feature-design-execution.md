@@ -6,7 +6,7 @@
 
 # Feature-Level Detailed Design（特性级详细设计）
 
-为单一特性产出详细设计，在系统级设计（§4.N）与 TDD 实现之间搭桥。
+为单一特性产出详细设计，在系统级设计（§2.N）与 TDD 实现之间搭桥。
 
 系统设计回答 "WHAT classes exist and HOW they interact."
 本 skill 回答 "WHAT each method does（签名 + 前置 / 后置条件层面）、WHAT can go wrong、要复用的既有代码，以及 HOW to test it."
@@ -18,14 +18,14 @@
 写任何设计内容**之前**先读完以下全部：
 
 1. **Feature 对象**（来自 feature-list.json） — ID、title、description、srs_trace、ui flag、dependencies、priority（如有 verification_steps）
-2. **系统设计章节** — 设计文档中完整的 §4.N（读整个子章节，不要用 grep）
+2. **系统设计章节** — 设计文档中完整的 §2.N（读整个子章节，不要用 grep）
 3. **SRS 需求** — SRS 文档中完整的 FR-xxx
 4. **UCD 章节**（若 `"ui": true`） — UCD 文档中的 component/page 提示词
 5. **Constraints & assumptions**（来自 feature-list.json 根）
 6. **相关 NFR** — SRS 中可追溯到本特性的 NFR-xxx
 7. **存量代码复用候选** — 以签名、方法名模式、行为关键字在 codebase 中 grep 相似函数 / 类（见 §1c 流程）。最大化复用；**不**要重新实现已存在的东西。
-8. **Internal API 契约**（若存在 §6.2） — 读 Design Section 6.2 中本特性作为 Provider 或 Consumer 出现的行。这些定义了本特性 Interface Contract（§Interface Contract）必须对齐的跨特性 schema。
-9. **存量代码库约束** — 若 Design §13 或 `env-guide.md` §4 存在，读其中的强制内部库、禁用 API、命名约定、错误处理模式。所有新代码必须合规。
+8. **Internal API 契约**（若存在 §4） — 读 Design Section 4 中本特性作为 Provider 或 Consumer 出现的行。这些定义了本特性 Interface Contract（§Interface Contract）必须对齐的跨特性 schema。
+9. **存量代码库约束** — 若 `env-guide.md §4` 存在，读其中的强制内部库、禁用 API、命名约定、错误处理模式。所有新代码必须合规。
 
 ## 模板
 
@@ -46,21 +46,21 @@
 | Code | What to check |
 |------|---------------|
 | `SRS-VAGUE` | 验收准则含模糊语言（"fast"、"user-friendly"、"appropriate"、"should handle"）且无可度量阈值或具体行为 |
-| `SRS-DESIGN-CONFLICT` | SRS 需求与 Design §4.N 在接口类型、数据格式、行为或错误处理上矛盾 |
+| `SRS-DESIGN-CONFLICT` | SRS 需求与 Design §2.N 在接口类型、数据格式、行为或错误处理上矛盾 |
 | `SRS-MISSING` | 验收准则无 Given/When/Then 或未指定预期结果 |
 | `ATS-MISMATCH` | ATS 要求某测试类别（例如 SEC）但特性的可观察行为无对应表面 |
 | `UCD-VAGUE` | 视觉需求不够具体，无法推导 DOM 选择器或可测试断言（仅 ui:true） |
-| `DEP-AMBIGUOUS` | 跨特性接口不清晰 — 依赖的 §6.2 条目缺失或不完整 |
+| `DEP-AMBIGUOUS` | 跨特性接口不清晰 — 依赖的 §4 条目缺失或不完整 |
 | `NFR-GAP` | 引用的 NFR 无可度量阈值（如 "should scale" 而无数字） |
 
 **扫描流程：**
 
 1. 对每条 SRS 验收准则（来自 srs_trace 需求）：检查是否含可度量、具体、可测试的条件。标记无数值阈值或具体行为的模糊语言 → `SRS-VAGUE`
-2. 对映射到本特性的每条 SRS 需求：与 Design §4.N 交叉核对。标记接口类型、数据格式、行为或错误处理上的矛盾 → `SRS-DESIGN-CONFLICT`
+2. 对映射到本特性的每条 SRS 需求：与 Design §2.N 交叉核对。标记接口类型、数据格式、行为或错误处理上的矛盾 → `SRS-DESIGN-CONFLICT`
 3. 对每条 SRS 验收准则：验证 Given/When/Then 存在且显式给出预期结果 → `SRS-MISSING`
 4. 对每个 ATS 要求的类别（若提供了 ATS 文档）：检查特性可观察行为是否具备该类别的可测表面 → `ATS-MISMATCH`
 5. 对 UCD 章节（若 ui:true）：检查视觉需求是否指定具体颜色、字体、间距或选择器 → `UCD-VAGUE`
-6. 对本特性为 Provider 或 Consumer 的 §6.2 契约：检查 schema 是否完整（无缺失字段、无歧义类型） → `DEP-AMBIGUOUS`
+6. 对本特性为 Provider 或 Consumer 的 §4 契约：检查 schema 是否完整（无缺失字段、无歧义类型） → `DEP-AMBIGUOUS`
 7. 对引用的 NFR：验证是否存在可度量阈值 → `NFR-GAP`
 
 **对每个检测到的歧义，产出结构化记录：**
@@ -77,7 +77,7 @@
 
 **决策关卡：**
 - **未检测到歧义** → 正常进入 Step 1c。无额外摩擦。
-- **所有歧义均有合理的建议解释，且影响仅限于非关键章节**（**不**影响 Interface Contract 签名、Test Inventory 预期结果、跨特性 §6.2 契约） → 以假设继续。将每条假设记录在设计文档的 `## Clarification Addendum` 章节，Authority = "assumed"。Verdict 设为 `PASS`。在 `### Next Step Inputs` 中包含 assumption 数量。
+- **所有歧义均有合理的建议解释，且影响仅限于非关键章节**（**不**影响 Interface Contract 签名、Test Inventory 预期结果、跨特性 §4 契约） → 以假设继续。将每条假设记录在设计文档的 `## Clarification Addendum` 章节，Authority = "assumed"。Verdict 设为 `PASS`。在 `### Next Step Inputs` 中包含 assumption 数量。
 - **任一歧义有高影响**（影响 Interface Contract 签名、Test Inventory 预期结果或跨特性契约） **或无合理的建议解释** → Verdict 设为 `CLARIFY`。在 Structured Return Contract 中包含完整 Ambiguities 表。**不**要进入 Step 1c — orchestrator 会收集用户回答并重新分发。
 
 > **携带 Clarification Addendum 重新分发时**：若 SubAgent 提示词含 `## Clarification Addendum (user-approved resolutions)` 章节，将这些处置视为权威约束。**不**要再把它们标记为歧义。按其已在原 SRS / Design 文档中存在那样纳入设计。
@@ -102,10 +102,10 @@
 
 **禁止**：若发现可复用匹配（`covers` 或 `close`），Interface Contract **必须**委托给它。默默重写可复用的 helper 是缺陷（TDD Refactor 的静态分析会捕捉，但在此处提前捕捉更好）。
 
-**存量代码库约束绑定**（若 Design §13 或 env-guide.md §4 存在）：
-- §13.1 / §4.1 强制内部库：新代码**必须**为相应领域（HTTP、日志、配置等）使用这些库
-- §13.2 / §4.2 禁用 API：新代码**不得**引用这些；若复用搜索发现禁用 API，不要复用 — 改搜已批准的替代
-- §13.5 / §4.3 命名约定：新方法 / 类名必须遵循
+**存量代码库约束绑定**（若 `env-guide.md §4` 存在）：
+- §4.1 强制内部库：新代码**必须**为相应领域（HTTP、日志、配置等）使用这些库
+- §4.2 禁用 API：新代码**不得**引用这些；若复用搜索发现禁用 API，不要复用 — 改搜已批准的替代
+- §4.3 命名约定：新方法 / 类名必须遵循
 
 ### 2. Interface Contract
 
@@ -121,11 +121,11 @@
 - 每条 SRS 验收准则（来自 srs_trace 需求）必须追溯到至少一个方法的 postcondition
 - `Raises` 列是错误条件的权威来源 — TDD Rule 4 直接读取该列以推导负向测试
 - 仅当内部方法含非平凡逻辑时才包含它
-- **§6.2 对齐规则**：对产生或消费跨特性数据的方法，方法签名（参数、返回类型）**必须**与 Design Section 6.2 中定义的 schema 兼容。若本特性为 **Provider**，postconditions **必须**保证 Response Schema。若为 **Consumer**，preconditions **必须**假定 Request Schema 格式。任何偏离都需要在 Design Rationale 中显式说明并触发下文的 Contract Deviation Protocol。
+- **§4 对齐规则**：对产生或消费跨特性数据的方法，方法签名（参数、返回类型）**必须**与 Design Section 4 中定义的 schema 兼容。若本特性为 **Provider**，postconditions **必须**保证 Response Schema。若为 **Consumer**，preconditions **必须**假定 Request Schema 格式。任何偏离都需要在 Design Rationale 中显式说明并触发下文的 Contract Deviation Protocol。
 
 ### Contract Deviation Protocol（契约偏离协议）
 
-若特性设计期间发现某 §6.2 契约不正确、不充分或技术不可行：
+若特性设计期间发现某 §4 契约不正确、不充分或技术不可行：
 
 1. **不得**默默偏离 — 不匹配的契约会导致集成失败
 2. 在设计文档的 Design Rationale 章节**记录偏离**：
@@ -135,14 +135,14 @@
    - 对 Consumer 特性的影响（列出受影响的 feature ID）
 3. Verdict 设为 **BLOCKED**，Issue："Contract deviation requires design update"
 4. orchestrator（long-task-work）通过 AskUserQuestion 升级给用户
-5. 若批准：用户更新设计文档中的 §6.2；orchestrator 重新分发 SubAgent
+5. 若批准：用户更新设计文档中的 §4；orchestrator 重新分发 SubAgent
 6. 若拒绝：SubAgent 必须遵循原契约
 
 ### 2b. Visual Rendering Contract（`"ui": true` 强制）
 
 对 `"ui": true` 的特性，指定用户必须看到的所有视觉元素。本契约是 TDD Rule 7（正向渲染测试）与 Feature-ST（渲染验证）的事实源。
 
-**数据来源**：读取 SRS 需求的 `Visual output` 字段（用户看到的变化）+ UCD 的 component/page 提示词（外观）+ 系统设计 §4.N 的 UI/UX 方案。
+**数据来源**：读取 SRS 需求的 `Visual output` 字段（用户看到的变化）+ UCD 的 component/page 提示词（外观）+ 系统设计 §2.N 的 UI/UX 方案。
 
 **如何填写每列**：
 - **Visual Element**：为用户看到的每个独立视觉物命名（如 "贪吃蛇身段"、"game board grid"、"score counter"、"food item"）。**不是**抽象概念如 "the UI" 或 "the page"。
@@ -166,7 +166,7 @@
 2. **调用链** — 运行时谁调谁（如 "HTTP handler → service → repository → DB"）
 3. **关键设计决策或非显见约束** — 为何选此方法而非替代、要注意什么陷阱
 4. **遗留 / 存量代码交互点** — 本特性触及哪些既有模块、如何与 `env-guide.md §4` 存量代码库约束对齐（强制内部库、禁用 API、命名约定）
-5. **§6.2 Internal API Contract 集成** — 若本特性是 Provider/Consumer，如何满足共享 schema
+5. **§4 Internal API Contract 集成** — 若本特性是 Provider/Consumer，如何满足共享 schema
 
 **散文指南**：目标读者是后续实现代码的人。使用具体文件路径、类名、方法名。**不**包含 pseudocode、flowchart、Mermaid 图 — 结构契约由 Interface Contract + Boundary Conditions + Test Inventory 承载。
 
@@ -200,7 +200,7 @@ TDD Rule 4 依此表推导可能的错误实现测试。若特性无非平凡参
 | B  | FUNC/error | §Interface Contract Raises row | [触发] | [异常类型 + 消息] | [缺失分支] |
 | C  | BNDRY/edge | §Implementation Summary Boundary Conditions | [边界值] | [行为] | [off-by-one] |
 | D  | INTG/db    | §Interface Contract + required_configs | [真实 DB setup] | [数据已持久化且可查询] | [连接未建立 / 错表] |
-| E  | INTG/api   | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点 / 未处理 timeout] |
+| E  | INTG/api   | §2.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点 / 未处理 timeout] |
 
 Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` 之一，subtag 为自由标签。
 
@@ -225,7 +225,7 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 
 **Design Interface Coverage Gate（最终化前强制执行）：**
 
-1. 重新读取系统设计文档 §4.N
+1. 重新读取系统设计文档 §2.N
 2. 提取**所有**具名函数、方法、endpoint、middleware、validator、鉴权检查（如 `check_repo_access`、`validate_input`）
 3. 对**每个**具名项：确认至少一行 Test Inventory 使用它
    （在 "Traces To" 或 "Input / Setup" 列中匹配）
@@ -247,7 +247,7 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 - [ ] ui:true 特性的 Visual Rendering Contract 完整（列出全部视觉元素、正向渲染断言已定义、交互深度断言已定义）
 - [ ] 每个 Visual Rendering Contract 元素至少 1 行 UI/render Test Inventory
 - [ ] 每个跳过章节都写明 "N/A — [reason]"
-- [ ] §4.N 中所有函数 / 方法都至少有一行 Test Inventory
+- [ ] §2.N 中所有函数 / 方法都至少有一行 Test Inventory
 
 ## 跳过需显式规则
 
@@ -280,7 +280,7 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
   "Test Inventory: N rows covering <categories>",
   "Interface Contract: M public methods matched to <srs_trace> acceptance criteria",
   "Existing Code Reuse: K reused symbols (or 'greenfield feature' if 0)",
-  "Internal API Contract §6.2: this feature is Provider/Consumer for <contract IDs>"
+  "Internal API Contract §4: this feature is Provider/Consumer for <contract IDs>"
 ]
 
 ### Metrics (extension — for task-progress.md)

@@ -136,8 +136,9 @@ conda activate <env-name>
 
 ## §4 存量代码库约束
 
-> **下游流水线消费区**。Design §13、Feature Design、TDD 新代码必须遵守以下约束。
-> 本段由 `codebase-scanner` 扫描 `docs/rules/` 后合并关键内容到此处。
+> **下游流水线消费区**（单一事实源）。Feature Design、TDD、Worker 的新代码必须遵守以下约束。
+> **数据源**：`docs/rules/*.md`（由 `codebase-scanner` 扫描填充）。init 阶段直接从 `docs/rules/` 提取关键约束投影到此处；设计文档**不再**镜像这些约束。
+> 本段变更必须经人工审批（见 §6）。
 
 ### §4.1 强制内部库
 | 场景 | 必须使用 | 禁止重新实现 |

@@ -180,12 +180,88 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 
 **Step 1.6 代码探索不拆，改返回契约**：原先 explore 返回全文污染主 context；改为要求返回结构化摘要（`modules[] / integration_points[] / architectural_patterns[] / api_surface[] / narrative_insights[]`），主 agent 从摘要引用模块/API 做提问。
 
+## Occam 剃刀：拆分之前先删除（long-task-design 经验）
+
+评估 `long-task-design`（284 行单体）是否适合骨架化时，发现**更优先的问题是"哪些章节根本不应存在"**。对设计模板 13 章做下游消费矩阵后，有 7 章为孤儿或重复源；在此基础上骨架化收益反而下降（负担本身可剔除）。本次**不拆分、仅剪枝**的结果：模板 374 → 194 行（−48%），SKILL.md 284 → 206 行（−27%），13 章 → 6 章。
+
+### 何时优先应用剃刀而非骨架化
+
+单体 skill 前先问三问：
+1. **是否存在"OR 路径"的跨 skill 引用？** 例如下游写 "若 Design §X **或** env-guide §Y 存在" —— 这是双源信号，说明其中一个从未被唯一消费，可删。
+2. **是否存在"上游产出、下游重生"的章节？** 如设计 §4.N 画类图/时序图/流程图，但 Worker 阶段 feature-design SubAgent 会在 `docs/features/*.md` 中以 Interface Contract + Test Inventory 重新产出——上游图只会被覆盖一次，纯冗余。
+3. **是否存在与权威源重复的章节？** 测试策略 vs `feature-list.json.tech_stack`；部署 vs `env-guide.md`；依赖清单 vs 包清单。重复即漂移风险。
+
+三问中任何一个命中，**剃刀先于剪枝**。骨架化适合步骤独立 + 重文档读写；剃刀适合文档冗余 + 多源漂移。
+
+### 剃刀流程（可执行 4 步）
+
+1. **构建消费矩阵** —— 对每个章节 grep 所有下游 skill 的引用：`grep -rn "§N\|第 N 节\|Section N" skills/`。列表即证据。
+2. **标注判决**：
+   - 消费者 0 处 → **孤儿**，删除。
+   - 消费者 N 处但全为 "OR 源 Y" 表达式 → **可删**（Y 是单源）。
+   - 消费者 N 处但 Y 源更简单/已是权威 → **可删**。
+   - 消费者 N 处且唯一 → **保留**。
+3. **预演下游修改**：删前列出每个消费者的替代读取点，确保全部能切换。不能切换的章节**暂缓删除**。
+4. **单批次落地**：模板 + SKILL.md + 所有下游引用一次性改，避免中间态留下悬空引用。跑 grep 复核 + 回归测试闭环。
+
+### 剃刀与 SKILL 运行时文档的边界（延续坑 4）
+
+剃刀过程中极易把"被删除章节 → 替代源"表、"Occam 说明"blockquote、"本章是集成规范不是详细设计"定位语塞入**运行时模板**。这些对 AI 执行无增益，是纯 token 消耗。
+
+判定准则：**"如果这段话删了，SubAgent 下一步的动作会变吗？"** 不会变就删。
+
+具体反模式（本次踩到并清理）：
+
+| 反模式 | 出现位置 | 正确做法 |
+|---|---|---|
+| "已删除章节与替代源对照"表 | `design-template.md` 尾部 | 表写在 `docs/*-lessons.md`；模板文件只写当前章节指引 |
+| "Occam 说明"blockquote | `design-template.md` 开头 | 删；模板本身就是当前结构，不需要自我解释 |
+| "本章是集成规范，不是详细设计"定位段 | §2 章节开头 | 改为 1 行直接禁令："禁止画类图/时序图/流程图" |
+| "选中方案持久化、被淘汰一句话"方法论段 | §1.4 下方 blockquote | 删；表头 "Rejected Alternatives" 列已是执行指令 |
+| `SKILL.md` "设计产物边界（Occam 剃刀结果）"表 | 列出 8 项"不产出"及替代源 | 删；每节自身的 "禁止 X" 直接写在该节规则里 |
+
+**通用规则**：模板与 SKILL.md 中的文字应全部是**填表指引**或**行为约束**；任何"为什么现在是这个结构"的解释都属于 lessons 文档。
+
+### 典型判决（供后续复用）
+
+| 判决模式 | 触发信号 | 本次实例 |
+|---|---|---|
+| **OR 路径即冗余** | 下游 ≥2 处写 "X OR Y" 引用 | `§13 OR env-guide §4` 在 5 处 skill 出现 → 删 §13 |
+| **下游重生即冗余** | 上游章节被下游 SubAgent 原样覆盖 | §4.N 类图/时序图/流程图被 feature-design 重新产出 → §2.N 只留 Overview + Key Types + Integration Surface |
+| **权威源已存在即冗余** | 章节内容可从 feature-list.json / env-guide / 包清单直接读取 | §8 第三方依赖（→ 包清单 + §1.4 关键版本）；§9 测试策略（→ tech_stack + quality_gates）；§10 部署（→ env-guide §1-§3）；§11.1 里程碑（→ waves[].description）|
+| **操作性缺失即删** | 章节写了但无动作触发条件 | §11.4 风险登记、§12 遗留问题 —— 无人读、无流程触发 → 删；真风险应进 task-progress 或阻塞审批 |
+| **单源已足够即删** | 中间摘要层无独立价值 | §13（docs/rules/ 到 env-guide §4 的中间摘要）→ 删 §13，init 直读 docs/rules/ 生成 §4 |
+
+### 剃刀收益量化模板
+
+| 维度 | 前 | 后 | 降幅 |
+|---|---|---|---|
+| 模板行数 | 374 | 194 | −48% |
+| SKILL.md 行数 | 284 | 206 | −27% |
+| 设计章节数 | 13（其中 7 条件/孤儿） | 6（其中 2 条件） | −54% |
+| 每特性强制 Mermaid 图数 | 2–4 | 0（系统级图保留） | −100% |
+| "§X OR §Y" 双路径 | 5 处 skill | 0 | −100% |
+| 跨 skill 引用漂移风险源 | 3 层（rules / §13 / §4） | 2 层（rules / §4） | −33% |
+
+总行数变化不是核心指标——**跨文件漂移源数量**才是。从 3 层降到 2 层意味着后续每次增量修改只需同步 1 处，而非 2 处。
+
+### 剃刀与骨架化的选择矩阵
+
+| 场景 | 优先动作 |
+|---|---|
+| 单体文件长、但每节都有唯一下游消费者 | 骨架化（拆 SubAgent） |
+| 单体文件长、且下游有 OR 路径或重复源 | 剃刀（先剪章节） |
+| 剪枝后仍 >250 行且读重文档 | 再骨架化 |
+| 剪枝后 <200 行 | 保持单体，不再拆 |
+
+**本次结论**：`long-task-design` 从 284 行剪到 206 行，单体已足够轻，放弃原计划的 "Layer C 骨架化"——剃刀的连锁红利是"骨架化变得不必要"。
+
 ## 复用到其他 skill 的判断表
 
 | Skill | 是否适合拆分 | 理由 |
 |---|---|---|
 | `long-task-requirements` | ⚠️ 部分（已拆） | 多轮 AskUserQuestion 挖掘留主 agent；尾部 Step 7-11（质量流水线）/ E10（一致性校验）/ Step 15（落盘）可拆，以交互 vs 非交互为分界 |
-| `long-task-design` | ⚠️ 部分 | 评审可拆（类似 ats-reviewer），但设计本体仍以主 agent 交互为主 |
+| `long-task-design` | ❌ 不拆（已剃刀） | 284 → 206 行，6 章骨架；先剃刀后判定骨架化无必要 |
 | `long-task-work` | ✅ 已拆 | 参考项目：feature-design / tdd / quality / feature-st 已是 SubAgent-per-Step |
 | `long-task-hotfix` | ❌ | 复现 + 根因分析强依赖主 agent 的代码理解与交互 |
 | `long-task-st` | ⚠️ | ST plan 生成可拆，ST 执行依赖交互；建议仅拆 plan |
@@ -206,4 +282,6 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 - 返回契约（共享）：`skills/long-task-work/references/structured-return-contract.md`
 - SubAgent 开发指南（既有）：`skills/long-task-work/references/subagent-development.md`
 - 5 个 sub-skill：`skills/long-task-increment-{impact,design,ats,ucd,srs}/SKILL.md`
-- 本次 commit：`826ab59`
+- Increment 骨架化 commit：`826ab59`
+- Design 剃刀骨架：`docs/templates/design-template.md`、`skills/long-task-design/SKILL.md`
+- Design 剃刀评审计划：`/home/machine/.claude/plans/long-task-design-roi-melodic-origami.md`

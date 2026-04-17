@@ -27,7 +27,7 @@
 
 这些规则在流水线的两个节点被消费：
 
-1. **Design 阶段** —— 合并进设计文档 §13（代码库约定与约束），作为所有新代码的绑定参考
-2. **Worker 阶段** —— 在 Orient、TDD、Inline Check 步骤通过 Design §13 引用
+1. **Init 阶段** —— 由 `long-task-init` 直接从本目录提取关键约束，投影到 `env-guide.md §4`
+2. **Worker 阶段** —— TDD、Feature Design、Inline Check 步骤读取 `env-guide.md §4` 强制执行
 
 重新扫描方法：删除 `docs/rules/` 并开启新会话。router 会重新触发 codebase-scanner。

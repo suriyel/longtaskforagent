@@ -27,7 +27,7 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 
 | 项目规模 | 特性数 | ATS 深度 |
 |---|---|---|
-| 微型 | 1-5 | **跳过独立 ATS** —— 把简化映射表嵌入设计文档的 Testing Strategy 节（第 7 节）；路由检测到 `*-ats.md` 缺失 + ≤5 特性 → 自动跳到 Init |
+| 微型 | 1-5 | **跳过独立 ATS** —— 每特性的简化映射直接写入 `feature-list.json` 各特性的 `verification_steps[]`；路由检测到 `*-ats.md` 缺失 + ≤5 特性 → 自动跳到 Init |
 | 小型 | 5-15 | 轻量级独立 ATS —— 仅第 1-3 节（范围、映射表、类别策略）；跳过第 4-6 节 |
 | 中型 | 15-50 | 完整 ATS 文档——全部 6 节 |
 | 大型 | 50-200+ | 完整 ATS + 详细的每个子系统集成矩阵 + 风险热图 |
@@ -58,7 +58,7 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 - **CON-xxx**：约束——硬限
 - **ASM-xxx**：假设——隐含信念
 
-统计 FR-xxx 数量。若 ≤ 5，应用 **微型项目自动跳过** 规则（见上方 Scaling 指南）。
+统计 FR-xxx 数量。若 ≤ 5，应用 **微型项目自动跳过** 规则：为每条 FR 生成精简验收场景直接写入 `feature-list.json` 对应特性的 `verification_steps[]`，然后写一份仅含占位 + "See feature-list.json verification_steps" 指针的 `docs/plans/YYYY-MM-DD-<topic>-ats.md`。
 
 ### 3. 生成需求 → 验收场景映射
 
@@ -125,8 +125,8 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 | INT-001 | User register → login → first action | F1, F2, F5 | POST /register → POST /login → GET /dashboard | Session propagation, data consistency | System ST |
 ```
 
-**基于 §6.2 派生集成场景：**
-对 Design §6.2 Internal API Contracts 的每一行：
+**基于 §4 派生集成场景：**
+对 Design §4 Internal API Contracts 的每一行：
 1. 创建至少一个覆盖 happy-path 数据流的集成场景（Provider 产出 → Consumer 接收 → Consumer 正确处理）
 2. 创建至少一个覆盖 Provider 错误码的错误场景（例如 Provider 返回 404 → Consumer 优雅处理）
 3. 若契约涉及共享持久状态（同一 DB 表），创建一致性场景（并发访问、陈旧读）
@@ -247,23 +247,14 @@ ATS 文档保存并提交后：
    - **来自 ATS**：类别约束 → feature-st 测试用例类别要求（经由 srs_trace）
 2. **必需子 skill：** 调用 `long-task:long-task-init` 为项目打骨架
 
-## 与设计文档 Testing Strategy 的边界
+## 与其他文档的边界
 
-**设计文档**（第 7 节，Testing Strategy）描述*方式*：
-- 使用哪些测试类型（unit、integration、E2E）
-- 使用哪些工具与框架（pytest、k6、Chrome DevTools MCP）
-- 覆盖率目标（line 90%、branch 80%）
-
-**ATS 文档**描述*详细映射*：
-- 哪条具体需求得到哪些具体测试类别
-- 带精确阈值与负载参数的 NFR 测试方法
-- 跨特性集成场景
-- 风险驱动测试深度
-
-设计文档的 testing strategy 节**应当**在 ATS 存在后引用它：
-```markdown
-See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-category mapping.
-```
+| 关注点 | 权威源 |
+|--------|--------|
+| 测试框架、覆盖率阈值 | `feature-list.json.tech_stack` + `.quality_gates` |
+| 每条需求的测试类别映射 | 本 ATS 文档 |
+| 每特性 Test Inventory | Worker 阶段 `docs/features/*.md`（由 feature-design SubAgent 产出）|
+| 跨特性集成场景 | 本 ATS 文档 §5-§6 |
 
 ## 关键规则
 

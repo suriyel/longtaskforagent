@@ -4,7 +4,7 @@
 **Feature**: #ID — [title]
 **Priority**: high/medium/low
 **Dependencies**: [list or "none"]
-**Design Reference**: docs/plans/YYYY-MM-DD-<topic>-design.md § 4.N
+**Design Reference**: docs/plans/YYYY-MM-DD-<topic>-design.md § 2.N
 **SRS Reference**: FR-xxx
 
 ## Context
@@ -13,11 +13,10 @@
 
 ## Design Alignment
 
-[将设计文档 §4.N 的**完整**内容复制于此 — 含类图、序列图与设计决策。Mermaid 代码块原样保留，使本设计自包含、可供 subagent 独立执行。]
+[将设计文档 §2.N 的**完整**内容复制于此 — Overview、Key Types、Integration Surface。]
 
-- **Key classes**: [自类图 — 要创建 / 修改的类及其关键方法]
-- **Interaction flow**: [自序列图 — 关键调用链]
-- **Third-party deps**: [自依赖表 — 精确库版本]
+- **Key types**: [自 §2.N.2 — 本特性引入或扩展的关键类/模块]
+- **Provides / Requires**: [自 §2.N.3 Integration Surface — Contract IDs + Provider/Consumer]
 - **Deviations**: [无 / 说明偏离及经用户审批记录]
 
 ## SRS Requirement
@@ -32,7 +31,7 @@
 
 **Design rationale**（每条非显见决策一行）：
 - [如：为何阈值默认为 0.6、为何参数 X 可选]
-- **跨特性契约对齐**：若本特性在 Design §6.2 中作为 Provider 或 Consumer 出现，对应方法签名必须匹配 §6.2 schema。标注 Contract ID（如 IAPI-001）以便追溯。
+- **跨特性契约对齐**：若本特性在 Design §4 中作为 Provider 或 Consumer 出现，对应方法签名必须匹配 §4 schema。标注 Contract ID（如 IAPI-001）以便追溯。
 
 ## Visual Rendering Contract（仅 ui: true）
 
@@ -57,7 +56,7 @@
 
 ## Implementation Summary
 
-[3-5 段散文。每段分别涉及：主要类 / 函数；它们之间的调用链；关键设计决策或非显见约束；遗留 / 存量代码交互点；与 §6.2 契约的集成。]
+[3-5 段散文。每段分别涉及：主要类 / 函数；它们之间的调用链；关键设计决策或非显见约束；遗留 / 存量代码交互点；与 §4 契约的集成。]
 
 ### Boundary Conditions
 
@@ -83,7 +82,7 @@
 | B  | FUNC/error | §Interface Contract Raises | [触发条件] | [异常类型 + 消息] | [遗漏的分支] |
 | C  | BNDRY/edge | §Implementation Summary Boundary Conditions | [边界值] | [精确行为] | [off-by-one 或缺失 guard] |
 | D  | INTG/db    | §Interface Contract + required_configs | [真实 DB setup] | [数据已持久化且可查询] | [连接未建立 / 错表] |
-| E  | INTG/api   | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点 / 未处理 timeout] |
+| E  | INTG/api   | §2.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点 / 未处理 timeout] |
 | F  | UI/render  | §Visual Rendering Contract | [页面加载、游戏开始] | [canvas 含非透明像素 / DOM 元素可见且尺寸 > 0] | [render 函数未被调用 / canvas 空白 / DOM 元素未追加] |
 
 Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` 之一，subtag 为自由标签。

@@ -139,7 +139,7 @@ long-task-explore (standalone — no pipeline dependency)
 | 0-pre: Codebase Scan (brownfield) | `codebase-scanner` SubAgent | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns, commit conventions |
 | 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds) |
 | 0b: UCD Style Guide | `long-task-ucd` | `docs/plans/*-ucd.md` (auto-skips if no UI features) |
-| 0c: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §13 if brownfield) |
+| 0c: Design | `long-task-design` | `docs/plans/*-design.md` (6 sections: architecture / feature integration specs / data model / internal API contracts / external interfaces / task decomposition) |
 | 0d: ATS | `long-task-ats` | `docs/plans/*-ats.md` (req→scenario mapping; independent reviewer subagent; auto-skips ≤5 FR) |
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design/UCD updated in place; new features appended with `wave` metadata |
@@ -168,7 +168,7 @@ long-task-explore (standalone — no pipeline dependency)
 - **Service lifecycle via env-guide.md**: All start/stop/restart use `env-guide.md` commands. Follow 4-step Restart Protocol between test cycles. Capture first 30 lines of startup output for PID/port.
 - **Startup output in code**: Servers must print bound port, PID, and ready signal at startup.
 - **Real tests mandatory for external-dependency features**: Features with `required_configs[]` containing URL/HOST/PORT/DSN/URI/CONNECTION/ENDPOINT keys cannot use pure-function exemption. Use `check_real_tests.py --require-for-deps`.
-- **2/3方件 constraints binding**: Design §13.1 mandatory internal libraries and §13.2 prohibited APIs are binding for all new code.
+- **2/3方件 constraints binding**: `env-guide.md §4.1` mandatory internal libraries and `§4.2` prohibited APIs (sourced from `docs/rules/coding-constraints.md`) are binding for all new code.
 - **Codebase scan before requirements (brownfield)**: >3 source files + ≥5 commits → run codebase-scanner first.
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
@@ -177,11 +177,11 @@ long-task-explore (standalone — no pipeline dependency)
 
 | File | Phase | Purpose |
 |------|-------|---------|
-| `docs/rules/*.md` | 0-pre | Codebase conventions (brownfield; merged into Design §13) |
+| `docs/rules/*.md` | 0-pre | Codebase conventions (brownfield; projected into `env-guide.md §4` by init) |
 | `docs/plans/*-srs.md` | 0a | Approved SRS |
 | `docs/plans/*-deferred.md` | 0a | Deferred requirements backlog |
 | `docs/plans/*-ucd.md` | 0b | Approved UCD style guide (UI projects only) |
-| `docs/plans/*-design.md` | 0c | Approved design (includes §13 codebase constraints) |
+| `docs/plans/*-design.md` | 0c | Approved design (6 sections; no longer includes codebase constraints — those live in `env-guide.md §4`) |
 | `docs/plans/*-ats.md` | 0d | Approved ATS (req→scenario mapping; reviewed by ats-reviewer) |
 | `bugfix-request.json` | Hotfix | Signal file (deleted after processing) |
 | `increment-request.json` | Increment | Signal file (deleted after processing) |
@@ -311,8 +311,8 @@ long-task-agent/
 
 This project uses a multi-session agent workflow with 25 skills loaded on-demand (17 top-level + 5 increment sub-skills + 3 requirements sub-skills).
 The `using-long-task` skill routes to the correct phase based on project state.
-Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
+Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS/UCD in place → new features appended → Worker cycles → ST.
 
-Key files: `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-ucd.md` (UCD style guide), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
+Key files: `docs/rules/*.md` (codebase conventions — brownfield only; projected into env-guide.md §4), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-ucd.md` (UCD style guide), `docs/plans/*-design.md` (design — 6 sections: architecture / feature integration specs / data model / internal API contracts / external interfaces / task decomposition), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `env-guide.md` (environment contract — §4 is the Worker/TDD/Feature-Design enforcement source for codebase constraints), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
 <!-- /long-task-agent -->

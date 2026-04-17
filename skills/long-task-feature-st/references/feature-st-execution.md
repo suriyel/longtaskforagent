@@ -101,7 +101,7 @@ TDD（long-task-tdd）已从内部验证实现：
 
 - **Feature 对象**（来自 `feature-list.json`） — ID、title、description、srs_trace、ui flag、dependencies、priority
 - **SRS 章节** — 通过 Document Lookup Protocol 从 `docs/plans/*-srs.md` 读完整 FR-xxx（读整子章节，不要 grep）
-- **Design 章节** — 通过 Document Lookup Protocol 从 `docs/plans/*-design.md` 读完整 §4.N
+- **Design 章节** — 通过 Document Lookup Protocol 从 `docs/plans/*-design.md` 读完整 §2.N
 - **ATS 约束**（若 `docs/plans/*-ats.md` 存在） — 读映射到本特性需求的 ATS 映射表行；提取必需类别。这些类别约束对 Step 3（派生测试用例）**具有约束力**。
 - **Plan 文档** — 来自 Step 5（`docs/features/YYYY-MM-DD-<feature-name>.md`）
 - **UCD 章节**（仅当 `"ui": true`） — `docs/plans/*-ucd.md` 中相关 component/page 提示词
