@@ -262,11 +262,75 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 |---|---|---|
 | `long-task-requirements` | ⚠️ 部分（已拆） | 多轮 AskUserQuestion 挖掘留主 agent；尾部 Step 7-11（质量流水线）/ E10（一致性校验）/ Step 15（落盘）可拆，以交互 vs 非交互为分界 |
 | `long-task-design` | ❌ 不拆（已剃刀） | 284 → 206 行，6 章骨架；先剃刀后判定骨架化无必要 |
+| `long-task-ats` | ❌ 不拆（已剃刀 + reviewer 规范化） | 288 → 218 行；§6 删、§3 压、§1 压；reviewer 对齐五字段契约；见下节 |
 | `long-task-work` | ✅ 已拆 | 参考项目：feature-design / tdd / quality / feature-st 已是 SubAgent-per-Step |
 | `long-task-hotfix` | ❌ | 复现 + 根因分析强依赖主 agent 的代码理解与交互 |
 | `long-task-st` | ⚠️ | ST plan 生成可拆，ST 执行依赖交互；建议仅拆 plan |
 | `long-task-finalize` | ❌ | 多为 README/examples 生成，轻量 |
 | `long-task-retrospective` | ❌ | 上传逻辑已集中，不复杂 |
+
+## ATS 剃刀 + Reviewer 规范化经验（long-task-ats）
+
+延续 Design 剃刀思路对 `long-task-ats`（288 行单体 + 195 行模板）实施剃刀。关键发现：**Design 剃刀后，下游校验 agent 会遗留幻影 §引用**，这是跨 skill 剃刀需要补的审计动作。
+
+### 消费矩阵判决
+
+| § | 判决 | 触发规则 |
+|---|-----|---------|
+| §1.2/§1.3 质量目标/测试级别 | **删** | 与 SKILL.md Step 3 类别分配规则重复；下游 0 消费者 |
+| §2 映射表 | **保留** | feature-st / init / st / 校验脚本唯一源 |
+| §3.1-3.5 prose | **压缩到 1 行** | 类别由 §2 `必须类别` 列驱动；prose 无下游消费者（lessons §剃刀 Q2：上游产出下游重生） |
+| §4 NFR 矩阵 | **保留** | 提供 SRS §5 没有的工具/负载参数；唯一源 |
+| §5 集成场景 | **保留** | ats-reviewer R6 + st 集成规划消费 |
+| §6 风险驱动优先级 | **删** | Design §11.4 已被 Design 剃刀删；§6 失去对齐锚点；ST 从 SRS 优先级直接派生 |
+
+### 新模式 A：上游剃刀 → 下游校验 agent §引用必须同步审计
+
+Design 剃刀把模板从 13 章剪到 6 章，但 `agents/ats-reviewer.md` 仍在 R8 维度里写：
+- `Design §3.4 技术栈兼容`（新结构 §3 是"数据模型"，技术栈在 §1.4）
+- `Design §9 测试策略`（已无 §9）
+- `Design §11.4 风险评估`（已无 §11）
+
+这些**幻影引用**若不修，reviewer 每次跑都产出无意义 Major（R8 条目锚点不存在 → 判 fail）。
+
+**通用规则**：对某 skill 做剃刀时，grep 所有下游 `<SkillName> §N` 形式的引用，对照剪后实际章节号逐条核对。特别关注 reviewer 类 agent——它们是跨文档一致性的最后一道校验。
+
+### 新模式 B：reviewer SubAgent 也必须对齐 Structured Return Contract
+
+ats-reviewer 虽然已在 Step 9 作为独立 SubAgent 分发（lessons 此前误判"已隔离就无需再做"），但输出仍是自由格式自然语言报告：
+- `## Summary / ### Issues Found / ### Dimension Results / ...`
+- 主 agent 需手工解析 "Verdict: PASS/FAIL"、数 Major 条数、提取 Cross-Reference Conflicts 表
+
+改造后对齐五字段契约：
+- `status` 替代 "Verdict: PASS/FAIL"
+- `next_step_input.review_report_markdown` 承载完整评审文本（主 agent 只读不解析）
+- `next_step_input.major_defect_count` / `minor_defect_count` 供分支决策
+- `blockers[]` 专用 `[CROSS-REF CONFLICT]` 条目（双语义：与 status 正交，pass + 非空 blockers 合法）
+- `evidence[]` 每维度裁决 + 关键证据（主 agent 摘要入 task-progress）
+
+**规则**：任何独立分发的 SubAgent（包括不升级为 sub-skill 的 reviewer/evaluator/analyzer），输出都必须对齐 `structured-return-contract.md`。"独立分发" ≠ "自由格式"。
+
+### 新模式 C：blockers 字段可承载非阻塞的外部决策
+
+ATS 场景揭示 `blockers[]` 可双用：
+1. **传统 blocked**：输入缺失、工具异常 → `status: blocked`
+2. **需外部裁决的条目**：如 `[CROSS-REF CONFLICT]` → `status: pass` 也可非空 blockers
+
+主 agent 按前缀分流：无前缀 → 标准 blocked 流程；`[CROSS-REF CONFLICT]` → 逐条 AskUserQuestion A/B/C 选项。这个扩展保持契约字段不变，通过"值约定"承载新语义。
+
+### 收益量化
+
+| 指标 | 前 | 后 | 降幅 |
+|------|-----|-----|------|
+| ats-template.md | 195 | 137 | −30% |
+| long-task-ats/SKILL.md | 288 | 218 | −24% |
+| ats-reviewer.md | 295 | 261 | −12% |
+| 章节数 | 6 | 5 | −17% |
+| **幻影引用**（Design 剃刀后遗） | 4 处 | 0 | **−100%** |
+| 审批节循环 | 5 节 | 4 节 | −20% |
+| Reviewer dispatch 风格偏离 | 1 | 0 | −100% |
+| Reviewer 返回契约偏离 | 1 | 0 | −100% |
+| 审批循环模式维护点 | 散落 Step 10/10.5 | 集中 approval-revise-loop.md | 集中化 |
 
 ## 回归防护
 
@@ -285,3 +349,5 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 - Increment 骨架化 commit：`826ab59`
 - Design 剃刀骨架：`docs/templates/design-template.md`、`skills/long-task-design/SKILL.md`
 - Design 剃刀评审计划：`/home/machine/.claude/plans/long-task-design-roi-melodic-origami.md`
+- ATS 剃刀 + reviewer 规范化：`docs/templates/ats-template.md`、`skills/long-task-ats/SKILL.md`、`skills/long-task-ats/references/approval-revise-loop.md`、`agents/ats-reviewer.md`
+- ATS 剃刀评审计划：`/home/machine/.claude/plans/long-task-ats-docs-skill-subagent-refac-joyful-codd.md`

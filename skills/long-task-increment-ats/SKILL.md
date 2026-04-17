@@ -39,7 +39,6 @@ description: "Use when dispatched by long-task-increment Step 4b — revise ATS 
 3. 对 prompt 中的 `new_contracts` / `modified_contracts`：
    - 新契约：每条至少 1 happy-path + 1 error 集成场景
    - 修改契约：更新对应集成场景
-4. 风险画像变化 → 更新 Risk-Driven Test Priority
 
 ## 再评审判定
 

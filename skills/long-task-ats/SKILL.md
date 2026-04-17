@@ -19,7 +19,6 @@ description: "Use when design doc exists but no ATS doc and no feature-list.json
 - 类别失衡（FUNC/BNDRY 过重，SEC/PERF/UI 几近为零）
 - NFR 测试方法在 feature-st 期间临时决定
 - 跨特性集成场景在 ST 阶段过晚才发现
-- 风险驱动的测试优先级完全缺失
 
 ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束。
 
@@ -28,9 +27,9 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 | 项目规模 | 特性数 | ATS 深度 |
 |---|---|---|
 | 微型 | 1-5 | **跳过独立 ATS** —— 每特性的简化映射直接写入 `feature-list.json` 各特性的 `verification_steps[]`；路由检测到 `*-ats.md` 缺失 + ≤5 特性 → 自动跳到 Init |
-| 小型 | 5-15 | 轻量级独立 ATS —— 仅第 1-3 节（范围、映射表、类别策略）；跳过第 4-6 节 |
-| 中型 | 15-50 | 完整 ATS 文档——全部 6 节 |
-| 大型 | 50-200+ | 完整 ATS + 详细的每个子系统集成矩阵 + 风险热图 |
+| 小型 | 5-15 | 轻量级独立 ATS —— 仅第 1-3 节（范围、映射表、类别策略）；跳过第 4-5 节 |
+| 中型 | 15-50 | 完整 ATS 文档——全部 5 节 |
+| 大型 | 50-200+ | 完整 ATS + 详细的每个子系统集成矩阵 |
 
 **微型项目自动跳过规则**：如果设计文档存在且 SRS 的功能需求（FR-xxx）≤ 5，本 skill 会把 ATS 映射表嵌入设计文档的 testing strategy 节，并创建一份仅引用该节的最小 `docs/plans/*-ats.md` 占位。路由随后检测到 ATS 占位并进入 Init。
 
@@ -94,15 +93,15 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 
 **保守标注**：仅在自动化真正不可能时才标 `Manual`，而非仅仅困难。Chrome DevTools MCP 覆盖大多数 UI 测试；mock 服务覆盖大多数外部依赖。把 `Manual` 留给真正的缺口。
 
-### 4. 定义测试类别策略
+### 4. 测试类别策略（压缩）
 
-对每个测试类别，指定策略：
+类别语义由 §2 映射表的 `必须类别` 列 + 模板末尾「类别定义（参考）」表承载，本节不重复 prose。按类别一行写具体执行约束：
 
-- **FUNC**：每个 FR 必须至少覆盖一个 happy-path + 一个 error-path 场景
-- **BNDRY**：每个 FR 的边界值分析 + 等价类划分需求
-- **SEC**：输入校验（SQL 注入、XSS、路径穿越）、认证绕过、授权越权、数据泄漏
-- **PERF**：NFR 指标阈值 + 负载场景 + 工具规约 + 通过标准
-- **UI**：Chrome DevTools MCP 交互链—— navigate → interact → verify → 三层检测
+- **FUNC**：每个 FR 至少一个 happy-path + 一个 error-path 场景
+- **BNDRY**：每个带上限/尺寸/计数的 FR 必须显式列边界值场景
+- **SEC**：处理用户输入/认证/外部数据的 FR 覆盖注入、授权绕过、数据泄漏
+- **PERF**：NFR 指定工具（如 k6/locust/ab）+ 量化阈值 + 负载参数
+- **UI**：Chrome DevTools MCP 交互链 navigate → interact → verify → 三层检测
 
 ### 5. NFR 测试方法矩阵
 
@@ -125,25 +124,14 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 | INT-001 | User register → login → first action | F1, F2, F5 | POST /register → POST /login → GET /dashboard | Session propagation, data consistency | System ST |
 ```
 
-**基于 §4 派生集成场景：**
+**基于 Design §4 派生集成场景：**
 对 Design §4 Internal API Contracts 的每一行：
 1. 创建至少一个覆盖 happy-path 数据流的集成场景（Provider 产出 → Consumer 接收 → Consumer 正确处理）
 2. 创建至少一个覆盖 Provider 错误码的错误场景（例如 Provider 返回 404 → Consumer 优雅处理）
 3. 若契约涉及共享持久状态（同一 DB 表），创建一致性场景（并发访问、陈旧读）
 4. 在场景的 "Data Flow Path" 列引用 Contract ID（IAPI-xxx）
 
-### 7. 风险驱动的测试优先级
-
-按需求评估风险并分配测试深度：
-
-```markdown
-| Risk Area | Risk Level | Impact Scope | Test Depth | Rationale |
-|-----------|------------|--------------|------------|-----------|
-| User authentication | High | System-wide | Deep (SEC+FUNC+BNDRY) | Security boundary |
-| Data import | Medium | Feature 3-5 | Standard (FUNC+BNDRY) | Data integrity |
-```
-
-### 8. 按章节用户审批
+### 7. 按章节用户审批
 
 向用户呈现每一节以获取审批（与 design skill 相同模式）：
 
@@ -151,84 +139,25 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 2. 测试类别策略（Step 4）
 3. NFR 测试方法矩阵（Step 5）——无带指标的 NFR 则跳过
 4. 跨特性集成场景（Step 6）
-5. 风险驱动优先级（Step 7）
 
 呈现每一节。等待用户反馈。在进入下一节前纳入更改。
 
-**对小型项目**（5-15 特性）：合并为 2 个审批步骤：(a) 映射表 + 类别，(b) 其他全部。
+**对小型项目**（5-15 特性）：合并为 2 个审批步骤：(a) 映射表 + 类别，(b) NFR + 集成。
 
-### 9. Subagent 评审
+### 8. ATS 合规评审
 
-分发 ATS reviewer subagent 进行独立质量评审：
+> **DISPATCH** → 启动独立 SubAgent 执行 reviewer（加载 `agents/ats-reviewer.md`）
+> **input**: `ats_draft`, `srs_path`, `design_path`, `ucd_path`（可选）
+> **expect**: Structured Return Contract；`evidence` 含 R1-R6 + R8 裁决列表；`blockers` 含 `[CROSS-REF CONFLICT]` 条目（若有）；`next_step_input` 含 `major_defect_count` / `minor_defect_count` / `review_report_markdown`
 
-```
-Agent(
-  subagent_type="general-purpose",
-  prompt="""
-  You are an independent ATS reviewer.
-  Read the reviewer definition at: agents/ats-reviewer.md
+按 `references/approval-revise-loop.md` 处理。循环退出后 `next_step_input.review_report_markdown` 即最终评审报告文本，供 Step 9 追加到 ATS 附录。
 
-  ## Input Documents
-  - ATS document (draft): {ats_content}
-  - SRS document: {srs_path} — read it
-  - Design document: {design_path} — read it
-  - UCD document (if applicable): {ucd_path} — read it
-
-  ## Task
-  Execute all review dimensions (R1-R8) defined in agents/ats-reviewer.md.
-  Output a structured review report.
-  Do NOT suggest improvements beyond defect identification.
-  Do NOT read any implementation code — this is a requirements-level review.
-  """
-)
-```
-
-**隔离保证：**
-- Subagent 仅读取 ATS + SRS + Design + UCD + reviewer 定义（agents/ats-reviewer.md）
-- Subagent 不读取实现代码或测试代码
-- Subagent 不修改任何文件——仅返回结构化报告
-- 主 skill 处理报告并决定修复
-
-### 10. 处理评审报告
-
-解析 subagent 的评审报告：
-
-1. **0 个 Major 缺陷** → PASS → 进入 Step 10.5
-2. **存在 Major 缺陷** → 按缺陷描述修复 ATS 文档 → 重跑 Step 9（最多 2 轮评审）
-3. **第三轮仍 FAIL** → 通过 `AskUserQuestion` 向用户呈现完整报告：
-   - 显示所有剩余 Major 缺陷
-   - 选项：手动修复 / 接受已知缺口 / 终止
-   - 如用户接受缺口：在 ATS 页脚节记录缺口
-
-### 10.5 处理交叉引用冲突
-
-如果评审报告包含 `[CROSS-REF CONFLICT]` 项（来自 R8 交叉校验）：
-
-1. 从评审报告的 **Cross-Reference Conflicts** 表收集所有 `[CROSS-REF CONFLICT]` 项
-2. 对每个冲突，通过 `AskUserQuestion` 呈现给用户：
-   - 源文档值 + 节引用
-   - ATS 值 + 节引用
-   - 性质：omission / contradiction / distortion
-   - 选项：
-     - **A**：采用源文档值（修改 ATS）
-     - **B**：采用 ATS 值（更新 SRS/Design 以匹配）
-     - **C**：两者都不对（用户提供正确值）
-3. 把用户决定应用到相关文档
-4. 在 ATS 附录（Review Report 节）记录每条决定，格式：
-   ```
-   | Conflict # | Decision | Applied To | User Rationale |
-   ```
-5. 若有源文档（SRS/Design）被修改，git commit 变更：
-   ```
-   docs: resolve ATS cross-reference conflicts per user decision
-   ```
-6. 进入 Step 11
-
-### 11. 保存 ATS 文档
+### 9. 保存 ATS 文档
 
 1. 把已审批 ATS 保存到 `docs/plans/YYYY-MM-DD-<topic>-ats.md`
-2. 把最终评审报告作为附录节追加
-3. Git 提交：
+2. 把 `next_step_input.review_report_markdown` 作为附录节追加
+3. 若 Step 8 循环中 `[CROSS-REF CONFLICT]` 用户裁决产生了对 SRS/Design 的修改，已由 loop 模板单独 git commit
+4. Git 提交 ATS：
    ```
    docs: add acceptance test strategy (ATS)
 
@@ -237,7 +166,7 @@ Agent(
    Reviewed: [PASS / CONDITIONAL PASS with N gaps]
    ```
 
-### 12. 衔接到 Initializer
+### 10. 衔接到 Initializer
 
 ATS 文档保存并提交后：
 
@@ -254,7 +183,8 @@ ATS 文档保存并提交后：
 | 测试框架、覆盖率阈值 | `feature-list.json.tech_stack` + `.quality_gates` |
 | 每条需求的测试类别映射 | 本 ATS 文档 |
 | 每特性 Test Inventory | Worker 阶段 `docs/features/*.md`（由 feature-design SubAgent 产出）|
-| 跨特性集成场景 | 本 ATS 文档 §5-§6 |
+| 跨特性集成场景 | 本 ATS 文档 §5 |
+| 风险优先级 | SRS 需求 `priority` 字段 + Design §2 Feature Integration Specs |
 
 ## 关键规则
 
