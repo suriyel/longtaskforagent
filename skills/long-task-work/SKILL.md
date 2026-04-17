@@ -281,16 +281,6 @@ grep CSS/样式文件查找不在 UCD 色板 token 中的硬编码颜色 hex 值
   git commit -m "chore: update progress — feature #{id} passing"
   ```
 
-### 11.5 Session 反思（条件性）
-
-若 `feature-list.json` 中 `retro_authorized` 为 `true`：
-1. 读取 `skills/long-task-retrospective/prompts/reflection-prompt.md`
-2. 填充模板变量：特性 ID/标题、阶段、本会话 `task-progress.md` 条目、任何用户纠正 skill 输出的 `AskUserQuestion` 交互
-3. 通过 `Agent(run_in_background=true)` 分发 Reflection SubAgent —— **不要**等待完成
-4. 立即进入 End Session
-
-若 `retro_authorized` 缺失或 `false` → 完全跳过（无输出、无分发）。
-
 ### 12. End Session
 - 停止任何你在本循环期间直接启动的服务（Step 10 ST 验收测试期间启动的服务由 `long-task-feature-st` 停止）
 - 输出简洁完成摘要：

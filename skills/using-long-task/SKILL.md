@@ -117,7 +117,6 @@ digraph phase_detection {
 | Skill | 用途 |
 |-------|---------|
 | `long-task:long-task-finalize` | ST 后文档——场景化使用示例生成 + RELEASE_NOTES/task-progress 收尾（在 ST Go 裁决后）|
-| `long-task:long-task-retrospective` | Skill 自我演化——汇总回顾记录并上传到 REST API（在 ST Go 裁决后，如已授权）|
 
 ## 关键文件（共享契约）
 
@@ -136,7 +135,6 @@ digraph phase_detection {
 | `docs/plans/*-st-report.md` | 系统测试报告—— Go/No-Go 裁决 |
 | `bugfix-request.json` | 信号文件——触发 hotfix 会话（处理后删除）|
 | `increment-request.json` | 信号文件——触发增量需求（处理后删除）|
-| `docs/retrospectives/*.md` | Skill 改进记录（Worker 会话期间收集，ST 后上传）|
 | `docs/rules/*.md` | 存量代码库约定——编码风格、2/3方件约束、构建模式、commit 约定（仅存量项目）|
 
 ## 红旗信号

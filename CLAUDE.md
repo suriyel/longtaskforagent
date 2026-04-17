@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 28 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills); bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker → ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts. 27 skills loaded on-demand via the `Skill` tool (16 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills); bootstrap router (`using-long-task`) routes to the correct phase based on project state. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -25,10 +25,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Validate bugfix | `python scripts/validate_bugfix_request.py bugfix-request.json` |
 | Get tool commands | `python scripts/get_tool_commands.py feature-list.json [--json]` |
 | Check real tests | `python scripts/check_real_tests.py feature-list.json [--feature N] [--require-for-deps] [--json]` |
-| Check retro auth | `python scripts/check_retro_auth.py feature-list.json` |
-| Validate retro record | `python scripts/validate_retrospective_record.py docs/retrospectives/record.md` |
-| Check retro readiness | `python scripts/check_retrospective_readiness.py` |
-| Post retro report | `python scripts/post_retrospective_report.py --feature-list feature-list.json` |
 | Run all tests | `python -m pytest tests/` |
 | Run single test | `python -m pytest tests/test_<script_name>.py` |
 | Auto-loop (Claude Code) | `python scripts/auto_loop.py feature-list.json [--max-iterations 30] [--log-dir logs] [--cooldown 10]` |
@@ -37,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 28-Skill System (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills)
+### 27-Skill System (16 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills)
 
 #### Phase Skills
 
@@ -107,7 +103,6 @@ All dispatched by `long-task-init` orchestrator; each returns a Structured Retur
 | Skill | Purpose |
 |-------|---------|
 | `long-task-finalize` | Post-ST: usage examples + RELEASE_NOTES/task-progress finalization |
-| `long-task-retrospective` | Consolidate retrospective records and upload to REST API (after ST Go verdict, if authorized) |
 
 #### Skill Call Graph
 
@@ -209,7 +204,6 @@ long-task-explore (standalone — no pipeline dependency)
 | `.env.example` | 1 | Required env config template |
 | `docs/features/YYYY-MM-DD-<name>.md` | 2 | Per-feature detailed design |
 | `docs/test-cases/feature-*.md` | 2 | Per-feature ST test cases (ISO/IEC/IEEE 29119) |
-| `docs/retrospectives/*.md` | 2 | Skill improvement records |
 | `docs/plans/*-st-plan.md` | 3 | ST plan with RTM |
 | `docs/plans/*-st-report.md` | 3 | ST report with Go/No-Go verdict |
 | `examples/` | Finalize | Scenario-based usage examples |
@@ -235,7 +229,6 @@ long-task-explore (standalone — no pipeline dependency)
   }],
   "ats_template_path": "optional", "ats_review_template_path": "optional", "ats_example_path": "optional",
   "st_case_template_path": "optional", "st_case_example_path": "optional",
-  "retro_api_endpoint": "https://... (optional)", "retro_authorized": false,
   "features": [...]
 }
 ```
@@ -293,16 +286,14 @@ long-task-agent/
 │   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + references/ui-error-detection.md + prompts/implementer-prompt.md
 │   ├── long-task-quality/SKILL.md + coverage-recipes.md
 │   ├── long-task-finalize/SKILL.md
-│   ├── long-task-retrospective/SKILL.md + prompts/reflection-prompt.md
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
-├── agents/{codebase-scanner,ats-reviewer,example-generator,reflection-analyst,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
+├── agents/{codebase-scanner,ats-reviewer,example-generator,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
 ├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
 ├── scripts/{get_tool_commands,validate_features,validate_guide,check_configs,check_devtools,
 │           check_st_readiness,validate_ats,check_ats_coverage,check_real_tests,
 │           validate_bugfix_request,validate_increment_request,validate_st_cases,
-│           check_retro_auth,validate_retrospective_record,check_retrospective_readiness,
-│           post_retrospective_report,auto_loop,auto_loop_opencode}.py
+│           auto_loop,auto_loop_opencode}.py
 └── tests/test_<script_name>.py  (one file per script)
 ```
 
@@ -327,7 +318,7 @@ long-task-agent/
 <!-- long-task-agent -->
 ## Long-Task Agent
 
-This project uses a multi-session agent workflow with 28 skills loaded on-demand (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills).
+This project uses a multi-session agent workflow with 27 skills loaded on-demand (16 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills).
 The `using-long-task` skill routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS/UCD in place → new features appended → Worker cycles → ST.

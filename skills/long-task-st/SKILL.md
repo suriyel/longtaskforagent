@@ -320,18 +320,6 @@ Charter: Explore [feature area]
   - 运行 `env-guide.md` "Verify Services Stopped" 命令 —— 端口必须无响应
   - **记录清理结果**：在 `task-progress.md` 记录清理状态
 
-### 12.5 Retrospective 报告（条件性）
-
-```bash
-python scripts/check_retrospective_readiness.py
-```
-
-若 exit 0（发现记录）且 `feature-list.json` 中 `retro_authorized` 为 `true`：
-- 调用 `long-task:long-task-retrospective`
-- 等待完成后再进入 Verdict
-
-若 exit 1（无记录）或 `retro_authorized` 缺失/false → 直接到 Verdict。
-
 ### 12. Verdict
 
 基于出口标准决定 Go/No-Go 裁决。在 ST 报告记录：

@@ -102,19 +102,7 @@ git commit -m "chore: initialize long-task project scaffold
 - `## Current State` 头部：`0/N features passing`、`last event: init scaffold`、`next up: Feature 1`
 - 追加 `## Session 0 — Init` 条目：SRS / Design / ATS 路径引用、特性总数、UI 特性数、config 数
 
-### 10. Retrospective 授权
-
-```bash
-python scripts/check_retro_auth.py feature-list.json
-```
-- **Exit 0**（endpoint 已配置且可达）→ AskUserQuestion：
-  > "检测到 Skill 反馈 API 已配置（{endpoint}）。是否授权在本项目中搜集 Skill 改进建议并在项目结束后上报？搜集内容包括：用户反馈修正、技能缺陷分析。不包含项目代码或业务数据。"
-  > 选项：`授权 (Recommended)` / `不授权`
-  - 授权 → feature-list.json 根置 `"retro_authorized": true`
-  - 拒绝 → 置 `false`
-- **Exit 1 或 2**（不可用或禁用）→ 静默跳过
-
-### 11. 开始首次 Worker 循环
+### 10. 开始首次 Worker 循环
 
 **必需子 skill：** 调用 `long-task:long-task-work`。主 agent 在此保留 handoff 控制权（不在任何 sub-skill 内自动触发）。
 
@@ -160,4 +148,4 @@ python scripts/check_retro_auth.py feature-list.json
 - **env-guide.md frontmatter 审批字段由主 agent 写** —— sub-skill 永不修改 `approved_by` / `approved_date` / `approved_sections`
 - **每步 sub-skill 返回都走 approval-revise-loop** —— 统一 approve / revise / escalate 闸门；bootstrap 为零审批快通
 - **feature-list.json 单一写者** —— 仅 features sub-skill 写入；env / bootstrap 只读 tech_stack
-- **Step 11 handoff 保留在主 agent** —— 任何 sub-skill 不在 evidence 中触发自动链式 Worker 调用
+- **Step 10 handoff 保留在主 agent** —— 任何 sub-skill 不在 evidence 中触发自动链式 Worker 调用
