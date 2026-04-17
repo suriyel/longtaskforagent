@@ -164,21 +164,6 @@ python scripts/check_retro_auth.py feature-list.json
 }
 ```
 
-## 生成的持久化工件
-
-| 文件 | 产出方 | 用途 |
-|------|---------|---------|
-| `feature-list.json` | Step 2 骨架 + Step 5 填充 | 带状态的结构化任务清单 |
-| `CLAUDE.md` | Step 2 追加 | 跨会话导航索引 |
-| `task-progress.md` | Step 2 + Step 9 | 逐会话进度日志 |
-| `RELEASE_NOTES.md` | Step 2 | Keep a Changelog 格式 |
-| `examples/` | Step 2 | 可运行示例目录 |
-| `init.sh` / `init.ps1` | Step 4 sub-skill | 环境 bootstrap |
-| `env-guide.md` | Step 3 sub-skill | 服务生命周期、build/test 命令、存量约束（§3/§4 审批）|
-| `long-task-guide.md` | Step 5 sub-skill | Worker 会话导航（不嵌命令） |
-| `.env.example` | Step 5 sub-skill | 必需 env config 模板 |
-| `scripts/check_configs.py` | Step 5 sub-skill | 项目专属 config 检查器 |
-
 ## 关键规则
 
 - **主 agent 不读 SRS / Design / ATS 全文** —— sub-skill 在其 SubAgent 上下文自行加载；主 agent 只按 evidence + next_step_input 做决策

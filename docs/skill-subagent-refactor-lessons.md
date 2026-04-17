@@ -133,6 +133,43 @@ DISPATCH 块越短越好，主 agent 组装 prompt 的成本才越低。
 - 拆分背景、"本次从 X 重构到 Y"、"复用了 Z"这些话只写在开发经验文档（`docs/*-lessons.md`）或 commit message
 - 初稿写完后自检：把每段话代入"如果删了这段，AI 行为会不会变？"—— 不会变就删
 
+#### 坑 4 的高发子类：产物索引表 / 流程图 / Schema 总览
+
+骨架化后最容易在主 SKILL.md 里留下一张 **"生成的持久化工件" 表** 或 **"文件产出方→消费方"流程图**。本次 `long-task-init` 重构踩到：主 orchestrator SKILL.md 保留了一张 10 行的产物表（文件 / 产出方 / 用途），审查时发现**零执行消费者**：
+
+- **主 agent**：不读此表做分支。每步产出已写在该步 DISPATCH stub 的 `expect: artifacts_written=...` 里，冗余。
+- **sub-skill**：不加载主 SKILL.md。
+- **下游 skill**（work / st / hotfix / finalize）：按固定路径读具体文件，从不 grep "产出方" 字段。
+- **CLAUDE.md**：已有一份同名 "Generated Persistent Artifacts" 权威表（给人读）。
+
+表放在 SKILL.md 里 = 每次 init 循环都灌入主 agent 上下文，纯 token 消耗。
+
+**反模式集合**（骨架化后 Occam 第二轮审查必查）：
+
+| 反模式 | 典型形态 | 为什么没用 | 正确位置 |
+|---|---|---|---|
+| 产物索引表 | `\| 文件 \| 产出方 \| 用途 \|` | 每步 DISPATCH 的 `artifacts_written` 已声明；下游按路径直读 | 删；`CLAUDE.md` 给人看的索引已存在 |
+| 文件产出→消费流程图 | mermaid / ascii 箭头图 | AI 不按图做分支；执行顺序已由 Step 编号决定 | 删；流程图归 `docs/*-lessons.md` |
+| 主 SKILL.md 里的 Feature List Schema 全量 | `features[]` 所有字段枚举 | 只有 sizing 关卡呈现需要数量/band 字段，不需要完整 schema | 保留最小子集或改引 `scripts/validate_features.py` 作权威校验 |
+| "Generated Persistent Artifacts" 在 SKILL.md + CLAUDE.md 双写 | 两张同表 | 双源漂移风险 | 留 CLAUDE.md 一份 |
+| 下游 skill 清单 / 上游来源清单 | "本 skill 被 X 调用、下游是 Y" 段落 | 执行路径由 Skill Call Graph 决定，不由本文件分支 | 只留最短一行 "集成" 段，或移到 CLAUDE.md |
+
+**执行路径消费者清单**（判断某段内容"有没有执行消费者"用）：
+
+| 候选消费者 | 是否读主 SKILL.md | 是否读 `references/*.md` | 是否读 sub-skill SKILL.md |
+|---|---|---|---|
+| 主 agent（当前 skill 循环内） | ✅ 全文 | ✅ 按引用加载 | ❌ 不读 |
+| 主 agent（下游 skill 会话） | ❌ 只读当时活跃的那个 | ❌ | ❌ |
+| sub-skill SubAgent | ❌ | ❌ 除非 sub-skill SKILL.md 主动引用 | ✅ 全文 |
+| 开发者阅读 | ✅ | ✅ | ✅ |
+
+**推论**：如果某段内容只有"开发者阅读"这一列命中，它归 `docs/*-lessons.md` 或 `CLAUDE.md`，不归 SKILL.md。
+
+**自检问句**（比坑 4 主问句更具体，适合产物表/流程图场景）：
+1. "主 agent 在哪一步会 grep 这张表取值？" 答不出来 → 删。
+2. "这张表的字段是否在 DISPATCH stub 的 `expect:` 里已声明？" 是 → 删。
+3. "同样的信息在 CLAUDE.md 是否已有权威版？" 是 → 删主 SKILL.md 的那份，避免双源漂移。
+
 ### 坑 5：DISPATCH 语法偏离既有约定
 
 初版把 DISPATCH 简化成 `> execute skill xxx`，丢失了"启动独立 SubAgent"的隔离语义。
