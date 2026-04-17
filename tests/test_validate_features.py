@@ -149,13 +149,11 @@ def test_valid_tech_stack():
         "tech_stack": {
             "language": "python",
             "test_framework": "pytest",
-            "coverage_tool": "pytest-cov",
-            "mutation_tool": "mutmut"
+            "coverage_tool": "pytest-cov"
         },
         "quality_gates": {
             "line_coverage_min": 90,
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
+            "branch_coverage_min": 80
         },
         "features": [
             {
@@ -177,8 +175,7 @@ def test_invalid_language():
         "tech_stack": {
             "language": "ruby",
             "test_framework": "rspec",
-            "coverage_tool": "simplecov",
-            "mutation_tool": "mutant"
+            "coverage_tool": "simplecov"
         },
         "features": [
             {
@@ -215,8 +212,7 @@ def test_invalid_quality_gate_value():
         "created": "2025-01-01",
         "quality_gates": {
             "line_coverage_min": 150,
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
+            "branch_coverage_min": 80
         },
         "features": [
             {
@@ -236,8 +232,7 @@ def test_negative_quality_gate_value():
         "created": "2025-01-01",
         "quality_gates": {
             "line_coverage_min": -10,
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
+            "branch_coverage_min": 80
         },
         "features": [
             {
@@ -257,8 +252,7 @@ def test_quality_gate_string_value():
         "created": "2025-01-01",
         "quality_gates": {
             "line_coverage_min": "high",
-            "branch_coverage_min": 80,
-            "mutation_score_min": 80
+            "branch_coverage_min": 80
         },
         "features": [
             {
@@ -1320,70 +1314,6 @@ def test_short_step_with_chaining_no_warning():
     assert "simple assertion" not in stdout.lower()
 
 
-def test_report_path_file_does_not_exist_fails():
-    """report_path set but file does not exist should fail."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "passing",
-                "dependencies": [],
-                "report_path": "/nonexistent/path/to/report.md"
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 1
-    assert "report_path" in stdout
-    assert "does not exist" in stdout
-
-
-def test_report_path_missing_on_passing_feature_warns():
-    """report_path missing on a passing feature should warn."""
-    data = {
-        "project": "test-project",
-        "created": "2025-01-01",
-        "features": [
-            {
-                "id": 1, "category": "core", "title": "A",
-                "description": "A", "priority": "high", "status": "passing",
-                "dependencies": []
-            }
-        ]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0
-    assert "no report_path" in stdout.lower()
-
-
-def test_report_path_valid_passes():
-    """Valid report_path should pass without warnings."""
-    import tempfile
-    import os
-    with tempfile.TemporaryDirectory() as tmpdir:
-        report_file = os.path.join(tmpdir, "feature-1-test-report.md")
-        with open(report_file, "w") as f:
-            f.write("# Report\n")
-
-        data = {
-            "project": "test-project",
-            "created": "2025-01-01",
-            "features": [
-                {
-                    "id": 1, "category": "core", "title": "A",
-                    "description": "A", "priority": "high", "status": "passing",
-                    "dependencies": [],
-                    "report_path": report_file
-                }
-            ]
-        }
-        code, stdout, _ = run_validator(data)
-        assert code == 0
-        assert "no report_path" not in stdout.lower()
-
-
 if __name__ == "__main__":
     tests = [
         test_valid_feature_list,
@@ -1447,9 +1377,6 @@ if __name__ == "__main__":
         test_simple_verification_step_warning,
         test_rich_verification_step_no_warning,
         test_short_step_with_chaining_no_warning,
-        test_report_path_file_does_not_exist_fails,
-        test_report_path_missing_on_passing_feature_warns,
-        test_report_path_valid_passes,
     ]
     passed = 0
     failed = 0

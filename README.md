@@ -427,85 +427,6 @@ Long-Task Agent 提供五个可自定义的文档模板，用于生成符合行�
 
 ---
 
-## 企业级 MCP 工具抽象
-
-Long-Task Agent 的所有技能默认使用 Chrome DevTools MCP 和 CLI 命令进行测试、覆盖率和变异测试。**企业级 MCP 工具抽象**允许您将这些硬编码的工具引用替换为内部 MCP 服务器，无需修改任何技能文件。
-
-### 工作原理
-
-```
-tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-bindings/
-(企业工具映射)                   (Jinja2 模板渲染)           (渲染后的 SKILL.md)
-```
-
-1. 在项目根目录放置 `tool-bindings.json`（从 `docs/templates/tool-bindings-template.json` 复制）
-2. 会话启动时 hook 自动检测并渲染模板到 `.long-task-bindings/`
-3. 技能加载时优先使用渲染后的文件，回退到原始 SKILL.md
-
-### 能力映射
-
-`tool-bindings.json` 定义了四种能力绑定：
-
-| 能力 | 默认（CLI/Chrome DevTools） | 企业 MCP 替换 |
-|------|---------------------------|--------------|
-| `test` | `pytest` / `jest` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `coverage` | `pytest-cov` / `c8` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `mutation` | `mutmut` / `stryker` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `ui_tools` | Chrome DevTools MCP 工具名 | 企业浏览器自动化 MCP |
-
-### 配置示例
-
-```json
-{
-  "version": 1,
-  "mcp_servers": {
-    "corp_ci": {
-      "command": "npx",
-      "args": ["-y", "@your-org/ci-mcp@latest"]
-    },
-    "corp_browser": {
-      "command": "npx",
-      "args": ["-y", "@your-org/browser-mcp@latest"]
-    }
-  },
-  "capability_bindings": {
-    "test": {
-      "type": "mcp",
-      "tool": "corp_ci__run_tests"
-    },
-    "coverage": {
-      "type": "mcp",
-      "tool": "corp_ci__coverage"
-    },
-    "ui_tools": {
-      "type": "mcp",
-      "tool_mapping": {
-        "navigate_page": "corp_browser__navigate",
-        "take_screenshot": "corp_browser__screenshot",
-        "click": "corp_browser__click"
-      }
-    }
-  }
-}
-```
-
-### 相关脚本
-
-| 脚本 | 用途 |
-|------|------|
-| `apply_tool_bindings.py` | 渲染 SKILL.md.template → .long-task-bindings/（Jinja2） |
-| `check_mcp_providers.py` | 检测企业 MCP 服务器注册状态，输出安装指引 |
-| `check_jinja2.py` | 检测 Jinja2 可用性（企业 MCP 模板渲染依赖） |
-
-### 设计原则
-
-- **非侵入式检测** — 只读检查 MCP 注册状态，不写入配置文件
-- **项目级隔离渲染** — 输出到 `.long-task-bindings/`，避免多会话竞态
-- **向后兼容** — 无 `tool-bindings.json` 时使用原始 SKILL.md，零影响
-- **仅标准库依赖** — 除 Jinja2 外无额外依赖（Python 3 标准库）
-
----
-
 ## 对比分析
 
 | 能力 | 典型 AI 编程 | Long-Task Agent |
@@ -514,7 +435,7 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 | 需求流程 | "直接构建" | 符合 ISO 29148 的 SRS，带结构化收集 |
 | 设计流程 | 临时性 | 2-3 种方案带权衡，逐节批准 |
 | TDD 纪律 | 可选，经常跳过 | 每个功能强制 红→绿→重构 |
-| 测试质量验证 | 仅行覆盖（如果有） | 覆盖率 + 变异测试，可配置阈值 |
+| 测试质量验证 | 仅行覆盖（如果有） | 覆盖率，可配置阈值 |
 | 验收测试规划 | 临时性，类别偏向功能测试 | ATS 前置规划每个需求的测试类别，独立 subagent 审核 |
 | UI 一致性 | 每个开发者的口味 | 带令牌化设计系统的 UCD 风格指南 |
 | 实现后验证 | 无 | 设计接口覆盖门 + 内联合规检查 |

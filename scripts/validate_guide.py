@@ -43,8 +43,6 @@ REQUIRED_SECTIONS = [
      [r"coverage\s*gate", r"coverage.*threshold", r"line.*coverage.*branch.*coverage"]),
     ("TDD Refactor",
      [r"tdd\s*refactor", r"refactor.*keeping.*test", r"clean\s*up"]),
-    ("Mutation Gate / mutation testing",
-     [r"mutation\s*gate", r"mutation.*test", r"mutation.*score"]),
     ("Verification enforcement",
      [r"verification.*enforce", r"fresh.*evidence", r"never.*mark.*passing.*without"]),
     ("ST Test Cases / test case generation",

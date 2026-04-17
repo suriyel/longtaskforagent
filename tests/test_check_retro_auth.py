@@ -31,9 +31,8 @@ def base_data(**extra):
     d = {
         "project": "test",
         "tech_stack": {"language": "python", "test_framework": "pytest",
-                       "coverage_tool": "pytest-cov", "mutation_tool": "mutmut"},
-        "quality_gates": {"line_coverage_min": 90, "branch_coverage_min": 80,
-                          "mutation_score_min": 80},
+                       "coverage_tool": "pytest-cov"},
+        "quality_gates": {"line_coverage_min": 90, "branch_coverage_min": 80},
         "features": [],
     }
     d.update(extra)

@@ -64,7 +64,7 @@ When you need the design section or SRS requirement for a feature, do NOT grep f
 - **Development environment readiness**: Check if environment is set up
   - If `init.sh` / `init.ps1` exists and environment is not ready: run it once
   - Record decision in `task-progress.md` if script was executed
-- **Confirm test commands available**: Activate environment per `long-task-guide.md` and verify the test/coverage/mutation commands are correct for the tech stack; use these directly throughout the cycle (no wrapper scripts)
+- **Confirm test commands available**: Activate environment per `long-task-guide.md` and verify the test/coverage commands are correct for the tech stack; use these directly throughout the cycle (no wrapper scripts)
 - **Service readiness** (conditional — based on Orient service dependency determination):
   - **No service dependencies**: Skip service startup. Feature-ST (Step 10) manages services for acceptance testing.
   - **Has service dependencies**: Real tests (TDD Rule 5a) need running infrastructure. Ensure availability:
@@ -159,15 +159,14 @@ Context to carry forward:
 ### 8. Quality Gates
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-quality` and follow it exactly.
 
-The Quality skill dispatches a SubAgent to execute all 4 gates (Real Test → Coverage → Mutation → Verify). The main Agent does NOT read coverage reports, mutation output, or test runner output — the SubAgent handles everything in its own fresh context and returns a structured summary.
+The Quality skill dispatches a SubAgent to execute all 3 gates (Real Test → Coverage → Verify). The main Agent does NOT read coverage reports or test runner output — the SubAgent handles everything in its own fresh context and returns a structured summary.
 
 Context to carry forward (minimal — SubAgent reads files itself):
 - Feature ID from feature-list.json
 - `quality_gates` thresholds (compact JSON)
 - `tech_stack` (compact JSON)
 - Working directory path
-- Feature test file paths (test files written/modified during TDD for this feature — for mutation_feature scoping)
-- Active feature count (total non-deprecated features in feature-list.json — for mutation_full_threshold decision)
+- Feature test file paths (test files written/modified during TDD for this feature)
 
 ### 9. ST Acceptance Test Cases
 **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-st` and follow it exactly.
@@ -253,7 +252,7 @@ Record in `task-progress.md`:
     ### Feature #id: Title — PASS
     - Completed: YYYY-MM-DD
     - TDD: green ✓
-    - Quality Gates: N% line, N% branch, N% mutation
+    - Quality Gates: N% line, N% branch
     - Feature-ST: N cases, all PASS
     - Inline Check: PASS
     - Git: {commit_sha} feat: title
@@ -270,63 +269,9 @@ Record in `task-progress.md`:
   ```bash
   python scripts/validate_features.py feature-list.json
   ```
-- **MUST execute Step 11a (Generate Feature Report) before the final commit — no bypass allowed.**
-  Do NOT run the final git commit until `docs/report/feature-{id}-{slug}-report.md` exists on disk.
-
-### 11a. Generate Feature Report — MANDATORY (no bypass)
-
-**This step is non-negotiable. Every feature. No exceptions.**
-Generate a per-feature development report at `docs/report/feature-{id}-{slug}-report.md`.
-
-**Data sources** (use in-context data where available; read feature design doc §4 if SRS AC text is needed for Section B — one targeted read is acceptable):
-- Feature object from `feature-list.json` (id, title, category, priority, wave, srs_trace, dependencies, ui)
-- Feature design doc: `docs/features/YYYY-MM-DD-<feature-name>.md` (§3 Interface Contract, §4 SRS Requirement, §7 Test Inventory)
-- Quality Gates metrics from Step 8 SubAgent result (line %, branch %, mutation %)
-- Feature-ST SubAgent result (verdict, metrics table, real test counts, issues, visual assessment)
-- Inline Check results from Step 10 (P2, T2, D3, U1)
-- Risks collected during Step 11 (merged from Quality + Feature-ST)
-- Commit SHA from Step 11
-
-**Steps:**
-1. `mkdir -p docs/report`
-2. Populate template (see `docs/templates/feature-report-template.md`) with session data
-3. Write to `docs/report/feature-{id}-{slug}-report.md`
-4. Set `"report_path"` on the feature object in `feature-list.json`
-
-**Report sections** (see template for full structure):
-
-**A. Basic Info** — Feature metadata, completion date, git SHA.
-
-**B. Requirements Consistency Briefing (需求一致性简报)** — Read §4 (SRS Requirement) from the feature design doc (`docs/features/YYYY-MM-DD-<feature-name>.md`). For each `srs_trace` requirement ID:
-- Copy EARS statement + Given/When/Then ACs from §4
-- Map each AC to: implementing Interface Contract methods + verifying Test Inventory rows
-- Verdict per AC: **Covered** / **Partial** / **Gap**
-- Overall consistency score: N/N ACs fully covered
-
-**C. Quality Gates** — Line coverage, branch coverage, mutation score vs thresholds.
-
-**D. Real Test Execution Summary (真实测试内容)** — From Feature-ST return:
-- Real vs Mock test case counts and pass rates
-- Per-case breakdown: Case ID, Category, Test Type (Real/Mock), Result, Key Assertion
-- If `check_real_tests.py` was run: marker count, mock warnings, skip patterns
-
-**E. Risk Assessment with Mitigations (风险与解决办法)** — For each risk:
-- Original risk description + Severity (Critical/Major/Minor)
-- Concrete mitigation recommendation (not just restating the risk)
-- Status: Resolved / Accepted / Deferred
-- If no risks: "No risks identified — all quality gates passed with comfortable margins."
-
-**F. Inline Compliance Check** — P2, T2, D3, U1 status.
-
-**G. Feature-ST Summary** — Total cases, pass rate, category breakdown, visual assessment (ui:true).
-
-**H. Files Changed** — `git diff --name-only` of the feature commit.
-
-**I. Dependencies** — Dependency feature IDs with current status.
-
-- Git commit again (progress files + report):
+- Git commit again (progress files):
   ```bash
-  git add feature-list.json task-progress.md RELEASE_NOTES.md docs/report/feature-{id}-{slug}-report.md
+  git add feature-list.json task-progress.md RELEASE_NOTES.md
   git commit -m "chore: update progress — feature #{id} passing"
   ```
 
@@ -362,7 +307,6 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 - **Systematic debugging only** — on error, read `references/systematic-debugging.md`; trace root cause, never guess-and-fix
 - **Update RELEASE_NOTES.md after every git commit**
 - **Always commit + update progress before ending session** — bridges context gap
-- **Always generate feature report before final commit** — Write `docs/report/feature-{id}-{slug}-report.md` in Step 11a; set `report_path` in feature-list.json; include the report file in the progress commit. Every feature, no exceptions.
 - **Never leave broken code** — revert incomplete work
 
 ## Red Flags
@@ -377,7 +321,6 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "Let me just try this quick fix" | Systematic debugging first. |
 | "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
 | "I'll update release notes at the end" | Update after every commit. |
-| "Mutation score is probably OK" | Run mutation tests and read the report. |
 | "The UI looks correct to me" | Run automated detection + EXPECT/REJECT. |
 | "ST test case failed but the code is fine" | No bypass. AI must fix code and re-dispatch — no retry limit. If test spec is wrong, use `long-task-increment` to modify. Only escalate if issue genuinely requires human manual testing. |
 | "Port is busy, let me kill manually" | Use env-guide.md "Stop All Services" (port fallback) to kill it, then restart via env-guide.md Start — update env-guide.md if the command needed correction. |
@@ -385,7 +328,6 @@ The auto-loop script (`scripts/auto_loop.py`) handles multi-feature automation e
 | "This deprecated feature still needs work" | Skip it. Deprecated features are excluded. |
 | "Backend isn't ready but I'll mock it for now" | Dependency check exists for a reason. Develop backend features first. |
 | "I'll skip the dependency check this once" | Never skip. Reorder features so deps are satisfied. |
-| "The report can wait / I'll generate it later" | Step 11a is mandatory. Generate the report now — before the final git commit. |
 | "The SRS is ambiguous but I'll just assume..." | SubAgent should flag CLARIFY. Assumptions on critical paths (Interface Contract, Test Inventory expected results, cross-feature contracts) cause late-stage rework. Only low-impact ambiguities may be assumed. |
 
 ## On Error
@@ -403,7 +345,7 @@ Follow the systematic debugging process — **never guess-and-fix**:
 **Called by:** using-long-task (when feature-list.json exists) or long-task-init (Step 16)
 **Invokes (in strict order):**
 1. `long-task:long-task-tdd` (Steps 5-7) — TDD Red-Green-Refactor
-2. `long-task:long-task-quality` (Step 8) — Coverage + Mutation
+2. `long-task:long-task-quality` (Step 8) — Coverage Gate
 3. `long-task:long-task-feature-st` (Step 9) — Black-Box Feature Acceptance Testing (ISO/IEC/IEEE 29119, self-managed lifecycle)
 **Reads/Writes:** feature-list.json, task-progress.md (including `## Current State`), RELEASE_NOTES.md
 **Read on-demand (via Read tool, NOT Skill tool):** `references/systematic-debugging.md`

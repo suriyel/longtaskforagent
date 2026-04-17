@@ -12,21 +12,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Purpose | Command |
 |---------|---------|
-| Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|typescript] [--line-cov N] [--branch-cov N] [--mutation-score N]` |
+| Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|typescript] [--line-cov N] [--branch-cov N]` |
 | Validate feature-list | `python scripts/validate_features.py feature-list.json` |
 | Validate guide | `python scripts/validate_guide.py long-task-guide.md [--feature-list feature-list.json]` |
 | Check configs | `python scripts/check_configs.py feature-list.json [--feature N]` |
 | Check DevTools MCP | `python scripts/check_devtools.py feature-list.json [--feature N]` |
-| Check Jinja2 | `python scripts/check_jinja2.py [--quiet]` |
-| Check MCP providers | `python scripts/check_mcp_providers.py tool-bindings.json [--feature N]` |
-| Apply tool bindings | `python scripts/apply_tool_bindings.py tool-bindings.json [--defaults\|--regenerate-defaults\|--dry-run]` |
 | Validate ATS | `python scripts/validate_ats.py docs/plans/ats.md [--srs docs/plans/srs.md]` |
 | Check ATS coverage | `python scripts/check_ats_coverage.py docs/plans/ats.md --feature-list feature-list.json [--feature N] [--strict]` |
 | Check ST readiness | `python scripts/check_st_readiness.py feature-list.json` |
 | Validate ST cases | `python scripts/validate_st_cases.py docs/test-cases/feature-N.md [--feature-list feature-list.json --feature N]` |
 | Validate increment | `python scripts/validate_increment_request.py increment-request.json` |
 | Validate bugfix | `python scripts/validate_bugfix_request.py bugfix-request.json` |
-| Get tool commands | `python scripts/get_tool_commands.py feature-list.json [--json] [--bindings tool-bindings.json]` |
+| Get tool commands | `python scripts/get_tool_commands.py feature-list.json [--json]` |
 | Check real tests | `python scripts/check_real_tests.py feature-list.json [--feature N] [--require-for-deps] [--json]` |
 | Check retro auth | `python scripts/check_retro_auth.py feature-list.json` |
 | Validate retro record | `python scripts/validate_retrospective_record.py docs/retrospectives/record.md` |
@@ -70,7 +67,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |-------|---------|
 | `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory |
 | `long-task-tdd` | TDD Red-Green-Refactor |
-| `long-task-quality` | Coverage Gate + Feature-Scoped Mutation Gate |
+| `long-task-quality` | Coverage Gate |
 | `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, Chrome DevTools MCP + ISO/IEC/IEEE 29119) |
 
 #### Meta Skills
@@ -123,10 +120,10 @@ long-task-explore (standalone — no pipeline dependency)
 
 ### Critical Rules
 
-- **Gate order**: Config gate → Requirements (SRS) → UCD (UI projects) → Design → ATS → Init → TDD → Coverage → Mutation → Feature-ST → ST → Finalize. No skipping.
+- **Gate order**: Config gate → Requirements (SRS) → UCD (UI projects) → Design → ATS → Init → TDD → Coverage → Feature-ST → ST → Finalize. No skipping.
 - **ATS reviewer mandatory**: Independent subagent reviews ATS before approval; max 2 fix rounds then user escalation.
 - **ATS constrains downstream**: `srs_trace` → ATS category lookup drives `ui` flag; feature-st must satisfy ATS category requirements.
-- **Strict TDD**: Always Red→Green→Refactor. Coverage: line ≥90%, branch ≥80%. Mutation: score ≥80% (feature-scoped if >`mutation_full_threshold` active features; full during ST).
+- **Strict TDD**: Always Red→Green→Refactor. Coverage: line ≥90%, branch ≥80%.
 - **Verification enforcement**: Never mark "passing" without fresh evidence.
 - **Inline compliance after every feature**: interface contract, test inventory, dependency versions, UCD tokens (no SubAgent).
 - **Systematic debugging**: Never guess-and-fix; trace root cause first.
@@ -160,7 +157,7 @@ long-task-explore (standalone — no pipeline dependency)
 | `bugfix-request.json` | Hotfix | Signal file (deleted after processing) |
 | `increment-request.json` | Increment | Signal file (deleted after processing) |
 | `feature-list.json` | 1 | Task inventory with status, constraints, assumptions, waves |
-| `long-task-guide.md` | 1 | Worker session guide (env activation, test/coverage/mutation commands) |
+| `long-task-guide.md` | 1 | Worker session guide (env activation, test/coverage commands) |
 | `env-guide.md` | 1 | Service lifecycle commands (start/stop/restart/verify) |
 | `task-progress.md` | 1 | `## Current State` + session log |
 | `RELEASE_NOTES.md` | 1 | Keep a Changelog format |
@@ -168,7 +165,6 @@ long-task-explore (standalone — no pipeline dependency)
 | `.env.example` | 1 | Required env config template |
 | `docs/features/YYYY-MM-DD-<name>.md` | 2 | Per-feature detailed design |
 | `docs/test-cases/feature-*.md` | 2 | Per-feature ST test cases (ISO/IEC/IEEE 29119) |
-| `docs/report/feature-*-report.md` | 2 | Per-feature development report |
 | `docs/retrospectives/*.md` | 2 | Skill improvement records |
 | `docs/plans/*-st-plan.md` | 3 | ST plan with RTM |
 | `docs/plans/*-st-report.md` | 3 | ST report with Go/No-Go verdict |
@@ -183,8 +179,8 @@ long-task-explore (standalone — no pipeline dependency)
 {
   "project": "name",
   "created": "2025-01-15",
-  "tech_stack": { "language": "python|java|typescript|c|cpp", "test_framework": "...", "coverage_tool": "...", "mutation_tool": "..." },
-  "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80, "mutation_score_min": 80, "mutation_full_threshold": 100 },
+  "tech_stack": { "language": "python|java|typescript|c|cpp", "test_framework": "...", "coverage_tool": "..." },
+  "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80 },
   "waves": [{ "id": 0, "date": "2025-01-15", "description": "Initial release" }],
   "constraints": ["Hard limit"],
   "assumptions": ["Implicit belief"],
@@ -210,7 +206,6 @@ Each feature:
   "deprecated": false, "deprecated_reason": null, "supersedes": null,
   "st_case_path": "optional", "st_case_count": 8,
   "git_sha": "abc1234 (optional — set by Worker Step 11)",
-  "report_path": "optional — set by Worker Step 11a",
   "bug_severity": "Critical|Major|Minor|Cosmetic (bugfix only)",
   "bug_source": "manual-testing (bugfix only)",
   "fixed_feature_id": null, "root_cause": "confirmed root cause (bugfix only)"
@@ -246,10 +241,10 @@ long-task-agent/
 │   ├── long-task-retrospective/SKILL.md + prompts/reflection-prompt.md
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
 ├── agents/{codebase-scanner,ats-reviewer,example-generator,reflection-analyst,codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
-├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,feature-report,rules-index,explore-report}-template.md
+├── docs/templates/{srs,design,ats,ats-review,st-case,deferred-backlog,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
 ├── scripts/{get_tool_commands,validate_features,validate_guide,check_configs,check_devtools,
-│           check_jinja2,check_st_readiness,validate_ats,check_ats_coverage,check_real_tests,
+│           check_st_readiness,validate_ats,check_ats_coverage,check_real_tests,
 │           validate_bugfix_request,validate_increment_request,validate_st_cases,
 │           check_retro_auth,validate_retrospective_record,check_retrospective_readiness,
 │           post_retrospective_report,auto_loop,auto_loop_opencode}.py
@@ -282,5 +277,5 @@ The `using-long-task` skill routes to the correct phase based on project state.
 Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design (merges rules into §13) → ATS (Acceptance Test Strategy) → Init → Worker cycles → System Testing → Finalize.
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/ATS/UCD in place → new features appended → Worker cycles → ST.
 
-Key files: `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-ucd.md` (UCD style guide), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `docs/report/feature-*-report.md` (per-feature development reports), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
+Key files: `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-ucd.md` (UCD style guide), `docs/plans/*-design.md` (design, includes §13 codebase constraints), `docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `docs/test-cases/feature-*.md` (per-feature ST test cases), `docs/plans/*-st-report.md` (ST report), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
 <!-- /long-task-agent -->

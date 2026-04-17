@@ -27,9 +27,8 @@ def make_feature_list(tmp_path, features=None, real_test=None, language="python"
         "project": "test-project",
         "created": "2025-01-01",
         "tech_stack": {"language": language, "test_framework": "pytest",
-                       "coverage_tool": "pytest-cov", "mutation_tool": "mutmut"},
-        "quality_gates": {"line_coverage_min": 90, "branch_coverage_min": 80,
-                          "mutation_score_min": 80},
+                       "coverage_tool": "pytest-cov"},
+        "quality_gates": {"line_coverage_min": 90, "branch_coverage_min": 80},
         "features": features or [],
     }
     if real_test is not None:

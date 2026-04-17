@@ -142,7 +142,7 @@ def test_process_data():
 
 **Why it fails**: Exercising code paths without verifying correctness gives false confidence. Tests will never fail even if the function returns garbage.
 
-**Fix**: Every test must assert observable outcomes. Mutation testing exposes this — if a mutant survives, the test isn't actually checking the result.
+**Fix**: Every test must assert observable outcomes.
 
 ```python
 def test_process_data():
@@ -151,26 +151,7 @@ def test_process_data():
     assert result.count == 42
 ```
 
-### 12. Ignoring Surviving Mutants
-
-**Symptom**: Mutation score below threshold but feature is marked as "passing" anyway.
-
-**Why it fails**: Surviving mutants are bugs your tests can't catch. If you change `>` to `>=` and no test fails, your boundary logic is untested.
-
-**Fix**: For each surviving mutant:
-- **Real gap**: add a test that kills it
-- **Equivalent mutant**: document why the change produces identical behavior (e.g., `# equivalent mutant: condition is always true due to precondition on line X`)
-- **Never ignore**: every survivor must be addressed (fixed or documented)
-
-### 13. Running Mutation Tests on Untested Code
-
-**Symptom**: Running mutation tests before achieving coverage threshold. Many mutants show "no coverage".
-
-**Why it fails**: Mutation testing on uncovered code produces many false survivors and wastes time — there's no test to kill the mutant in the first place.
-
-**Fix**: Always pass the coverage gate before running mutation tests. Coverage first, mutation second.
-
-### 14. Low-Value Assertions (Existence/Type/Import Tests)
+### 12. Low-Value Assertions (Existence/Type/Import Tests)
 
 **Symptom**: Tests assert existence, type, or import success — things that would only fail if the language runtime itself is broken, not if the implementation has a bug.
 
@@ -215,7 +196,6 @@ def test_process():
 **Why they're harmful**:
 - They pass regardless of what the implementation actually returns, as long as it returns *something*
 - They inflate coverage and test counts with zero bug-finding ability
-- Mutation testing may not catch all of these — some mutations preserve type/existence
 - They crowd out meaningful assertions, creating false confidence in test suite quality
 
 **The "Wrong Implementation" Test**: For each assertion, ask: *"What wrong implementation would this test NOT catch?"* If the answer is "almost any wrong implementation" → the assertion is low-value.
@@ -275,9 +255,9 @@ Low-value assertion patterns (for counting):
 - `from module import X; assert X is not None` (import test)
 - Tests with no assertion at all (already covered by anti-pattern #9)
 
-**Relationship to other anti-patterns**: This is more specific than #9 (assertion-free tests) and #11 (gaming coverage). A test can have assertions and still be low-value if those assertions only verify existence/type. Mutation testing (#12) catches some but not all low-value assertions — the 20% ratio rule provides an additional check during test writing.
+**Relationship to other anti-patterns**: This is more specific than #9 (assertion-free tests) and #11 (gaming coverage). A test can have assertions and still be low-value if those assertions only verify existence/type — the 20% ratio rule provides an additional check during test writing.
 
-### 15. All-Mock Real Test (Mock Label Laundering)
+### 13. All-Mock Real Test (Mock Label Laundering)
 
 **Symptom**: A test is marked as a real test (via marker, naming, or label), but the function body mocks the primary external dependency it claims to verify.
 
@@ -298,7 +278,7 @@ def test_real_db_connection(mock_session):  # mock_session replaces real connect
 
 **Relationship**: This anti-pattern is what Rule 5a prevents at TDD Red, and what Gate 0 in `long-task-quality/SKILL.md` enforces via script + LLM sampling.
 
-### 16. Silent Skip (Environment Guard Bypass)
+### 14. Silent Skip (Environment Guard Bypass)
 
 **Symptom**: A real test checks for infrastructure availability at the top of the function and returns early (or marks itself as skipped) when the dependency is missing — causing the test to "pass" without executing any assertions.
 
@@ -344,7 +324,7 @@ def test_real_db_write():
 
 **Detection**: `python scripts/check_real_tests.py feature-list.json` — skip warning list (static scan of real test bodies for skip patterns).
 
-**Relationship**: Complements Anti-Pattern #15 (mock label laundering). #15 catches mocked real tests; #16 catches real tests that silently skip. Both produce false confidence in infrastructure connectivity. Gate 0 Step 3 in `long-task-quality/SKILL.md` enforces runtime skip detection by requiring `skipped 0` in test output.
+**Relationship**: Complements Anti-Pattern #13 (mock label laundering). #13 catches mocked real tests; #14 catches real tests that silently skip. Both produce false confidence in infrastructure connectivity. Gate 0 Step 3 in `long-task-quality/SKILL.md` enforces runtime skip detection by requiring `skipped 0` in test output.
 
 ## Quick Reference: Test Writing Checklist
 
@@ -360,11 +340,9 @@ Before marking a test as complete:
 - [ ] Mocks are at boundaries, not internal layers
 - [ ] Test file contains real tests discoverable by check_real_tests.py (Rule 5a)
 - [ ] check_real_tests.py reports no mock warnings (or warnings reviewed as non-primary-dep mocks)
-- [ ] Real tests fail loudly when infrastructure is unavailable (no silent skip — Anti-Pattern #16)
+- [ ] Real tests fail loudly when infrastructure is unavailable (no silent skip — Anti-Pattern #14)
 - [ ] If pure-function exemption claimed: verified against design section (no external I/O)
 - [ ] No low-value assertions (None checks, isinstance, import, len>0, key-in-dict, truthiness)
 - [ ] Low-value assertion ratio <= 20% of total assertions
 - [ ] Each assertion would fail for a plausible wrong implementation ("wrong implementation" test)
 - [ ] Coverage meets project thresholds (line >= 90%, branch >= 80%)
-- [ ] Mutation score meets threshold (>= 80%) for changed files
-- [ ] No surviving mutants without justification

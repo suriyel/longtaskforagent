@@ -1,17 +1,17 @@
-# Coverage & Mutation Tool Setup Recipes
+# Coverage Tool Setup Recipes
 
-Multi-language setup instructions for coverage tracking and mutation testing tools. Read this file when configuring tools for a new project.
+Multi-language setup instructions for coverage tracking tools. Read this file when configuring tools for a new project.
 
 ## Multi-Language Tool Matrix
 
-| Language | Coverage Tool | Branch Support | Mutation Tool | Incremental Support |
-|----------|--------------|----------------|---------------|---------------------|
-| Python | pytest-cov (coverage.py) | Yes | mutmut | Yes (`--paths-to-mutate`) |
-| Java | JaCoCo | Yes | PIT (pitest) | Yes (`-DtargetClasses`) |
-| JavaScript | c8 / nyc (Istanbul) | Yes | Stryker | Yes (`--mutate` glob) |
-| TypeScript | c8 / nyc (Istanbul) | Yes | Stryker | Yes (`--mutate` glob) |
-| C | gcov + lcov | Yes (`--branch-probabilities`) | Mull | Partial (filter by file) |
-| C++ | gcov + lcov / llvm-cov | Yes | Mull | Partial (filter by file) |
+| Language | Coverage Tool | Branch Support |
+|----------|--------------|----------------|
+| Python | pytest-cov (coverage.py) | Yes |
+| Java | JaCoCo | Yes |
+| JavaScript | c8 / nyc (Istanbul) | Yes |
+| TypeScript | c8 / nyc (Istanbul) | Yes |
+| C | gcov + lcov | Yes (`--branch-probabilities`) |
+| C++ | gcov + lcov / llvm-cov | Yes |
 
 ---
 
@@ -38,30 +38,10 @@ exclude_lines = [
 ]
 ```
 
-**Mutation** — mutmut:
-
-```toml
-# pyproject.toml (or setup.cfg)
-[tool.mutmut]
-paths_to_mutate = "src/"
-tests_dir = "tests/"
-runner = "python -m pytest -x --tb=short"
-```
-
 **Commands**:
 ```bash
 # Coverage
 pytest --cov=src --cov-branch --cov-report=term-missing
-
-# Mutation (incremental — changed files only)
-mutmut run --paths-to-mutate=src/changed_module.py
-
-# Mutation (full)
-mutmut run
-
-# View surviving mutants
-mutmut results
-mutmut show <mutant-id>
 ```
 
 ---
@@ -139,55 +119,12 @@ test.finalizedBy jacocoTestReport
 check.dependsOn jacocoTestCoverageVerification
 ```
 
-**Mutation** — PIT (pitest):
-
-Maven:
-```xml
-<plugin>
-    <groupId>org.pitest</groupId>
-    <artifactId>pitest-maven</artifactId>
-    <version>1.17.1</version>
-    <configuration>
-        <targetClasses><param>com.example.*</param></targetClasses>
-        <targetTests><param>com.example.*Test</param></targetTests>
-        <mutationThreshold>80</mutationThreshold>
-        <outputFormats>
-            <outputFormat>HTML</outputFormat>
-            <outputFormat>XML</outputFormat>
-        </outputFormats>
-    </configuration>
-</plugin>
-```
-
-Gradle:
-```groovy
-plugins {
-    id 'info.solidsoft.pitest' version '1.15.0'
-}
-
-pitest {
-    targetClasses = ['com.example.*']
-    targetTests = ['com.example.*Test']
-    mutationThreshold = 80
-    outputFormats = ['HTML', 'XML']
-    timestampedReports = false
-}
-```
-
 **Commands**:
 ```bash
 # Coverage
 mvn test jacoco:report
 # or
 gradle test jacocoTestReport
-
-# Mutation (incremental — specific classes)
-mvn pitest:mutationCoverage -DtargetClasses=com.example.ChangedClass
-# or
-gradle pitest -PtargetClasses=com.example.ChangedClass
-
-# Mutation (full)
-mvn pitest:mutationCoverage
 ```
 
 ---
@@ -225,24 +162,6 @@ mvn pitest:mutationCoverage
 }
 ```
 
-**Mutation** — Stryker:
-
-```json
-// stryker.conf.json
-{
-  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-core.schema.json",
-  "mutate": ["src/**/*.js", "!src/**/*.test.js", "!src/**/*.spec.js"],
-  "testRunner": "jest",
-  "reporters": ["clear-text", "html"],
-  "thresholds": {
-    "high": 90,
-    "low": 80,
-    "break": 80
-  },
-  "coverageAnalysis": "perTest"
-}
-```
-
 **Commands**:
 ```bash
 # Coverage (c8)
@@ -250,12 +169,6 @@ npx c8 --branches 80 --lines 90 --reporter=text npx jest
 
 # Coverage (Jest built-in)
 npx jest --coverage
-
-# Mutation (incremental — changed files only)
-npx stryker run --mutate='src/changed-module.js'
-
-# Mutation (full)
-npx stryker run
 ```
 
 ---
@@ -292,36 +205,12 @@ npx stryker run
 }
 ```
 
-**Mutation** — Stryker:
-
-```json
-// stryker.conf.json
-{
-  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-core.schema.json",
-  "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.spec.ts"],
-  "testRunner": "vitest",
-  "reporters": ["clear-text", "html"],
-  "thresholds": {
-    "high": 90,
-    "low": 80,
-    "break": 80
-  },
-  "coverageAnalysis": "perTest"
-}
-```
-
 **Commands**:
 ```bash
 # Coverage
 npx c8 --branches --reporter=text npm test
 # or
 npx vitest run --coverage
-
-# Mutation (incremental — changed files only)
-npx stryker run --mutate='src/changed-module.ts'
-
-# Mutation (full)
-npx stryker run
 ```
 
 ---
@@ -357,25 +246,6 @@ if(ENABLE_COVERAGE)
 endif()
 ```
 
-**Mutation** — Mull:
-
-```yaml
-# mull.yml
-mutators:
-  - cxx_add_to_sub
-  - cxx_sub_to_add
-  - cxx_mul_to_div
-  - cxx_div_to_mul
-  - cxx_remove_void_call
-  - cxx_negate_condition
-  - cxx_boundary
-
-timeout: 10000
-reporters:
-  - Elements
-  - SQLite
-```
-
 **Commands**:
 ```bash
 # Coverage
@@ -384,11 +254,6 @@ make CFLAGS="--coverage" test
 gcov -b src/*.c
 lcov --capture -d . -o coverage.info
 lcov --summary coverage.info
-
-# Mutation
-clang -fexperimental-new-pass-manager -fpass-plugin=/path/to/mull-ir-frontend.so \
-      -g -O0 src/*.c tests/*.c -o test-binary
-mull-runner ./test-binary
 ```
 
 ---
@@ -427,11 +292,6 @@ make && ctest
 llvm-profdata merge -sparse default.profraw -o coverage.profdata
 llvm-cov report ./test-binary -instr-profile=coverage.profdata
 llvm-cov show ./test-binary -instr-profile=coverage.profdata --format=html > cov-report.html
-
-# Mutation (Mull — same approach as C)
-clang++ -fexperimental-new-pass-manager -fpass-plugin=/path/to/mull-ir-frontend.so \
-        -g -O0 src/*.cpp tests/*.cpp -o test-binary
-mull-runner ./test-binary
 ```
 
 ---
@@ -440,14 +300,14 @@ mull-runner ./test-binary
 
 When using `init_project.py --lang <language>`:
 
-| Language | Test Framework | Coverage Tool | Mutation Tool |
-|----------|---------------|---------------|---------------|
-| `python` | pytest | pytest-cov | mutmut |
-| `java` | junit | jacoco | pitest |
-| `javascript` | jest | c8-jest | stryker |
-| `typescript` | vitest | c8 | stryker |
-| `c` | ctest | gcov | mull |
-| `cpp` / `c++` | gtest | gcov | mull |
+| Language | Test Framework | Coverage Tool |
+|----------|---------------|---------------|
+| `python` | pytest | pytest-cov |
+| `java` | junit | jacoco |
+| `javascript` | jest | c8-jest |
+| `typescript` | vitest | c8 |
+| `c` | ctest | gcov |
+| `cpp` / `c++` | gtest | gcov |
 
 ## Default Thresholds
 
@@ -455,36 +315,3 @@ When using `init_project.py --lang <language>`:
 |--------|---------|-----------|
 | Line coverage | >= 90% | Most production code paths must be tested |
 | Branch coverage | >= 80% | Conditional logic must be exercised both ways |
-| Mutation score | >= 80% | Tests must catch 4 out of 5 injected bugs |
-| Mutation full threshold | 100 features | Projects with ≤ this many active features run full mutation per-feature |
-
----
-
-## Per-Feature Mutation Test Scoping
-
-When the project's active feature count exceeds `mutation_full_threshold`, the Quality Gate scopes mutation testing to the current feature's changed files **and** tests. This avoids running the entire test suite per mutant, which becomes prohibitively slow in large projects.
-
-**Principle**: Mutate only changed source files, run only the feature's tests per mutant. Full mutation runs during ST phase (Step 3b) to catch project-wide regressions.
-
-### Identifying Feature Test Files
-
-- Test files created/modified during the TDD cycle for this feature
-- Convention-based: if source is `src/foo.ext`, tests are likely `tests/test_foo.ext`
-- Marker-based: if the project uses test markers/tags, filter by feature marker
-- The Worker passes feature test file paths to the Quality SubAgent
-
-### Per-Tool Scoping Reference
-
-| Tool | Mutation Target Scoping | Test Scoping Mechanism |
-|------|------------------------|------------------------|
-| mutmut | `--paths-to-mutate={files}` | `--runner='{test_runner} {test_files}'` |
-| pitest | `-DtargetClasses={classes}` | `-DtargetTests={test_classes}` |
-| stryker | `--mutate='{files}'` | `--coverageAnalysis perTest` (auto-selects relevant tests) |
-| mull | `--filters={files}` | Build feature-specific test binary |
-
-### Tool-Specific Notes
-
-- **mutmut** `--runner`: Provide the full test execution command including framework binary and file paths. The `{test_runner}` placeholder resolves to the project's test runner command (e.g., `python -m pytest -x --tb=short`, `npx vitest run`).
-- **pitest** `-DtargetTests`: Accepts comma-separated Java class patterns (e.g., `com.example.UserAuthTest,com.example.UserLoginTest`).
-- **Stryker** `--coverageAnalysis perTest`: Stryker automatically determines which tests cover each mutant and runs only those. No explicit test file list needed. Requires Stryker 6+.
-- **mull**: Link only feature-relevant test object files when compiling the test binary. This requires building a separate binary per feature scope.

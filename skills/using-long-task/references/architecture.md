@@ -314,7 +314,7 @@ Each worker cycle follows this exact sequence.
 12. Run full test suite — confirm all new tests green, no regressions
 
 ### Phase 4.5: Coverage Gate — verify test coverage
-12a. Run coverage tool for the project's language (see [coverage-and-mutation.md](coverage-and-mutation.md))
+12a. Run coverage tool for the project's language (see [../../long-task-quality/coverage-recipes.md](../../long-task-quality/coverage-recipes.md))
 12b. Check: line coverage >= `quality_gates.line_coverage_min` (default 90%), branch coverage >= `quality_gates.branch_coverage_min` (default 80%)
 12c. If BELOW threshold: write additional tests (return to Phase 3 for new test cases)
 12d. Record coverage report output as evidence
@@ -323,13 +323,6 @@ Each worker cycle follows this exact sequence.
 13. Refactor code while keeping all tests green
 14. Run verification again — mark feature as `"passing"` in `feature-list.json` ONLY after ALL tests pass
 15. **Verification enforcement**: Execute each `verification_step`, read FULL output, confirm all green. If you catch yourself thinking "should pass" or "probably works" — STOP and re-run. See [verification-enforcement.md](verification-enforcement.md).
-
-### Phase 5.5m: Mutation Gate — verify test effectiveness
-15a. **Scope decision**: If active features ≤ `quality_gates.mutation_full_threshold` (default 100) → run `mutation_full`; otherwise → run `mutation_feature` (changed files + feature's tests only)
-15b. Check: mutation score >= `quality_gates.mutation_score_min` (default 80%)
-15c. If BELOW threshold: improve test assertions to kill surviving mutants (return to Phase 3)
-15d. Record mutation report output as evidence
-15e. Full mutation testing (all source files, all tests) runs during ST phase (Step 3b) — no per-feature milestone runs needed
 
 ### Phase 5.5: Inline Compliance Check
 16. Run mechanical compliance checks (interface contract verification, test inventory cross-check, dependency version spot-check, UCD token grep for UI features)
@@ -378,8 +371,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | Skipping examples for user-facing features | Users can't understand how to use new features; reduces project value | Add runnable example for every user-facing feature |
 | Removing srs_trace entries | Breaks ATS category traceability | srs_trace maps features to SRS requirements — keep intact |
 | Skipping coverage check | Tests may miss entire code paths | Run coverage after every TDD Green |
-| Skipping mutation testing | Tests may pass without catching real bugs | Run mutation after every TDD Refactor |
-| Gaming coverage with assert-free tests | High coverage but useless tests | Mutation testing catches this; strengthen assertions |
+| Gaming coverage with assert-free tests | High coverage but useless tests | Strengthen assertions; no existence-only or truthiness-only checks |
 | Skipping progress file update | Next session wastes tokens rediscovering state | Always update before ending session |
 | Not committing at session end | Work may be lost, next session can't diff | Always commit working code |
 | Using markdown for feature list | Models tend to corrupt/reformat markdown lists | Use JSON for structured data |
@@ -399,7 +391,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
    - Follow test scenario rules: category coverage, negative ratio >= 40%, low-value assertions <= 20%
 2. **Green**: Write minimal implementation to pass tests
 3. **Refactor**: Clean up while keeping tests green
-4. **Quality gates**: Coverage gate (line ≥90%, branch ≥80%) + Mutation gate (score ≥80%) objectively verify test quality
+4. **Quality gates**: Coverage gate (line ≥90%, branch ≥80%) objectively verifies test quality
 
 ### For API / backend features:
 - Unit tests for business logic (pytest, jest, etc.)
@@ -415,10 +407,9 @@ Requirements → SRS approved → Design → design approved → Initializer →
   - See [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md) for full specification
 - Test flow: navigate → wait → error detection → snapshot → EXPECT/REJECT → interact → error detection → snapshot → console check
 
-### For ALL features (Coverage & Mutation mandatory):
+### For ALL features (Coverage mandatory):
 - **Coverage**: Run language-specific coverage tool, verify line/branch thresholds met
-- **Mutation**: Run feature-scoped mutation (large projects) or full mutation (small projects ≤ `mutation_full_threshold`), verify mutation score threshold met
-- See [coverage-and-mutation.md](coverage-and-mutation.md) for per-language tool setup and commands
+- See [../../long-task-quality/coverage-recipes.md](../../long-task-quality/coverage-recipes.md) for per-language tool setup and commands
 
 ### For data / pipeline features:
 - Run with sample data and verify output
@@ -473,17 +464,9 @@ Requirements → SRS approved → Design → design approved → Initializer →
 │     ALL PASS             │
 └──────────┬───────────────┘
            ↓
-┌─── Mutation Gate ────────┐
-│ 12. Run mutation tool    │
-│     (incremental)        │
-│ 13. Score >= threshold?  │
-│ 14. If below → improve   │
-│     assertions           │
-└──────────┬───────────────┘
-           ↓
 ┌─── Verify & Mark ────────┐
-│ 15. All evidence recorded │
-│ 16. Mark "passing"        │
+│ 12. All evidence recorded │
+│ 13. Mark "passing"        │
 └───────────────────────────┘
 ```
 
@@ -523,14 +506,14 @@ See [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md
 
 ## Multi-Language Tool Quick Reference
 
-Coverage and mutation tool commands per language. For full setup recipes, see [coverage-and-mutation.md](coverage-and-mutation.md).
+Coverage tool commands per language. For full setup recipes, see [../../long-task-quality/coverage-recipes.md](../../long-task-quality/coverage-recipes.md).
 
-| Language | Coverage Command | Mutation Command (Feature) | Mutation Command (Full) |
-|----------|-----------------|---------------------------|------------------------|
-| Python | `pytest --cov=src --cov-branch --cov-report=term-missing` | `mutmut run --paths-to-mutate=<files> --runner='<runner> <test-files>'` | `mutmut run` |
-| Java | `mvn test jacoco:report` | `mvn pitest:mutationCoverage -DtargetClasses=<classes> -DtargetTests=<test-classes>` | `mvn pitest:mutationCoverage` |
-| TypeScript | `npx c8 --branches --reporter=text npm test` | `npx stryker run --mutate='<files>' --coverageAnalysis perTest` | `npx stryker run` |
-| C/C++ | `gcov -b src/*.c && lcov --capture -d . -o cov.info` | `mull-runner <feature-test-binary> --filters=<files>` | `mull-runner <test-binary>` |
+| Language | Coverage Command |
+|----------|-----------------|
+| Python | `pytest --cov=src --cov-branch --cov-report=term-missing` |
+| Java | `mvn test jacoco:report` |
+| TypeScript | `npx c8 --branches --reporter=text npm test` |
+| C/C++ | `gcov -b src/*.c && lcov --capture -d . -o cov.info` |
 
 ## Release Notes Maintenance
 

@@ -24,8 +24,8 @@ Feature schema supports optional UI fields:
 Usage:
     python scripts/init_project.py <project-name> [--path <output-dir>]
            [--lang <language>] [--test-framework <framework>]
-           [--coverage-tool <tool>] [--mutation-tool <tool>]
-           [--line-cov <0-100>] [--branch-cov <0-100>] [--mutation-score <0-100>]
+           [--coverage-tool <tool>]
+           [--line-cov <0-100>] [--branch-cov <0-100>]
 """
 
 import argparse
@@ -57,7 +57,6 @@ _LONG_TASK_REFERENCE_BODY = (
     "`docs/features/*.md` (per-feature detailed design), "
     "`docs/test-cases/feature-*.md` (per-feature ST test cases), "
     "`docs/plans/*-st-report.md` (ST report), "
-    "`docs/report/feature-*-report.md` (per-feature development reports), "
     "`increment-request.json` (increment signal).\n"
     "<!-- /long-task-agent -->\n"
 )
@@ -101,11 +100,8 @@ def create_feature_list(
     language: str = "TODO",
     test_framework: str = "TODO",
     coverage_tool: str = "TODO",
-    mutation_tool: str = "TODO",
     line_coverage_min: int = 90,
     branch_coverage_min: int = 80,
-    mutation_score_min: int = 80,
-    mutation_full_threshold: int = 100,
 ) -> dict:
     return {
         "project": project_name,
@@ -113,14 +109,11 @@ def create_feature_list(
         "tech_stack": {
             "language": language,
             "test_framework": test_framework,
-            "coverage_tool": coverage_tool,
-            "mutation_tool": mutation_tool
+            "coverage_tool": coverage_tool
         },
         "quality_gates": {
             "line_coverage_min": line_coverage_min,
-            "branch_coverage_min": branch_coverage_min,
-            "mutation_score_min": mutation_score_min,
-            "mutation_full_threshold": mutation_full_threshold
+            "branch_coverage_min": branch_coverage_min
         },
         "constraints": [],
         "assumptions": [],
@@ -134,37 +127,30 @@ LANG_PRESETS = {
     "python": {
         "test_framework": "pytest",
         "coverage_tool": "pytest-cov",
-        "mutation_tool": "mutmut",
     },
     "java": {
         "test_framework": "junit",
         "coverage_tool": "jacoco",
-        "mutation_tool": "pitest",
     },
     "javascript": {
         "test_framework": "jest",
         "coverage_tool": "c8-jest",
-        "mutation_tool": "stryker",
     },
     "typescript": {
         "test_framework": "vitest",
         "coverage_tool": "c8",
-        "mutation_tool": "stryker",
     },
     "c": {
         "test_framework": "ctest",
         "coverage_tool": "gcov",
-        "mutation_tool": "mull",
     },
     "cpp": {
         "test_framework": "gtest",
         "coverage_tool": "gcov",
-        "mutation_tool": "mull",
     },
     "c++": {
         "test_framework": "gtest",
         "coverage_tool": "gcov",
-        "mutation_tool": "mull",
     },
 }
 
@@ -232,18 +218,12 @@ def main():
                         help="Test framework (e.g., pytest, junit, vitest, gtest)")
     parser.add_argument("--coverage-tool", default=None,
                         help="Coverage tool (e.g., pytest-cov, jacoco, c8, gcov)")
-    parser.add_argument("--mutation-tool", default=None,
-                        help="Mutation tool (e.g., mutmut, pitest, stryker, mull)")
 
     # Quality gate thresholds
     parser.add_argument("--line-cov", type=int, default=90,
                         help="Min line coverage %% (default: 90)")
     parser.add_argument("--branch-cov", type=int, default=80,
                         help="Min branch coverage %% (default: 80)")
-    parser.add_argument("--mutation-score", type=int, default=80,
-                        help="Min mutation score %% (default: 80)")
-    parser.add_argument("--mutation-full-threshold", type=int, default=100,
-                        help="Feature count threshold for full mutation per-feature (default: 100)")
 
     args = parser.parse_args()
 
@@ -255,7 +235,6 @@ def main():
     preset = LANG_PRESETS.get(language.lower(), {}) if language != "TODO" else {}
     test_framework = args.test_framework or preset.get("test_framework", "TODO")
     coverage_tool = args.coverage_tool or preset.get("coverage_tool", "TODO")
-    mutation_tool = args.mutation_tool or preset.get("mutation_tool", "TODO")
 
     # feature-list.json
     fl_path = os.path.join(out_dir, "feature-list.json")
@@ -265,11 +244,8 @@ def main():
             language=language,
             test_framework=test_framework,
             coverage_tool=coverage_tool,
-            mutation_tool=mutation_tool,
             line_coverage_min=args.line_cov,
             branch_coverage_min=args.branch_cov,
-            mutation_score_min=args.mutation_score,
-            mutation_full_threshold=args.mutation_full_threshold,
         ), f, indent=2, ensure_ascii=False)
     print(f"Created: {fl_path}")
 
@@ -323,7 +299,6 @@ def main():
     helper_scripts = [
         "validate_features.py",
         "check_devtools.py",
-        "check_jinja2.py",
         "validate_guide.py",
         "get_tool_commands.py",
         "validate_st_cases.py",
@@ -332,7 +307,6 @@ def main():
         "check_st_readiness.py",
         "check_real_tests.py",
         "check_ats_coverage.py",
-        "check_mcp_providers.py",
         "auto_loop.py",
         "auto_loop_opencode.py",
     ]

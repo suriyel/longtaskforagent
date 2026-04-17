@@ -81,7 +81,6 @@ Add ST completion and version entry (moved from ST Persist):
 Add ST session summary entry (moved from ST Persist):
 - ST categories executed, pass/fail counts
 - Defects found and fixed (with severity)
-- Full mutation score
 - Final quality metrics
 - Example generation results (from Step 2)
 

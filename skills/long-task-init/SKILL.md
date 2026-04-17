@@ -35,36 +35,13 @@ You MUST create a TodoWrite task for each step and complete them in order:
    ```
    - `<project-name>` — from the SRS title
    - `<language>` — one of `python|java|typescript|c|cpp` from the design doc tech stack
-   - Use `--line-cov`, `--branch-cov`, `--mutation-score` to override thresholds (defaults: 90/80/80)
+   - Use `--line-cov`, `--branch-cov` to override thresholds (defaults: 90/80)
    - Creates: `feature-list.json`, `CLAUDE.md` (appended), `task-progress.md`, `RELEASE_NOTES.md`, `examples/`, `docs/plans/`
-   - Auto-copies helper scripts (`validate_features.py`, `check_configs.py`, `check_devtools.py`, `check_jinja2.py`, `check_real_tests.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_st_cases.py`, `validate_increment_request.py`, `validate_bugfix_request.py`, `check_st_readiness.py`, `check_ats_coverage.py`, `check_mcp_providers.py`) into project `scripts/`
-3b. **MCP Provider Setup** (SKIP if no enterprise MCP required):
-   - Ask user: "Does this project use enterprise MCP servers for test/coverage/mutation/UI automation?"
-   - If **YES**:
-     1. Collect per capability: MCP server name, install command, tool names, result field paths
-     2. Create `tool-bindings.json` at project root using `docs/templates/tool-bindings-template.json` as a guide
-     3. Check Jinja2 availability (required for template rendering):
-        ```bash
-        python scripts/check_jinja2.py
-        ```
-        → Exit 1: present installation guide to user (`pip install jinja2`); wait for user to install; re-run check to confirm exit 0
-        → Exit 0: continue
-     4. Render skill templates:
-        ```bash
-        python scripts/apply_tool_bindings.py tool-bindings.json --output-dir .long-task-bindings
-        ```
-        → Verify: "N templates rendered to .long-task-bindings/"
-     5. Check MCP server availability:
-        ```bash
-        python scripts/check_mcp_providers.py tool-bindings.json
-        ```
-        → Exit 1: present installation instructions to user (the script outputs exact `claude mcp add` commands); wait for user to install and restart session; re-run check to confirm exit 0
-        → Exit 0: continue
-   - If **NO**: skip (skills use plugin defaults — Chrome DevTools MCP for UI, CLI tools for testing)
+   - Auto-copies helper scripts (`validate_features.py`, `check_configs.py`, `check_devtools.py`, `check_real_tests.py`, `validate_guide.py`, `get_tool_commands.py`, `validate_st_cases.py`, `validate_increment_request.py`, `validate_bugfix_request.py`, `check_st_readiness.py`, `check_ats_coverage.py`) into project `scripts/`
 
 3. **Verify `tech_stack` and `quality_gates`** in `feature-list.json`:
-   - Confirm `language`, `test_framework`, `coverage_tool`, `mutation_tool` match the design doc
-   - Adjust `quality_gates` thresholds if needed (defaults: line 90%, branch 80%, mutation 80%)
+   - Confirm `language`, `test_framework`, `coverage_tool` match the design doc
+   - Adjust `quality_gates` thresholds if needed (defaults: line 90%, branch 80%)
    - Verify tool commands resolve correctly:
      ```bash
      python scripts/get_tool_commands.py feature-list.json
@@ -77,17 +54,14 @@ You MUST create a TodoWrite task for each step and complete them in order:
    - Read these files for reference:
      - `skills/long-task-work/SKILL.md` — Worker workflow
      - `skills/long-task-quality/SKILL.md` — verification enforcement
-     - `skills/long-task-quality/coverage-recipes.md` — coverage/mutation tool setup
+     - `skills/long-task-quality/coverage-recipes.md` — coverage tool setup
      - `skills/using-long-task/references/architecture.md` — TDD workflow details
-   - Include ONLY the project's language-specific coverage/mutation commands (get from `python scripts/get_tool_commands.py feature-list.json`)
-   - Include UI testing section ONLY if the project has UI features (`"ui": true`):
-     - If `tool-bindings.json` exists and `capability_bindings.ui_tools.tool_mapping` is present: use the enterprise tool names from `tool-bindings.json` throughout the guide (not Chrome DevTools MCP names)
-     - Otherwise: use Chrome DevTools MCP tool names (`navigate_page`, `click`, etc.)
-   - **Must include all required sections**: Orient, Bootstrap, Config Gate, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Mutation Gate, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules
+   - Include ONLY the project's language-specific coverage commands (get from `python scripts/get_tool_commands.py feature-list.json`)
+   - Include UI testing section ONLY if the project has UI features (`"ui": true`): use Chrome DevTools MCP tool names (`navigate_page`, `click`, etc.)
+   - **Must include all required sections**: Orient, Bootstrap, Config Gate, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules
    - **Must include `Environment Commands` section** with:
      - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate myenv`, `nvm use 20`)
      - Direct test execution command (e.g., `pytest --cov=src tests/`)
-     - Direct mutation testing command (e.g., `mutmut run`)
      - Direct coverage report command
      - These replace the now-removed test.sh/mutate.sh wrappers — Claude runs these directly
    - **Must include `Service Commands` section** (only if project has server processes): reference `env-guide.md` as the authoritative source for start/stop/restart commands; list health check URLs; include reminder about the Restart Protocol
@@ -173,7 +147,7 @@ You MUST create a TodoWrite task for each step and complete them in order:
 7. **Populate SRS fields in `feature-list.json`** — from the **SRS document**:
    - `constraints[]` — copy CON-xxx items from SRS "Constraints" section; each a concise string
    - `assumptions[]` — copy ASM-xxx items from SRS "Assumptions & Dependencies" section; each a concise string
-   - NFR-xxx rows → create `category: "non-functional"` features with `srs_trace` (e.g. `["NFR-001"]`) and optionally measurable `verification_steps`; coverage/mutation gates do not apply to NFR features
+   - NFR-xxx rows → create `category: "non-functional"` features with `srs_trace` (e.g. `["NFR-001"]`) and optionally measurable `verification_steps`; coverage gate does not apply to NFR features
 8. **Populate features from Design §10.2** — FRs are already right-sized at the Requirements phase (G1-G6 over-size + S1-S4 under-size heuristics). The design document's Task Decomposition table (§10.2) maps right-sized FRs to prioritized features with dependency ordering. Populate `feature-list.json` `features[]`:
    - Each §10.2 row → one feature. Do NOT further split or merge — granularity was finalized in the SRS phase.
    - `srs_trace`: copy the "Mapped FRs" column — the array of FR IDs this feature implements (e.g. `["FR-003", "FR-004", "FR-005"]`)
@@ -236,7 +210,6 @@ You MUST create a TodoWrite task for each step and complete them in order:
 14. **Run init script and verify environment**:
     - Run `init.sh` (or `init.ps1`), verify environment setup completes without errors
     - Verify test execution works: activate env → run test command from `long-task-guide.md` → confirm tests execute (may all fail at this point — that's expected)
-    - Verify mutation testing command is available: activate env → run mutation tool version check
     - If any check fails: diagnose root cause, fix the script or configuration, re-run
     - Do NOT start services here — services are started during ST testing using the commands defined in `env-guide.md`
 15. **Update `task-progress.md`** — update `## Current State` with initial progress (0/N features passing), then append Session 0 entry (include SRS + design doc references)
@@ -262,13 +235,11 @@ Root structure:
   "tech_stack": {
     "language": "python|java|typescript|c|cpp",
     "test_framework": "pytest|junit|vitest|gtest|...",
-    "coverage_tool": "pytest-cov|jacoco|c8|gcov|...",
-    "mutation_tool": "mutmut|pitest|stryker|mull|..."
+    "coverage_tool": "pytest-cov|jacoco|c8|gcov|..."
   },
   "quality_gates": {
     "line_coverage_min": 90,
-    "branch_coverage_min": 80,
-    "mutation_score_min": 80
+    "branch_coverage_min": 80
   },
   "constraints": ["Hard limit — one string per item"],
   "assumptions": ["Implicit belief — one string per item"],

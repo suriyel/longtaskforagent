@@ -134,22 +134,6 @@ Must exit 0. Any ATS category gap = finding to resolve before proceeding.
 
 **Record:** total tests, passed/failed, line/branch coverage vs thresholds.
 
-### 3b. Full Mutation Regression
-
-Run full-codebase mutation testing. Per-feature mutation during Worker cycles may have only scoped feature tests (when active features > `mutation_full_threshold`); this step verifies mutation score holds project-wide with the full test suite.
-
-1. Get the `mutation_full` command from `long-task-guide.md`
-2. Run full mutation testing (all source files, all tests)
-3. Verify: mutation score >= `quality_gates.mutation_score_min` from `feature-list.json`
-4. If surviving mutants found:
-   - Analyze: equivalent mutant (document + skip) vs real gap (add test → Major severity defect)
-   - If score below threshold → treat as regression defect (Major severity)
-5. Record: mutation score, killed/survived/total, command used
-
-See `references/st-recipes.md` section "Full Mutation Regression" for per-tool commands and result interpretation.
-
-**Record:** mutation score vs threshold, surviving mutant count, tool output summary.
-
 ### 4. Integration Testing
 
 Test cross-feature interactions. Read `references/st-recipes.md` for language-specific patterns and real-vs-contract test classification.
@@ -322,7 +306,7 @@ Generate `docs/plans/YYYY-MM-DD-st-report.md` with these sections:
 2. **Requirements Traceability Matrix** — full RTM table with Feature ST status, System ST category, ATS categories, result, evidence; coverage count (X/Y requirements, Z%); list any gaps; include ATS compliance check result (`check_ats_coverage.py --strict` output)
 3. **Test Execution Summary** — table: category, tests run, passed, failed, skipped, notes (one row per category from Step 2a); include a final row **Real Test Cases** — aggregate `Real` test case counts (total / passed / failed) from all feature ST documents (`docs/test-cases/feature-*.md` Real Test Case Execution Summary tables); if any manual test cases exist, include a **Manual Test Cases** row — aggregate manual test case counts (total / MANUAL-PASS / MANUAL-FAIL / BLOCKED) from all Feature-ST documents and System-ST execution steps
 4. **Defect Summary** — table: severity, **escaped from**, category, description, status (fixed/deferred), fix reference; totals; open Critical/Major count (must be 0 for Go); if ≥2 defects share the same "Escaped From" source, flag as systemic gap in Risk Assessment
-5. **Quality Metrics** — line/branch coverage vs thresholds, **full mutation score** vs threshold (from Step 3b), total test count; real test cases: total / passed / failed (aggregated from all `docs/test-cases/feature-*.md` Real Test Case Execution Summary tables)
+5. **Quality Metrics** — line/branch coverage vs thresholds, total test count; real test cases: total / passed / failed (aggregated from all `docs/test-cases/feature-*.md` Real Test Case Execution Summary tables)
 6. **Risk Assessment** — residual risks with likelihood, impact, mitigation
 7. **Recommendations** — post-release monitoring, known limitations, suggested improvements
 

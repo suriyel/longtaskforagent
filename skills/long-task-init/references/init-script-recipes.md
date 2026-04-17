@@ -36,7 +36,7 @@ echo "=== [Project Name] Environment Bootstrap ==="
 # [install packages]
 
 # --- Step 5: Install dev tools ---
-# [install test/coverage/mutation tools]
+# [install test/coverage tools]
 
 # --- Step 6: Verify ---
 echo ""
@@ -67,7 +67,7 @@ Write-Host "=== [Project Name] Environment Bootstrap ==="
 # [install packages]
 
 # --- Step 5: Install dev tools ---
-# [install test/coverage/mutation tools]
+# [install test/coverage tools]
 
 # --- Step 6: Verify ---
 Write-Host ""

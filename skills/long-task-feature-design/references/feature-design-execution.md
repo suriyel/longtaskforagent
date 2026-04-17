@@ -285,11 +285,6 @@ After the design is complete, decompose into TDD tasks.
 1. [Specific refactoring actions]
 2. Run full test suite. All tests PASS.
 
-#### Task 5: Mutation Gate
-1. Run: `[mutation command] --paths-to-mutate=<changed-files>`
-2. Check threshold. If below: improve assertions.
-3. Record mutation output as evidence.
-
 ### Verification Checklist
 - [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
 - [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows

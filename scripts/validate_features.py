@@ -14,7 +14,6 @@ Checks:
 - quality_gates values are numbers between 0 and 100 (if present)
 - ui field is boolean (if present)
 - git_sha field is a valid hex string 7–40 chars (if present)
-- report_path file exists on disk (if present); warns if missing for passing features
 - ui_entry field is string (if present)
 
 Usage:
@@ -32,7 +31,7 @@ SRS_TRACE_PATTERN = re.compile(r"^(?:FR|NFR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
-QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min", "mutation_score_min"}
+QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min"}
 VALID_CONFIG_TYPES = {"env", "file"}
 REQUIRED_CONFIG_FIELDS = {"name", "type", "description", "required_by"}
 
@@ -76,13 +75,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                         errors.append(
                             f"quality_gates.{key} must be a number between 0 and 100, got {val!r}"
                         )
-            # Validate mutation_full_threshold (positive integer, not a percentage)
-            mft = quality_gates.get("mutation_full_threshold")
-            if mft is not None:
-                if not isinstance(mft, int) or mft < 1:
-                    errors.append(
-                        f"quality_gates.mutation_full_threshold must be a positive integer, got {mft!r}"
-                    )
 
     # Validate waves if present
     waves = data.get("waves")
@@ -313,25 +305,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                     f"{prefix} (id={fid}): 'git_sha' must be a hex string of 7–40 characters, got {git_sha!r}"
                 )
 
-        # Check report_path field (optional — set by Worker Step 11a after report generation)
-        report_path = feat.get("report_path")
-        if report_path is not None:
-            if not isinstance(report_path, str):
-                errors.append(
-                    f"{prefix} (id={fid}): 'report_path' must be a string, got {report_path!r}"
-                )
-            elif not os.path.isfile(report_path):
-                errors.append(
-                    f"{prefix} (id={fid}): report_path '{report_path}' is set but file does not exist"
-                )
-        else:
-            # report_path absent on a passing feature = warning (not error, for backward compat with old projects)
-            if feat.get("status") == "passing":
-                warnings.append(
-                    f"Feature #{fid} (passing): no report_path — "
-                    f"run Step 11a to generate docs/report/feature-{fid}-*.md"
-                )
-
         # Check srs_trace field (optional, array of requirement IDs)
         srs_trace = feat.get("srs_trace")
         if srs_trace is not None:
@@ -441,8 +414,7 @@ def main():
         if qg:
             line_min = qg.get("line_coverage_min", "N/A")
             branch_min = qg.get("branch_coverage_min", "N/A")
-            mutation_min = qg.get("mutation_score_min", "N/A")
-            summary += f" | Quality gates: line>={line_min}%, branch>={branch_min}%, mutation>={mutation_min}%"
+            summary += f" | Quality gates: line>={line_min}%, branch>={branch_min}%"
 
         # Show constraints/assumptions counts
         ct = data.get("constraints", [])

@@ -254,7 +254,7 @@ Once the ATS document is saved and committed:
 The **design doc** (Section 7, Testing Strategy) describes the *approach*:
 - What test types will be used (unit, integration, E2E)
 - What tools and frameworks (pytest, k6, Chrome DevTools MCP)
-- What coverage targets (line 90%, branch 80%, mutation 80%)
+- What coverage targets (line 90%, branch 80%)
 
 The **ATS document** describes the *detailed mapping*:
 - Which specific requirement gets which specific test categories

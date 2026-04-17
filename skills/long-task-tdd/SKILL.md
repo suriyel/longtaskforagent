@@ -245,7 +245,7 @@ Write ONLY enough code to make tests pass.
 
 For subagent mode, dispatch with `skills/long-task-tdd/prompts/implementer-prompt.md` template:
 - Provide FULL task text (don't make subagent read files)
-- Include tech_stack, test command, coverage command, mutation command
+- Include tech_stack, test command, coverage command
 - Exit criteria: all tests pass, no regressions
 
 **Rules:**

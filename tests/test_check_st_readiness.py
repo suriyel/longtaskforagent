@@ -27,9 +27,8 @@ def create_project(features, docs=None):
     data = {
         "project": "test",
         "tech_stack": {"language": "python", "test_framework": "pytest",
-                       "coverage_tool": "pytest-cov", "mutation_tool": "mutmut"},
-        "quality_gates": {"line_coverage_min": 90, "branch_coverage_min": 80,
-                          "mutation_score_min": 80},
+                       "coverage_tool": "pytest-cov"},
+        "quality_gates": {"line_coverage_min": 90, "branch_coverage_min": 80},
         "features": features,
     }
     with open(fl_path, "w", encoding="utf-8") as f:

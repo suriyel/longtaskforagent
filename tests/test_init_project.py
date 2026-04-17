@@ -137,7 +137,6 @@ def test_feature_list_has_tech_stack():
         assert ts["language"] == "TODO"
         assert ts["test_framework"] == "TODO"
         assert ts["coverage_tool"] == "TODO"
-        assert ts["mutation_tool"] == "TODO"
     finally:
         shutil.rmtree(tmp)
 
@@ -154,7 +153,6 @@ def test_feature_list_has_quality_gates():
         qg = data["quality_gates"]
         assert qg["line_coverage_min"] == 90
         assert qg["branch_coverage_min"] == 80
-        assert qg["mutation_score_min"] == 80
     finally:
         shutil.rmtree(tmp)
 
@@ -219,7 +217,7 @@ def test_task_progress_has_current_state_header():
 
 
 def test_lang_preset_fills_tools():
-    """--lang python should auto-fill pytest, pytest-cov, mutmut."""
+    """--lang python should auto-fill pytest, pytest-cov."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp, ["--lang", "python"])
@@ -230,20 +228,18 @@ def test_lang_preset_fills_tools():
         assert ts["language"] == "python"
         assert ts["test_framework"] == "pytest"
         assert ts["coverage_tool"] == "pytest-cov"
-        assert ts["mutation_tool"] == "mutmut"
     finally:
         shutil.rmtree(tmp)
 
 
 def test_custom_thresholds():
-    """--line-cov, --branch-cov, --mutation-score should override defaults."""
+    """--line-cov, --branch-cov should override defaults."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp, [
             "--lang", "java",
             "--line-cov", "85",
             "--branch-cov", "75",
-            "--mutation-score", "70"
         ])
         fl_path = os.path.join(tmp, "feature-list.json")
         with open(fl_path, "r", encoding="utf-8") as f:
@@ -251,19 +247,17 @@ def test_custom_thresholds():
         qg = data["quality_gates"]
         assert qg["line_coverage_min"] == 85, f"Expected 85, got {qg['line_coverage_min']}"
         assert qg["branch_coverage_min"] == 75, f"Expected 75, got {qg['branch_coverage_min']}"
-        assert qg["mutation_score_min"] == 70, f"Expected 70, got {qg['mutation_score_min']}"
         # Also verify Java preset was applied
         ts = data["tech_stack"]
         assert ts["language"] == "java"
         assert ts["test_framework"] == "junit"
         assert ts["coverage_tool"] == "jacoco"
-        assert ts["mutation_tool"] == "pitest"
     finally:
         shutil.rmtree(tmp)
 
 
 def test_lang_preset_javascript():
-    """--lang javascript should auto-fill jest, c8-jest, stryker."""
+    """--lang javascript should auto-fill jest, c8-jest."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp, ["--lang", "javascript"])
@@ -274,7 +268,6 @@ def test_lang_preset_javascript():
         assert ts["language"] == "javascript"
         assert ts["test_framework"] == "jest"
         assert ts["coverage_tool"] == "c8-jest"
-        assert ts["mutation_tool"] == "stryker"
     finally:
         shutil.rmtree(tmp)
 
@@ -294,7 +287,6 @@ def test_tool_override_with_preset():
         assert ts["language"] == "typescript"
         assert ts["coverage_tool"] == "nyc", f"Expected nyc override, got {ts['coverage_tool']}"
         assert ts["test_framework"] == "vitest"  # from preset
-        assert ts["mutation_tool"] == "stryker"   # from preset
     finally:
         shutil.rmtree(tmp)
 

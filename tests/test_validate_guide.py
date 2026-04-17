@@ -69,10 +69,6 @@ COMPLETE_GUIDE = """# My Project — Long-Task Worker Guide
 ### Step 5: TDD Refactor — clean up
 1. Refactor while keeping tests green
 
-### Step 5.5m: Mutation Gate — verify test effectiveness
-1. Mutation score >= threshold
-2. Run: `mutmut run`
-
 ### Step 5.5v: Verification enforcement
 NEVER mark "passing" without fresh evidence — run tests, read output
 
@@ -145,16 +141,6 @@ def test_missing_coverage_gate_fails():
     assert code != 0, f"Expected non-zero when Coverage Gate missing: {stdout}"
 
 
-def test_missing_mutation_gate_fails():
-    """A guide missing Mutation Gate should fail."""
-    content = COMPLETE_GUIDE.replace("Mutation Gate", "Extra Check")
-    content = content.replace("mutation", "extra")
-    content = content.replace("Mutation", "Extra")
-    content = content.replace("mutmut", "extratool")
-    code, stdout, _ = run_validator(content)
-    assert code != 0, f"Expected non-zero when Mutation Gate missing: {stdout}"
-
-
 def test_missing_verification_enforcement_fails():
     """A guide missing verification enforcement should fail."""
     content = COMPLETE_GUIDE.replace("Verification enforcement", "Quality check")
@@ -215,9 +201,6 @@ Verify line coverage >= 90% and branch coverage >= 80%.
 
 ### Clean up
 Refactor code while keeping tests green.
-
-### Mutation testing
-Run mutation tests, verify mutation score >= 80%.
 
 ### Verification enforcement
 NEVER mark "passing" without fresh evidence.
@@ -325,7 +308,6 @@ if __name__ == "__main__":
         test_missing_config_gate_fails,
         test_missing_tdd_red_fails,
         test_missing_coverage_gate_fails,
-        test_missing_mutation_gate_fails,
         test_missing_verification_enforcement_fails,
         test_missing_compliance_review_fails,
         test_missing_critical_rules_fails,

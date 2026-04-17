@@ -263,29 +263,3 @@ python -c "import platform; print(platform.system())"
 | JS/TS | `npx vitest run --reporter=verbose` |
 | Java | `mvn test` (Surefire report) |
 | C/C++ | `ctest --test-dir build -V` |
-
----
-
-## 7. Full Mutation Regression
-
-Full-codebase mutation testing during ST phase. Complements per-feature mutation from Worker cycles — verifies mutation score holds project-wide with the full test suite.
-
-### Per-Tool Commands
-
-| Tool | Full Mutation Command | Results Command | Score Extraction |
-|------|----------------------|-----------------|------------------|
-| mutmut | `mutmut run` | `mutmut results` | "Killed N out of M mutants" line |
-| pitest | `mvn pitest:mutationCoverage` | `cat target/pit-reports/*/mutations.xml` | `mutationScore` attribute in XML |
-| stryker | `npx stryker run` | `cat reports/mutation/mutation.json` | `.thresholds.high` in JSON |
-| mull | `mull-runner ./test-binary` | `cat mull-report.json` | killed/survived counts in JSON |
-
-### Interpreting Results
-
-- **Score >= threshold** → PASS
-- **Score < threshold** with equivalent mutants documented → may PASS if adjusted score (excluding equivalents) >= threshold
-- **Score < threshold** with real gaps → FAIL (Major severity defect — add tests to kill surviving mutants, then re-run)
-
-### Relationship to Per-Feature Mutation
-
-- During Worker cycles, projects with active features ≤ `mutation_full_threshold` already run full mutation per-feature — this step re-confirms project-wide
-- Projects with active features > `mutation_full_threshold` ran feature-scoped mutation during Worker — this step is the first full-suite mutation run and may surface cross-feature mutation gaps

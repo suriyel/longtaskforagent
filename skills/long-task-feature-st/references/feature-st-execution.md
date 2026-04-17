@@ -19,7 +19,7 @@ Users may override the template and style via `feature-list.json` root fields:
 ## Black-Box Testing Philosophy
 
 TDD (long-task-tdd) has already verified the implementation from the inside:
-unit tests exercise code paths; coverage and mutation gates verify completeness.
+unit tests exercise code paths; coverage gate verifies completeness.
 
 This skill verifies from the **outside** — as a user or external system would:
 - Inputs go in through the real interface (HTTP endpoints, UI, CLI args)
@@ -108,7 +108,7 @@ Read all input artifacts for the target feature:
 - **Root context** — `constraints[]`, `assumptions[]` from `feature-list.json` root
 - **Related NFRs** — check SRS for NFR-xxx requirements that trace to this feature
 - **Interface contracts** — API endpoints, CLI commands, UI entry points that form the observable surface of this feature
-- **Test results summary** — from TDD and Quality Gates (coverage %, mutation score)
+- **Test results summary** — from TDD and Quality Gates (coverage %)
 
 ### 1b. Specification Gap Scan
 

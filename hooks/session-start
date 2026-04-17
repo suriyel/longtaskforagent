@@ -9,24 +9,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# ── Render SKILL.md.template → .long-task-bindings/ (enterprise MCP support) ──
-# Renders only when tool-bindings.json exists AND Jinja2 is available.
-# Output goes to the project-local .long-task-bindings/ directory — NOT to the
-# plugin directory — so concurrent sessions on different projects don't race.
-# On failure, warn to stderr but never abort the session.
-# NOTE: Jinja2 is NOT auto-installed here. Use check_jinja2.py to detect and
-# guide the user through installation (same pattern as check_devtools.py).
-RENDER_SCRIPT="${PLUGIN_ROOT}/scripts/apply_tool_bindings.py"
-if [ -f "$RENDER_SCRIPT" ] && [ -f "tool-bindings.json" ]; then
-    if python3 -c "import jinja2" 2>/dev/null; then
-        python3 "$RENDER_SCRIPT" "tool-bindings.json" \
-            --output-dir ".long-task-bindings" --quiet 2>/tmp/lt-render-warn.txt \
-            || echo "[long-task] Warning: tool binding render failed. See /tmp/lt-render-warn.txt" >&2
-    else
-        echo "[long-task] Warning: jinja2 not installed — enterprise template rendering skipped. Run: python scripts/check_jinja2.py" >&2
-    fi
-fi
-
 # ── Copy init_project.py to project scripts dir ──────────────────────────────
 # The companion hint file tells the copied script where the plugin root is so it
 # can locate and copy the helper scripts (validate_features.py etc.) correctly.
