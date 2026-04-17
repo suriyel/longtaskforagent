@@ -11,6 +11,7 @@ description: "TDD 重构阶段 -- 清理代码、运行静态分析、验证 S11
 
 1. 阅读执行规则：`skills/long-task-tdd-refactor/references/tdd-refactor-execution.md`
 2. 阅读规则：`skills/long-task-tdd-shared/references/iron-law.md`、`docs/rules`
+3. 读取 `long-task-guide.md` -> 提取测试命令
 
 ## 关键约束
 
