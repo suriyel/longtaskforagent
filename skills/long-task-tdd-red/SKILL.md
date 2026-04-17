@@ -11,7 +11,8 @@ description: "TDD Red 阶段 -- 为功能测试清单编写失败测试。输入
 
 1. 读取执行规则：`skills/long-task-tdd-red/references/tdd-red-execution.md`
 2. 读取规则：`skills/long-task-tdd-shared/references/iron-law.md`，`docs/rules`
-3. 读取反模式：`skills/long-task-tdd-shared/references/testing-anti-patterns.md`
+3. 读取 `long-task-guide.md` → 提取测试命令、环境激活和 UT 风格（`[test-framework]`、`[mock-style]`、`[conventions]`）
+4. 读取反模式：`skills/long-task-tdd-shared/references/testing-anti-patterns.md`
 
 ## 规格输入（来自功能设计文档）
 
