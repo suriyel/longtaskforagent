@@ -3,15 +3,15 @@ name: long-task-quality
 description: "Use after TDD cycle in a long-task project - enforces coverage gate and fresh verification evidence before marking features as passing"
 ---
 
-# Quality Gates — SubAgent Dispatch
+# 质量关卡 —— SubAgent 分发
 
-Delegate quality gate execution to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads coverage reports or test runner output directly.
+将质量关卡执行委派给拥有全新上下文的 SubAgent。主 agent 仅负责分发并解析结构化结果 —— 绝不直接阅读覆盖率报告或测试运行器输出。
 
-**Announce at start:** "I'm using the long-task-quality skill to run quality gates via SubAgent."
+**开始时声明：** "I'm using the long-task-quality skill to run quality gates via SubAgent."
 
-## Step 1: Construct SubAgent Prompt
+## Step 1: 构建 SubAgent 提示词
 
-Build the prompt from current session state. Do NOT read any source code, test output, or coverage reports yourself.
+基于当前会话状态构造提示词。**不要**自行读取任何源码、测试输出或覆盖率报告。
 
 ```
 You are a Quality Gates execution SubAgent.
@@ -37,11 +37,11 @@ You are a Quality Gates execution SubAgent.
 - If a tool/environment error cannot be resolved after 1 retry, set Verdict to BLOCKED
 ```
 
-Replace `{skills_root}` with the path to the skills directory (e.g., `skills` in the project or the installed plugin path).
+将 `{skills_root}` 替换为 skills 目录路径（例如项目内的 `skills` 或已安装插件的路径）。
 
-## Step 2: Dispatch SubAgent
+## Step 2: 分发 SubAgent
 
-**Claude Code:** Use the `Agent` tool:
+**Claude Code：** 使用 `Agent` 工具：
 ```
 Agent(
   description = "Quality Gates for feature #{feature_id}",
@@ -49,30 +49,30 @@ Agent(
 )
 ```
 
-**OpenCode:** Use `@mention` syntax or the platform's native subagent mechanism with the same prompt content.
+**OpenCode：** 使用 `@mention` 语法或平台原生的 subagent 机制，提示词内容一致。
 
-## Step 3: Parse Result
+## Step 3: 解析结果
 
-Read the SubAgent's returned text and locate the `**status**:` line (unified contract field). The legacy `### Verdict:` line may coexist for backward compatibility but the authoritative field is `**status**`.
+读取 SubAgent 返回的文本，定位 `**status**:` 行（统一契约字段）。为向后兼容，可能同时存在遗留的 `### Verdict:` 行，但权威字段是 `**status**`。
 
 - **`**status**: pass`**
-  1. Extract `**next_step_input**` (coverage_line, coverage_branch, all_tests_pass, test_count)
-  2. Optionally read Metrics table for task-progress.md detail
-  3. Record in `task-progress.md`: "Quality Gates: PASS (line {X}%, branch {Y}%)"
-  4. Proceed to next step (Feature-ST)
+  1. 提取 `**next_step_input**`（coverage_line、coverage_branch、all_tests_pass、test_count）
+  2. 可选：读取 Metrics 表以补充 task-progress.md 详情
+  3. 在 `task-progress.md` 中记录："Quality Gates: PASS (line {X}%, branch {Y}%)"
+  4. 进入下一步（Feature-ST）
 
 - **`**status**: fail`**
-  1. Read `**evidence**` and Issues table — identify which gate failed and why
-  2. If the SubAgent already attempted fixes (per the 3-retry rule), escalate to user via `AskUserQuestion` with the failure details
-  3. If fixable by re-dispatching (e.g., environment issue resolved), construct a new prompt and dispatch again (max 3 total dispatches)
+  1. 阅读 `**evidence**` 与 Issues 表 —— 识别哪个关卡失败及原因
+  2. 若 SubAgent 已按 3 次重试规则尝试过修复，通过 `AskUserQuestion` 携带失败细节升级给用户
+  3. 若可通过重新分发修复（如环境问题已解决），构造新提示词并再次分发（最多 3 次总分发）
 
 - **`**status**: blocked`**
-  1. Read `**blockers**` array — identify the blocker (tool not installed, environment error, etc.)
-  2. Escalate to user via `AskUserQuestion` with the blocker details and what was attempted
+  1. 阅读 `**blockers**` 数组 —— 识别阻塞原因（工具未安装、环境错误等）
+  2. 通过 `AskUserQuestion` 携带阻塞细节与已尝试的动作升级给用户
 
-## Integration
+## 集成
 
-**Called by:** long-task-work (Step 8)
-**Requires:** TDD cycle completed (long-task-tdd passed — tests exist and pass)
-**Produces:** Structured summary (coverage %, per-gate pass/fail)
-**Chains to:** long-task-feature-st (via Work Step 9)
+**调用方：** long-task-work（Step 8）
+**依赖：** TDD 循环已完成（long-task-tdd 已通过 —— 测试存在并通过）
+**产出：** 结构化摘要（覆盖率 %、每个关卡 pass/fail）
+**下游：** long-task-feature-st（通过 Work Step 9）

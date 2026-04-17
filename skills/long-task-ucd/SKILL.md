@@ -3,53 +3,53 @@ name: long-task-ucd
 description: "Use when SRS doc exists but no UCD doc and no design doc and no feature-list.json - generate UI Component Design style guide with text-to-image prompts based on approved SRS"
 ---
 
-# UI Component Design (UCD) Style Guide Generation
+# UI Component Design (UCD) 样式指南生成
 
-Take the approved SRS as input. Analyze UI-related requirements, define visual style direction, and produce a UCD style guide containing text-to-image model prompts — so that all frontend features share a unified visual language.
+以已审批 SRS 为输入。分析 UI 相关需求，定义视觉风格方向，并产出一份包含 text-to-image 模型提示词的 UCD 样式指南——从而让所有前端特性共享统一的视觉语言。
 
 <HARD-GATE>
-Do NOT invoke any design skill, implementation skill, write any code, scaffold any project, or take any implementation action until you have presented the UCD style guide and the user has approved it. This applies to EVERY project with UI features.
+在你呈现 UCD 样式指南并且用户审批通过之前，禁止调用任何设计 skill、实现 skill、写任何代码、脚手架任何项目，或执行任何实现动作。这适用于**每一个**带 UI 特性的项目。
 </HARD-GATE>
 
-## When This Phase Applies
+## 本阶段何时适用
 
-This phase runs **after SRS approval** and **before design**. It applies when:
-- The approved SRS contains UI-related functional requirements (FR-xxx with user-facing screens, pages, or components)
-- No UCD document (`*-ucd.md`) exists in `docs/plans/`
+本阶段在 **SRS 审批之后**、**设计之前**运行。适用条件：
+- 已审批的 SRS 含 UI 相关功能需求（FR-xxx 含面向用户的屏幕、页面或组件）
+- `docs/plans/` 下不存在 UCD 文档（`*-ucd.md`）
 
-**If the SRS has NO UI features**: announce "No UI features detected in SRS — skipping UCD phase" and immediately chain to design via `long-task:long-task-design`.
+**如果 SRS 无 UI 特性**：宣告 "No UI features detected in SRS — skipping UCD phase"，随即通过 `long-task:long-task-design` 衔接到设计。
 
 ## Checklist
 
-You MUST create a TodoWrite task for each of these items and complete them in order:
+你必须为下列每一项创建一个 TodoWrite 任务并按顺序完成：
 
-1. **Read the approved SRS** — from `docs/plans/*-srs.md`
-2. **Extract UI scope** — identify all UI-related requirements and user personas
-3. **Define visual style direction** — propose 2-3 style options with mood boards
-4. **Generate component-level prompts** — text-to-image prompts for each UI component type
-5. **Generate page-level prompts** — text-to-image prompts for each key page/screen
-6. **Define style tokens** — color palette, typography, spacing, iconography
-7. **Present & approve UCD** — section-by-section for non-trivial projects
-8. **Save UCD document** — `docs/plans/YYYY-MM-DD-<topic>-ucd.md` and commit
-9. **Transition to design** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-design`
+1. **阅读已审批 SRS** —— 来自 `docs/plans/*-srs.md`
+2. **抽取 UI 范围** —— 识别所有 UI 相关需求与用户角色
+3. **定义视觉风格方向** —— 提出 2-3 个风格选项与 mood board
+4. **生成组件级提示词** —— 每种 UI 组件类型的 text-to-image 提示词
+5. **生成页面级提示词** —— 每个关键页面/屏幕的 text-to-image 提示词
+6. **定义样式 token** —— 色板、字体、间距、图标风格
+7. **呈现并审批 UCD** —— 非平凡项目按章节逐段
+8. **保存 UCD 文档** —— `docs/plans/YYYY-MM-DD-<topic>-ucd.md` 并提交
+9. **衔接到设计** —— **必需子 skill：** 调用 `long-task:long-task-design`
 
-**The terminal state is invoking long-task-design.** Do NOT invoke any other skill.
+**终态是调用 long-task-design。** 不要调用任何其他 skill。
 
-## Step 1: Read SRS & Extract UI Scope
+## Step 1：阅读 SRS 与抽取 UI 范围
 
-1. Read the approved SRS document from `docs/plans/*-srs.md`
-2. Extract UI-relevant inputs:
-   - **User personas** — technical level, accessibility needs, device preferences
-   - **Functional requirements with UI** — screens, pages, forms, dashboards, data visualizations
-   - **NFR usability requirements** — accessibility standards (WCAG level), responsive breakpoints, internationalization
-   - **Constraints** — brand guidelines, platform restrictions, browser support
-   - **Interface requirements** — external UI components, design systems to integrate with
-3. Build a **UI inventory** — list every distinct screen/page/component type implied by the SRS
-4. If the SRS lacks sufficient UI detail → ask user via `AskUserQuestion` before proceeding
+1. 读取 `docs/plans/*-srs.md` 中已审批的 SRS 文档
+2. 抽取 UI 相关输入：
+   - **用户角色** —— 技术水平、无障碍需求、设备偏好
+   - **带 UI 的功能需求** —— 屏幕、页面、表单、仪表盘、数据可视化
+   - **NFR 易用性需求** —— 无障碍标准（WCAG 等级）、响应式断点、国际化
+   - **约束** —— 品牌指南、平台限制、浏览器支持
+   - **接口需求** —— 外部 UI 组件、要集成的设计系统
+3. 构建 **UI 清单** —— 列出 SRS 隐含的每一种不同屏幕/页面/组件类型
+4. 如果 SRS 缺乏足够 UI 细节 → 在继续之前通过 `AskUserQuestion` 询问用户
 
-## Step 2: Define Visual Style Direction
+## Step 2：定义视觉风格方向
 
-Present **2-3 visual style options** to the user:
+向用户呈现 **2-3 个视觉风格选项**：
 
 ```markdown
 ## Style A: [Name] (e.g., "Clean Corporate", "Bold Modern", "Soft Minimal")
@@ -67,13 +67,13 @@ Present **2-3 visual style options** to the user:
 **Reason**: [why this fits the SRS personas, constraints, and NFRs best]
 ```
 
-Wait for user to choose or provide direction. Incorporate feedback before proceeding.
+等用户选择或给出方向。在继续前纳入反馈。
 
-## Step 3: Generate Style Tokens
+## Step 3：生成样式 Token
 
-Define the concrete design tokens that anchor the entire style system:
+定义锚定整套风格系统的具体设计 token：
 
-### 3.1 Color Palette
+### 3.1 色板
 
 ```markdown
 | Token | Hex | Usage | Contrast Ratio |
@@ -91,10 +91,10 @@ Define the concrete design tokens that anchor the entire style system:
 | --color-border | #XXXXXX | Default borders | |
 ```
 
-- All contrast ratios MUST meet WCAG AA at minimum (4.5:1 for normal text, 3:1 for large text)
-- If SRS specifies WCAG AAA, ratios must be 7:1 / 4.5:1
+- 所有对比度**必须**至少满足 WCAG AA（普通文本 4.5:1，大文本 3:1）
+- 若 SRS 指定 WCAG AAA，则比例须为 7:1 / 4.5:1
 
-### 3.2 Typography Scale
+### 3.2 字体级阶
 
 ```markdown
 | Token | Font Family | Size | Weight | Line Height | Usage |
@@ -108,7 +108,7 @@ Define the concrete design tokens that anchor the entire style system:
 | --font-code | [family] | [size] | [weight] | [lh] | Code snippets |
 ```
 
-### 3.3 Spacing & Layout
+### 3.3 间距与布局
 
 ```markdown
 | Token | Value | Usage |
@@ -126,7 +126,7 @@ Define the concrete design tokens that anchor the entire style system:
 | --shadow-lg | [value] | Modals, overlays |
 ```
 
-### 3.4 Iconography & Imagery
+### 3.4 图标与图片
 
 ```markdown
 - **Icon style**: [outlined/filled/duotone] [rounded/sharp] [stroke weight]
@@ -135,13 +135,13 @@ Define the concrete design tokens that anchor the entire style system:
 - **Photography treatment**: [if applicable — filters, overlays, cropping rules]
 ```
 
-## Step 4: Generate Component-Level Prompts
+## Step 4：生成组件级提示词
 
-For each UI component type in the inventory, produce a **text-to-image prompt** that a generative image model (Midjourney, DALL-E, Stable Diffusion, etc.) can use to visualize the component.
+对清单中每种 UI 组件类型，产出生成式图像模型（Midjourney、DALL-E、Stable Diffusion 等）可用于可视化该组件的 **text-to-image 提示词**。
 
-### Prompt Structure
+### 提示词结构
 
-Each component prompt follows this template:
+每个组件提示词遵循此模板：
 
 ```markdown
 ### Component: [Component Name]
@@ -162,24 +162,24 @@ Each component prompt follows this template:
 - [Constraint 2 — e.g., "Error text must appear below the input, never as tooltip"]
 ```
 
-### Required Component Types
+### 必需的组件类型
 
-Generate prompts for at least these component types (skip only if truly absent from the UI inventory):
+至少为下列组件类型生成提示词（仅当 UI 清单中确实不含时才跳过）：
 
-| Category | Components |
+| 类别 | 组件 |
 |----------|-----------|
-| **Navigation** | Header/navbar, sidebar, breadcrumb, tabs, pagination |
-| **Input** | Text input, textarea, select/dropdown, checkbox, radio, toggle, date picker |
-| **Action** | Primary button, secondary button, icon button, link button, FAB |
-| **Feedback** | Alert/toast, modal/dialog, progress bar, skeleton loader, empty state |
-| **Data Display** | Table, card, list item, badge/tag, avatar, tooltip |
-| **Layout** | Page shell, form layout, grid/masonry, divider |
+| **导航** | Header/navbar、sidebar、breadcrumb、tabs、pagination |
+| **输入** | Text input、textarea、select/dropdown、checkbox、radio、toggle、date picker |
+| **动作** | Primary button、secondary button、icon button、link button、FAB |
+| **反馈** | Alert/toast、modal/dialog、progress bar、skeleton loader、empty state |
+| **数据展示** | Table、card、list item、badge/tag、avatar、tooltip |
+| **布局** | Page shell、form layout、grid/masonry、divider |
 
-## Step 5: Generate Page-Level Prompts
+## Step 5：生成页面级提示词
 
-For each key page/screen identified in the UI inventory, produce a **full-page text-to-image prompt**.
+对 UI 清单中识别的每个关键页面/屏幕，产出 **整页 text-to-image 提示词**。
 
-### Page Prompt Structure
+### 页面提示词结构
 
 ```markdown
 ### Page: [Page Name]
@@ -203,24 +203,24 @@ For each key page/screen identified in the UI inventory, produce a **full-page t
 - **Mobile (< 768px)**: [layout changes]
 ```
 
-## Step 6: Present & Approve UCD
+## Step 6：呈现并审批 UCD
 
-For non-trivial projects, present section by section:
+非平凡项目按章节逐段呈现：
 
-1. **Visual style direction** — mood, color tendency, typography direction
-2. **Style tokens** — color palette, typography scale, spacing, iconography
-3. **Component prompts** — one or two representative components for approval before generating the rest
-4. **Page prompts** — key pages for approval
+1. **视觉风格方向** —— mood、色彩倾向、字体方向
+2. **样式 token** —— 色板、字体级阶、间距、图标
+3. **组件提示词** —— 先取一两个代表性组件审批，再生成其余
+4. **页面提示词** —— 关键页面审批
 
-Present each section. Wait for user feedback. Incorporate changes before moving to the next.
+呈现每一节。等待用户反馈。在进入下一节前纳入更改。
 
-**For simple projects** (< 3 UI pages): combine all sections into a single approval step.
+**对简单项目**（< 3 个 UI 页面）：将所有章节合并为单一审批步骤。
 
-## Step 7: Save UCD Document
+## Step 7：保存 UCD 文档
 
-Save the approved UCD style guide to `docs/plans/YYYY-MM-DD-<topic>-ucd.md`.
+把已审批的 UCD 样式指南保存到 `docs/plans/YYYY-MM-DD-<topic>-ucd.md`。
 
-Document structure:
+文档结构：
 
 ```markdown
 # <Project Name> — UCD Style Guide
@@ -250,51 +250,51 @@ Document structure:
 [Cross-cutting rules: accessibility, animation, responsive, dark mode]
 ```
 
-## Step 8: Transition to Design
+## Step 8：衔接到设计
 
-Once the UCD document is saved and committed:
+UCD 文档保存并提交后：
 
-1. Summarize key inputs the design phase will need:
-   - **From SRS**: functional requirements, NFRs, constraints
-   - **From UCD**: style tokens, component catalog, page layouts → informs UI/UX section and frontend architecture in design doc
-2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-design` to begin design
+1. 为设计阶段总结关键输入：
+   - **来自 SRS**：功能需求、NFR、约束
+   - **来自 UCD**：样式 token、组件目录、页面布局 → 为设计文档的 UI/UX 节和前端架构提供信息
+2. **必需子 skill：** 调用 `long-task:long-task-design` 开始设计
 
-## Scaling the UCD Phase
+## UCD 阶段的伸缩
 
-| Project Size | UI Pages | Depth |
+| 项目规模 | UI 页面数 | 深度 |
 |---|---|---|
-| Tiny | 1-3 | Style tokens + 3-5 core component prompts + page prompts; single approval step |
-| Small | 3-8 | Full style tokens + component prompts for used components + all page prompts |
-| Medium | 8-20 | Full UCD with all component variants + responsive page prompts |
-| Large | 20+ | Full UCD + interaction state matrices + animation spec + dark mode variants |
+| 微型 | 1-3 | 样式 token + 3-5 个核心组件提示词 + 页面提示词；单一审批步骤 |
+| 小型 | 3-8 | 完整样式 token + 使用到的组件提示词 + 全部页面提示词 |
+| 中型 | 8-20 | 带全部组件变体与响应式页面提示词的完整 UCD |
+| 大型 | 20+ | 完整 UCD + 交互态矩阵 + 动效规范 + 暗黑模式变体 |
 
-## Red Flags
+## 红旗信号
 
-| Rationalization | Correct Response |
+| 理性化逃避 | 正确响应 |
 |---|---|
-| "The UI is simple, skip UCD" | Even simple UIs need a consistent style — run lightweight UCD |
-| "I'll define styles during implementation" | Ad-hoc styling causes visual inconsistency across features |
-| "The user will pick a UI library, that's enough" | UI libraries need configuration — UCD provides those values |
-| "Style tokens are premature" | Tokens are cheaper to define now than to retrofit across 20 components |
-| "Let me just use default Material/Ant styles" | Defaults are a valid starting point but must be documented as the explicit choice |
-| "The SRS doesn't mention colors" | SRS defines WHAT; UCD defines the visual HOW; both are needed for UI projects |
+| "UI 很简单，跳过 UCD" | 即便简单 UI 也需要一致的风格——运行轻量级 UCD |
+| "我在实现期间再定义样式" | 临时造型会导致跨特性视觉不一致 |
+| "用户会挑一个 UI 库，够了" | UI 库需要配置—— UCD 提供这些值 |
+| "样式 token 过早" | Token 现在定义比事后跨 20 个组件改造更便宜 |
+| "我就直接用 Material/Ant 默认风格" | 默认值是合法起点，但必须作为显式选择记录下来 |
+| "SRS 没提到颜色" | SRS 定义 WHAT；UCD 定义视觉 HOW；UI 项目两者都需要 |
 
-## Prompt Writing Rules
+## 提示词书写规则
 
-1. **Be specific, not vague** — "a rounded-corner card with 8px radius, 1px solid #E5E7EB border, 16px padding, white background with 0 2px 4px rgba(0,0,0,0.05) shadow" beats "a nice card"
-2. **Reference tokens, not raw values** — use token names in prompts so design changes propagate: "using --color-primary for the button fill"
-3. **Include spatial relationships** — "the icon is 16px, positioned 8px left of the label text, vertically centered"
-4. **Describe states, not just defaults** — every interactive element needs hover, active, disabled, error states
-5. **Specify responsive intent** — how the component/page adapts at each breakpoint
-6. **Anchor to SRS personas** — prompts should serve the defined user types (e.g., larger touch targets for mobile-primary users)
+1. **具体而非模糊** —— "a rounded-corner card with 8px radius, 1px solid #E5E7EB border, 16px padding, white background with 0 2px 4px rgba(0,0,0,0.05) shadow" 胜过 "a nice card"
+2. **引用 token 而非原始值** —— 在提示词中使用 token 名以便设计变更传播："using --color-primary for the button fill"
+3. **包含空间关系** —— "the icon is 16px, positioned 8px left of the label text, vertically centered"
+4. **描述状态，不只是默认** —— 每个可交互元素都需要 hover、active、disabled、error 状态
+5. **指定响应式意图** —— 组件/页面在每个断点如何适配
+6. **锚定到 SRS 角色** —— 提示词应服务定义的用户类型（例如面向移动优先用户的更大触控目标）
 
-## Integration
+## 集成
 
-**Called by:** using-long-task (when SRS exists, no UCD doc, no design doc, no feature-list.json — and SRS contains UI features) or long-task-requirements (Step 8 chains here)
-**Requires:** Approved SRS at `docs/plans/*-srs.md`
-**Chains to:** long-task-design (after UCD approval)
-**Produces:** `docs/plans/YYYY-MM-DD-<topic>-ucd.md`
-**Referenced by:**
-- long-task-design (UI/UX section references UCD style tokens and component catalog)
-- long-task-work (frontend features reference UCD for style consistency)
-- Inline Check (UCD token grep in Worker Step 10)
+**被调用方：** using-long-task（SRS 存在、无 UCD 文档、无设计文档、无 feature-list.json，且 SRS 含 UI 特性时）或 long-task-requirements（Step 8 衔接到此）
+**依赖：** `docs/plans/*-srs.md` 中已审批的 SRS
+**衔接到：** long-task-design（UCD 审批后）
+**产出：** `docs/plans/YYYY-MM-DD-<topic>-ucd.md`
+**被引用方：**
+- long-task-design（UI/UX 节引用 UCD 样式 token 与组件目录）
+- long-task-work（前端特性引用 UCD 保持风格一致）
+- Inline Check（Worker Step 10 中的 UCD token grep）

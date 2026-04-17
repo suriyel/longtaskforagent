@@ -4,22 +4,20 @@ description: "Use when starting any session in a long-task project - routes to t
 ---
 
 <EXTREMELY-IMPORTANT>
-You are in a long-task multi-session project. You MUST invoke the correct phase skill BEFORE any response or action — including clarifying questions.
+你正处于一个 long-task 多会话项目中。在任何响应或行动之前（包括澄清问题），你必须先调用正确的阶段 skill。
 
-IF A PHASE SKILL APPLIES, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+如果某个阶段 skill 适用，你没有选择。你必须使用它。
 
-This is not negotiable. This is not optional. You cannot rationalize your way out of this.
-
-**LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
+这不可谈判。这不是可选的。你无法通过任何理性化来逃避它。
 </EXTREMELY-IMPORTANT>
 
-## How to Access Skills
+## 如何访问 Skill
 
-Use the `Skill` tool to invoke skills by name (e.g., `long-task:long-task-work`). When invoked, the skill content is loaded and presented to you — follow it directly. Never use the Read tool on skill files.
+使用 `Skill` 工具按名称调用 skill（例如 `long-task:long-task-work`）。被调用时，skill 内容会加载并呈现给你——直接按其执行。永远不要对 skill 文件使用 Read 工具。
 
-## Phase Detection
+## 阶段检测
 
-Check project state and invoke the corresponding skill:
+检查项目状态并调用对应的 skill：
 
 ```dot
 digraph phase_detection {
@@ -69,126 +67,126 @@ digraph phase_detection {
 }
 ```
 
-**Detection rules:**
-0. Check `bugfix-request.json` in project root → if exists → `long-task-hotfix` **(HIGHEST priority)**
-   Note: If both `bugfix-request.json` AND `increment-request.json` exist, hotfix runs first; `increment-request.json` is preserved and processed next session.
-1. Check `increment-request.json` in project root → if exists → `long-task-increment`
-2. Check `feature-list.json` in project root → if exists:
-   - Run `python scripts/check_st_readiness.py feature-list.json` — if exit 0 (all active features passing, excludes deprecated) → `long-task-st`
-   - Otherwise (some active features failing) → `long-task-work`
-3. Check `docs/plans/*-ats.md` → if any match → `long-task-init` (ATS done, proceed to init)
-4. Check `docs/plans/*-design.md` → if any match → `long-task-ats` (Design done, proceed to ATS)
-5. Check `docs/plans/*-ucd.md` → if any match → `long-task-design` (UCD done, proceed to design)
-6. Check `docs/plans/*-srs.md` → if any match → `long-task-ucd` (SRS done, UCD next; if no UI features the UCD skill auto-skips to design)
-7. Otherwise → check codebase conventions:
-   a. Check `docs/rules/` — if exists AND contains ≥1 `.md` file (beyond a greenfield stub) → `long-task-requirements` (rules already scanned)
-   b. Check for existing source files (brownfield heuristic): count source files (`*.py`, `*.js`, `*.ts`, `*.java`, `*.c`, `*.cpp`, `*.go`, `*.rs`, etc.) excluding `.git/`, `node_modules/`, `venv/`, `dist/`, `build/`; and check `git rev-list --count HEAD`
-      - If source files > 3 AND git commits ≥ 5 → **run codebase-scanner** (see Phase 0-pre below) → then `long-task-requirements`
-      - Else (greenfield) → create `docs/rules/README.md` stub ("Greenfield — no conventions to extract") → `long-task-requirements`
+**检测规则：**
+0. 检查项目根目录下的 `bugfix-request.json` → 如果存在 → `long-task-hotfix` **（最高优先级）**
+   注意：如果 `bugfix-request.json` 和 `increment-request.json` 同时存在，hotfix 先执行；`increment-request.json` 被保留，下次会话处理。
+1. 检查项目根目录下的 `increment-request.json` → 如果存在 → `long-task-increment`
+2. 检查项目根目录下的 `feature-list.json` → 如果存在：
+   - 运行 `python scripts/check_st_readiness.py feature-list.json` —— 如果 exit 0（所有激活特性通过，排除弃用）→ `long-task-st`
+   - 否则（存在激活特性未通过）→ `long-task-work`
+3. 检查 `docs/plans/*-ats.md` → 如有匹配 → `long-task-init`（ATS 完成，进入 init）
+4. 检查 `docs/plans/*-design.md` → 如有匹配 → `long-task-ats`（Design 完成，进入 ATS）
+5. 检查 `docs/plans/*-ucd.md` → 如有匹配 → `long-task-design`（UCD 完成，进入 design）
+6. 检查 `docs/plans/*-srs.md` → 如有匹配 → `long-task-ucd`（SRS 完成，下一步 UCD；如果没有 UI 特性，UCD skill 自动跳到 design）
+7. 否则 → 检查存量代码库约定：
+   a. 检查 `docs/rules/` —— 如存在且至少包含 1 个 `.md` 文件（排除全新项目占位）→ `long-task-requirements`（规则已扫描）
+   b. 检查是否存在源文件（存量项目启发式）：统计源文件（`*.py`、`*.js`、`*.ts`、`*.java`、`*.c`、`*.cpp`、`*.go`、`*.rs` 等），排除 `.git/`、`node_modules/`、`venv/`、`dist/`、`build/`；并检查 `git rev-list --count HEAD`
+      - 如果源文件数 > 3 且 git 提交数 ≥ 5 → **运行 codebase-scanner**（见下文 Phase 0-pre）→ 然后 `long-task-requirements`
+      - 否则（全新项目）→ 创建 `docs/rules/README.md` 占位（"Greenfield — no conventions to extract"）→ `long-task-requirements`
 
-## Skill Catalog
+## Skill 目录
 
-### Phase Skills (invoke ONE based on detection above)
-| Skill | Phase | When |
+### 阶段 Skill（根据上述检测调用其中一个）
+| Skill | 阶段 | 时机 |
 |-------|-------|------|
-| `long-task:long-task-hotfix` | Hotfix | bugfix-request.json exists (HIGHEST priority) |
-| `long-task:long-task-increment` | Phase 1.5 | increment-request.json exists |
-| `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS, no rules docs, existing source files > 3 — scan codebase before requirements |
-| `long-task:long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json |
-| `long-task:long-task-ucd` | Phase 0b | SRS exists, no UCD doc, no design doc, no feature-list.json |
-| `long-task:long-task-design` | Phase 0c | SRS + UCD exist (or no UI features), no design doc, no feature-list.json |
-| `long-task:long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
-| `long-task:long-task-init` | Phase 1 | ATS doc exists (or auto-skipped for tiny projects), no feature-list.json |
-| `long-task:long-task-work` | Phase 2 | feature-list.json exists, some active features failing |
-| `long-task:long-task-st` | Phase 3 | feature-list.json exists, ALL active features passing |
+| `long-task:long-task-hotfix` | Hotfix | bugfix-request.json 存在（最高优先级）|
+| `long-task:long-task-increment` | 阶段 1.5 | increment-request.json 存在 |
+| `codebase-scanner` (SubAgent) | 阶段 0-pre | 无 SRS、无 rules 文档、源文件 > 3 —— 在需求阶段前扫描存量代码库 |
+| `long-task:long-task-requirements` | 阶段 0a | 无 SRS、无设计文档、无 feature-list.json |
+| `long-task:long-task-ucd` | 阶段 0b | SRS 存在、无 UCD 文档、无设计文档、无 feature-list.json |
+| `long-task:long-task-design` | 阶段 0c | SRS + UCD 都存在（或无 UI 特性）、无设计文档、无 feature-list.json |
+| `long-task:long-task-ats` | 阶段 0d | 设计文档存在、无 ATS 文档、无 feature-list.json |
+| `long-task:long-task-init` | 阶段 1 | ATS 文档存在（或对微型项目自动跳过）、无 feature-list.json |
+| `long-task:long-task-work` | 阶段 2 | feature-list.json 存在、存在未通过的激活特性 |
+| `long-task:long-task-st` | 阶段 3 | feature-list.json 存在、所有激活特性均通过 |
 
-### Standalone Skills (invoke independently — no pipeline dependency)
-| Skill | Purpose | Trigger |
+### 独立 Skill（独立调用——无流水线依赖）
+| Skill | 用途 | 触发 |
 |-------|---------|---------|
-| `long-task:long-task-explore` | Deep codebase exploration — architecture, data flow, domain model, API surface, dependencies, code health | On-demand via `/deep-explore [quick\|standard\|deep] [--focus area] [--path dir]` |
+| `long-task:long-task-explore` | 存量代码库深度探索——架构、数据流、领域模型、API 表面、依赖、代码健康度 | 按需通过 `/deep-explore [quick\|standard\|deep] [--focus area] [--path dir]` 触发 |
 
-### Discipline Skills (invoked by long-task-work as sub-skills — do NOT invoke directly)
-| Skill | Purpose |
+### 专业 Skill（由 long-task-work 作为子 skill 调用——禁止直接调用）
+| Skill | 用途 |
 |-------|---------|
-| `long-task:long-task-feature-design` | Feature Detailed Design — interface contracts, algorithm pseudocode, state diagrams, boundary matrices, test inventory (bridges system design → TDD) |
-| `long-task:long-task-feature-st` | Black-Box Feature Acceptance Testing — self-managed start/cleanup lifecycle, Chrome DevTools MCP execution, ISO/IEC/IEEE 29119 test case documentation (per-feature, after Quality Gates) |
+| `long-task:long-task-feature-design` | Feature 详细设计——接口契约、算法伪代码、状态图、边界矩阵、测试清单（桥接系统设计 → TDD）|
+| `long-task:long-task-feature-st` | 黑盒 Feature 验收测试——自管 start/cleanup 生命周期、Chrome DevTools MCP 执行、ISO/IEC/IEEE 29119 测试用例文档（按特性、在覆盖率关卡后）|
 | `long-task:long-task-tdd` | TDD Red-Green-Refactor |
-| `long-task:long-task-quality` | Coverage Gate |
+| `long-task:long-task-quality` | 覆盖率关卡 |
 
-### Meta Skills (invoked conditionally by phase skills — do NOT invoke directly)
-| Skill | Purpose |
+### 元 Skill（由阶段 skill 按需调用——禁止直接调用）
+| Skill | 用途 |
 |-------|---------|
-| `long-task:long-task-finalize` | Post-ST Documentation — scenario-based usage examples generation + RELEASE_NOTES/task-progress finalization (after ST Go verdict) |
-| `long-task:long-task-retrospective` | Skill Self-Evolution — consolidate retrospective records and upload to REST API (after ST Go verdict, if authorized) |
+| `long-task:long-task-finalize` | ST 后文档——场景化使用示例生成 + RELEASE_NOTES/task-progress 收尾（在 ST Go 裁决后）|
+| `long-task:long-task-retrospective` | Skill 自我演化——汇总回顾记录并上传到 REST API（在 ST Go 裁决后，如已授权）|
 
-## Key Files (shared contract)
+## 关键文件（共享契约）
 
-| File | Role |
+| 文件 | 角色 |
 |------|------|
-| `docs/plans/*-srs.md` | Approved SRS — the WHAT |
-| `docs/plans/*-deferred.md` | Deferred requirements backlog — next-round pickup via increment |
-| `docs/plans/*-ucd.md` | Approved UCD style guide — the LOOK (UI projects only) |
-| `docs/plans/*-design.md` | Approved design — the HOW |
-| `docs/plans/*-ats.md` | Approved ATS — the TEST STRATEGY (requirement→scenario mapping) |
-| `feature-list.json` | Task inventory — the central shared state |
-| `task-progress.md` | `## Current State` header (progress) + session-by-session log |
-| `long-task-guide.md` | Project-specific Worker guide |
-| `RELEASE_NOTES.md` | Living changelog |
-| `docs/test-cases/feature-*.md` | Per-feature ST test case documents (ISO/IEC/IEEE 29119) |
-| `docs/plans/*-st-report.md` | System testing report — Go/No-Go verdict |
-| `bugfix-request.json` | Signal file — triggers hotfix session (deleted after processing) |
-| `increment-request.json` | Signal file — triggers incremental requirements (deleted after processing) |
-| `docs/retrospectives/*.md` | Skill improvement records (collected during Worker sessions, uploaded after ST) |
-| `docs/rules/*.md` | Codebase conventions — coding style, 2/3方件 constraints, build patterns, commit conventions (brownfield only) |
+| `docs/plans/*-srs.md` | 已审批 SRS —— WHAT |
+| `docs/plans/*-deferred.md` | 延后需求待办清单——下一轮经由 increment 捡起 |
+| `docs/plans/*-ucd.md` | 已审批 UCD 样式指南—— LOOK（仅 UI 项目）|
+| `docs/plans/*-design.md` | 已审批设计—— HOW |
+| `docs/plans/*-ats.md` | 已审批 ATS —— 测试策略（需求→场景映射）|
+| `feature-list.json` | 任务清单——中央共享状态 |
+| `task-progress.md` | `## Current State` 头部（进度）+ 会话日志 |
+| `long-task-guide.md` | 项目专属 Worker 指南 |
+| `RELEASE_NOTES.md` | 活更新日志 |
+| `docs/test-cases/feature-*.md` | 按特性的 ST 测试用例文档（ISO/IEC/IEEE 29119）|
+| `docs/plans/*-st-report.md` | 系统测试报告—— Go/No-Go 裁决 |
+| `bugfix-request.json` | 信号文件——触发 hotfix 会话（处理后删除）|
+| `increment-request.json` | 信号文件——触发增量需求（处理后删除）|
+| `docs/retrospectives/*.md` | Skill 改进记录（Worker 会话期间收集，ST 后上传）|
+| `docs/rules/*.md` | 存量代码库约定——编码风格、2/3方件约束、构建模式、commit 约定（仅存量项目）|
 
-## Red Flags
+## 红旗信号
 
-These thoughts mean STOP — you're rationalizing:
+出现这些想法意味着停下——你在理性化逃避：
 
-| Thought | Reality |
+| 想法 | 现实 |
 |---------|---------|
-| "Let me just look at the code first" | Invoke phase skill first. It tells you HOW to orient. |
-| "I know which feature to work on" | Worker skill has Orient step. Follow it. |
-| "This feature is simple, skip TDD" | long-task-tdd is non-negotiable. |
-| "Tests pass, I can mark it done" | long-task-quality gates MUST pass first. |
-| "I remember the workflow" | Skills evolve. Load current version via Skill tool. |
-| "I need more context first" | Skill check comes BEFORE exploration. |
-| "I'll just do this one thing first" | Check BEFORE doing anything. |
-| "Requirements are obvious, skip to design" | long-task-requirements captures what you'd miss. |
-| "Test categories can be decided during feature-st" | Ad-hoc assignment leads to SEC/PERF gaps. Run ATS first. |
-| "ATS is overkill for this project" | Check Scaling Guide — tiny projects auto-skip ATS. |
-| "The SRS already implies the design" | SRS = WHAT, design = HOW. Both are needed. |
-| "UI styles can be decided during coding" | Ad-hoc styling causes inconsistency. Run UCD first. |
-| "This UI is too simple for a style guide" | Even simple UIs need tokens. UCD can be lightweight. |
-| "All features pass, we can ship" | Feature tests ≠ system tests. Run ST phase first. |
-| "System testing is overkill" | Integration bugs, NFR failures, and workflow gaps hide until ST. |
-| "I'll just add features to the JSON directly" | Invoke the `long-task-increment` skill for tracked, audited changes. |
-| "The requirement change is small, no need for impact analysis" | Increment skill catches hidden dependencies. |
-| "I'll just fix this quick bug directly" | Invoke `long-task-hotfix` — bug gets tracked in feature-list.json as category=bugfix and fixed via the full Worker pipeline. |
-| "I'll generate examples during Worker" | Examples are post-ST via long-task-finalize. |
-| "I already know the project's conventions" | Run codebase-scanner. Implicit knowledge doesn't persist across sessions. 2/3方件 constraints are easy to miss. |
-| "This brownfield project is small, no need to scan" | Auto-skip handles greenfield (≤3 files). Let the scanner decide. |
+| "先看一下代码吧" | 先调用阶段 skill。它会告诉你如何定位。|
+| "我知道该做哪个特性" | Worker skill 有 Orient 步骤。照着走。|
+| "这个特性简单，跳过 TDD" | long-task-tdd 不可协商。|
+| "测试通过了，可以标记完成" | 必须先通过 long-task-quality 关卡。|
+| "我记得工作流" | Skill 在演化。通过 Skill 工具加载当前版本。|
+| "我需要先获取更多上下文" | Skill 检查先于探索。|
+| "先做这一件事再说" | 做任何事之前先检查。|
+| "需求很明显，直接到设计" | long-task-requirements 会捕捉你会遗漏的内容。|
+| "测试分类可以在 feature-st 期间决定" | 临时指派会导致 SEC/PERF 缺口。先运行 ATS。|
+| "ATS 对这个项目来说过头了" | 查阅 Scaling Guide —— 微型项目会自动跳过 ATS。|
+| "SRS 已经暗含了设计" | SRS = WHAT，design = HOW。两者都必需。|
+| "UI 样式可以在编码期间决定" | 临时造型会导致不一致。先运行 UCD。|
+| "这个 UI 太简单不需要样式指南" | 即便简单 UI 也需要 token。UCD 可以很轻量。|
+| "所有特性都过了，可以发布" | 特性测试 ≠ 系统测试。先运行 ST 阶段。|
+| "系统测试过头了" | 集成 bug、NFR 失败、工作流缺口会藏到 ST 才暴露。|
+| "我直接往 JSON 里加特性就行了" | 调用 `long-task-increment` skill 进行可追踪、可审计的变更。|
+| "需求变更很小，不需要影响评估" | Increment skill 会捕捉隐藏依赖。|
+| "我直接把这个小 bug 修了吧" | 调用 `long-task-hotfix` —— bug 会被记录到 feature-list.json 为 category=bugfix，并走完整 Worker 流水线修复。|
+| "Worker 期间生成示例吧" | 示例在 ST 之后通过 long-task-finalize 生成。|
+| "我已经了解项目的约定了" | 运行 codebase-scanner。隐性知识不跨会话持久化。2/3方件约束很容易被漏掉。|
+| "这个存量项目很小，不用扫描" | 自动跳过会处理全新项目（≤3 文件）。让 scanner 自己决定。|
 
-## Skill Priority
+## Skill 优先级
 
-1. **Phase skill first** — determines the entire session workflow
-2. **Discipline skills second** — invoked by Worker in strict order (tdd → quality → st-case → review)
-3. **On error** — follow systematic-debugging approach in `skills/long-task-work/references/systematic-debugging.md` before any fix
+1. **阶段 skill 优先** —— 决定整个会话工作流
+2. **专业 skill 其次** —— 由 Worker 按严格顺序调用（tdd → quality → st-case → review）
+3. **出错时** —— 在做任何修复前遵循 `skills/long-task-work/references/systematic-debugging.md` 中的系统化调试方法
 
-## Phase 0-pre: Codebase Convention Scan (Brownfield Only)
+## Phase 0-pre：存量代码库约定扫描（仅存量项目）
 
-When detection rule 7b triggers (brownfield project, no existing `docs/rules/`), execute these steps **before** invoking `long-task-requirements`:
+当检测规则 7b 触发（存量项目、无现有 `docs/rules/`），在调用 `long-task-requirements` **之前**执行以下步骤：
 
-1. **Create output directory**: `mkdir -p docs/rules/`
+1. **创建输出目录**：`mkdir -p docs/rules/`
 
-2. **Detect language & framework**: analyze file extensions and dependency manifests (`package.json`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `go.mod`, `*.csproj`). Determine scan depth:
-   | LOC Range | Depth |
+2. **检测语言与框架**：分析文件扩展名和依赖清单（`package.json`、`requirements.txt`、`pom.xml`、`Cargo.toml`、`go.mod`、`*.csproj`）。决定扫描深度：
+   | LOC 范围 | 深度 |
    |-----------|-------|
-   | < 1,000 | Lightweight (top 20 files) |
-   | 1,000–10,000 | Standard (top 50 files) |
-   | > 10,000 | Deep (top 100 + all configs) |
+   | < 1,000 | 轻量（前 20 个文件）|
+   | 1,000–10,000 | 标准（前 50 个文件）|
+   | > 10,000 | 深度（前 100 + 所有 config）|
 
-3. **Dispatch `codebase-scanner` SubAgent**:
+3. **分发 `codebase-scanner` SubAgent**：
 
    ```
    Agent(
@@ -210,12 +208,12 @@ When detection rule 7b triggers (brownfield project, no existing `docs/rules/`),
    )
    ```
 
-4. **Validate results**: verify ≥1 output file exists in `docs/rules/`. If SubAgent returns BLOCKED, write minimal stubs (non-blocking — scan is best-effort).
+4. **校验结果**：确认 `docs/rules/` 下至少存在 1 个输出文件。如果 SubAgent 返回 BLOCKED，写入最小占位（非阻塞——扫描是尽力而为）。
 
-5. **User review** via `AskUserQuestion`:
-   - Present concise summary of key findings (especially 2/3方件 constraints and prohibited APIs)
-   - Ask user to confirm or edit `docs/rules/` files before continuing
+5. **用户评审** 通过 `AskUserQuestion`：
+   - 呈现关键发现的简要摘要（尤其是 2/3方件 约束和禁用 API）
+   - 请用户在继续前确认或编辑 `docs/rules/` 文件
 
-6. **Git commit**: `docs: add codebase convention rules`
+6. **Git 提交**：`docs: add codebase convention rules`
 
-7. **Invoke `long-task:long-task-requirements`**
+7. **调用 `long-task:long-task-requirements`**

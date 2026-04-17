@@ -1,27 +1,27 @@
-# Git Worktree Isolation
+# Git Worktree 隔离（Worktree Isolation）
 
-## Purpose
+## 目的
 
-Isolate feature implementation in a dedicated git worktree. This keeps the main branch clean, enables safe experimentation, and provides a clear merge/discard workflow.
+在专用 git worktree 中隔离特性实现。这保持主分支干净、支持安全实验，并提供清晰的合并 / 丢弃工作流。
 
-## When to Use
+## 何时使用
 
-- **Recommended** for all feature implementation in Worker sessions
-- **Required** when multiple features may be developed in parallel
-- **Optional** for single-feature sequential development if the user prefers direct branch work
+- **推荐**用于 Worker 会话中的全部特性实现
+- **必需**当多个特性可能并行开发时
+- **可选**用于单特性串行开发，若用户偏好直接分支工作
 
-## Setup Process
+## 建立流程
 
-### Step 1: Check Existing Configuration
+### Step 1：检查既有配置
 
-1. Look for existing worktree directories:
+1. 查找既有 worktree 目录：
    ```bash
    ls -d .worktrees worktrees 2>/dev/null
    ```
-2. Check CLAUDE.md or project docs for worktree preferences
-3. If ambiguous, ask the user which directory to use
+2. 检查 CLAUDE.md 或项目文档中的 worktree 偏好
+3. 若模糊，询问用户使用哪个目录
 
-### Step 2: Create Worktree
+### Step 2：创建 worktree
 
 ```bash
 # Determine base branch
@@ -34,14 +34,14 @@ WORKTREE_DIR=".worktrees/${FEATURE_BRANCH}"
 git worktree add "${WORKTREE_DIR}" -b "${FEATURE_BRANCH}" "${BASE_BRANCH}"
 ```
 
-### Step 3: Safety Verification
+### Step 3：安全性验证
 
-1. Ensure worktree directory is in `.gitignore`:
+1. 确保 worktree 目录在 `.gitignore` 中：
    ```bash
    grep -q '.worktrees' .gitignore || echo '.worktrees/' >> .gitignore
    ```
 
-2. Run project setup in the worktree:
+2. 在 worktree 中运行项目 setup：
    ```bash
    cd "${WORKTREE_DIR}"
    # Auto-detect and run setup
@@ -51,30 +51,30 @@ git worktree add "${WORKTREE_DIR}" -b "${FEATURE_BRANCH}" "${BASE_BRANCH}"
    [ -f go.mod ] && go mod download
    ```
 
-3. Run baseline tests to verify clean state:
+3. 运行基线测试验证洁净状态：
    ```bash
    # Run full test suite — all must pass before starting work
    ```
 
-### Step 4: Work in Worktree
+### Step 4：在 worktree 中工作
 
-All TDD Red → Green → Refactor work happens inside the worktree directory.
+所有 TDD Red → Green → Refactor 工作都在 worktree 目录内进行。
 
-## Branch Naming Convention
+## 分支命名约定
 
 ```
 feature/feature-{ID}-{short-name}
 ```
 
-Examples:
+示例：
 - `feature/feature-01-user-login`
 - `feature/feature-15-dashboard-charts`
 
-## Finishing a Feature Branch
+## 收尾特性分支
 
-After a feature is marked "passing" and code review is complete, present the user with four options:
+当特性被标记为 "passing" 且代码评审完成后，向用户呈现四个选项：
 
-### Option 1: Merge Locally
+### Option 1：本地合并
 ```bash
 # Switch to base branch
 git checkout "${BASE_BRANCH}"
@@ -90,7 +90,7 @@ git worktree remove "${WORKTREE_DIR}"
 git branch -d "${FEATURE_BRANCH}"
 ```
 
-### Option 2: Push and Create PR
+### Option 2：推送并创建 PR
 ```bash
 # Push the feature branch
 git push -u origin "${FEATURE_BRANCH}"
@@ -102,14 +102,14 @@ gh pr create --title "Feature #${FEATURE_ID}: ${TITLE}" --body "..."
 echo "Worktree kept at ${WORKTREE_DIR} — remove after PR merge"
 ```
 
-### Option 3: Keep As-Is
+### Option 3：保持现状
 ```bash
 # Leave worktree and branch intact
 echo "Worktree preserved at ${WORKTREE_DIR}"
 echo "Branch: ${FEATURE_BRANCH}"
 ```
 
-### Option 4: Discard
+### Option 4：丢弃
 ```bash
 # SAFETY: Require explicit confirmation
 echo "Type 'discard' to confirm deletion of all changes on ${FEATURE_BRANCH}"
@@ -120,7 +120,7 @@ git worktree remove --force "${WORKTREE_DIR}"
 git branch -D "${FEATURE_BRANCH}"
 ```
 
-## Worktree Lifecycle
+## Worktree 生命周期
 
 ```
 Orient → Select Feature
@@ -138,9 +138,9 @@ Orient → Select Feature
   └─ Finish: Merge / PR / Keep / Discard
 ```
 
-## Rules
+## 规则
 
-- Always verify `.gitignore` includes the worktree directory
-- Always run baseline tests before starting work in a new worktree
-- Never force-delete a worktree without user confirmation
-- If the user declines worktree isolation, work directly on a feature branch (still isolated from main)
+- 始终确认 `.gitignore` 包含 worktree 目录
+- 在新 worktree 中始终先运行基线测试再开始工作
+- 未经用户确认**不要**强删 worktree
+- 若用户拒绝 worktree 隔离，在特性分支上直接工作（仍与 main 隔离）

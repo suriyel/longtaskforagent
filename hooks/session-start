@@ -52,4 +52,18 @@ if [ -f "env-guide.md" ] && [ -f "$APPROVAL_CHECK" ]; then
     fi
 fi
 
+# ── Inject Chinese (Simplified) language rule into the session ───────────────
+# Emit a SessionStart hook JSON payload so that the rule is surfaced as
+# `additionalContext` to the agent on every session start. Keeping the rule
+# out of individual SKILL.md bodies avoids duplication (per plan MAIN-BRANCH
+# Topic 5 guidance: rely on session-level injection rather than per-SKILL).
+cat <<'JSON'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "# 语言规则（Language Rule）\n\n与用户交互一律使用**简体中文**回复。以下内容保持英文原样，不翻译：\n- 代码标识符、函数名、变量名、字段名（如 `srs_trace`、`feature_id`）\n- 命令行示例与工具名（`Skill`、`Agent`、`Grep`、`mvn test` 等）\n- YAML frontmatter 的 `name` / `description` 字段\n- Commit message 与文件路径\n- 已成标识符的缩写：`SRS` / `FR` / `NFR` / `ATS` / `UCD` / `ST` / `TDD` / `UT` / `E2E`\n\n术语统一参考 `docs/templates/glossary.md`（若存在）。首次出现的英文专有名词可括注中文；后续直接使用既定译法。"
+  }
+}
+JSON
+
 exit 0

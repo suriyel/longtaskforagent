@@ -1,4 +1,4 @@
-# Feature Detailed Design: [Feature Title] (Feature #ID)
+# Feature Detailed Design：[Feature Title]（Feature #ID）
 
 **Date**: YYYY-MM-DD
 **Feature**: #ID — [title]
@@ -9,169 +9,102 @@
 
 ## Context
 
-[1-2 sentences: what this feature does and why it matters]
+[1-2 句话：本特性做什么、为何重要]
 
 ## Design Alignment
 
-[Copy the FULL design section §4.N content here — including class diagram, sequence diagram, and design decisions. Include Mermaid code blocks verbatim so the design is self-contained for subagent execution.]
+[将设计文档 §4.N 的**完整**内容复制于此 — 含类图、序列图与设计决策。Mermaid 代码块原样保留，使本设计自包含、可供 subagent 独立执行。]
 
-- **Key classes**: [from class diagram — classes to create/modify with key methods]
-- **Interaction flow**: [from sequence diagram — key call chains]
-- **Third-party deps**: [from dependency table — exact library versions]
-- **Deviations**: [none, or explain deviation with user approval note]
+- **Key classes**: [自类图 — 要创建 / 修改的类及其关键方法]
+- **Interaction flow**: [自序列图 — 关键调用链]
+- **Third-party deps**: [自依赖表 — 精确库版本]
+- **Deviations**: [无 / 说明偏离及经用户审批记录]
 
 ## SRS Requirement
 
-[Copy the FULL FR-xxx section from SRS — EARS statement, acceptance criteria, Given/When/Then scenarios]
-
-## Component Data-Flow Diagram
-
-[Mermaid `graph` or `flowchart` showing runtime data flow between this feature's internal components. Label edges with data types. Include external dependencies as dashed-border boxes.]
-
-> N/A — [reason, e.g., "single-class feature, see Interface Contract below"]
+[将 SRS 中的**完整** FR-xxx 章节复制 — 含 EARS 陈述、验收准则、Given/When/Then 场景]
 
 ## Interface Contract
 
 | Method | Signature | Preconditions | Postconditions | Raises |
 |--------|-----------|---------------|----------------|--------|
-| `method_name` | `method_name(param: Type, ...) -> ReturnType` | [what must be true before call] | [what is guaranteed after call] | [exception + condition] |
+| `method_name` | `method_name(param: Type, ...) -> ReturnType` | [调用前必须成立的条件] | [调用后被保证的条件] | [异常 + 条件] |
 
-**Design rationale** (one line per non-obvious decision):
-- [e.g., why threshold defaults to 0.6, why parameter X is optional]
-- **Cross-feature contract alignment**: If this feature appears in Design §6.2 as Provider or Consumer, the corresponding methods' signatures must match the §6.2 schemas. Note the Contract ID (e.g., IAPI-001) for traceability.
+**Design rationale**（每条非显见决策一行）：
+- [如：为何阈值默认为 0.6、为何参数 X 可选]
+- **跨特性契约对齐**：若本特性在 Design §6.2 中作为 Provider 或 Consumer 出现，对应方法签名必须匹配 §6.2 schema。标注 Contract ID（如 IAPI-001）以便追溯。
 
-## Visual Rendering Contract (ui: true only)
+## Visual Rendering Contract（仅 ui: true）
 
-> N/A — [reason, e.g., "backend-only feature, no visual output"]
+> N/A — [原因，例如"后端专用特性，无视觉输出"]
 
 | Visual Element | DOM/Canvas Selector | Rendered When | Visual State Variants | Minimum Dimensions | Data Source |
 |----------------|---------------------|---------------|----------------------|-------------------|-------------|
-| [e.g., snake body segments] | `canvas#game-board` or `div.snake-segment` | [on game tick / on page load] | [alive=green, dead=red, paused=grey] | [20x20px per cell] | [GameState.segments[]] |
+| [例如：贪吃蛇身段] | `canvas#game-board` 或 `div.snake-segment` | [game tick / 页面加载] | [alive=green, dead=red, paused=grey] | [每格 20x20px] | [GameState.segments[]] |
 
 **Rendering technology**: [Canvas 2D / WebGL / DOM elements / SVG / CSS animation]
-**Entry point function**: [e.g., `GameRenderer.draw()` called from `gameLoop()`]
-**Render trigger**: [e.g., requestAnimationFrame loop / event-driven / reactive state]
+**Entry point function**: [如 `GameRenderer.draw()`，由 `gameLoop()` 调用]
+**Render trigger**: [如 requestAnimationFrame 循环 / 事件驱动 / 响应式状态]
 
-**Positive rendering assertions** (after trigger, these MUST be visually present):
-- [ ] [Element 1 is drawn/visible with dimensions > 0]
-- [ ] [Element 2 shows data from state]
-- [ ] [Container is not empty / canvas has non-transparent pixels]
+**正向渲染断言**（触发后必须视觉可见）：
+- [ ] [元素 1 被绘制 / 可见且尺寸 > 0]
+- [ ] [元素 2 显示来自 state 的数据]
+- [ ] [容器非空 / canvas 含非透明像素]
 
-**Interactive depth assertions** (rendered elements MUST respond to their designed interactions — rendering without interaction is a "display-only" defect):
-- [ ] [Element 1 responds to [key press / click / drag] → visual output changes]
-- [ ] [Element 2 updates on [state change / user input] → displayed data refreshes]
+**交互深度断言**（已渲染元素**必须**响应其设计意图的交互 — 只渲染而无交互属于 "display-only" 缺陷）：
+- [ ] [元素 1 响应 [按键 / 点击 / 拖拽] → 视觉输出随之变化]
+- [ ] [元素 2 在 [状态变化 / 用户输入] 时更新 → 展示数据刷新]
 
-## Internal Sequence Diagram
+## Implementation Summary
 
-[Mermaid `sequenceDiagram` showing method-to-method calls WITHIN this feature's implementation. Cover main success path + at least one error path per Raises entry.]
+[3-5 段散文。每段分别涉及：主要类 / 函数；它们之间的调用链；关键设计决策或非显见约束；遗留 / 存量代码交互点；与 §6.2 契约的集成。]
 
-> N/A — [reason, e.g., "single-class implementation, error paths documented in Algorithm error handling table"]
-
-## Algorithm / Core Logic
-
-### [Method Name]
-
-#### Flow Diagram
-
-```mermaid
-flowchart TD
-    A[Start] --> B{Decision?}
-    B -->|Yes| C[Process]
-    B -->|No| D[Return default]
-    C --> E[Return result]
-```
-
-#### Pseudocode
-
-```
-FUNCTION name(param1: Type, param2: Type) -> ReturnType
-  // Step 1: [major step]
-  // Step 2: [formula or key decision]
-  // Step 3: [edge case handling]
-  RETURN result
-END
-```
-
-#### Boundary Decisions
+### Boundary Conditions
 
 | Parameter | Min | Max | Empty/Null | At boundary |
 |-----------|-----|-----|------------|-------------|
 | [param]   | [val] | [val] | [behavior] | [behavior] |
 
-#### Error Handling
+> 任何带有数值范围、大小或可空输入参数的方法都要求填写此表。TDD Rule 4 依此表系统地识别可能的错误实现。无非平凡参数的特性可写 "N/A — no boundary conditions"。
 
-| Condition | Detection | Response | Recovery |
-|-----------|-----------|----------|----------|
-| [condition] | [how detected] | [exception or default] | [caller action] |
+### Existing Code Reuse
 
-> N/A — [reason, e.g., "pure CRUD, no algorithm" or "Delegates to [X] — see Feature #N"]
+[由 Feature Design SKILL Step 1c（Existing Code Reuse Check）填充。列出本特性复用而非重实现的已有符号 / 文件。若无复用，写 "N/A — greenfield feature" 或 "N/A — searched keywords: <terms>, no reusable match"。]
 
-## State Diagram
-
-[Mermaid `stateDiagram-v2` showing all valid states, transitions, triggers, and guard conditions]
-
-> N/A — [reason, e.g., "stateless feature"]
+| Existing Symbol | Location (file:line) | Reused Because |
+|-----------------|---------------------|----------------|
+| `UserRepository.findByEmail` | `src/repos/UserRepository.java:L42` | 既有查询已满足本特性的查找需求 |
 
 ## Test Inventory
 
 | ID | Category | Traces To | Input / Setup | Expected | Kills Which Bug? |
 |----|----------|-----------|---------------|----------|-----------------|
-| A  | FUNC/happy | FR-xxx AC-1 | [specific values] | [exact result] | [wrong impl this catches] |
-| B  | FUNC/error | §Interface Contract Raises | [trigger condition] | [exception type + msg] | [missing branch] |
-| C  | BNDRY/edge | §Algorithm boundary table | [edge value] | [exact behavior] | [off-by-one or missing guard] |
-| D  | FUNC/state | §State Diagram transition | [pre-state + event] | [post-state] | [missing guard condition] |
-| E  | INTG/db    | §Interface Contract + required_configs | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
-| F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
-| G  | UI/render  | §Visual Rendering Contract | [page loaded, game started] | [canvas has non-transparent pixels / DOM element visible with dimensions > 0] | [render function never called / canvas blank / DOM element not appended] |
+| A  | FUNC/happy | FR-xxx AC-1 | [具体值] | [精确结果] | [可捕获的错误实现] |
+| B  | FUNC/error | §Interface Contract Raises | [触发条件] | [异常类型 + 消息] | [遗漏的分支] |
+| C  | BNDRY/edge | §Implementation Summary Boundary Conditions | [边界值] | [精确行为] | [off-by-one 或缺失 guard] |
+| D  | INTG/db    | §Interface Contract + required_configs | [真实 DB setup] | [数据已持久化且可查询] | [连接未建立 / 错表] |
+| E  | INTG/api   | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点 / 未处理 timeout] |
+| F  | UI/render  | §Visual Rendering Contract | [页面加载、游戏开始] | [canvas 含非透明像素 / DOM 元素可见且尺寸 > 0] | [render 函数未被调用 / canvas 空白 / DOM 元素未追加] |
 
-Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF, INTG` and subtag is a free-form label.
+Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` 之一，subtag 为自由标签。
 
-If the feature has no external dependencies (pure computation, no IO, no DB, no network), add an explicit note:
+若本特性无外部依赖（纯计算、无 IO、无 DB、无网络），显式注明：
 > INTG: N/A — pure function, no external I/O
 
-## Tasks
-
-### Task 1: Write failing tests
-**Files**: [exact paths]
-**Steps**:
-1. Create test file with imports
-2. Write test code for each row in Test Inventory:
-   - Test A: [matching table row A]
-   - Test B: [matching table row B]
-3. Run: `[test command]`
-4. **Expected**: All tests FAIL for the right reason
-
-### Task 2: Implement minimal code
-**Files**: [exact paths]
-**Steps**:
-1. [Exact change referencing Algorithm pseudocode]
-2. [Exact change referencing Interface Contract]
-3. Run: `[test command]`
-4. **Expected**: All tests PASS
-
-### Task 3: Coverage Gate
-1. Run: `[coverage command]`
-2. Check thresholds. If below: return to Task 1.
-3. Record coverage output as evidence.
-
-### Task 4: Refactor
-1. [Specific refactoring actions]
-2. Run full test suite. All tests PASS.
-
 ## Verification Checklist
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
-- [ ] Algorithm pseudocode covers all non-trivial methods
-- [ ] Boundary table covers all algorithm parameters
-- [ ] Error handling table covers all Raises entries
-- [ ] Test Inventory negative ratio >= 40%
-- [ ] Visual Rendering Contract complete for ui:true features (all visual elements listed, positive rendering assertions defined)
-- [ ] Each Visual Rendering Contract element has ≥1 UI/render Test Inventory row
-- [ ] Every skipped section has explicit "N/A — [reason]"
+- [ ] 所有 SRS 验收准则（来自 srs_trace）已追溯到 Interface Contract 的 postconditions
+- [ ] 所有 SRS 验收准则（来自 srs_trace）已追溯到 Test Inventory 行
+- [ ] Boundary Conditions 表覆盖所有非平凡参数（或声明 "N/A — no boundary conditions"）
+- [ ] Interface Contract Raises 列覆盖所有预期错误条件
+- [ ] Test Inventory 负向占比 >= 40%
+- [ ] ui:true 特性的 Visual Rendering Contract 完整（列出全部视觉元素、定义正向渲染断言）
+- [ ] 每个 Visual Rendering Contract 元素至少对应 1 行 UI/render Test Inventory
+- [ ] Existing Code Reuse 章节已填充（或声明 "N/A — greenfield feature"）
+- [ ] 每个被跳过的章节都写明 "N/A — [reason]"
 
 ## Clarification Addendum
 
-> No clarifications required — all specifications were unambiguous.
+> 无需澄清 — 全部规格明确。
 
 | # | Category | Original Ambiguity | Resolution | Authority |
 |---|----------|--------------------|------------|-----------|

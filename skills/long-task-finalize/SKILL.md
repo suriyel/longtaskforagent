@@ -3,37 +3,37 @@ name: long-task-finalize
 description: "Use after ST Go verdict — generate usage examples and finalize release documentation via SubAgent"
 ---
 
-# Finalize — Post-ST Documentation & Examples
+# Finalize —— ST 后的文档与示例
 
-Generate scenario-based usage examples and finalize release documentation after System Testing passes with a Go/Conditional-Go verdict.
+在系统测试（ST）以 Go / Conditional-Go 判定通过后，生成基于场景的使用示例并完善发布文档。
 
-**Announce at start:** "I'm using the long-task-finalize skill. ST passed — generating examples and finalizing documentation."
+**开始时声明：** "I'm using the long-task-finalize skill. ST passed — generating examples and finalizing documentation."
 
-**Idempotent**: Safe to re-invoke after ST defect-fix loops. Overwrites `examples/` content cleanly on each run.
+**幂等**：ST 缺陷修复循环后可安全重复调用。每次运行都干净地覆盖 `examples/` 内容。
 
 <HARD-GATE>
-Do NOT invoke this skill unless the ST verdict is Go or Conditional-Go. If the verdict is No-Go, loop back to Worker for fixes instead.
+除非 ST 判定为 Go 或 Conditional-Go，**不要**调用本 skill。若判定为 No-Go，则回到 Worker 进行修复。
 </HARD-GATE>
 
-## Checklist
+## 清单
 
-You MUST create a TodoWrite task for each step and complete them in order:
+必须为每一步创建 TodoWrite 任务并按顺序完成：
 
-### 1. Gather Context
+### 1. 调取上下文
 
-- Read `feature-list.json` — all passing non-deprecated features, `tech_stack`, `quality_gates`
-- Read SRS document (`docs/plans/*-srs.md`) — requirement descriptions, user personas
-- Read Design document (`docs/plans/*-design.md`) — architecture, public API surface
-- Read UCD document (`docs/plans/*-ucd.md`) — only if UI features exist
-- Read `task-progress.md` — session history for ST summary entry
-- Read `RELEASE_NOTES.md` — current state for version entry
-- Note paths for SubAgent dispatch
+- 阅读 `feature-list.json` —— 所有通过且非弃用的特性、`tech_stack`、`quality_gates`
+- 阅读 SRS 文档（`docs/plans/*-srs.md`）—— 需求描述、用户画像
+- 阅读设计文档（`docs/plans/*-design.md`）—— 架构、公共 API 表面
+- 阅读 UCD 文档（`docs/plans/*-ucd.md`）—— 仅当存在 UI 特性时
+- 阅读 `task-progress.md` —— 供 ST 汇总条目使用的会话历史
+- 阅读 `RELEASE_NOTES.md` —— 当前版本条目状态
+- 记录路径供 SubAgent 分发使用
 
-### 2. Generate Examples (SubAgent)
+### 2. 生成示例（SubAgent）
 
-Dispatch the example-generator SubAgent to produce scenario-based usage examples.
+分发 example-generator SubAgent 生成基于场景的使用示例。
 
-1. Construct SubAgent prompt:
+1. 构建 SubAgent 提示词：
    ```
    You are an Example Generator SubAgent.
 
@@ -51,7 +51,7 @@ Dispatch the example-generator SubAgent to produce scenario-based usage examples
    - Working directory: <project_root>
    ```
 
-2. Dispatch:
+2. 分发：
    ```
    Agent(
      description = "Generate usage examples for all features",
@@ -59,63 +59,63 @@ Dispatch the example-generator SubAgent to produce scenario-based usage examples
    )
    ```
 
-3. Parse return contract:
-   - **PASS**: All planned scenarios generated and verified
-   - **PARTIAL**: Some examples generated; log warnings for gaps
-   - **FAIL**: Log error; proceed anyway — examples are non-blocking
+3. 解析返回契约：
+   - **PASS**：所有计划场景均已生成并校验
+   - **PARTIAL**：部分示例已生成；对缺口打 warning 日志
+   - **FAIL**：打 error 日志；仍然继续 —— 示例生成是非阻塞的
 
-Record in `task-progress.md`:
+在 `task-progress.md` 中记录：
 ```
 - Examples: <verdict> — N scenarios, N examples generated, N features covered
 ```
 
-### 3. Update RELEASE_NOTES.md
+### 3. 更新 RELEASE_NOTES.md
 
-Add ST completion and version entry (moved from ST Persist):
-- Add entry under `[Unreleased]` or create versioned section if appropriate
-- Include: ST verdict, date, test summary (categories run, defects found/fixed)
-- Reference the ST report document path
+添加 ST 完成条目与版本条目（从 ST Persist 迁移而来）：
+- 在 `[Unreleased]` 下添加，或按需创建版本化章节
+- 包含：ST 判定、日期、测试摘要（执行的分类、发现/修复的缺陷）
+- 引用 ST 报告文档路径
 
-### 4. Update task-progress.md
+### 4. 更新 task-progress.md
 
-Add ST session summary entry (moved from ST Persist):
-- ST categories executed, pass/fail counts
-- Defects found and fixed (with severity)
-- Final quality metrics
-- Example generation results (from Step 2)
+添加 ST 会话汇总条目（从 ST Persist 迁移而来）：
+- 执行的 ST 分类，通过/失败计数
+- 发现并修复的缺陷（含严重级别）
+- 最终质量指标
+- 示例生成结果（来自 Step 2）
 
-### 5. Persist
+### 5. Persist（持久化）
 
-- Git commit all documentation artifacts:
+- Git 提交所有文档工件：
   ```
   git add examples/ RELEASE_NOTES.md task-progress.md
   git commit -m "docs: finalize release — examples, release notes, progress update"
   ```
-- Validate:
+- 校验：
   ```bash
   python scripts/validate_features.py feature-list.json
   ```
 
-### 6. Summary
+### 6. 总结
 
-Output completion summary:
+输出完成摘要：
 > **Finalize — DONE**
 >
 > Examples: N scenarios generated (N features covered, N skipped)
 > RELEASE_NOTES.md: Updated with ST completion
 > task-progress.md: Updated with ST session summary
 
-## Critical Rules
+## 关键规则
 
-- **Non-blocking** — example generation failure does NOT retroactively change the Go verdict
-- **Idempotent** — safe to re-run; overwrites examples/ cleanly
-- **SubAgent for examples only** — RELEASE_NOTES and task-progress are updated directly by this skill (not by the SubAgent)
-- **No new features** — do not add, modify, or test any features; documentation only
-- **Follow project conventions** — examples match the project's language, style, and patterns
+- **非阻塞** —— 示例生成失败**不会**追溯性地改变 Go 判定
+- **幂等** —— 可安全重跑；干净地覆盖 examples/
+- **仅示例走 SubAgent** —— RELEASE_NOTES 与 task-progress 由本 skill 直接更新（不由 SubAgent）
+- **不新增特性** —— 不得新增、修改或测试任何特性；仅限文档
+- **遵循项目约定** —— 示例匹配项目的语言、风格与模式
 
-## Integration
+## 集成
 
-**Called by:** `long-task-st` (Step 13, after Go/Conditional-Go verdict)
-**Reads:** `feature-list.json`, `docs/plans/*-srs.md`, `docs/plans/*-design.md`, `docs/plans/*-ucd.md` (if UI), `task-progress.md`, `RELEASE_NOTES.md`, implementation code
-**Produces:** `examples/` (usage examples + README.md), updated `RELEASE_NOTES.md`, updated `task-progress.md`
-**Agent:** `agents/example-generator.md`
+**调用方：** `long-task-st`（Step 13，Go/Conditional-Go 判定之后）
+**读取：** `feature-list.json`、`docs/plans/*-srs.md`、`docs/plans/*-design.md`、`docs/plans/*-ucd.md`（若 UI）、`task-progress.md`、`RELEASE_NOTES.md`、实现代码
+**产出：** `examples/`（使用示例 + README.md）、已更新的 `RELEASE_NOTES.md`、已更新的 `task-progress.md`
+**Agent：** `agents/example-generator.md`

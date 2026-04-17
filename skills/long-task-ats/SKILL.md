@@ -3,68 +3,66 @@ name: long-task-ats
 description: "Use when design doc exists but no ATS doc and no feature-list.json - generate a global Acceptance Test Strategy mapping every requirement to acceptance scenarios with category constraints"
 ---
 
-**LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
+# 验收测试策略（ATS）生成
 
-# Acceptance Test Strategy (ATS) Generation
+以已审批的 SRS、Design，以及适用时的 UCD 为输入。产出一份全局验收测试策略文档，把每一条需求映射到带类别约束的验收场景——以约束下游 feature-st（通过 srs_trace 派生测试用例）。
 
-Take the approved SRS, Design, and UCD (if applicable) as input. Produce a global Acceptance Test Strategy document that maps every requirement to acceptance scenarios with required test categories — constraining downstream feature-st (test case derivation via srs_trace).
-
-**Announce at start:** "I'm using the long-task-ats skill to generate the Acceptance Test Strategy."
+**开始时宣告：** "I'm using the long-task-ats skill to generate the Acceptance Test Strategy."
 
 <HARD-GATE>
-Do NOT invoke any implementation skill, write any code, scaffold any project, run init_project.py, or take any implementation action until the ATS document is approved. This applies to EVERY project regardless of perceived simplicity.
+在 ATS 文档获批之前，禁止调用任何实现 skill、写任何代码、脚手架任何项目、运行 init_project.py 或执行任何实现动作。这适用于**每一个**项目，不论感觉它有多简单。
 </HARD-GATE>
 
-## Why ATS Exists
+## 为什么需要 ATS
 
-Without a global acceptance test strategy, per-feature ST test cases suffer from:
-- Category imbalance (heavy FUNC/BNDRY, near-zero SEC/PERF/UI)
-- NFR test methods decided ad-hoc during feature-st
-- Cross-feature integration scenarios discovered too late in ST phase
-- Risk-based test prioritization missing entirely
+没有全局验收测试策略，逐特性的 ST 测试用例会出现：
+- 类别失衡（FUNC/BNDRY 过重，SEC/PERF/UI 几近为零）
+- NFR 测试方法在 feature-st 期间临时决定
+- 跨特性集成场景在 ST 阶段过晚才发现
+- 风险驱动的测试优先级完全缺失
 
-ATS front-loads these decisions so Init and feature-st have concrete, auditable constraints.
+ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束。
 
-## Scaling Guide
+## Scaling 指南
 
-| Project Size | Features | ATS Depth |
+| 项目规模 | 特性数 | ATS 深度 |
 |---|---|---|
-| Tiny | 1-5 | **Skip standalone ATS** — embed a simplified mapping table in the design doc's Testing Strategy section (section 7); router detects `*-ats.md` absence + ≤5 features → auto-skip to Init |
-| Small | 5-15 | Lightweight standalone ATS — sections 1-3 only (scope, mapping table, category strategies); skip sections 4-6 |
-| Medium | 15-50 | Full ATS document — all 6 sections |
-| Large | 50-200+ | Full ATS + detailed per-subsystem integration matrices + risk heat map |
+| 微型 | 1-5 | **跳过独立 ATS** —— 把简化映射表嵌入设计文档的 Testing Strategy 节（第 7 节）；路由检测到 `*-ats.md` 缺失 + ≤5 特性 → 自动跳到 Init |
+| 小型 | 5-15 | 轻量级独立 ATS —— 仅第 1-3 节（范围、映射表、类别策略）；跳过第 4-6 节 |
+| 中型 | 15-50 | 完整 ATS 文档——全部 6 节 |
+| 大型 | 50-200+ | 完整 ATS + 详细的每个子系统集成矩阵 + 风险热图 |
 
-**Auto-skip rule for Tiny projects**: If the design document exists and the SRS has ≤ 5 functional requirements (FR-xxx), this skill embeds the ATS mapping table into the design doc's testing strategy section and creates a minimal `docs/plans/*-ats.md` stub containing only a reference to that section. The router then detects the ATS stub and proceeds to Init.
+**微型项目自动跳过规则**：如果设计文档存在且 SRS 的功能需求（FR-xxx）≤ 5，本 skill 会把 ATS 映射表嵌入设计文档的 testing strategy 节，并创建一份仅引用该节的最小 `docs/plans/*-ats.md` 占位。路由随后检测到 ATS 占位并进入 Init。
 
 ## Checklist
 
-You MUST create a TodoWrite task for each step and complete them in order:
+你必须为每个 step 创建一个 TodoWrite 任务并按顺序完成：
 
-### 1. Read Input Documents
+### 1. 阅读输入文档
 
-1. Read the approved SRS document from `docs/plans/*-srs.md`
-2. Read the approved design document from `docs/plans/*-design.md`
-3. Read the approved UCD style guide from `docs/plans/*-ucd.md` (if it exists — only for UI projects)
-4. Check for a custom ATS template:
-   - If user has specified a template path → read and validate it
-   - Else → use default template at `docs/templates/ats-template.md`
-5. Check for a custom ATS example:
-   - If user has specified an example path → read the example file — adapt style, language, and detail level
+1. 读取 `docs/plans/*-srs.md` 中已审批 SRS 文档
+2. 读取 `docs/plans/*-design.md` 中已审批设计文档
+3. 读取 `docs/plans/*-ucd.md` 中已审批 UCD 样式指南（如存在——仅 UI 项目）
+4. 检查自定义 ATS 模板：
+   - 如果用户指定了模板路径 → 读取并校验
+   - 否则 → 使用默认模板 `docs/templates/ats-template.md`
+5. 检查自定义 ATS 示例：
+   - 如果用户指定了示例路径 → 读取示例文件——借鉴风格、语言、细节层级
 
-### 2. Extract All Requirements
+### 2. 抽取所有需求
 
-From the SRS, extract a complete list of:
-- **FR-xxx**: Functional Requirements — with acceptance criteria (Given/When/Then)
-- **NFR-xxx**: Non-Functional Requirements — with measurable thresholds
-- **IFR-xxx**: Interface Requirements — with protocols and data formats
-- **CON-xxx**: Constraints — hard limits
-- **ASM-xxx**: Assumptions — implicit beliefs
+从 SRS 抽取完整列表：
+- **FR-xxx**：功能需求——带验收标准（Given/When/Then）
+- **NFR-xxx**：非功能需求——带可度量阈值
+- **IFR-xxx**：接口需求——带协议与数据格式
+- **CON-xxx**：约束——硬限
+- **ASM-xxx**：假设——隐含信念
 
-Count FR-xxx requirements. If ≤ 5, apply the **Tiny project auto-skip** rule (see Scaling Guide above).
+统计 FR-xxx 数量。若 ≤ 5，应用 **微型项目自动跳过** 规则（见上方 Scaling 指南）。
 
-### 3. Generate Requirement → Acceptance Scenario Mapping
+### 3. 生成需求 → 验收场景映射
 
-For each FR/NFR/IFR, generate one or more acceptance scenarios with:
+对每个 FR/NFR/IFR，生成一个或多个验收场景：
 
 ```markdown
 | Req ID | Requirement Summary | Acceptance Scenarios | Required Categories | Priority | Notes |
@@ -74,41 +72,41 @@ For each FR/NFR/IFR, generate one or more acceptance scenarios with:
 | FR-010 | Search results page | Search/empty results/pagination/sorting/filtering | FUNC,BNDRY,UI | High | ui:true→UI required |
 ```
 
-**Category assignment rules:**
+**类别分配规则：**
 
-| Condition | Required Categories |
+| 条件 | 必需类别 |
 |-----------|---------------------|
-| All FRs | FUNC + BNDRY (at minimum) |
-| Handles user input/authentication/authorization/external data | + SEC |
-| Corresponds to a `ui: true` feature | + UI |
-| Linked to NFR-xxx with performance metrics | + PERF |
+| 所有 FR | FUNC + BNDRY（至少）|
+| 处理用户输入/认证/授权/外部数据 | + SEC |
+| 对应 `ui: true` 特性 | + UI |
+| 关联到带性能指标的 NFR-xxx | + PERF |
 
-**Automation feasibility assessment (optional column `自动化可行性`):**
+**自动化可行性评估（可选列 `自动化可行性`）：**
 
-For each acceptance scenario, assess whether it can be fully automated with the project's tech stack:
-- `Auto` (default) — standard test tooling can execute and verify (CLI, API, Chrome DevTools MCP)
-- `Manual: physical-device` — requires hardware access (USB, printer, IoT device)
-- `Manual: visual-judgment` — requires human visual assessment beyond automated screenshot comparison
-- `Manual: external-action` — requires external human action (receive email, make phone call, approve in third-party system)
-- `Manual: other: {description}` — other reason
+对每个验收场景，评估其能否用项目技术栈完全自动化：
+- `Auto`（默认）—— 标准测试工具能执行和验证（CLI、API、Chrome DevTools MCP）
+- `Manual: physical-device` —— 需硬件访问（USB、打印机、IoT 设备）
+- `Manual: visual-judgment` —— 需超出自动截图比对的人工视觉评估
+- `Manual: external-action` —— 需外部人为动作（收邮件、打电话、在第三方系统审批）
+- `Manual: other: {description}` —— 其他原因
 
-This column propagates downstream: Feature-ST reads it to set `已自动化: No` + `手动测试原因` on derived test cases. The human will be interrupted via `AskUserQuestion` during Feature-ST execution to perform and report manual test results.
+本列向下游传播：Feature-ST 读取它以在派生测试用例上设置 `已自动化: No` + `手动测试原因`。Feature-ST 执行期间会通过 `AskUserQuestion` 中断人类执行并汇报手工测试结果。
 
-**Conservative flagging**: Only mark as `Manual` when automation is genuinely impossible, not merely difficult. Chrome DevTools MCP covers most UI testing; mock services cover most external dependencies. Reserve `Manual` for true gaps.
+**保守标注**：仅在自动化真正不可能时才标 `Manual`，而非仅仅困难。Chrome DevTools MCP 覆盖大多数 UI 测试；mock 服务覆盖大多数外部依赖。把 `Manual` 留给真正的缺口。
 
-### 4. Define Test Category Strategies
+### 4. 定义测试类别策略
 
-For each test category, specify the strategy:
+对每个测试类别，指定策略：
 
-- **FUNC**: Every FR must cover at least one happy-path + one error-path scenario
-- **BNDRY**: Boundary value analysis + equivalence class partitioning requirements per FR
-- **SEC**: Input validation (SQL injection, XSS, path traversal), authentication bypass, authorization escalation, data leakage
-- **PERF**: NFR metric thresholds + load scenarios + tool specification + pass criteria
-- **UI**: Chrome DevTools MCP interaction chains — navigate → interact → verify → three-layer detection
+- **FUNC**：每个 FR 必须至少覆盖一个 happy-path + 一个 error-path 场景
+- **BNDRY**：每个 FR 的边界值分析 + 等价类划分需求
+- **SEC**：输入校验（SQL 注入、XSS、路径穿越）、认证绕过、授权越权、数据泄漏
+- **PERF**：NFR 指标阈值 + 负载场景 + 工具规约 + 通过标准
+- **UI**：Chrome DevTools MCP 交互链—— navigate → interact → verify → 三层检测
 
-### 5. NFR Test Method Matrix
+### 5. NFR 测试方法矩阵
 
-For each NFR-xxx with measurable thresholds:
+对每个带可度量阈值的 NFR-xxx：
 
 ```markdown
 | NFR ID | Test Method | Tool | Pass Criteria | Load Parameters | Related Feature |
@@ -117,9 +115,9 @@ For each NFR-xxx with measurable thresholds:
 | NFR-002 | Memory profiling | tracemalloc/heapdump | RSS < 512MB | 10K records | Feature 8 |
 ```
 
-### 6. Cross-Feature Integration Scenarios
+### 6. 跨特性集成场景
 
-Identify critical data flow paths that span multiple features:
+识别跨多个特性的关键数据流路径：
 
 ```markdown
 | Scenario ID | Description | Features Involved | Data Flow Path | Verification Points | ST Phase Coverage |
@@ -127,16 +125,16 @@ Identify critical data flow paths that span multiple features:
 | INT-001 | User register → login → first action | F1, F2, F5 | POST /register → POST /login → GET /dashboard | Session propagation, data consistency | System ST |
 ```
 
-**§6.2-driven integration scenario derivation:**
-For each row in Design §6.2 Internal API Contracts:
-1. Create at least one integration scenario covering the happy-path data flow (Provider produces → Consumer receives → Consumer processes correctly)
-2. Create at least one error scenario covering Provider error codes (e.g., Provider returns 404 → Consumer handles gracefully)
-3. If the contract involves shared persistent state (same DB table), create a consistency scenario (concurrent access, stale reads)
-4. Reference the Contract ID (IAPI-xxx) in the scenario's "Data Flow Path" column
+**基于 §6.2 派生集成场景：**
+对 Design §6.2 Internal API Contracts 的每一行：
+1. 创建至少一个覆盖 happy-path 数据流的集成场景（Provider 产出 → Consumer 接收 → Consumer 正确处理）
+2. 创建至少一个覆盖 Provider 错误码的错误场景（例如 Provider 返回 404 → Consumer 优雅处理）
+3. 若契约涉及共享持久状态（同一 DB 表），创建一致性场景（并发访问、陈旧读）
+4. 在场景的 "Data Flow Path" 列引用 Contract ID（IAPI-xxx）
 
-### 7. Risk-Driven Test Priority
+### 7. 风险驱动的测试优先级
 
-Assess risk per requirement and assign test depth:
+按需求评估风险并分配测试深度：
 
 ```markdown
 | Risk Area | Risk Level | Impact Scope | Test Depth | Rationale |
@@ -145,23 +143,23 @@ Assess risk per requirement and assign test depth:
 | Data import | Medium | Feature 3-5 | Standard (FUNC+BNDRY) | Data integrity |
 ```
 
-### 8. Section-by-Section User Approval
+### 8. 按章节用户审批
 
-Present each section to the user for approval (same pattern as design skill):
+向用户呈现每一节以获取审批（与 design skill 相同模式）：
 
-1. Requirement → Scenario mapping table (Step 3)
-2. Test category strategies (Step 4)
-3. NFR test method matrix (Step 5) — skip if no NFRs with metrics
-4. Cross-feature integration scenarios (Step 6)
-5. Risk-driven priority (Step 7)
+1. 需求 → 场景映射表（Step 3）
+2. 测试类别策略（Step 4）
+3. NFR 测试方法矩阵（Step 5）——无带指标的 NFR 则跳过
+4. 跨特性集成场景（Step 6）
+5. 风险驱动优先级（Step 7）
 
-Present each section. Wait for user feedback. Incorporate changes before moving to the next.
+呈现每一节。等待用户反馈。在进入下一节前纳入更改。
 
-**For Small projects** (5-15 features): Combine into 2 approval steps: (a) mapping table + categories, (b) everything else.
+**对小型项目**（5-15 特性）：合并为 2 个审批步骤：(a) 映射表 + 类别，(b) 其他全部。
 
-### 9. Subagent Review
+### 9. Subagent 评审
 
-Dispatch the ATS reviewer subagent for independent quality review:
+分发 ATS reviewer subagent 进行独立质量评审：
 
 ```
 Agent(
@@ -185,52 +183,52 @@ Agent(
 )
 ```
 
-**Isolation guarantees:**
-- Subagent reads ONLY ATS + SRS + Design + UCD + reviewer definition (agents/ats-reviewer.md)
-- Subagent does NOT read implementation code or test code
-- Subagent does NOT modify any files — returns structured report only
-- Main skill processes the report and decides on fixes
+**隔离保证：**
+- Subagent 仅读取 ATS + SRS + Design + UCD + reviewer 定义（agents/ats-reviewer.md）
+- Subagent 不读取实现代码或测试代码
+- Subagent 不修改任何文件——仅返回结构化报告
+- 主 skill 处理报告并决定修复
 
-### 10. Process Review Report
+### 10. 处理评审报告
 
-Parse the subagent's review report:
+解析 subagent 的评审报告：
 
-1. **0 Major defects** → PASS → proceed to Step 10.5
-2. **Has Major defects** → fix the ATS document per defect descriptions → re-run Step 9 (max 2 review rounds)
-3. **Third round still FAIL** → present full report to user via `AskUserQuestion`:
-   - Show all remaining Major defects
-   - Options: fix manually / accept with known gaps / terminate
-   - If user accepts with gaps: document gaps in ATS footer section
+1. **0 个 Major 缺陷** → PASS → 进入 Step 10.5
+2. **存在 Major 缺陷** → 按缺陷描述修复 ATS 文档 → 重跑 Step 9（最多 2 轮评审）
+3. **第三轮仍 FAIL** → 通过 `AskUserQuestion` 向用户呈现完整报告：
+   - 显示所有剩余 Major 缺陷
+   - 选项：手动修复 / 接受已知缺口 / 终止
+   - 如用户接受缺口：在 ATS 页脚节记录缺口
 
-### 10.5 Process Cross-Reference Conflicts
+### 10.5 处理交叉引用冲突
 
-If the review report contains `[CROSS-REF CONFLICT]` items (from R8 cross-validation):
+如果评审报告包含 `[CROSS-REF CONFLICT]` 项（来自 R8 交叉校验）：
 
-1. Collect all `[CROSS-REF CONFLICT]` items from the **Cross-Reference Conflicts** table in the review report
-2. For each conflict, present to the user via `AskUserQuestion`:
-   - Source document value + section reference
-   - ATS value + section reference
-   - Nature: omission / contradiction / distortion
-   - Options:
-     - **A**: Use source document value (modify ATS)
-     - **B**: Use ATS value (update SRS/Design to match)
-     - **C**: Neither is correct (user provides the correct value)
-3. Apply user decisions to the relevant documents
-4. Record each decision in the ATS appendix (Review Report section) with format:
+1. 从评审报告的 **Cross-Reference Conflicts** 表收集所有 `[CROSS-REF CONFLICT]` 项
+2. 对每个冲突，通过 `AskUserQuestion` 呈现给用户：
+   - 源文档值 + 节引用
+   - ATS 值 + 节引用
+   - 性质：omission / contradiction / distortion
+   - 选项：
+     - **A**：采用源文档值（修改 ATS）
+     - **B**：采用 ATS 值（更新 SRS/Design 以匹配）
+     - **C**：两者都不对（用户提供正确值）
+3. 把用户决定应用到相关文档
+4. 在 ATS 附录（Review Report 节）记录每条决定，格式：
    ```
    | Conflict # | Decision | Applied To | User Rationale |
    ```
-5. If any source documents (SRS/Design) were modified, git commit the changes:
+5. 若有源文档（SRS/Design）被修改，git commit 变更：
    ```
    docs: resolve ATS cross-reference conflicts per user decision
    ```
-6. Proceed to Step 11
+6. 进入 Step 11
 
-### 11. Save ATS Document
+### 11. 保存 ATS 文档
 
-1. Save the approved ATS to `docs/plans/YYYY-MM-DD-<topic>-ats.md`
-2. Append the final review report as an appendix section
-3. Git commit:
+1. 把已审批 ATS 保存到 `docs/plans/YYYY-MM-DD-<topic>-ats.md`
+2. 把最终评审报告作为附录节追加
+3. Git 提交：
    ```
    docs: add acceptance test strategy (ATS)
 
@@ -239,61 +237,61 @@ If the review report contains `[CROSS-REF CONFLICT]` items (from R8 cross-valida
    Reviewed: [PASS / CONDITIONAL PASS with N gaps]
    ```
 
-### 12. Transition to Initializer
+### 12. 衔接到 Initializer
 
-Once the ATS document is saved and committed:
+ATS 文档保存并提交后：
 
-1. Summarize key inputs the Initializer will need:
-   - **From SRS**: requirements, acceptance criteria → features
-   - **From Design**: tech stack, architecture → project skeleton
-   - **From ATS**: category constraints → feature-st test case category requirements (via srs_trace)
-2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-init` to scaffold the project
+1. 为 Initializer 总结关键输入：
+   - **来自 SRS**：需求、验收标准 → features
+   - **来自 Design**：技术栈、架构 → 项目骨架
+   - **来自 ATS**：类别约束 → feature-st 测试用例类别要求（经由 srs_trace）
+2. **必需子 skill：** 调用 `long-task:long-task-init` 为项目打骨架
 
-## Boundary with Design Doc Testing Strategy
+## 与设计文档 Testing Strategy 的边界
 
-The **design doc** (Section 7, Testing Strategy) describes the *approach*:
-- What test types will be used (unit, integration, E2E)
-- What tools and frameworks (pytest, k6, Chrome DevTools MCP)
-- What coverage targets (line 90%, branch 80%)
+**设计文档**（第 7 节，Testing Strategy）描述*方式*：
+- 使用哪些测试类型（unit、integration、E2E）
+- 使用哪些工具与框架（pytest、k6、Chrome DevTools MCP）
+- 覆盖率目标（line 90%、branch 80%）
 
-The **ATS document** describes the *detailed mapping*:
-- Which specific requirement gets which specific test categories
-- NFR test methods with exact thresholds and load parameters
-- Cross-feature integration scenarios
-- Risk-driven test depth
+**ATS 文档**描述*详细映射*：
+- 哪条具体需求得到哪些具体测试类别
+- 带精确阈值与负载参数的 NFR 测试方法
+- 跨特性集成场景
+- 风险驱动测试深度
 
-The design doc testing strategy section SHOULD reference the ATS document once it exists:
+设计文档的 testing strategy 节**应当**在 ATS 存在后引用它：
 ```markdown
 See `docs/plans/YYYY-MM-DD-<topic>-ats.md` for detailed requirement-to-test-category mapping.
 ```
 
-## Critical Rules
+## 关键规则
 
-- **Requirements-driven**: Every mapping row traces to a specific SRS requirement ID
-- **No orphan requirements**: Every FR/NFR/IFR must appear in the mapping table
-- **Category assignment is auditable**: Every required category has a documented reason
-- **Review is mandatory**: ATS reviewer subagent runs before save — no skip
-- **Scaling applies**: Tiny projects (≤5 FR) skip standalone ATS; see Scaling Guide
-- **Immutable after approval**: Changes to ATS require the `long-task-increment` skill (ATS Revision step)
+- **需求驱动**：每一行映射都追溯到特定 SRS 需求 ID
+- **无孤立需求**：每个 FR/NFR/IFR 都必须出现在映射表中
+- **类别分配可审计**：每个必需类别都有成文理由
+- **评审强制**：保存前运行 ATS reviewer subagent——不得跳过
+- **Scaling 适用**：微型项目（≤5 FR）跳过独立 ATS；见 Scaling 指南
+- **审批后不可变**：对 ATS 的变更需使用 `long-task-increment` skill（ATS Revision 步骤）
 
-## Red Flags
+## 红旗信号
 
-| Rationalization | Correct Response |
+| 理性化逃避 | 正确响应 |
 |---|---|
-| "The SRS already has acceptance criteria, ATS is redundant" | SRS has business criteria; ATS maps them to test categories |
-| "We'll figure out test categories during feature-st" | Ad-hoc category assignment leads to SEC/PERF gaps |
-| "This project is too small for ATS" | Check Scaling Guide — Tiny projects auto-skip; Small projects get lightweight ATS |
-| "NFR testing can be decided during ST phase" | NFR test methods must be specified upfront with tools and thresholds |
-| "The review is overkill" | Independent review catches coverage gaps the author misses |
+| "SRS 已有验收标准，ATS 多余" | SRS 有业务标准；ATS 把它们映射到测试类别 |
+| "测试类别在 feature-st 时决定就行" | 临时类别分配会导致 SEC/PERF 缺口 |
+| "本项目太小不需要 ATS" | 查 Scaling 指南——微型项目自动跳过；小型项目得到轻量 ATS |
+| "NFR 测试在 ST 阶段决定" | NFR 测试方法必须前置指定工具与阈值 |
+| "评审太过头" | 独立评审能捕捉作者漏看的覆盖缺口 |
 
-## Integration
+## 集成
 
-**Called by:** using-long-task (when design doc exists, no ATS doc, no feature-list.json) or long-task-design (Step 6)
-**Requires:** Approved SRS at `docs/plans/*-srs.md`; Approved Design at `docs/plans/*-design.md`; optionally approved UCD at `docs/plans/*-ucd.md`
-**Chains to:** long-task-init (after ATS approval)
-**Produces:** `docs/plans/YYYY-MM-DD-<topic>-ats.md`
-**Downstream consumers:**
-- `long-task-init` — reads ATS to set `ui` flags based on category assignment
-- `long-task-feature-st` — reads ATS to enforce category requirements (via srs_trace lookup)
-- `long-task-st` — uses ATS as baseline for RTM verification
-- `long-task-increment` — updates ATS in place when requirements change
+**被调用方：** using-long-task（设计文档存在、无 ATS 文档、无 feature-list.json 时）或 long-task-design（Step 6）
+**依赖：** `docs/plans/*-srs.md` 已审批 SRS；`docs/plans/*-design.md` 已审批 Design；可选 `docs/plans/*-ucd.md` 已审批 UCD
+**衔接到：** long-task-init（ATS 审批后）
+**产出：** `docs/plans/YYYY-MM-DD-<topic>-ats.md`
+**下游消费方：**
+- `long-task-init` —— 读取 ATS 基于类别分配设置 `ui` 标记
+- `long-task-feature-st` —— 读取 ATS 强制类别要求（经由 srs_trace 查询）
+- `long-task-st` —— 以 ATS 作为 RTM 校验基线
+- `long-task-increment` —— 需求变更时就地更新 ATS

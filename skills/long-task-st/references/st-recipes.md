@@ -1,28 +1,28 @@
-# System Testing Recipes
+# 系统测试配方（System Testing Recipes）
 
-Per-language/framework recipes for each ST test category. Select recipes based on `tech_stack` in `feature-list.json`.
+按语言 / 框架提供每类 ST 测试的配方。依据 `feature-list.json` 中的 `tech_stack` 选择配方。
 
-## 1. Integration Test Patterns
+## 1. 集成测试模式
 
-### Real vs Contract Test Classification
+### Real vs Contract 测试分类
 
-- **Contract test** — verifies call signatures and data shapes using mocks/stubs (`unittest.mock`, `requests-mock`, `msw`, `gmock`). Validates interfaces but does NOT verify real data flow.
-- **Integration test** — verifies actual data flow between real components (real DB, real HTTP, real file system). Catches contract mismatches, type errors, and protocol bugs that mocks hide.
+- **Contract test**（契约测试） — 使用 mock/stub（`unittest.mock`、`requests-mock`、`msw`、`gmock`）验证调用签名与数据形状。校验接口但**不**验证真实数据流。
+- **Integration test**（集成测试） — 在真实组件之间（真实 DB、真实 HTTP、真实文件系统）验证实际数据流。捕获 mock 所隐藏的契约不一致、类型错误与协议 bug。
 
-**Preferred tools for real integration:**
-- `testcontainers` (Python, Java, JS/TS) — real DB/service in Docker
-- `sqlite:///:memory:` — real SQL engine, in-memory (acceptable for SQL integration)
-- `httpx` against running server — preferred over `requests-mock` for internal APIs
-- `supertest` against running Express/Fastify — preferred over `msw` for internal APIs
+**推荐用于真实集成的工具：**
+- `testcontainers`（Python、Java、JS/TS） — Docker 中的真实 DB/服务
+- `sqlite:///:memory:` — 内存中的真实 SQL 引擎（SQL 集成可接受）
+- 对运行中的 server 使用 `httpx` — 内部 API 优先于 `requests-mock`
+- 对运行中的 Express/Fastify 使用 `supertest` — 内部 API 优先于 `msw`
 
-**External third-party service testing strategy (priority order):**
-1. **Prefer real tests** — use test credentials from `required_configs` or environment (e.g., Stripe test key, GitHub personal token)
-2. **If unavailable** — use contract tests (mocks) and record the reason
-3. **Record decision** — note in ST plan Classification table: `External (credentials unavailable)` as mock authorization
+**外部第三方服务测试策略（优先级顺序）：**
+1. **优先真实测试** — 使用 `required_configs` 或环境中的测试凭据（例如 Stripe test key、GitHub personal token）
+2. **若不可用** — 使用契约测试（mock）并记录原因
+3. **记录决策** — 在 ST plan Classification 表中注明：`External (credentials unavailable)` 作为 mock 授权依据
 
-**Mocks are allowed ONLY when:**
-- External third-party service (e.g., Stripe API, GitHub API) AND test credentials are not available in `required_configs` or environment
-- Must record reason in ST plan as mock authorization basis
+**仅在以下情况允许使用 mock：**
+- 外部第三方服务（如 Stripe API、GitHub API） 且 `required_configs` 或环境中无可用测试凭据
+- 必须在 ST plan 中记录原因作为 mock 授权依据
 
 ### Python
 ```bash
@@ -38,11 +38,11 @@ pytest tests/integration/ -v --tb=short
 pytest tests/integration/ --cov=src --cov-report=term-missing
 ```
 
-**Patterns:**
-- Use `pytest` fixtures for shared state setup/teardown
-- Use `sqlite:///:memory:` or `testcontainers` for database integration [Real]
-- Use `httpx` against running server for internal API integration [Real]
-- Use `unittest.mock.patch` or `requests-mock` for external service boundaries only [Contract] — requires documented reason when credentials unavailable
+**模式：**
+- 使用 `pytest` fixture 做共享状态的 setup/teardown
+- 数据库集成用 `sqlite:///:memory:` 或 `testcontainers` [Real]
+- 内部 API 集成用 `httpx` 对运行中的 server [Real]
+- 外部服务边界用 `unittest.mock.patch` 或 `requests-mock` [Contract] — 凭据不可用时须记录原因
 
 ### JavaScript / TypeScript
 ```bash
@@ -58,11 +58,11 @@ npx vitest run tests/integration/ --reporter=verbose
 npx jest tests/integration/ --verbose
 ```
 
-**Patterns:**
-- Use `beforeAll`/`afterAll` for shared state
-- Use `testcontainers` for database integration [Real]
-- Use `supertest` against running Express/Fastify app for internal API integration [Real]
-- Use `msw` (Mock Service Worker) for external service boundaries only [Contract] — requires documented reason when credentials unavailable
+**模式：**
+- 使用 `beforeAll`/`afterAll` 做共享状态
+- 数据库集成用 `testcontainers` [Real]
+- 内部 API 集成用 `supertest` 对运行中的 Express/Fastify [Real]
+- 外部服务边界仅用 `msw`（Mock Service Worker） [Contract] — 凭据不可用时须记录原因
 
 ### Java
 ```bash
@@ -77,11 +77,11 @@ mvn test -Dtest="integration.*" -pl module-name
 ./gradlew test --tests "integration.*"
 ```
 
-**Patterns:**
-- Use `@SpringBootTest` for Spring integration [Real]
-- Use `Testcontainers` for database/service integration [Real]
-- Use `RestAssured` against running server for internal API integration [Real]; against mock server for external boundaries [Contract]
-- Use `@DirtiesContext` for state isolation between tests
+**模式：**
+- Spring 集成用 `@SpringBootTest` [Real]
+- 数据库 / 服务集成用 `Testcontainers` [Real]
+- 内部 API 集成用 `RestAssured` 对运行中的 server [Real]；外部边界用 mock server [Contract]
+- 测试间状态隔离用 `@DirtiesContext`
 
 ### C / C++
 ```bash
@@ -94,16 +94,16 @@ cmake --build build --target integration_tests
 ctest --test-dir build -R integration -V
 ```
 
-**Patterns:**
-- Use `gtest` fixtures for shared state
-- Test IPC, shared memory, file I/O between modules [Real]
-- Use mock libraries (`gmock`, `fff`) for external boundaries only [Contract] — requires documented reason when credentials unavailable
+**模式：**
+- 使用 `gtest` fixture 做共享状态
+- 测试模块间 IPC、共享内存、文件 I/O [Real]
+- 外部边界用 mock 库（`gmock`、`fff`）[Contract] — 凭据不可用时须记录原因
 
 ---
 
-## 2. E2E Test Tools
+## 2. E2E 测试工具
 
-### API-Based E2E
+### 基于 API 的 E2E
 
 | Language | Tool | Install |
 |----------|------|---------|
@@ -113,9 +113,9 @@ ctest --test-dir build -R integration -V
 | JS/TS | `axios` + `vitest` | `npm install axios` |
 | Java | `RestAssured` | Maven: `io.rest-assured:rest-assured` |
 
-### UI E2E (Chrome DevTools MCP)
+### UI E2E（Chrome DevTools MCP）
 
-For projects with `"ui": true` features, use Chrome DevTools MCP tools for browser-based E2E verification. Refer to the Chrome DevTools MCP documentation for available tools and usage patterns.
+对于含 `"ui": true` 特性的项目，使用 Chrome DevTools MCP 工具做浏览器 E2E 验证。可用工具与使用模式参考 Chrome DevTools MCP 文档。
 
 ### CLI E2E
 
@@ -128,7 +128,7 @@ For projects with `"ui": true` features, use Chrome DevTools MCP tools for brows
 
 ---
 
-## 3. Performance Benchmarking
+## 3. 性能基准测试
 
 ### Python
 ```bash
@@ -184,9 +184,9 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 
 ---
 
-## 4. Security Scanning
+## 4. 安全扫描
 
-### Dependency Vulnerability Scanners
+### 依赖漏洞扫描器
 
 | Language | Tool | Command |
 |----------|------|---------|
@@ -198,7 +198,7 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 | C/C++ | `cve-bin-tool` | `cve-bin-tool ./build/` |
 | General | `trivy` | `trivy fs --severity HIGH,CRITICAL .` |
 
-### Static Analysis (Security-Focused)
+### 静态分析（侧重安全）
 
 | Language | Tool | Command |
 |----------|------|---------|
@@ -207,32 +207,32 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 | Java | `SpotBugs + FindSecBugs` | `mvn spotbugs:check` |
 | C/C++ | `cppcheck` | `cppcheck --enable=all --force src/` |
 
-### OWASP Top 10 Checklist (Manual Review)
+### OWASP Top 10 检查清单（人工评审）
 
 | # | Category | What to Check |
 |---|----------|---------------|
-| A01 | Broken Access Control | Auth bypass, privilege escalation, IDOR |
-| A02 | Cryptographic Failures | Hardcoded secrets, weak algorithms, plaintext sensitive data |
-| A03 | Injection | SQL, XSS, command, LDAP, template injection |
-| A04 | Insecure Design | Missing rate limiting, missing input validation |
-| A05 | Security Misconfiguration | Debug mode, default credentials, verbose errors |
-| A06 | Vulnerable Components | Outdated dependencies (run scanner above) |
-| A07 | Authentication Failures | Weak passwords, missing MFA, session fixation |
-| A08 | Data Integrity Failures | Unsigned updates, untrusted deserialization |
-| A09 | Logging Failures | Missing audit logs, sensitive data in logs |
-| A10 | SSRF | Unvalidated URLs, internal network access |
+| A01 | Broken Access Control | 鉴权绕过、权限提升、IDOR |
+| A02 | Cryptographic Failures | 硬编码密钥、弱算法、明文敏感数据 |
+| A03 | Injection | SQL、XSS、命令、LDAP、模板注入 |
+| A04 | Insecure Design | 缺少限流、缺少输入校验 |
+| A05 | Security Misconfiguration | Debug 模式、默认凭据、冗长错误 |
+| A06 | Vulnerable Components | 过期依赖（运行上表扫描器） |
+| A07 | Authentication Failures | 弱密码、缺少 MFA、session fixation |
+| A08 | Data Integrity Failures | 未签名更新、不可信反序列化 |
+| A09 | Logging Failures | 缺审计日志、日志含敏感数据 |
+| A10 | SSRF | 未校验的 URL、内网访问 |
 
 ---
 
-## 5. Compatibility Testing
+## 5. 兼容性测试
 
-### Cross-Browser (UI Projects)
+### 跨浏览器（UI 项目）
 
-Use Chrome DevTools MCP device emulation for cross-browser and mobile testing.
+使用 Chrome DevTools MCP 设备模拟做跨浏览器与移动端测试。
 
-### Cross-Platform (CLI/Library)
+### 跨平台（CLI / Library）
 
-Verify on target platforms using available environment:
+在目标平台用可用环境进行验证：
 ```bash
 # Check platform-specific behavior
 python -c "import platform; print(platform.system())"
@@ -244,9 +244,9 @@ python -c "import platform; print(platform.system())"
 
 ---
 
-## 6. Test Report Metrics Collection
+## 6. 测试报告指标采集
 
-### Collecting Coverage Metrics
+### 采集覆盖率指标
 
 | Language | Command to Get Summary |
 |----------|----------------------|
@@ -255,7 +255,7 @@ python -c "import platform; print(platform.system())"
 | Java | `mvn jacoco:report` (then read `target/site/jacoco/index.html`) |
 | C/C++ | `gcovr --print-summary` |
 
-### Collecting Test Counts
+### 采集测试数量
 
 | Language | Command |
 |----------|---------|

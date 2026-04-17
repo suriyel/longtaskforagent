@@ -9,24 +9,24 @@ target_skill_file: "skills/long-task-xxx/SKILL.md"
 target_section: "Section heading"
 ---
 
-# Retrospective: {{title}}
+# 回顾记录（Retrospective）: {{title}}
 
-## User Feedback
+## 用户反馈（User Feedback）
 
-{{What the user said or corrected}}
+{{用户说了什么或纠正了什么}}
 
-## Skill Output (Before Correction)
+## Skill 输出（纠正前）
 
-{{What the skill produced that was wrong}}
+{{skill 产生的错误输出}}
 
-## Correction Applied
+## 已应用的纠正（Correction Applied）
 
-{{What was done to fix}}
+{{用于修复的动作}}
 
-## Root Cause Analysis
+## 根因分析（Root Cause Analysis）
 
-{{Why the skill produced wrong output — specific rule or section that was missing or inadequate}}
+{{为何 skill 产生了错误输出 —— 缺失或不足的具体规则或章节}}
 
-## Suggested Improvement
+## 改进建议（Suggested Improvement）
 
-{{Specific change suggestion for the target skill file and section}}
+{{针对目标 skill 文件及章节的具体修改建议}}

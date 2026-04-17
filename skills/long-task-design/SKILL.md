@@ -3,59 +3,57 @@ name: long-task-design
 description: "Use when SRS doc exists but no design doc and no feature-list.json - take the approved SRS as input and produce an architecture/design document focused on HOW to build it"
 ---
 
-**LANGUAGE RULE**: You MUST respond to the user in Chinese (Simplified). All generated documents, reports, and user-facing output must be written in Chinese. Skill names, code identifiers, and JSON field names remain in English.
+# 设计文档生成
 
-# Design Document Generation
-
-Take the approved SRS as input. Propose implementation approaches, get section-by-section design approval, and produce a design document that answers HOW — while the SRS answers WHAT.
+以已审批 SRS 为输入。提出实现方案、按章节获取设计审批，并产出一份回答 HOW 的设计文档——而 SRS 回答 WHAT。
 
 <HARD-GATE>
-Do NOT invoke any implementation skill, write any code, scaffold any project, run init_project.py, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
+在你呈现设计并且用户审批通过之前，禁止调用任何实现 skill、写任何代码、脚手架任何项目、运行 init_project.py 或执行任何实现动作。这适用于**每一个**项目，不论感觉它有多简单。
 </HARD-GATE>
 
-## Anti-Pattern: "The SRS Is Detailed Enough To Start Coding"
+## 反模式："SRS 已经够详细可以开始写代码了"
 
-The SRS describes WHAT the system must do. The design document describes HOW. Even when requirements are crystal clear, the implementation approach (architecture, data model, tech stack choices) needs explicit decisions and user approval. Skipping design causes mid-session corrections and rework.
+SRS 描述系统必须做什么（WHAT）。设计文档描述怎么做（HOW）。即便需求一清二楚，实现方式（架构、数据模型、技术栈选择）也需要显式决策与用户审批。跳过设计会造成会话中途的纠正与返工。
 
 ## Checklist
 
-You MUST create a TodoWrite task for each of these items and complete them in order:
+你必须为下列每一项创建一个 TodoWrite 任务并按顺序完成：
 
-1. **Read the approved SRS** — from `docs/plans/*-srs.md`
-2. **Explore technical context** — existing code, frameworks, deployment environment
-3. **Propose 2-3 approaches** — with trade-offs and your recommendation
-4. **Section-by-section design approval** — architecture, data model, API, UI, testing, deployment
-5. **Write design document** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
-6. **Transition to ATS** — **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ats`
+1. **阅读已审批 SRS** —— 来自 `docs/plans/*-srs.md`
+2. **探索技术上下文** —— 已有代码、框架、部署环境
+3. **提出 2-3 个方案** —— 带权衡与你的推荐
+4. **按章节审批设计** —— 架构、数据模型、API、UI、测试、部署
+5. **撰写设计文档** —— 保存到 `docs/plans/YYYY-MM-DD-<topic>-design.md` 并提交
+6. **衔接到 ATS** —— **必需子 skill：** 调用 `long-task:long-task-ats`
 
-**The terminal state is invoking long-task-ats.** Do NOT invoke any other implementation skill.
+**终态是调用 long-task-ats。** 不要调用任何其他实现 skill。
 
-## Step 1: Read SRS & UCD & Extract Design Inputs
+## Step 1：阅读 SRS 与 UCD 并抽取设计输入
 
-1. Read the approved SRS document from `docs/plans/*-srs.md`
-2. Read the approved UCD style guide from `docs/plans/*-ucd.md` (if it exists — only present for UI projects)
-3. Extract key design drivers:
-   - **Functional scope** — FR count, priority distribution, dependency chains
-   - **NFR thresholds** — performance targets, reliability, scalability that affect architecture
-   - **Constraints** — hard limits that restrict technology/approach choices
-   - **Interface requirements** — external systems, protocols, data formats to integrate with
-   - **User personas** — technical levels that affect API/UI design decisions
-   - **UCD style tokens** (if UCD exists) — color palette, typography, spacing, component catalog → informs frontend architecture and UI/UX section
-4. List any SRS **Open Questions** that must be resolved before design can proceed
-   - If unresolved questions affect architecture → ask user via `AskUserQuestion` before Step 2
+1. 读取 `docs/plans/*-srs.md` 中已审批的 SRS 文档
+2. 读取 `docs/plans/*-ucd.md` 中已审批的 UCD 样式指南（如存在——仅 UI 项目会有）
+3. 抽取关键设计驱动：
+   - **功能范围** —— FR 数量、优先级分布、依赖链
+   - **NFR 阈值** —— 影响架构的性能目标、可靠性、可扩展性
+   - **约束** —— 限制技术/方案选择的硬限
+   - **接口需求** —— 要集成的外部系统、协议、数据格式
+   - **用户角色** —— 影响 API/UI 设计决策的技术水平
+   - **UCD 样式 token**（如 UCD 存在）—— 色板、字体、间距、组件目录 → 为前端架构与 UI/UX 节提供输入
+4. 列出 SRS 中任何必须在设计推进前解决的 **Open Questions**
+   - 如果未解决的问题影响架构 → 在 Step 2 之前通过 `AskUserQuestion` 询问用户
 
-## Step 2: Explore Technical Context
+## Step 2：探索技术上下文
 
-1. Explore existing code / repos the project will build on
-2. Identify technical constraints not in the SRS (e.g., monorepo structure, CI/CD pipeline, existing libraries)
-3. Check for a design document template:
-   - If the user specified a template path → read and validate it
-   - Else → read `docs/templates/design-template.md` (the default template shipped with this skill)
-   - **Validation**: template must be a `.md` file containing at least one `## ` heading
+1. 探索项目将基于的已有代码 / 仓库
+2. 识别 SRS 之外的技术约束（例如 monorepo 结构、CI/CD 流水线、已有库）
+3. 检查设计文档模板：
+   - 如果用户指定了模板路径 → 读取并校验
+   - 否则 → 读取 `docs/templates/design-template.md`（本 skill 默认模板）
+   - **校验**：模板必须是 `.md` 文件且至少包含一个 `## ` 标题
 
-## Step 3: Propose Approaches
+## Step 3：提出方案
 
-Present **2-3 implementation approaches** with explicit trade-offs:
+呈现带明确权衡的 **2-3 个实现方案**：
 
 ```markdown
 ## Approach A: [Name]
@@ -73,132 +71,132 @@ Present **2-3 implementation approaches** with explicit trade-offs:
 **Reason**: [why this fits best given the SRS constraints and NFRs]
 ```
 
-**Key**: Each approach must be evaluated against the SRS constraints and NFR thresholds. An approach that cannot meet a "Must" NFR is disqualified.
+**要点**：每个方案必须根据 SRS 约束与 NFR 阈值评估。无法满足 "Must" NFR 的方案被淘汰。
 
-## Step 4: Section-by-Section Approval
+## Step 4：按章节审批
 
-For non-trivial projects, break the design into sections and get approval per section:
+对非平凡项目，将设计拆分为章节，逐节获取审批：
 
-1. **Architecture** — system components, logical view, tech stack decisions
-   - Must include a **Logical View** (Mermaid `graph`) showing layers/packages/modules and dependency directions
-   - Must include a **Component Diagram** (Mermaid `graph`) showing runtime components and interactions
-   - Must justify tech stack choices against SRS constraints
-   - Must show how NFR thresholds will be met
-2. **Key feature designs** — one chapter per key feature or feature group
-   - Each feature chapter MUST include at least:
-     - **Class diagram** (Mermaid `classDiagram`) — classes/modules, attributes, methods, relationships
-     - **One behavioral diagram**: sequence diagram (Mermaid `sequenceDiagram`) or flow diagram (Mermaid `flowchart`)
-     - **Integration Surface** (§4.N.6) — declaring Provides/Requires tables with §6.2 Contract IDs; write "Self-contained" if no cross-feature dependencies
-   - For complex features, include ALL four views: class diagram, sequence diagram, flow diagram, and design notes
-   - All diagrams MUST use **Mermaid** format — no ASCII art, no image references
-3. **Data model** — schemas, relationships, storage strategy
-   - Must use Mermaid ER diagrams (`erDiagram`) where applicable
-4. **API / interface design**
-   - **External interfaces** (§6.1) — endpoints, contracts, protocols (trace to SRS IFR-xxx)
-   - **Internal API contracts** (§6.2) — feature-to-feature boundaries; every §3.3 component diagram edge must have a corresponding §6.2 row with Contract ID, request/response schemas, and error codes
-5. **UI/UX approach** (if applicable) — layout strategy, interaction patterns
-   - Must address SRS User Personas
-   - If UCD document exists: must reference UCD style tokens (colors, typography, spacing) and component catalog
-   - Frontend architecture decisions (component library, state management, routing) must be compatible with UCD style tokens
-   - Include a mapping: UCD component prompts → concrete implementation components
-6. **Third-party dependencies** — ALL libraries/frameworks with **exact version numbers**
-   - Must verify mutual compatibility between dependencies
-   - Must verify compatibility with the project's target runtime version
-   - Must note license type for each dependency
-   - Must include a dependency graph (Mermaid) for non-trivial dependency chains
-7. **Testing strategy** — high-level test approach decisions only
-   - Test philosophy: TDD with quality gates (Red → Green → Refactor → Coverage)
-   - Tool selections: test framework, coverage tool (with versions — these are design decisions)
-   - Coverage thresholds: line >= X%, branch >= Y%
-   - **Boundary**: "Detailed requirement-to-test-category mapping, NFR test methods, and cross-feature integration scenarios are defined in the ATS phase — not here."
-8. **Deployment / infrastructure** (if applicable) — hosting, CI/CD, environments
-9. **Development plan** — milestones, task decomposition, priority ordering
-   - Must define milestones with clear exit criteria
-   - Must decompose into context-budget-sized features (P0-P3) — each row in §10.2 becomes one feature in `feature-list.json`; group related right-sized FRs (already validated by SRS G+S heuristics) into vertical slices; include `Mapped FRs` column for traceability
-   - Must show dependency chain (Mermaid `graph`) identifying the critical path
-   - Must include risk assessment with mitigation strategies
+1. **架构** —— 系统组件、逻辑视图、技术栈决策
+   - 必须包含 **逻辑视图**（Mermaid `graph`）显示层次/包/模块与依赖方向
+   - 必须包含 **组件图**（Mermaid `graph`）显示运行时组件与交互
+   - 必须对照 SRS 约束论证技术栈选择
+   - 必须展示如何满足 NFR 阈值
+2. **关键特性设计** —— 每个关键特性或特性组一章
+   - 每个特性章至少必须包含：
+     - **类图**（Mermaid `classDiagram`）—— 类/模块、属性、方法、关系
+     - **一个行为图**：时序图（Mermaid `sequenceDiagram`）或流程图（Mermaid `flowchart`）
+     - **集成面**（§4.N.6）—— 声明带 §6.2 Contract ID 的 Provides/Requires 表；若无跨特性依赖则写 "Self-contained"
+   - 对复杂特性，包含全部四视图：类图、时序图、流程图、设计要点
+   - 所有图表**必须**使用 **Mermaid** 格式——不接受 ASCII art，不接受图片引用
+3. **数据模型** —— schema、关系、存储策略
+   - 适用时必须使用 Mermaid ER 图（`erDiagram`）
+4. **API / 接口设计**
+   - **外部接口**（§6.1）—— 端点、契约、协议（追溯到 SRS IFR-xxx）
+   - **内部 API 契约**（§6.2）—— 特性之间的边界；§3.3 组件图的每条边都必须在 §6.2 中有对应一行，带 Contract ID、请求/响应 schema 和错误码
+5. **UI/UX 方案**（如适用）—— 布局策略、交互模式
+   - 必须回应 SRS User Personas
+   - 若 UCD 文档存在：必须引用 UCD 样式 token（颜色、字体、间距）与组件目录
+   - 前端架构决策（组件库、状态管理、路由）必须与 UCD 样式 token 兼容
+   - 包含映射：UCD 组件提示词 → 具体实现组件
+6. **2/3方件（第三方依赖）** —— 所有库/框架带**精确版本号**
+   - 必须验证依赖之间的相互兼容性
+   - 必须验证与项目目标 runtime 版本的兼容性
+   - 必须记录每个依赖的 license 类型
+   - 非平凡依赖链必须包含依赖图（Mermaid）
+7. **测试策略** —— 仅高层测试方式决策
+   - 测试哲学：带覆盖率关卡的 TDD（Red → Green → Refactor → Coverage）
+   - 工具选型：测试框架、覆盖率工具（含版本——这些是设计决策）
+   - 覆盖率阈值：line >= X%、branch >= Y%
+   - **边界**："详细的需求-测试类别映射、NFR 测试方法、跨特性集成场景在 ATS 阶段定义——不在此处。"
+8. **部署 / 基础设施**（如适用）—— 托管、CI/CD、环境
+9. **开发计划** —— 里程碑、任务分解、优先级排序
+   - 必须定义带清晰退出标准的里程碑
+   - 必须分解为上下文预算大小的特性（P0-P3）—— §10.2 每一行成为 `feature-list.json` 的一个特性；把相关的合适大小 FR（已由 SRS G+S 启发式校验）归入垂直切片；包含 `Mapped FRs` 列以保证可追溯性
+   - 必须显示依赖链（Mermaid `graph`）标识关键路径
+   - 必须包含风险评估与缓解策略
 
-> **Feature sizing is upstream**: FRs are right-sized at the Requirements phase via bidirectional granularity analysis (G1-G6 split + S1-S4 group). §10.2 groups these right-sized FRs into implementation features. Each row should map 1+ related FRs into a vertical slice that productively fills one Worker session (~50% of context window). Feature counts in the scaling table below refer to the final §10.2 row count.
+> **特性 sizing 在上游完成**：FR 已在需求阶段通过双向粒度分析（G1-G6 拆分 + S1-S4 合并）调整到合适大小。§10.2 将这些合适大小的 FR 组合为实现特性。每一行应把 1+ 相关 FR 映射为能高效填满一次 Worker 会话（约 50% 上下文窗口）的垂直切片。下方 scaling 表中的特性数指最终 §10.2 行数。
 
-Present each section. Wait for user feedback. Incorporate changes before moving to the next.
+呈现每一节。等待用户反馈。在进入下一节前纳入更改。
 
-**For simple projects** (< 5 features): Combine all sections into a single approval step, but still include the required diagrams and dependency versions.
+**对简单项目**（< 5 特性）：合并所有章节为单一审批步骤，但仍包含要求的图表与依赖版本。
 
-## Step 4b: Merge Codebase Conventions into Design
+## Step 4b：将存量代码库约定合入设计
 
-**Skip this step if `docs/rules/` does not exist or contains only a greenfield stub.**
+**如果 `docs/rules/` 不存在或仅含全新项目占位，则跳过本步骤。**
 
-If `docs/rules/` is populated with convention scan results (from Phase 0-pre codebase scanner):
+如果 `docs/rules/` 已填充约定扫描结果（来自 Phase 0-pre codebase scanner）：
 
-1. **Read all `docs/rules/*.md` files** — `coding-style.md`, `coding-constraints.md`, `build-and-compilation.md`, `commit-conventions.md`
-2. **Populate §13 of the design document** (Codebase Conventions & Constraints) using the design template's §13 structure:
-   - §13.1: Extract "Mandatory Internal Libraries" table from `coding-constraints.md`
-   - §13.2: Extract "Prohibited APIs / Libraries" table from `coding-constraints.md`
-   - §13.3: Extract "Approved 3rd-Party Libraries" table from `coding-constraints.md`
-   - §13.4: Extract "Static Analysis Tools" table from `coding-constraints.md` (tool name + config path + run command only — do not read config contents)
-   - §13.5: Extract key naming and formatting rules from `coding-style.md` (summary table)
-   - §13.6: Extract error handling pattern from `coding-constraints.md`
-   - §13.7: Extract build system and CI/CD summary from `build-and-compilation.md`
-   - §13.8: Extract commit format and branch naming from `commit-conventions.md`
-3. **Cross-verify** — check for conflicts between scanned conventions and design decisions:
-   - §8 (Third-Party Dependencies): new dependencies must not conflict with §13.2 prohibited list
-   - §6.2 (Internal API Contracts): libraries used must comply with §13.1 internal library mandates
-   - If conflicts exist: mark with "⚠ Design Override: [reason]" and present to user for confirmation
-4. **Present §13 to user** for review (same approval flow as other sections)
-5. **Propagate to env-guide.md §4** — after approval, the init phase (`long-task-init` Step 5) copies the binding parts of §13 (internal library mandates, prohibited APIs, style baseline, build conventions) into `env-guide.md` §4. Downstream pipeline (TDD Refactor, Feature Design, Quality) reads §4 directly. `docs/rules/` remains as the traceable scan record; §13 remains as the design-layer summary; §4 is the enforcement source for Worker cycles. Any change to §4 post-init requires human approval (see Worker Step 0 env-guide approval gate).
+1. **读取全部 `docs/rules/*.md` 文件** —— `coding-style.md`、`coding-constraints.md`、`build-and-compilation.md`、`commit-conventions.md`
+2. **填充设计文档 §13**（存量代码库约定与约束）使用设计模板的 §13 结构：
+   - §13.1：从 `coding-constraints.md` 抽取 "Mandatory Internal Libraries" 表
+   - §13.2：从 `coding-constraints.md` 抽取 "Prohibited APIs / Libraries" 表
+   - §13.3：从 `coding-constraints.md` 抽取 "Approved 3rd-Party Libraries" 表
+   - §13.4：从 `coding-constraints.md` 抽取 "Static Analysis Tools" 表（仅工具名 + 配置路径 + 运行命令——不读配置内容）
+   - §13.5：从 `coding-style.md` 抽取关键命名与格式规则（摘要表）
+   - §13.6：从 `coding-constraints.md` 抽取错误处理模式
+   - §13.7：从 `build-and-compilation.md` 抽取构建系统与 CI/CD 摘要
+   - §13.8：从 `commit-conventions.md` 抽取 commit 格式与分支命名
+3. **交叉校验** —— 检查扫描到的约定与设计决策之间的冲突：
+   - §8（2/3方件）：新依赖不得与 §13.2 禁用清单冲突
+   - §6.2（内部 API 契约）：使用的库必须符合 §13.1 强制内部库
+   - 如存在冲突：标注 "⚠ Design Override: [reason]" 并呈现给用户确认
+4. **把 §13 呈现给用户**进行评审（与其他章节相同的审批流程）
+5. **传播到 env-guide.md §4** —— 审批后，init 阶段（`long-task-init` Step 5）会把 §13 中具约束力的部分（强制内部库、禁用 API、样式基线、构建约定）复制到 `env-guide.md` §4。下游流水线（TDD Refactor、Feature Design、Quality）直接读取 §4。`docs/rules/` 作为可追溯的扫描记录保留；§13 作为设计层摘要保留；§4 是 Worker 循环的强制源。init 之后对 §4 的任何变更需人类审批（见 Worker Step 0 env-guide 审批关卡）。
 
-## Step 5: Write Design Document
+## Step 5：撰写设计文档
 
-Save the approved design to `docs/plans/YYYY-MM-DD-<topic>-design.md`.
+把已审批设计保存到 `docs/plans/YYYY-MM-DD-<topic>-design.md`。
 
-### Template usage
+### 模板用法
 
-Read the template found in Step 2 (user-specified or default `docs/templates/design-template.md`):
-1. Preserve the template's heading structure
-2. Replace guidance text under each heading with approved design content
-3. Add metadata at top if not already present (`Date`, `Status`, `SRS Reference`, `Template` path)
-4. For uncovered template sections: mark "[Not applicable]"
-5. For approved content without matching template section: append as "Additional Notes"
+读取 Step 2 找到的模板（用户指定或默认 `docs/templates/design-template.md`）：
+1. 保留模板的标题结构
+2. 用已审批设计内容替换每个标题下的指引文字
+3. 如顶部尚无元数据则添加（`Date`、`Status`、`SRS Reference`、`Template` 路径）
+4. 对未覆盖的模板章节：标 "[Not applicable]"
+5. 对已审批但无匹配模板章节的内容：追加为 "Additional Notes"
 
-## Step 5b: Design Integration Coherence Check
+## Step 5b：设计集成一致性检查
 
-Before transitioning to ATS, mechanically verify cross-feature integration coherence:
+衔接到 ATS 前，机械化核对跨特性集成一致性：
 
-1. **Contract completeness**: For each edge in §3.3 component diagram, verify a corresponding row exists in §6.2 Internal API Contracts. Flag missing rows.
-2. **Schema consistency**: For each §6.2 row, verify that Provider feature's §4.N class diagram includes the Response Schema type, and Consumer feature's §4.N references the Request Schema. Flag mismatches.
-3. **Dependency completeness**: For each feature that appears in a §6.2 "Consumer" column, verify it lists the Provider feature ID in §11.3 dependency chain. Flag missing dependency edges.
+1. **契约完备性**：§3.3 组件图的每条边，核对 §6.2 内部 API 契约中存在对应一行。标记缺失行。
+2. **Schema 一致性**：§6.2 每一行，核对 Provider 特性的 §4.N 类图包含响应 schema 类型，且 Consumer 特性的 §4.N 引用了请求 schema。标记不匹配。
+3. **依赖完备性**：每一个出现在 §6.2 "Consumer" 列中的特性，核对其 §11.3 依赖链列出了 Provider 特性 ID。标记缺失的依赖边。
 
-Present any flagged issues to the user. Resolve before proceeding to ATS.
+把任何被标记的问题呈现给用户。继续到 ATS 前解决。
 
-## Step 6: Transition to ATS
+## Step 6：衔接到 ATS
 
-Once the design document is saved and committed:
+设计文档保存并提交后：
 
-1. Summarize key inputs the ATS skill will need:
-   - **From SRS**: all FR/NFR/IFR requirements with acceptance criteria
-   - **From Design**: testing strategy, tech stack, architecture risk areas
-2. **REQUIRED SUB-SKILL:** Invoke `long-task:long-task-ats` to generate the Acceptance Test Strategy
+1. 为 ATS skill 总结关键输入：
+   - **来自 SRS**：所有带验收标准的 FR/NFR/IFR 需求
+   - **来自 Design**：测试策略、技术栈、架构风险区域
+2. **必需子 skill：** 调用 `long-task:long-task-ats` 生成验收测试策略
 
-## Scaling the Design Phase
+## 设计阶段的伸缩
 
-| Project Size | Features | Design Depth |
+| 项目规模 | 特性数 | 设计深度 |
 |---|---|---|
-| Tiny | 1-5 | Single paragraph approach + 1 approval step; logical view + 1 feature diagram + dependency table + simplified dev plan |
-| Small | 5-20 | 2-3 approach options + combined section approval; logical view + key feature diagrams + dependency table + milestone plan |
-| Medium | 20-50 | Full multi-section approval; all architecture views + per-feature diagrams + full dependency analysis + detailed dev plan |
-| Large | 50-200+ | Full multi-section approval; comprehensive diagrams for every feature group + dependency compatibility matrix + phased dev plan with risk register |
+| 微型 | 1-5 | 单段方案 + 1 审批步骤；逻辑视图 + 1 特性图 + 依赖表 + 简化开发计划 |
+| 小型 | 5-20 | 2-3 方案选项 + 合并章节审批；逻辑视图 + 关键特性图 + 依赖表 + 里程碑计划 |
+| 中型 | 20-50 | 完整多章节审批；全部架构视图 + 逐特性图 + 完整依赖分析 + 详细开发计划 |
+| 大型 | 50-200+ | 完整多章节审批；每个特性组的全面图表 + 依赖兼容性矩阵 + 带风险登记册的分期开发计划 |
 
-## Section 4 Depth Strategy
+## §4 深度策略
 
-For projects with many features, §4.N sections are written at different depths to manage context window constraints:
+对多特性项目，§4.N 按不同深度书写以管理上下文窗口约束：
 
-| Project Size | §4.N Content per Feature |
+| 项目规模 | 每特性 §4.N 内容 |
 |---|---|
-| Small (< 20) | Full: overview + class diagram + behavioral diagram + design notes + integration surface |
-| Medium (20-50) | Full for P0/P1 features; Thin for P2/P3 features |
-| Large (50+) | Thin for ALL features: overview + key types + integration surface only |
+| Small (< 20) | 完整：概述 + 类图 + 行为图 + 设计要点 + 集成面 |
+| Medium (20-50) | P0/P1 特性完整；P2/P3 特性精简 |
+| Large (50+) | 所有特性精简：仅 概述 + 关键类型 + 集成面 |
 
-**Thin §4.N format:**
+**精简 §4.N 格式：**
 
 ```markdown
 ### 4.N Feature: <Name> (FR-xxx)
@@ -210,77 +208,77 @@ For projects with many features, §4.N sections are written at different depths 
 [Provides/Requires tables referencing §6.2]
 ```
 
-This is safe because the feature-design SubAgent (Worker Step 4) produces the full class/sequence/flow/algorithm design with access to §6.2 contracts. The thin §4.N serves as an **integration specification**, not a complete design.
+这是安全的，因为 feature-design SubAgent（Worker Step 4）会产出带完整 §6.2 契约访问的完整 类/时序/流程/算法 设计。精简 §4.N 作为**集成规范**，而非完整设计。
 
-## Red Flags
+## 红旗信号
 
-| Rationalization | Correct Response |
+| 理性化逃避 | 正确响应 |
 |---|---|
-| "The SRS already implies the architecture" | SRS describes WHAT, not HOW. Present options. |
-| "There's only one way to build this" | Present at least 2 approaches. Even obvious choices benefit from stated trade-offs. |
-| "I already know the best approach" | Present options, let the user choose |
-| "The user seems impatient, I'll skip design" | Explain the value briefly, then run efficiently |
-| "I'll design as I go" | Upfront design is cheaper than mid-session corrections |
-| "Let me re-clarify requirements here" | Requirements belong in the SRS. If missing, note as Open Question and resolve with user before design. |
+| "SRS 已经暗含了架构" | SRS 描述 WHAT，不描述 HOW。呈现选项。|
+| "只有一种造法" | 至少呈现 2 种方案。即便显而易见的选择也会因列出权衡而受益。|
+| "我已经知道最佳方案" | 呈现选项，让用户选择 |
+| "用户看起来急，跳过设计" | 简要解释其价值，然后高效进行 |
+| "边做边设计" | 前置设计比会话中途纠正便宜 |
+| "让我在这里重新澄清需求" | 需求属于 SRS。如有缺失，标为 Open Question，在设计前与用户解决。|
 
-## Diagram Requirements
+## 图表要求
 
-All architectural and design views MUST use **Mermaid** syntax. This ensures:
-- Diagrams are version-controlled alongside the document (no external image files)
-- Diagrams are renderable in GitHub, GitLab, and most Markdown viewers
-- Diagrams stay in sync with design changes
+所有架构与设计视图**必须**使用 **Mermaid** 语法。这确保：
+- 图表与文档一起版本控制（无外部图片文件）
+- 图表在 GitHub、GitLab 和大多数 Markdown 查看器中可渲染
+- 图表随设计变更保持同步
 
-### Required Diagram Types
+### 必需的图表类型
 
-| Section | Diagram Type | Mermaid Syntax | Required? |
+| 章节 | 图表类型 | Mermaid 语法 | 必需？ |
 |---|---|---|---|
-| Architecture Logical View | Layered package diagram | `graph TB` | Always |
-| Architecture Components | Component interaction | `graph LR` | Always |
-| Key Feature — Structure | Class diagram | `classDiagram` | Per feature |
-| Key Feature — Behavior | Sequence diagram | `sequenceDiagram` | Per feature (at least one behavioral) |
-| Key Feature — Logic | Flow/decision diagram | `flowchart TD` | Per feature (at least one behavioral) |
-| Data Model | ER diagram | `erDiagram` | If persistent storage |
-| Dependency Graph | Dependency tree | `graph LR` | If > 3 third-party deps |
-| Development Plan | Critical path | `graph LR` | Always |
+| 架构逻辑视图 | 分层包图 | `graph TB` | 总是 |
+| 架构组件 | 组件交互 | `graph LR` | 总是 |
+| 关键特性——结构 | 类图 | `classDiagram` | 逐特性 |
+| 关键特性——行为 | 时序图 | `sequenceDiagram` | 逐特性（至少一个行为图）|
+| 关键特性——逻辑 | 流程/判定图 | `flowchart TD` | 逐特性（至少一个行为图）|
+| 数据模型 | ER 图 | `erDiagram` | 如有持久化存储 |
+| 依赖图 | 依赖树 | `graph LR` | 如 > 3 个 2/3方件依赖 |
+| 开发计划 | 关键路径 | `graph LR` | 总是 |
 
-### Diagram Quality Checklist
-- [ ] Each diagram has a clear title or surrounding heading
-- [ ] Class diagrams show visibility modifiers (`+`/`-`/`#`) and key methods
-- [ ] Sequence diagrams show the main success path and at least one error path
-- [ ] Flow diagrams include decision nodes for all branching logic
-- [ ] No placeholder diagrams — every diagram reflects actual approved design content
-- [ ] Every edge in §3.3 component diagram includes Contract ID referencing §6.2
+### 图表质量 checklist
+- [ ] 每张图有清晰标题或紧邻的标题
+- [ ] 类图显示可见性修饰符（`+`/`-`/`#`）与关键方法
+- [ ] 时序图显示主成功路径与至少一个错误路径
+- [ ] 流程图为所有分支逻辑包含判定节点
+- [ ] 无占位图表——每张图都反映实际已审批设计内容
+- [ ] §3.3 组件图的每条边都含引用 §6.2 的 Contract ID
 
-## Third-Party Dependency Rules
+## 2/3方件规则
 
-1. **Exact versions required** — specify `1.2.3` or a constrained range `^1.2.0` / `>=1.2,<2.0`; never use `latest` or omit version
-2. **Compatibility matrix** — verify each dependency is compatible with:
-   - The target language/runtime version (e.g., Python >= 3.10, Node >= 18)
-   - Other dependencies in the stack (check for known conflicts)
-3. **License audit** — document the license for each dependency; flag any copyleft licenses (GPL, AGPL) that may conflict with project requirements
-4. **Upgrade path** — note any dependencies approaching EOL or with known migration concerns
+1. **必需精确版本** —— 指定 `1.2.3` 或受约束区间 `^1.2.0` / `>=1.2,<2.0`；不得使用 `latest` 或省略版本
+2. **兼容性矩阵** —— 核对每个依赖与下列的兼容性：
+   - 目标语言/runtime 版本（例如 Python >= 3.10、Node >= 18）
+   - 栈中其他依赖（检查已知冲突）
+3. **License 审计** —— 记录每个依赖的 license；标注任何可能与项目要求冲突的 copyleft license（GPL、AGPL）
+4. **升级路径** —— 标注任何接近 EOL 或有已知迁移关注的依赖
 
-## Development Plan Rules
+## 开发计划规则
 
-The development plan section bridges the design document to the Init phase. It MUST include:
+开发计划节把设计文档桥接到 Init 阶段。**必须**包含：
 
-1. **Milestones** — time-boxed phases with clear scope and exit criteria
-   - M1 is always "Foundation" (project skeleton, CI, core abstractions)
-   - Final milestone is always "Polish & Release" (NFR verification, docs, examples)
-2. **Task decomposition** — features mapped to priorities (P0-P3) with rationale
-   - P0: Foundation — required by all other features
-   - P1: Core value — the minimum viable feature set
-   - P2: Extended — important but not launch-blocking
-   - P3: Nice-to-have — defer if timeline is tight
-3. **Dependency chain** — Mermaid graph showing which features block others
-4. **Paired feature ordering** — When the project has both backend and frontend features, organize the task decomposition table so that each backend feature is paired with its corresponding frontend feature. This produces a natural development flow: Backend A → Frontend A → Backend B → Frontend B. The Init phase uses this pairing to order features in `feature-list.json`.
-5. **Risk register** — technical and schedule risks with mitigation
+1. **里程碑** —— 带清晰范围与退出标准的时间盒阶段
+   - M1 始终为 "Foundation"（项目骨架、CI、核心抽象）
+   - 最后一个里程碑始终为 "Polish & Release"（NFR 验证、文档、示例）
+2. **任务分解** —— 特性映射到优先级（P0-P3）并附理由
+   - P0：Foundation —— 所有其他特性所需
+   - P1：Core value —— 最小可行特性集
+   - P2：Extended —— 重要但非发布阻塞
+   - P3：Nice-to-have —— 时间紧则延后
+3. **依赖链** —— Mermaid 图显示哪些特性阻塞其他
+4. **配对特性排序** —— 当项目同时有后端与前端特性时，组织任务分解表使每个后端特性与其对应的前端特性配对。这产生自然的开发流：Backend A → Frontend A → Backend B → Frontend B。Init 阶段使用此配对排序 `feature-list.json` 中的特性。
+5. **风险登记册** —— 技术与进度风险及缓解
 
-The Init phase uses this plan to populate `feature-list.json` with correct priority ordering, paired grouping, and dependency chains.
+Init 阶段使用此计划以正确的优先级顺序、配对分组和依赖链填充 `feature-list.json`。
 
-## Integration
+## 集成
 
-**Called by:** using-long-task (when SRS + UCD exist, no design doc, no feature-list.json) or long-task-ucd (Step 8)
-**Requires:** Approved SRS at `docs/plans/*-srs.md`; optionally approved UCD at `docs/plans/*-ucd.md` (for UI projects); optionally `docs/rules/*.md` (codebase conventions from Phase 0-pre scan)
-**Chains to:** long-task-ats (after design approval)
-**Produces:** `docs/plans/YYYY-MM-DD-<topic>-design.md` (includes §13 Codebase Conventions if `docs/rules/` exists)
+**被调用方：** using-long-task（SRS + UCD 存在、无设计文档、无 feature-list.json 时）或 long-task-ucd（Step 8）
+**依赖：** `docs/plans/*-srs.md` 中已审批 SRS；可选 `docs/plans/*-ucd.md` 已审批 UCD（UI 项目）；可选 `docs/rules/*.md`（来自 Phase 0-pre 扫描的存量代码库约定）
+**衔接到：** long-task-ats（设计审批后）
+**产出：** `docs/plans/YYYY-MM-DD-<topic>-design.md`（若 `docs/rules/` 存在则含 §13 存量代码库约定）

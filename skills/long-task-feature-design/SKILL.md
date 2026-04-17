@@ -3,40 +3,40 @@ name: long-task-feature-design
 description: "Use before TDD in a long-task project — produce feature-level detailed design with interface contracts, algorithm pseudocode, diagrams, and test inventory"
 ---
 
-# Feature-Level Detailed Design — SubAgent Dispatch
+# 特性级详细设计 —— SubAgent 分发
 
-Delegate feature detailed design production to a SubAgent with fresh context. The main Agent only dispatches and parses the structured result — it never reads design/SRS/UCD document sections or writes the design document directly.
+将特性详细设计的生成委派给拥有全新上下文的 SubAgent。主 agent 仅负责分发并解析结构化结果 —— 绝不自行阅读设计文档 / SRS / UCD 的章节，也不直接写入设计文档。
 
-**Announce at start:** "I'm using the long-task-feature-design skill to produce a detailed design via SubAgent."
+**开始时声明：** "I'm using the long-task-feature-design skill to produce a detailed design via SubAgent."
 
-## When to Run
+## 何时运行
 
-- Worker Step 4, before TDD (Steps 5-7)
-- For every feature (condensed version for `category: "bugfix"` features)
-- Invoked by `long-task-work` as a sub-skill (not directly by router)
+- Worker Step 4，TDD（Steps 5-7）之前
+- 每一个特性都要运行（`category: "bugfix"` 的特性使用精简版）
+- 由 `long-task-work` 作为子 skill 调用（路由不会直接调用）
 
-> **For `category: "bugfix"` features**: SubAgent should focus on: (1) root cause documentation (from `root_cause` field), (2) targeted fix approach, (3) regression test inventory from SRS acceptance criteria (via `srs_trace`). Skip full interface contracts, data flow diagrams, and state diagrams unless the bug directly touches those surfaces.
+> **对于 `category: "bugfix"` 的特性**：SubAgent 应聚焦于：(1) 根因文档（来自 `root_cause` 字段）；(2) 针对性修复方案；(3) 基于 SRS 验收标准的回归测试清单（通过 `srs_trace`）。除非缺陷直接涉及，否则跳过完整接口契约、数据流图与状态图。
 
-## Step 1: Gather Path Parameters
+## Step 1: 收集路径参数
 
-Collect these from the current session state. Do NOT read document contents yourself:
+从当前会话状态中收集以下内容。不要自行阅读文档内容：
 
-- `feature_json` — current feature object from feature-list.json (compact JSON)
-- `quality_gates_json` — quality_gates from feature-list.json (compact JSON)
-- `tech_stack_json` — tech_stack from feature-list.json (compact JSON)
-- `design_doc_path` — path to design doc (`docs/plans/*-design.md`)
-- `design_start` / `design_end` — line range of the §4.N subsection (from Orient Document Lookup)
-- `srs_doc_path` — path to SRS doc (`docs/plans/*-srs.md`)
-- `srs_start` / `srs_end` — line range of the FR-xxx subsection (from Orient Document Lookup)
-- `ucd_doc_path` — path to UCD doc (only if `"ui": true`; omit otherwise)
-- `ucd_start` / `ucd_end` — line range of relevant UCD sections (if applicable)
-- `ats_doc_path` — path to ATS doc (`docs/plans/*-ats.md`), if it exists; omit otherwise
-- `constraints` — constraints[] from feature-list.json root
-- `assumptions` — assumptions[] from feature-list.json root
-- `output_path` — target file: `docs/features/YYYY-MM-DD-<feature-name>.md`
-- `working_dir` — project working directory
+- `feature_json` —— feature-list.json 中当前的 feature 对象（紧凑 JSON）
+- `quality_gates_json` —— feature-list.json 中的 quality_gates（紧凑 JSON）
+- `tech_stack_json` —— feature-list.json 中的 tech_stack（紧凑 JSON）
+- `design_doc_path` —— 设计文档路径（`docs/plans/*-design.md`）
+- `design_start` / `design_end` —— §4.N 子节的行号范围（来自 Orient Document Lookup）
+- `srs_doc_path` —— SRS 文档路径（`docs/plans/*-srs.md`）
+- `srs_start` / `srs_end` —— FR-xxx 子节的行号范围（来自 Orient Document Lookup）
+- `ucd_doc_path` —— UCD 文档路径（仅当 `"ui": true` 时；否则省略）
+- `ucd_start` / `ucd_end` —— 相关 UCD 章节的行号范围（如适用）
+- `ats_doc_path` —— ATS 文档路径（`docs/plans/*-ats.md`），若存在；否则省略
+- `constraints` —— feature-list.json 根级的 constraints[]
+- `assumptions` —— feature-list.json 根级的 assumptions[]
+- `output_path` —— 目标文件：`docs/features/YYYY-MM-DD-<feature-name>.md`
+- `working_dir` —— 项目工作目录
 
-## Step 2: Construct SubAgent Prompt
+## Step 2: 构建 SubAgent 提示词
 
 ```
 You are a Feature Design execution SubAgent.
@@ -64,18 +64,19 @@ You are a Feature Design execution SubAgent.
 
 ## Key Constraints
 - Write the complete design document to {output_path}
-- Every section (§2-§6) must be COMPLETE or have "N/A — [reason]"
+- Every section must be COMPLETE or have "N/A — [reason]"
+- **Step 1c Existing Code Reuse Check is mandatory**: grep the codebase for reusable symbols before finalizing Interface Contract. Populate the Existing Code Reuse table (or state "N/A — searched keywords: [...], no reusable match"). Do NOT reimplement what already exists.
 - Test Inventory negative ratio must be >= 40%
 - Test Inventory main categories (FUNC/BNDRY/SEC/UI/PERF/INTG) must cover all ATS-required categories for this feature's requirement(s)
 - Features with external dependencies must have ≥1 INTG row per dependency type; pure-computation features: "INTG: N/A"
 - Features with `"ui": true` MUST have a complete Visual Rendering Contract (§Visual Rendering Contract): all visual elements listed, rendering technology specified, positive rendering assertions defined. "N/A" is only valid for `"ui": false`. For each positive rendering assertion, at least one `UI/render` Test Inventory row must exist. Missing rows → FAIL.
-- **Codebase constraints** (if Design doc §13 exists): Read {design_doc_path} §13 for codebase conventions. Interface Contract method names must follow §13.5 naming conventions. Error handling must follow §13.6 pattern. Dependencies must use §13.1 internal libraries where applicable. Do not reference prohibited APIs from §13.2.
+- **Codebase constraints** (if Design doc §13 OR `env-guide.md` §4 exists): Interface Contract method names must follow §13.5 / §4.3 naming conventions. Error handling must follow §13.6 pattern. Dependencies must use §13.1 / §4.1 internal libraries where applicable. Do not reference prohibited APIs from §13.2 / §4.2.
 - Do NOT start TDD — only produce the design document
 ```
 
-## Step 3: Dispatch SubAgent
+## Step 3: 分发 SubAgent
 
-**Claude Code:** Use the `Agent` tool:
+**Claude Code：** 使用 `Agent` 工具：
 ```
 Agent(
   description = "Feature Design for feature #{feature_id}",
@@ -83,28 +84,28 @@ Agent(
 )
 ```
 
-**OpenCode:** Use `@mention` syntax or the platform's native subagent mechanism with the same prompt content.
+**OpenCode：** 使用 `@mention` 语法或平台原生的 subagent 机制，提示词内容一致。
 
-## Step 4: Parse Result
+## Step 4: 解析结果
 
-Read the SubAgent's returned text and locate the `**status**:` line (unified contract field; legacy `### Verdict:` line may coexist for backward compatibility).
+读取 SubAgent 返回的文本，定位 `**status**:` 行（统一契约字段；为向后兼容，可能同时存在遗留的 `### Verdict:` 行）。
 
-- **`**status**: pass`** (legacy: `### Verdict: PASS`)
-  1. Verify the design document file exists at `output_path`
-  2. **Visual Rendering Contract spot-check (ui:true only):** The main Agent (not the SubAgent) reads the `## Visual Rendering Contract` section from the produced document and verifies:
-     - At least one visual element is listed with a concrete DOM/Canvas selector (not generic like "the page" or "the UI")
-     - Rendering technology is specified (Canvas 2D / WebGL / DOM / SVG / CSS)
-     - At least one positive rendering assertion references a specific visual outcome (not just "element is visible")
-     - The number of `UI/render` rows in the Test Inventory matches or exceeds the number of Visual Rendering Contract elements
-     - **If any check fails**: re-dispatch SubAgent with feedback: "Visual Rendering Contract is incomplete — [specific gap]. A blank page that passes Layer 1 error detection is NOT acceptable. Every visual element the user should see must be listed with a testable selector and assertion."
-  3. Extract Next Step Inputs: `feature_design_doc`, `test_inventory_count`, `tdd_task_count`
-  4. Record in `task-progress.md`: "Feature Design: PASS ({N} test scenarios, {M} TDD tasks)"
-  5. If `assumption_count > 0`: append to `task-progress.md`: "({K} assumptions documented in Clarification Addendum)"
-  6. Proceed to TDD (Steps 5-7)
+- **`**status**: pass`**（遗留：`### Verdict: PASS`）
+  1. 确认设计文档文件已写入 `output_path`
+  2. **视觉渲染契约抽查（仅 ui:true）：** 主 agent（非 SubAgent）读取生成文档中的 `## Visual Rendering Contract` 章节并校验：
+     - 至少有一个视觉元素带有具体的 DOM/Canvas 选择器（不能泛化为"the page"或"the UI"）
+     - 已指定渲染技术（Canvas 2D / WebGL / DOM / SVG / CSS）
+     - 至少有一条正向渲染断言引用了具体的视觉结果（而非仅"element is visible"）
+     - 测试清单中 `UI/render` 行数量 ≥ 视觉渲染契约元素数量
+     - **任一校验失败**：携带反馈重新分发 SubAgent："Visual Rendering Contract is incomplete — [specific gap]. A blank page that passes Layer 1 error detection is NOT acceptable. Every visual element the user should see must be listed with a testable selector and assertion."
+  3. 提取下一步输入：`feature_design_doc`、`test_inventory_count`、`existing_code_reuse_count`
+  4. 在 `task-progress.md` 中记录："Feature Design: PASS ({N} test scenarios, {M} existing-code reuses)"
+  5. 若 `assumption_count > 0`：追加写入 `task-progress.md`："({K} assumptions documented in Clarification Addendum)"
+  6. 进入 TDD（Steps 5-7）
 
-- **`**status**: clarify`** (legacy: `### Verdict: CLARIFY`)
-  1. Read the Ambiguities table — extract all categorized questions
-  2. Present to user via `AskUserQuestion` in a structured format:
+- **`**status**: clarify`**（遗留：`### Verdict: CLARIFY`）
+  1. 读取 Ambiguities 表 —— 提取所有分类问题
+  2. 使用 `AskUserQuestion` 以结构化格式向用户呈现：
      ```
      Feature Design Clarification Required: Feature #{id} ({title})
 
@@ -120,10 +121,10 @@ Read the SubAgent's returned text and locate the `**status**:` line (unified con
 
      Ambiguity 2 [{category}]: ...
      ```
-  3. Parse user responses — for each ambiguity, record:
-     - "accept" or specific answer → Resolution with Authority = "user-approved"
-     - "skip" → Resolution = suggested interpretation with Authority = "assumed"
-  4. **Approval gate**: After all answers collected, present a summary via `AskUserQuestion`:
+  3. 解析用户回复 —— 对每条歧义记录：
+     - "accept" 或具体回答 → Resolution，Authority = "user-approved"
+     - "skip" → Resolution = 建议解释，Authority = "assumed"
+  4. **审批关卡**：所有回答收集完毕后，通过 `AskUserQuestion` 呈现汇总：
      ```
      Clarification Summary for Feature #{id}:
      1. [{category}] {description} → Resolution: {answer} (Authority: {authority})
@@ -131,9 +132,9 @@ Read the SubAgent's returned text and locate the `**status**:` line (unified con
 
      Proceed with these resolutions? (yes / revise #N)
      ```
-     - If approved: proceed to step 5
-     - If user wants revision: re-ask specific items, then re-present summary
-  5. Construct a **Clarification Addendum** and re-dispatch the SubAgent with the original prompt PLUS:
+     - 若批准：进入第 5 步
+     - 若用户需要修改：重新询问对应条目，再次呈现汇总
+  5. 构建 **Clarification Addendum**，携带原始提示词 **以及** 以下内容重新分发 SubAgent：
      ```
      ## Clarification Addendum (user-approved resolutions)
      | # | Category | Original Ambiguity | Resolution | Authority |
@@ -144,25 +145,25 @@ Read the SubAgent's returned text and locate the `**status**:` line (unified con
      as ambiguities. Incorporate them into the design as if they were in the
      original SRS/Design documents.
      ```
-  6. Record in `task-progress.md`: "Feature Design: CLARIFY ({N} ambiguities resolved) → re-dispatching"
-  7. **Max 2 clarification rounds**: If SubAgent returns `CLARIFY` a second time after receiving clarifications, escalate remaining ambiguities to user:
+  6. 在 `task-progress.md` 中记录："Feature Design: CLARIFY ({N} ambiguities resolved) → re-dispatching"
+  7. **最多 2 轮澄清**：若 SubAgent 收到澄清后第二次仍返回 `CLARIFY`，将残留歧义升级给用户：
      "Persistent specification gaps found after 2 clarification rounds. Consider using `long-task-increment` to update the SRS/Design documents."
-     - If user says "SRS needs updating": record gap in `task-progress.md`, suggest `long-task-increment`, skip to next eligible feature
-     - If user provides final answers: incorporate and re-dispatch one last time
-     - If still unresolvable: set to BLOCKED
+     - 若用户确认"SRS 需要更新"：在 `task-progress.md` 记录缺口，建议调用 `long-task-increment`，跳至下一个可执行特性
+     - 若用户提供最终答复：纳入后再分发最后一次
+     - 若仍无法解决：置为 BLOCKED
 
-- **`**status**: fail`** (legacy: `### Verdict: FAIL`)
-  1. Read the Issues table — identify which sections are incomplete
-  2. Re-dispatch SubAgent with additional context if needed (max 2 retries)
-  3. If still failing, escalate to user via `AskUserQuestion`
+- **`**status**: fail`**（遗留：`### Verdict: FAIL`）
+  1. 读取 Issues 表 —— 识别哪些章节不完整
+  2. 如有需要，携带补充上下文重新分发 SubAgent（最多 2 次重试）
+  3. 若仍未通过，通过 `AskUserQuestion` 升级给用户
 
-- **`**status**: blocked`** (legacy: `### Verdict: BLOCKED`)
-  1. Read the Issues table — identify the blocker
-  2. Escalate to user via `AskUserQuestion`
+- **`**status**: blocked`**（遗留：`### Verdict: BLOCKED`）
+  1. 读取 Issues 表 —— 识别阻塞原因
+  2. 通过 `AskUserQuestion` 升级给用户
 
-## Integration
+## 集成
 
-**Called by:** long-task-work (Step 4)
-**Requires:** System design doc, SRS, feature-list.json
-**Produces:** `docs/features/YYYY-MM-DD-<feature-name>.md` (written by SubAgent)
-**Chains to:** long-task-tdd (via Work Steps 5-7)
+**调用方：** long-task-work（Step 4）
+**依赖：** 系统设计文档、SRS、feature-list.json
+**产出：** `docs/features/YYYY-MM-DD-<feature-name>.md`（由 SubAgent 写入）
+**下游：** long-task-tdd（通过 Work 的 Steps 5-7）

@@ -1,48 +1,48 @@
-# Feature-Level Black-Box Acceptance Testing — SubAgent Execution Reference
+# Feature-Level Black-Box Acceptance Testing — SubAgent 执行参考
 
-You are a Feature-ST execution SubAgent. Follow these rules exactly. When finished, return your result using the **Structured Return Contract** at the bottom of this document.
+你是 Feature-ST 执行 SubAgent。严格遵循以下规则。完成后，使用本文件底部的 **Structured Return Contract** 返回结果。
 
 ---
 
-# Feature-Level Black-Box Acceptance Testing
+# Feature-Level Black-Box Acceptance Testing（特性级黑盒验收测试）
 
-Execute black-box acceptance testing for a completed feature **after** TDD implementation and quality gates pass. This reference independently manages its own environment lifecycle (start → test → cleanup) and generates ISO/IEC/IEEE 29119 compliant test case documents.
+在 TDD 实现与 quality gate 通过**之后**，对已完成特性执行黑盒验收测试。本参考独立管理自身的环境生命周期（启动 → 测试 → 清理），并生成符合 ISO/IEC/IEEE 29119 的测试用例文档。
 
-## Standard
+## 标准
 
-Default: **ISO/IEC/IEEE 29119-3** (Test Documentation).
+默认：**ISO/IEC/IEEE 29119-3**（Test Documentation）。
 
-Users may override the template and style via `feature-list.json` root fields:
-- `st_case_template_path` — custom template file (defines structure)
-- `st_case_example_path` — example file (defines style, language, detail level)
+用户可通过 `feature-list.json` 根字段覆盖模板与风格：
+- `st_case_template_path` — 自定义模板文件（定义结构）
+- `st_case_example_path` — 样例文件（定义风格、语言、细节深度）
 
-## Black-Box Testing Philosophy
+## 黑盒测试理念
 
-TDD (long-task-tdd) has already verified the implementation from the inside:
-unit tests exercise code paths; coverage gate verifies completeness.
+TDD（long-task-tdd）已从内部验证实现：
+单元测试行使代码路径；coverage gate 校验完备性。
 
-This skill verifies from the **outside** — as a user or external system would:
-- Inputs go in through the real interface (HTTP endpoints, UI, CLI args)
-- Outputs observed through the real interface (HTTP responses, rendered UI, stdout)
-- Internal implementation is NOT consulted during test design or execution
-- Chrome DevTools MCP is the primary execution environment for UI features
+本 skill 从**外部**验证 — 站在用户或外部系统的视角：
+- 输入经真实接口（HTTP endpoint、UI、CLI 参数）进入
+- 输出经真实接口（HTTP 响应、渲染 UI、stdout）观察
+- 在测试设计与执行期间**不**参考内部实现
+- Chrome DevTools MCP 是 UI 特性的主要执行环境
 
-**Rule:** If a test case requires reading source code to determine the expected result, it is not a black-box test — rewrite it using only the SRS specification.
+**规则**：若某测试用例必须阅读源代码才能确定预期结果，它不是黑盒测试 — 仅用 SRS 规格重写。
 
-## Service Lifecycle (via env-guide.md)
+## 服务生命周期（经 env-guide.md）
 
-Manage services explicitly using `env-guide.md`. No hooks handle this automatically.
+显式使用 `env-guide.md` 管理服务。无 hook 自动处理。
 
-**Pre-existing services**: If Worker Bootstrap already started services (because the feature has service dependencies for TDD), they may still be running when Feature-ST begins. The Start step below checks health first and only starts if not already running. Feature-ST owns **restart** (between test cycles) and **cleanup** (after all cases) — it does NOT assume sole responsibility for first start.
+**已运行服务**：若 Worker Bootstrap 已启动服务（因为 TDD 需要服务依赖），Feature-ST 开始时它们可能仍在运行。下文的 Start 步骤先检查健康度，仅在未运行时启动。Feature-ST 拥有**重启**（测试循环之间）与**清理**（全部用例完成后）— **不**假定独享首次启动职责。
 
-**env-guide.md is the source of truth.** It must always reflect commands that actually work. If a command in env-guide.md fails, fix the command and update env-guide.md before proceeding.
+**env-guide.md 是事实源**。它必须始终反映真正有效的命令。若 env-guide.md 中的命令失败，先修复命令并更新 env-guide.md，再继续。
 
-### Start (before first test case)
+### Start（首个测试用例之前）
 
-1. **Read `env-guide.md`** — locate the "Start All Services" section
-2. **Check if services are already running**: run the "Verify Services Running" health checks
-   - If already running and healthy: record PID/port in `task-progress.md`; proceed
-3. **If not running**: execute each start command with output capture:
+1. **读 `env-guide.md`** — 定位 "Start All Services" 节
+2. **检查服务是否已运行**：跑 "Verify Services Running" 健康检查
+   - 若已运行且健康：在 `task-progress.md` 记录 PID/port；继续
+3. **若未运行**：执行每条启动命令并捕获输出：
    ```bash
    # Unix/macOS
    [start command] > /tmp/svc-<slug>-start.log 2>&1 &
@@ -54,78 +54,78 @@ Manage services explicitly using `env-guide.md`. No hooks handle this automatica
    timeout /t 3 /nobreak >nul
    powershell "Get-Content $env:TEMP\svc-<slug>-start.log -TotalCount 30"
    ```
-   - Extract PID and port from the first 30 lines; record both in `task-progress.md`
-   - Run "Verify Services Running" health checks from `env-guide.md` — must respond before proceeding
-4. **If start fails**: check the log file, diagnose root cause
-   - Try corrected commands (port conflict, missing env vars, env not activated, missing dependencies)
-   - Once a working command is found: **update `env-guide.md`** — fix the Services table row and Start command; if the fix requires >2 shell commands, extract to `scripts/svc-<slug>-start.sh` / `scripts/svc-<slug>-start.ps1` and update env-guide.md to call the script
-   - Set Verdict to BLOCKED if service cannot be started after 3 attempts
+   - 从前 30 行提取 PID 与 port；两者都记入 `task-progress.md`
+   - 跑 `env-guide.md` 中的 "Verify Services Running" 健康检查 — 必须响应后才继续
+4. **启动失败**：检查日志文件，诊断根因
+   - 尝试修正命令（端口冲突、缺失环境变量、环境未激活、缺依赖）
+   - 一旦找到可用命令：**更新 `env-guide.md`** — 修正 Services 表行与 Start 命令；若修正需要 >2 条 shell 命令，抽取到 `scripts/svc-<slug>-start.sh` / `scripts/svc-<slug>-start.ps1` 并更新 env-guide.md 改为调用脚本
+   - 3 次尝试仍无法启动 → Verdict 设为 BLOCKED
 
-### Cleanup (after all test cases complete) — MANDATORY
+### Cleanup（全部测试用例完成后）— 强制
 
-1. **Read `env-guide.md`** — locate "Stop All Services" and "Verify Services Stopped" sections
-2. **Stop services**: kill by PID (from `task-progress.md`) — preferred; or kill by port (fallback commands in `env-guide.md`)
-   - If the stop command fails (PID not found, kill returns error): try the port-based fallback; once a working command is confirmed, **update `env-guide.md`** Stop command to reflect the fix
-3. **Verify stopped**: run "Verify Services Stopped" commands — ports must not respond (max 5 seconds)
-4. **Record**: note cleanup status in `task-progress.md`
+1. **读 `env-guide.md`** — 定位 "Stop All Services" 与 "Verify Services Stopped" 节
+2. **停止服务**：按 PID 杀（从 `task-progress.md`）— 优先；或按 port 杀（`env-guide.md` 中的 fallback 命令）
+   - 若 stop 命令失败（PID 未找到、kill 报错）：尝试端口兜底；一旦确认有效命令，**更新 `env-guide.md`** 的 Stop 命令反映修复
+3. **验证已停**：跑 "Verify Services Stopped" 命令 — 端口必须无响应（最多 5 秒）
+4. **记录**：在 `task-progress.md` 标注清理状态
 
-**Why mandatory**: Leaving services running causes port conflicts in subsequent ST cycles.
+**为何强制**：残留运行的服务会在后续 ST 循环中导致端口冲突。
 
-### Restart Protocol (between fix-and-retest cycles)
+### Restart 协议（fix-and-retest 循环之间）
 
-When a test case fails, code is fixed, and services must restart:
+当某测试用例失败、代码已修复、服务必须重启：
 
-1. **Kill**: stop by PID (from `task-progress.md`) or by port (env-guide.md Stop commands)
-   - If kill fails: try port-based fallback; once working, **update `env-guide.md`** Stop command
-2. **Verify dead**: poll port — must not respond within 5 seconds
-3. **Start**: run start command with output capture (`head -30`) — extract new PID/port; update `task-progress.md`
-   - If start fails: diagnose, fix, **update `env-guide.md`** before retrying
-4. **Verify alive**: poll health endpoint — must respond within 10 seconds
+1. **Kill**：按 PID（来自 `task-progress.md`）或按 port（env-guide.md 的 Stop 命令）停止
+   - 若 kill 失败：尝试端口兜底；一旦可用，**更新 `env-guide.md`** 的 Stop 命令
+2. **验证已死**：轮询端口 — 5 秒内必须无响应
+3. **Start**：运行启动命令并捕获输出（`head -30`） — 提取新 PID/port；更新 `task-progress.md`
+   - 若启动失败：诊断、修复、**更新 `env-guide.md`** 后再重试
+4. **验证已活**：轮询健康端点 — 10 秒内必须响应
 
-### Scripts Convention (for complex service sequences)
+### 脚本约定（复杂服务序列）
 
-If startup or cleanup requires >2 shell steps (e.g., DB migration + seed + server start), consolidate into versioned scripts rather than keeping complex inline commands in env-guide.md:
+若启动或清理需要 >2 条 shell 步骤（如 DB 迁移 + seed + 启动 server），合并入版本化脚本，而不是在 env-guide.md 中保留复杂内联命令：
 
-- Create `scripts/svc-<slug>-start.sh` (Unix) / `scripts/svc-<slug>-start.ps1` (Windows) — full startup sequence
-- Create `scripts/svc-<slug>-stop.sh` / `scripts/svc-<slug>-stop.ps1` — full teardown sequence
-- Update `env-guide.md` "Start All Services" to call `bash scripts/svc-<slug>-start.sh` (or `pwsh scripts/svc-<slug>-start.ps1`)
-- Commit the scripts and updated env-guide.md together in the same commit
+- 创建 `scripts/svc-<slug>-start.sh`（Unix）/ `scripts/svc-<slug>-start.ps1`（Windows） — 完整启动序列
+- 创建 `scripts/svc-<slug>-stop.sh` / `scripts/svc-<slug>-stop.ps1` — 完整 teardown 序列
+- 更新 `env-guide.md` "Start All Services" 为调用 `bash scripts/svc-<slug>-start.sh`（或 `pwsh scripts/svc-<slug>-start.ps1`）
+- 脚本与更新后的 env-guide.md 在同一 commit 中提交
 
-## Checklist
+## 检查清单
 
-You MUST complete each step in order:
+必须按顺序完成每一步：
 
-### 1. Load Context
+### 1. 加载上下文
 
-Read all input artifacts for the target feature:
+为目标特性读取全部输入工件：
 
-- **Feature object** from `feature-list.json` — ID, title, description, srs_trace, ui flag, dependencies, priority
-- **SRS section** — full FR-xxx from `docs/plans/*-srs.md` via Document Lookup Protocol (read the entire subsection, NOT grep)
-- **Design section** — full §4.N from `docs/plans/*-design.md` via Document Lookup Protocol
-- **ATS constraints** (if `docs/plans/*-ats.md` exists) — read the ATS mapping table rows for the requirement(s) that map to this feature; extract required categories. These category constraints are **binding** for Step 3 (Derive Test Cases).
-- **Plan document** — from Step 5 (`docs/features/YYYY-MM-DD-<feature-name>.md`)
-- **UCD sections** (only if `"ui": true`) — relevant component prompts and page prompts from `docs/plans/*-ucd.md`
-- **Root context** — `constraints[]`, `assumptions[]` from `feature-list.json` root
-- **Related NFRs** — check SRS for NFR-xxx requirements that trace to this feature
-- **Interface contracts** — API endpoints, CLI commands, UI entry points that form the observable surface of this feature
-- **Test results summary** — from TDD and Quality Gates (coverage %)
+- **Feature 对象**（来自 `feature-list.json`） — ID、title、description、srs_trace、ui flag、dependencies、priority
+- **SRS 章节** — 通过 Document Lookup Protocol 从 `docs/plans/*-srs.md` 读完整 FR-xxx（读整子章节，不要 grep）
+- **Design 章节** — 通过 Document Lookup Protocol 从 `docs/plans/*-design.md` 读完整 §4.N
+- **ATS 约束**（若 `docs/plans/*-ats.md` 存在） — 读映射到本特性需求的 ATS 映射表行；提取必需类别。这些类别约束对 Step 3（派生测试用例）**具有约束力**。
+- **Plan 文档** — 来自 Step 5（`docs/features/YYYY-MM-DD-<feature-name>.md`）
+- **UCD 章节**（仅当 `"ui": true`） — `docs/plans/*-ucd.md` 中相关 component/page 提示词
+- **Root 上下文** — `feature-list.json` 根的 `constraints[]`、`assumptions[]`
+- **相关 NFR** — 检查 SRS 中与本特性相关的 NFR-xxx
+- **接口契约** — 构成本特性可观察表面的 API endpoint、CLI 命令、UI 入口
+- **测试结果摘要** — 来自 TDD 与 Quality Gates（coverage %）
 
-### 1b. Specification Gap Scan
+### 1b. 规格缺口扫描
 
-After loading all context and BEFORE deriving test cases, scan for specification gaps that would prevent writing correct expected results for black-box test cases.
+加载全部上下文、派生测试用例**之前**，扫描将阻碍为黑盒测试用例撰写正确预期结果的规格缺口。
 
-**Step 1: Load Clarification Addendum**
-Check if the Feature Design document (`docs/features/YYYY-MM-DD-<feature-name>.md`) contains a `## Clarification Addendum` section. If present, load all resolved ambiguities as authoritative constraints — these are user-approved resolutions from the Feature Design phase. Do NOT re-flag items that appear in this addendum.
+**Step 1：加载 Clarification Addendum**
+检查 Feature Design 文档（`docs/features/YYYY-MM-DD-<feature-name>.md`）是否含 `## Clarification Addendum` 章节。若存在，将全部已处置歧义加载为权威约束 — 这些是 Feature Design 阶段经用户批准的处置。**不**要再将此 Addendum 中的项标记为歧义。
 
-**Step 2: Scan for gaps using this taxonomy:**
+**Step 2：按以下分类扫描缺口：**
 
 | Code | What to check |
 |------|---------------|
-| `SRS-MISSING` | For each srs_trace AC: can the expected result be derived solely from SRS + observable interface? If not, and not resolved in Clarification Addendum → flag |
-| `ATS-MISMATCH` | For each ATS-required category: does the feature's observable interface have a testable surface for this category? If not, and not resolved in Clarification Addendum → flag |
-| `DESIGN-VAGUE` | For each Feature Design Test Inventory (§7) row: is the "Expected" column specific enough to write a concrete assertion? If not → flag |
+| `SRS-MISSING` | 对每条 srs_trace AC：预期结果能否仅由 SRS + 可观察接口推导？若否且未在 Clarification Addendum 中解决 → 标记 |
+| `ATS-MISMATCH` | 对每个 ATS 要求类别：特性的可观察接口是否具备该类别的可测表面？若否且未在 Clarification Addendum 中解决 → 标记 |
+| `DESIGN-VAGUE` | 对每行 Feature Design Test Inventory：其 "Expected" 列是否足够具体以撰写具体断言？若否 → 标记 |
 
-**For each detected gap, produce a structured record:**
+**对每个检测到的缺口，产出结构化记录：**
 ```
 - Category: [code from taxonomy]
 - Source: [document path + section reference]
@@ -135,315 +135,311 @@ Check if the Feature Design document (`docs/features/YYYY-MM-DD-<feature-name>.m
 - Question for user: [specific, actionable question that would resolve the gap]
 ```
 
-**Decision gate:**
-- **Zero gaps** → proceed to Step 2 (Load Template) normally. No friction added.
-- **All gaps resolved by Clarification Addendum** from Feature Design → proceed with those resolutions. Document in test case document header: "Specification resolutions applied from Feature Design Clarification Addendum."
-- **New gaps exist but all have reasonable suggested interpretations** → proceed with assumptions. Document each in the test case document header with notation: "Assumed: [interpretation] (not user-approved)."
-- **New gaps with HIGH impact on expected results AND no reasonable interpretation** → set Verdict to `CLARIFY`. Include the full Specification Gaps table in the Structured Return Contract. Do NOT proceed to Step 2.
+**决策关卡：**
+- **无缺口** → 正常进入 Step 2（加载模板）。无额外摩擦。
+- **所有缺口由 Feature Design Clarification Addendum 解决** → 按处置继续。在测试用例文档头部注记："Specification resolutions applied from Feature Design Clarification Addendum."
+- **存在新缺口但均有合理建议解释** → 以假设继续。在测试用例文档头部按此记录每条："Assumed: [interpretation] (not user-approved)."
+- **新缺口对预期结果有高影响且无合理解释** → Verdict 设为 `CLARIFY`。在 Structured Return Contract 中包含完整 Specification Gaps 表。**不**要进入 Step 2。
 
-> **On re-dispatch with Specification Gap Addendum**: If the SubAgent prompt includes a `## Specification Gap Addendum (user-approved resolutions)` section, treat those resolutions as authoritative. Do NOT re-flag them. Derive test case expected results from these resolutions.
+> **携带 Specification Gap Addendum 重新分发时**：若 SubAgent 提示词含 `## Specification Gap Addendum (user-approved resolutions)` 章节，将其处置视为权威。**不**要再次标记。依此派生测试用例的预期结果。
 
-### 2. Load Template
+### 2. 加载模板
 
-1. Check `feature-list.json` root for `st_case_template_path`:
-   - If present and file exists: read the custom template
-   - If absent: use default template at `docs/templates/st-case-template.md`
-2. Check `feature-list.json` root for `st_case_example_path`:
-   - If present and file exists: read the example file — adapt style, language, and detail level from it
-   - If absent: use standard professional style
+1. 检查 `feature-list.json` 根的 `st_case_template_path`：
+   - 存在且文件存在：读取自定义模板
+   - 不存在：使用默认模板 `docs/templates/st-case-template.md`
+2. 检查 `feature-list.json` 根的 `st_case_example_path`：
+   - 存在且文件存在：读样例文件 — 从中学习风格、语言与细节层级
+   - 不存在：使用标准专业风格
 
-**Template + Example interaction:**
-- Both provided → use template's **structure**, example's **style**
-- Only template → use template structure with default style
-- Only example → infer structure from example, use example's style
-- Neither → use the built-in default template (ISO/IEC/IEEE 29119-3)
+**模板 + 样例交互：**
+- 都提供 → 使用模板**结构**、样例**风格**
+- 仅模板 → 模板结构 + 默认风格
+- 仅样例 → 从样例推断结构，使用样例风格
+- 都无 → 使用内置默认模板（ISO/IEC/IEEE 29119-3）
 
-### 3. Derive Test Cases
+### 3. 派生测试用例
 
-For each SRS acceptance criterion (via the feature's `srs_trace` → SRS doc) mapped to this feature, generate **one or more** test cases. The Feature Design Test Inventory (§7) and boundary matrix (§5c) provide additional test case sources.
+对映射到本特性的每条 SRS 验收准则（经该特性的 `srs_trace` → SRS 文档），生成**一条或多条**测试用例。Feature Design Test Inventory 与 §Implementation Summary 内的 Boundary Conditions 表提供额外的用例来源。
 
-**Category assignment rules:**
+**类别分配规则：**
 
 | Category | Abbrev | When to generate |
 |----------|--------|------------------|
-| `functional` | FUNC | Always — happy path + error path for every feature |
-| `boundary` | BNDRY | Always — edge cases, limits, empty/max/zero values |
-| `ui` | UI | Only when `"ui": true` — browser-based interaction + visual verification |
-| `security` | SEC | When feature handles user input, auth, or external data |
-| `performance` | PERF | Only when traceable to NFR-xxx with performance metrics |
+| `functional` | FUNC | 始终 — 每个特性的 happy path + error path |
+| `boundary` | BNDRY | 始终 — 边界、极限、空 / 最大 / 零值 |
+| `ui` | UI | 仅当 `"ui": true` — 基于浏览器的交互 + 视觉验证 |
+| `security` | SEC | 当特性处理用户输入、鉴权或外部数据 |
+| `performance` | PERF | 仅当可追溯到带性能指标的 NFR-xxx |
 
-**UI test case enrichment (mandatory for `"ui": true` features):**
-- UI category test cases should cover navigation, interaction, and visual verification using Chrome DevTools MCP tools
-- Test cases that verify data MUST include backend integration steps (real API data, not mocked)
-- Test cases MUST test at least one negative path via UI (e.g., submit invalid form → verify error message)
+**UI 测试用例扩充**（`"ui": true` 特性强制）：
+- UI 类别用例应覆盖导航、交互与基于 Chrome DevTools MCP 的视觉验证
+- 校验数据的用例**必须**含后端集成步骤（真实 API 数据，不 mock）
+- 用例**必须**经 UI 测试至少一条负向路径（如提交非法表单 → 验证错误信息）
 
-**ATS enforcement (if ATS document exists):**
-- Read the ATS mapping table rows loaded in Step 1
-- For each ATS-required category for this feature's requirement(s): generate at least one test case of that category
-- If ATS requires SEC but the feature does not handle user input, note the discrepancy in the test case document and generate at least one boundary-security case
-- **ATS category constraints are hard gates** — validate via `python scripts/check_ats_coverage.py` in Step 6
+**ATS 强制**（若 ATS 文档存在）：
+- 读 Step 1 加载的 ATS 映射表行
+- 对本特性需求要求的每个 ATS 类别：至少生成一条该类别的用例
+- 若 ATS 要求 SEC 但特性不处理用户输入，在用例文档中注明差异并生成至少一条边界 - 安全用例
+- **ATS 类别约束是硬关卡** — Step 6 经 `python scripts/check_ats_coverage.py` 校验
 
-**Minimum coverage:**
-- Every feature MUST have at least one FUNC and one BNDRY test case
-- Every `srs_trace` requirement MUST be covered by at least one test case
-- UI features MUST have at least one UI test case
-- If ATS exists: all ATS-required categories are met
+**最低覆盖：**
+- 每个特性**必须**至少 1 条 FUNC 与 1 条 BNDRY 用例
+- 每条 `srs_trace` 需求**必须**至少被 1 条用例覆盖
+- UI 特性**必须**至少 1 条 UI 用例
+- 若 ATS 存在：全部 ATS 要求类别被满足
 
-**Case ID format:**
+**用例 ID 格式：**
 ```
 ST-{CATEGORY}-{FEATURE_ID(3 digits)}-{SEQ(3 digits)}
 ```
-Examples: `ST-FUNC-005-001`, `ST-UI-005-002`, `ST-SEC-012-001`
+示例：`ST-FUNC-005-001`、`ST-UI-005-002`、`ST-SEC-012-001`
 
-**Test case content rules:**
-- Test steps MUST be concrete and executable (no vague "verify it works")
-- Expected results MUST be specific and assertable (no "should look correct")
-- Preconditions MUST list real, verifiable states
-- Verification points MUST be observable and automatable where possible
+**用例内容规则：**
+- 测试步骤**必须**具体可执行（不说 "verify it works"）
+- 预期结果**必须**具体可断言（不说 "should look correct"）
+- 前置条件**必须**列出真实可验证状态
+- 校验点**必须**可观察、尽可能可自动化
 
-**Acceptance-level focus:** Test cases confirm the implementation matches requirements from a user/system perspective — not duplicating unit test assertions. Focus on behavioral scenarios and end-to-end workflows from the user/system perspective. Per-feature integration with external dependencies is verified during TDD (via INTG rows in Test Inventory). ST focuses on verifying the feature works correctly through the real running system interface.
+**验收级聚焦**：用例从用户 / 系统视角确认实现匹配需求 — 不复制单元测试断言。聚焦行为场景与端到端用户 / 系统视角工作流。单特性与外部依赖的集成在 TDD（经 Test Inventory 的 INTG 行）验证。ST 聚焦通过真实运行系统接口验证特性正常工作。
 
-**Test type labeling (real/mock)** — for each derived test case, set the `Test Type` metadata field:
-- Mark as `Real` if the test case executes against a real running system (real DB, real HTTP service, real browser via Chrome DevTools MCP, real file system)
-- Mark as `Mock` only if the test case's primary execution path uses a mock or stub service
-- Feature-ST test cases executed against a running service (Step 7 starts services before execution) are **always `Real`** — they connect to real services
+**测试类型标签（real/mock）** — 为每条派生用例设置 `Test Type` 元数据字段：
+- 标记为 `Real` 若用例针对真实运行系统执行（真实 DB、真实 HTTP 服务、经 Chrome DevTools MCP 的真实浏览器、真实文件系统）
+- 仅当用例的主要执行路径使用 mock / stub 服务时标 `Mock`
+- 针对运行中服务执行的 Feature-ST 用例（Step 7 先启动服务）**一律为 `Real`** — 它们连接真实服务
 
-**Automation feasibility labeling** — for each derived test case, set the `已自动化` metadata field:
-- `Yes` (default) — test can be executed programmatically (CLI, API, Chrome DevTools MCP)
-- `No` — test genuinely cannot be automated; requires physical device, human visual judgment, or external human action
+**自动化可行性标签** — 为每条派生用例设置 `已自动化` 元数据字段：
+- `Yes`（默认） — 用例可程序化执行（CLI、API、Chrome DevTools MCP）
+- `No` — 用例确实无法自动化；需要物理设备、人类视觉判断或外部人工动作
 
-When `已自动化: No`, also set:
-- **手动测试原因 (Manual Test Reason)**: one of `physical-device`, `visual-judgment`, `external-action`, `other: {description}`
+当 `已自动化: No`，还需设置：
+- **手动测试原因（Manual Test Reason）**：`physical-device`、`visual-judgment`、`external-action`、`other: {description}` 之一
 
-**Decision authority:**
-- If ATS document exists and has `自动化可行性` column: inherit the ATS value as primary source
-- SubAgent may mark a case as `已自动化: No` during derivation if it determines the test requires physical/visual/external action, even if ATS did not flag it — but MUST document the reason
-- A case marked `Auto` in ATS SHOULD NOT be downgraded to `No` without explicit justification in the test case document
+**决策权：**
+- 若 ATS 文档存在且含 `自动化可行性` 列：继承 ATS 值为主要来源
+- SubAgent 可在派生时将某用例标记为 `已自动化: No`，即便 ATS 未标记 — 但**必须**记录原因
+- ATS 标 `Auto` 的用例**不应**无显式证明地降级为 `No`
 
-**Conservative flagging**: Only mark as `已自动化: No` when automation is genuinely impossible, not merely difficult. Chrome DevTools MCP covers most UI testing; mock services cover most external dependencies. Reserve `No` for true gaps.
+**保守标记**：仅当自动化确实不可行时才标 `已自动化: No`，而非仅仅困难。Chrome DevTools MCP 覆盖大多数 UI 测试；mock 服务覆盖大多数外部依赖。`No` 留给真正的缺口。
 
-**Black-box constraint:** Expected results must be derivable solely from the SRS (acceptance criteria via `srs_trace`, Given/When/Then, NFR thresholds) and the observable interface. If the expected result cannot be determined without reading implementation code, document it as a specification gap in the test case document and proceed with best interpretation from SRS.
+**黑盒约束**：预期结果必须仅由 SRS（`srs_trace` 验收准则、Given/When/Then、NFR 阈值）与可观察接口推导。若不读实现代码就无法确定预期，在用例文档中记录为规格缺口，并以对 SRS 的最佳解读继续。
 
-### 4. UI Test Case Requirements (only if `"ui": true`)
+### 4. UI 用例要求（仅当 `"ui": true`）
 
-For UI features, test cases consolidate previously separate concerns:
+对 UI 特性，用例合并以前分散的关注点：
 
-**a) Functional UI testing** — navigation, interaction, state changes:
-- Navigation path from `ui_entry` or specific route
-- Interaction sequence using Chrome DevTools MCP tools
-- Expected results for each interaction step
+**a) 功能型 UI 测试** — 导航、交互、状态变化：
+- 从 `ui_entry` 或特定路由的导航路径
+- 使用 Chrome DevTools MCP 工具的交互序列
+- 每个交互步骤的预期结果
 
-**b) UCD compliance** — style token verification:
-- Reference which UCD color palette tokens apply to verified elements
-- Reference which typography scale values apply
-- Reference which spacing tokens apply
-- This replaces the separate U1-U4 review check for individual elements
+**b) UCD 合规** — 样式 token 校验：
+- 引用对已验证元素适用的 UCD 色板 token
+- 引用适用的字体 scale 值
+- 引用适用的间距 token
+- 替代对单个元素的独立 U1-U4 review 检查
 
-**c) Backend integration verification** (when feature depends on backend APIs):
-- Test cases MUST verify real data from backend — not hardcoded or mocked data
-- Include at least one data mutation + persistence scenario: create/update/delete via UI → verify backend persisted → refresh page → verify UI reflects the change
-- Include at least one error state scenario: what the UI shows when backend returns error (500/503/timeout) — verify user-friendly error message
-- Include at least one empty state scenario: what the UI shows when backend returns empty data — verify the empty state is visually correct per UCD
+**c) 后端集成验证**（当特性依赖后端 API）：
+- 用例**必须**校验来自后端的真实数据 — 非硬编码或 mock
+- 至少含 1 条数据变更 + 持久化场景：经 UI create/update/delete → 验证后端持久化 → 刷新页面 → 验证 UI 反映变化
+- 至少含 1 条错误态场景：后端返 500/503/timeout 时 UI 显示什么 — 验证用户友好的错误信息
+- 至少含 1 条空态场景：后端返空数据时 UI 显示什么 — 验证空态按 UCD 视觉正确
 
-**d) Cross-page workflow** (when feature spans multiple pages):
-- Test the complete workflow across page transitions (page A → action → page B → verify → page C → verify)
-- Do NOT test pages in isolation — the E2E value comes from the transitions
-- Each page transition should verify the new page loaded without errors
+**d) 跨页面工作流**（当特性跨多页面）：
+- 测试跨页面迁移的完整工作流（页面 A → 动作 → 页面 B → 验证 → 页面 C → 验证）
+- **不**要孤立测试页面 — E2E 价值来自迁移
+- 每次页面迁移应验证新页无错加载
 
-**e) State mutation verification** (when feature creates/updates/deletes data):
-- Perform mutation via UI → navigate away from current page → navigate back → verify the mutation persisted
-- This confirms backend persistence, not just frontend state
-- Verify related views also reflect the change (e.g., create order → order list shows new order → dashboard counter incremented)
+**e) 状态变更验证**（当特性创建 / 更新 / 删除数据）：
+- 经 UI 变更 → 离开当前页 → 返回 → 验证变更已持久化
+- 这确认后端持久化，而非仅前端状态
+- 验证相关视图也反映变化（如创建订单 → 订单列表显示新订单 → 仪表盘计数 +1）
 
-**f) Positive rendering verification** (mandatory for all `"ui": true` features):
+**f) 正向渲染验证**（所有 `"ui": true` 特性强制）：
 
-Every UI category ST test case MUST include at least one step that verifies expected visual elements are **positively present**, not just error-free. This uses the Layer 1b positive rendering verification script from `references/ui-error-detection.md` (in long-task-tdd).
+每条 UI 类别 ST 用例**必须**至少含一步验证预期视觉元素**正向存在**，不仅无错。使用 `references/ui-error-detection.md`（在 long-task-tdd）中的 Layer 1b 正向渲染校验脚本。
 
-For each visual element listed in the Feature Design Visual Rendering Contract (§Visual Rendering Contract of the feature design document):
-1. Navigate to the page or trigger the rendering condition specified in the contract
-2. Execute the Layer 1b positive rendering script with the element's selector/canvas ID
-3. Assert `missingCount === 0` — all expected elements are rendered and visible
+对 Feature Design 的 Visual Rendering Contract（特性设计文档的 §Visual Rendering Contract）中列出的每个视觉元素：
+1. 导航到契约指定的页面或触发渲染条件
+2. 用该元素的 selector/canvas ID 执行 Layer 1b 正向渲染脚本
+3. 断言 `missingCount === 0` — 所有预期元素被渲染且可见
 
-**Hard gate**: An ST test case that only runs the error detection script (Layer 1) without positive rendering verification (Layer 1b) is **incomplete** for UI features. A page with zero errors but no rendered game content, no rendered data, or no rendered visual elements is a FAIL.
+**硬关卡**：仅运行错误检测脚本（Layer 1）而无正向渲染验证（Layer 1b）的 ST 用例对 UI 特性**不完整**。零错误但无游戏内容、无数据、无视觉元素的页面是 FAIL。
 
-Test step example for Canvas game:
+Canvas 游戏的测试步骤示例：
 
 | Step | 操作 | 预期结果 |
 | ---- | ---- | -------- |
 | 3 | evaluate_script(positive_render_checker, [], ['game-canvas']) | Layer 1b: missingCount = 0, canvas has non-transparent pixels |
 | 4 | evaluate_script(() => { const segments = document.querySelectorAll('.snake-segment'); return segments.length; }) | Snake segments rendered: count >= 1 |
 
-### 5. Write Test Case Document
+### 5. 写测试用例文档
 
-Output file: `docs/test-cases/feature-{id}-{slug}.md`
-- `{id}` is the feature ID (as-is, not zero-padded in filename)
-- `{slug}` is a kebab-case version of the feature title
+输出文件：`docs/test-cases/feature-{id}-{slug}.md`
+- `{id}` 为特性 ID（原样，不在文件名中补零）
+- `{slug}` 为特性标题的 kebab-case 版本
 
-**Document structure (following template):**
+**文档结构（依模板）：**
 
-1. **Header** — Feature ID, related requirements, date, standard
-2. **Summary table** — count by category
-3. **Test case blocks** — one per case, all required sections
-4. **Traceability matrix** — Case ID ↔ Requirement (srs_trace) ↔ Feature Design Test Inventory row ↔ Automated test ↔ Result
+1. **Header** — Feature ID、相关需求、日期、标准
+2. **Summary 表** — 按类别计数
+3. **测试用例块** — 每条一份、全部必需章节
+4. **可追溯矩阵** — Case ID ↔ Requirement（srs_trace） ↔ Feature Design Test Inventory 行 ↔ 自动化测试 ↔ 结果
 
-The traceability matrix `结果` column starts as `PENDING`. Execute each test case in Step 7 below and update to `PASS`/`FAIL` during this step.
+可追溯矩阵 `结果` 列起始为 `PENDING`。下文 Step 7 执行每条用例并在该步更新为 `PASS`/`FAIL`。
 
-### 5b. SRS Trace Coverage Gate (mandatory before validation)
+### 5b. SRS Trace 覆盖关卡（校验前强制）
 
-**a) SRS requirement completeness:**
-1. List ALL `srs_trace` requirement IDs from the feature object
-2. For each requirement ID: confirm at least one ST case maps to it
-   in the traceability matrix "Requirement" column
-3. If ANY `srs_trace` requirement has zero ST case mapping:
-   - Derive additional test case(s) for the uncovered requirement
-   - Add to the document and traceability matrix
-   - Re-number case IDs if necessary
+**a) SRS 需求完备性：**
+1. 列出特性对象的**全部** `srs_trace` 需求 ID
+2. 对每个需求 ID：确认在可追溯矩阵 "Requirement" 列至少有一条 ST 用例映射
+3. 若**任一** `srs_trace` 需求的 ST 用例映射为零：
+   - 为未覆盖需求派生额外用例
+   - 加入文档与可追溯矩阵
+   - 必要时重新编号 case ID
 
-**b) `# ST-xxx` code annotation is NOT required:**
-Traceability is maintained solely via the ST document's traceability matrix
-("自动化测试" column maps ST case → test function). Redundant code-level
-`# ST-xxx` comments are not required and should not be added.
+**b) `# ST-xxx` 代码注解**不**要求：**
+可追溯性完全由 ST 文档的可追溯矩阵维护（"自动化测试" 列映射 ST 用例 → 测试函数）。代码层冗余的 `# ST-xxx` 注释不要求，也不应添加。
 
-### 6. Validate
+### 6. 校验
 
-Run the validation scripts:
+运行校验脚本：
 
 ```bash
 python scripts/validate_st_cases.py docs/test-cases/feature-{id}-{slug}.md --feature-list feature-list.json --feature {id}
 ```
 
-If ATS document exists, also run ATS coverage check:
+若 ATS 文档存在，同时跑 ATS 覆盖检查：
 ```bash
 python scripts/check_ats_coverage.py docs/plans/*-ats.md --feature-list feature-list.json --feature {id} --strict
 ```
 
-- **Both exit 0**: proceed to Execute Test Cases (Step 7)
-- **Any exit 1**: fix errors and re-validate (do NOT proceed with errors)
+- **两者 exit 0**：进入执行测试用例（Step 7）
+- **任一 exit 1**：修正错误并重校验（**不**要带错误继续）
 
-### 7. Execute Test Cases
+### 7. 执行测试用例
 
-Since implementation code already exists (TDD and Quality Gates are complete), execute each test case to verify acceptance:
+由于实现代码已存在（TDD 与 Quality Gates 已完成），执行每条用例验证验收：
 
-**HARD REQUIREMENT: Must execute test cases one by one as defined in `docs/test-cases/feature-{id}-{slug}.md`**
-- Each test case must be executed individually and results recorded
-- **UI test cases CANNOT be skipped for any reason** — UI verification is mandatory
-- No test case may be skipped
-- Do not merge or simplify the test case execution process
-- **UI test cases require browser-based verification**
+**硬要求：必须按 `docs/test-cases/feature-{id}-{slug}.md` 定义逐条执行**
+- 每条用例都必须独立执行并记录结果
+- **UI 用例不得以任何原因跳过** — UI 验证强制
+- 不得跳过任何用例
+- 不得合并或简化执行过程
+- **UI 用例需要基于浏览器的验证**
 
-1. **Start services** per Service Management above — follow env-guide.md start protocol with output capture; record PID and port in `task-progress.md`
-2. For **automated non-UI test cases** (`已自动化: Yes`): verify by running relevant test commands or programmatic checks against the running system
-2b. For **manual test cases** (`已自动化: No`): do NOT attempt to execute.
-   - Record `PENDING-MANUAL` in the traceability matrix `结果` column
-   - These cases will be presented to the human AFTER the SubAgent returns (via the dispatcher's Step 4b)
-   - Continue to the next test case
-3. For **UI test cases** (`已自动化: Yes`, `ui` category): execute via Chrome DevTools MCP
-4. Update the traceability matrix `结果` column:
-   - Automated cases: `PASS` or `FAIL`
-   - Manual cases: `PENDING-MANUAL` (human review happens post-SubAgent in the dispatcher)
-4b. Update the **Real Test Case Execution Summary** table in the test case document:
-   - Count all `Real` cases from the traceability matrix and their PASS/FAIL status (exclude `PENDING-MANUAL`)
-   - Fill in the summary table (total / passed / failed / pending)
-   - Any `Real` FAIL is a blocking failure — same consequence as any other test case failure
-4c. If manual test cases exist, update the **Manual Test Case Summary** table:
-   - Count all manual cases (all should be `PENDING-MANUAL` at this point)
-5. **Do NOT stop services yet** — if the feature is `"ui": true`, Step 8 (Exploratory Visual Assessment) requires the application to be running. Services are stopped AFTER Step 8.
+1. **启动服务** — 按上文 Service Management，遵循 env-guide.md 启动协议并捕获输出；在 `task-progress.md` 记录 PID 与 port
+2. 对**自动化非 UI 用例**（`已自动化: Yes`）：通过运行相关测试命令或对运行系统的程序化检查来校验
+2b. 对**手动用例**（`已自动化: No`）：**不**尝试执行。
+   - 在可追溯矩阵 `结果` 列记录 `PENDING-MANUAL`
+   - 这些用例将在 SubAgent 返回**之后**呈给人类（经 dispatcher 的 Step 4b）
+   - 继续下一用例
+3. 对 **UI 用例**（`已自动化: Yes`、`ui` 类别）：经 Chrome DevTools MCP 执行
+4. 更新可追溯矩阵 `结果` 列：
+   - 自动化用例：`PASS` 或 `FAIL`
+   - 手动用例：`PENDING-MANUAL`（人工 review 在 SubAgent 之后由 dispatcher 进行）
+4b. 更新测试用例文档中的 **Real Test Case Execution Summary** 表：
+   - 统计可追溯矩阵中所有 `Real` 用例及其 PASS/FAIL 状态（排除 `PENDING-MANUAL`）
+   - 填入 summary 表（total / passed / failed / pending）
+   - 任一 `Real` FAIL 都是阻塞失败 — 与其他用例失败后果相同
+4c. 若存在手动用例，更新 **Manual Test Case Summary** 表：
+   - 统计所有手动用例（此时应全为 `PENDING-MANUAL`）
+5. **此时先不停服务** — 若特性 `"ui": true`，Step 8（探索性视觉评估）要求应用仍在运行。服务在 Step 8 之后停止。
 
-**If any automated test case FAILS:**
-- Include failure details in the Issues table of the Structured Return Contract
-- A failure here blocks the feature from proceeding to Persist
-- Set Verdict to FAIL with specific case IDs and failure details
+**若任一自动化用例 FAIL：**
+- 将失败详情纳入 Structured Return Contract 的 Issues 表
+- 此处失败阻塞特性进入 Persist
+- Verdict 设为 FAIL 并附具体 case ID 与失败详情
 
-**If all automated test cases PASS (manual cases may still be PENDING-MANUAL):**
-- Set Verdict to PASS (the dispatcher will re-evaluate after collecting manual results)
+**若所有自动化用例 PASS（手动用例可能仍为 PENDING-MANUAL）：**
+- Verdict 设为 PASS（dispatcher 会在收集手动结果后重新评估）
 
-Traceability between ST cases and automated tests is maintained in the ST case
-document's traceability matrix (not via code comments). See Step 5b.
+ST 用例与自动化测试之间的可追溯性完全维护在 ST 用例文档的可追溯矩阵中（非经代码注释）。见 Step 5b。
 
-## Execution Rules (Hard Gates)
+## 执行规则（硬关卡）
 
-### Environment Gate
+### 环境关卡
 
-Always start from a known-clean state. Do not assume services are already running.
+始终从已知洁净状态开始。**不**假定服务已运行。
 
-- Start services per Service Management above; verify health endpoint before running any test cases
-- If service fails to start after diagnosis: **BLOCKED** — set Verdict to BLOCKED with service details
-- After start: verify app is responding before running any test cases
+- 按上文 Service Management 启动服务；跑任何用例前先校验健康端点
+- 诊断后若服务仍无法启动：**BLOCKED** — Verdict 设为 BLOCKED 并附服务详情
+- 启动后：跑任何用例前确认应用在响应
 
-### Failure Is Not Bypassable
+### 失败不可绕过
 
-- **Any test case execution failure** blocks the feature from being marked `"passing"`
-- **ALL bugs found in ST testing MUST be fixed** — regardless of whether they are:
-  - Frontend bugs (UI rendering, interaction, state)
-  - Backend bugs (API errors, data persistence, logic)
-  - Integration bugs (frontend-backend communication)
-- **No bypass allowed** for any reason:
-  - "Simple feature" — still needs test cases
-  - "UI tests are complex" — **UI test cases CANNOT be skipped**
-  - "Browser testing is too complex" — **UI test cases require browser-based verification**
-  - "This is a frontend bug, not my code" — **ALL bugs must be fixed**
-  - "This is a backend bug, let someone else fix it" — **ALL bugs must be fixed**
-  - "Environment temporarily unavailable" — BLOCKED, not skipped
-  - "Test case might be wrong" — set Verdict to FAIL, don't skip
-- All failures MUST be recorded in the Structured Return Contract Issues table
+- **任何用例执行失败**阻塞特性被标记为 `"passing"`
+- **ST 测试中发现的所有 bug 都必须被修复** — 无论它们是：
+  - 前端 bug（UI 渲染、交互、状态）
+  - 后端 bug（API 错误、数据持久化、逻辑）
+  - 集成 bug（前后端通信）
+- **不允许**以任何理由绕过：
+  - "简单特性" — 仍需用例
+  - "UI 测试复杂" — **UI 用例不得跳过**
+  - "浏览器测试太复杂" — **UI 用例需要基于浏览器的验证**
+  - "这是前端 bug，不是我的代码" — **所有 bug 都必须修**
+  - "这是后端 bug，让别人修吧" — **所有 bug 都必须修**
+  - "环境暂时不可用" — BLOCKED，不是跳过
+  - "用例可能错了" — Verdict 设为 FAIL，不跳过
+- 所有失败**必须**记录在 Structured Return Contract 的 Issues 表
 
-## Step 8: Exploratory Visual Assessment (mandatory for `"ui": true`)
+## Step 8：探索性视觉评估（`"ui": true` 强制）
 
-After all scripted test cases are executed (Step 7), perform a **free-form visual assessment** of the running application. This step is inspired by the GAN-style generator-evaluator pattern: the scripted tests verify specification compliance, but the exploratory assessment catches issues that scripted tests miss — "display-only" features without interactive depth, visual incoherence, and rendering gaps invisible to mechanical checks.
+在所有脚本化用例执行完毕（Step 7）后，对运行中的应用进行**自由形式的视觉评估**。本步启发自 GAN 风格的 generator-evaluator 模式：脚本化测试校验规格合规，但探索性评估抓住脚本测试漏掉的问题 — 无交互深度的 "display-only" 特性、视觉不一致、机械检查看不见的渲染缺口。
 
-**Do NOT skip this step.** This is where you act as a skeptical QA evaluator, not a generator defending its own work.
+**不**要跳过本步。你要在此扮演**怀疑的 QA 评估者**，而不是为自身工作辩护的 generator。
 
-### 8a. Navigate and Screenshot
+### 8a. 导航与截图
 
-1. Start from the feature's `ui_entry` URL
-2. Navigate through ALL pages/views related to this feature
-3. At each page: `take_screenshot()` → visually study the result
-4. Interact with every rendered element: click buttons, hover links, type into inputs, scroll containers, trigger animations
-5. Record what you observe — do NOT assume anything works until you verify it
+1. 从特性的 `ui_entry` URL 开始
+2. 导航到与本特性相关的**所有**页面 / 视图
+3. 每页：`take_screenshot()` → 视觉研究结果
+4. 与每个渲染元素交互：点按钮、悬停链接、键入输入、滚动容器、触发动画
+5. 记录所观察 — 在你亲自验证之前**不**假定任何东西能工作
 
-### 8b. Grade Against Visual Quality Criteria
+### 8b. 按视觉质量准则打分
 
-Score each criterion 1-5 using the anchors below. **Any criterion scoring ≤ 2 is a FAIL.**
+每项 1-5 分（依下列锚点）。**任一项 ≤ 2 即 FAIL。**
 
-**Score anchors** (apply to ALL criteria):
-- **1**: Complete absence — nothing related to this criterion is present
-- **2**: Minimal/broken — some elements exist but core content is missing or non-functional (e.g., canvas exists but is blank; form renders but can't submit)
-- **3**: Partial — core content present with notable gaps (e.g., game board renders but some visual elements missing; data list shows items but pagination broken)
-- **4**: Complete with minor gaps — all expected elements rendered and interactive, minor polish issues (e.g., alignment slightly off; one state variant not styled)
-- **5**: Fully complete — all Visual Rendering Contract elements present, interactive, correctly styled, reflecting real data
+**分数锚点**（适用于**所有**准则）：
+- **1**：完全缺失 — 与本准则相关的任何东西都不存在
+- **2**：极少 / 损坏 — 有些元素存在但核心内容缺失或不可用（如 canvas 存在但空白；表单渲染但无法提交）
+- **3**：部分 — 核心内容存在但有明显缺口（如游戏板渲染但某些视觉元素缺失；数据列表显示但分页损坏）
+- **4**：完整但有轻微瑕疵 — 全部预期元素已渲染且可交互，存在轻微打磨问题（如对齐略偏；某状态变体未样式化）
+- **5**：完全完整 — 全部 Visual Rendering Contract 元素存在、可交互、样式正确、反映真实数据
 
 | Criterion | Weight | What to assess | Failure signals |
 |-----------|--------|----------------|-----------------|
-| **Rendering Completeness** | High | Are ALL visual elements from the Visual Rendering Contract actually rendered and visible? Is the core visual content present (game board, data visualization, interactive canvas), not just chrome (buttons, menus, headers)? | Blank canvas, empty containers, placeholder text, "display-only" UI with no actual content rendered |
-| **Interactive Depth** | High | Do rendered elements actually respond to user interaction? Can the user perform the feature's core action through the UI, not just see static elements? | Buttons that don't respond, canvas with no input handling, forms that don't submit, game board that doesn't update on key press |
-| **Visual Coherence** | Medium | Does the UI feel like a coherent whole? Are colors, typography, spacing, and layout consistent? Do elements align to a grid? | Misaligned elements, inconsistent spacing, clashing colors, mixed font sizes with no hierarchy |
-| **Functional Accuracy** | Medium | Does the rendered output reflect actual data/state? Does the score display match the game state? Does the list show real items? | Hardcoded placeholder data, counters showing 0 when data exists, stale state after interactions |
+| **Rendering Completeness** | High | 是否**所有** Visual Rendering Contract 的视觉元素都被实际渲染且可见？核心视觉内容（game board、数据可视化、交互式 canvas）是否存在，而非仅仅是 chrome（按钮、菜单、页头）？ | 空白 canvas、空容器、占位文本、无实际内容渲染的 "display-only" UI |
+| **Interactive Depth** | High | 已渲染元素是否真的响应用户交互？用户能否通过 UI 执行本特性的核心动作，而非仅看到静态元素？ | 不响应的按钮、无输入处理的 canvas、不提交的表单、按键时不更新的游戏板 |
+| **Visual Coherence** | Medium | UI 是否给人统一感？颜色、字体、间距、布局是否一致？元素是否对齐到网格？ | 对齐错乱、间距不一、颜色冲突、字号混杂无层级 |
+| **Functional Accuracy** | Medium | 渲染输出是否反映真实数据 / 状态？分数显示是否匹配游戏状态？列表是否显示真实条目？ | 硬编码占位数据、数据存在但计数显示 0、交互后状态陈旧 |
 
-**Anti-leniency rules (read these before grading):**
-- "Looks OK at first glance" is not a passing grade — **click every interactive element**
-- A page that renders a header and sidebar but has a blank main content area is a **FAIL on Rendering Completeness**, even if the header and sidebar look perfect
-- "The core logic works in unit tests" is irrelevant — you are grading what the **user sees and can interact with in the browser**
-- If you find yourself writing "this is acceptable because..." — STOP. That is leniency bias. Grade what you see, not what you wish were there.
-- A snake game where the canvas is blank but the score counter works is a **FAIL** — the canvas IS the feature
-- A form that renders all fields but doesn't submit is a **FAIL on Interactive Depth** — rendering without interaction is display-only
+**反宽松规则（打分前先读）：**
+- "第一眼看 OK" 不是及格分 — **点击每个交互元素**
+- 渲染 header 与 sidebar 但主内容区空白的页面在 Rendering Completeness 上是 **FAIL**，即使 header 与 sidebar 完美
+- "核心逻辑在单元测试中工作" 无关紧要 — 你在为**用户在浏览器中所见与可交互**打分
+- 若你发现自己在写 "this is acceptable because..." — STOP。那是宽松偏差。为所见打分，不为所愿打分。
+- 一个 canvas 空白但计分器工作的贪吃蛇游戏是 **FAIL** — canvas 就是特性
+- 一个渲染全部字段但不提交的表单在 Interactive Depth 上是 **FAIL** — 只渲染而无交互属于 display-only
 
-### 8c. "Display-Only" Detection
+### 8c. "Display-Only" 检测
 
-For each rendered element from the Visual Rendering Contract, verify it has **interactive depth** — not just visual presence:
+对 Visual Rendering Contract 中每个已渲染元素，核实其具**交互深度** — 不仅视觉存在：
 
 | Element Type | Presence Check (Layer 1b) | Interactive Depth Check (this step) |
 |-------------|--------------------------|-------------------------------------|
-| Canvas (game) | Has non-transparent pixels | Responds to keyboard/mouse input; game state updates; visual output changes |
-| Form | Input fields visible | Fields accept input; submit triggers action; validation fires |
-| Data display | Elements visible with content | Reflects real data; updates on state change; pagination/scroll works |
-| Navigation | Links/buttons visible | Click navigates to correct route; back button works |
-| Interactive widget | Widget rendered | Drag, resize, toggle, slider — the interaction it's designed for actually works |
+| Canvas（游戏） | 含非透明像素 | 响应键盘 / 鼠标输入；游戏状态更新；视觉输出变化 |
+| Form | 输入字段可见 | 字段接受输入；提交触发动作；校验触发 |
+| 数据展示 | 元素可见且有内容 | 反映真实数据；随状态变更更新；分页 / 滚动可用 |
+| Navigation | 链接 / 按钮可见 | 点击导航到正确路由；返回按钮可用 |
+| 交互组件 | 组件渲染 | 拖、缩、切、滑 — 其设计意图的交互真正工作 |
 
-If any element passes Layer 1b (presence) but fails interactive depth → record as **"Display-Only Defect"** in the Issues table with severity **Major**.
+若任一元素通过 Layer 1b（存在性）但交互深度未通过 → 在 Issues 表记录为 **"Display-Only Defect"**，严重度 **Major**。
 
-### 8d. Record Assessment
+### 8d. 记录评估
 
-Add to the Structured Return Contract:
+加入 Structured Return Contract：
 
 ```markdown
 ### Visual Assessment (ui:true only)
@@ -458,31 +454,31 @@ Display-Only Defects: [count]
 [list each: element, what it renders, what interaction it lacks]
 ```
 
-**Verdict impact:** Any criterion ≤ 2 OR any Display-Only Defect → overall Verdict is **FAIL**.
+**Verdict 影响**：任一准则 ≤ 2 或任一 Display-Only Defect → 总 Verdict 为 **FAIL**。
 
-### 8e. Service Cleanup (after Visual Assessment)
+### 8e. 服务清理（视觉评估之后）
 
-**Stop services** per Service Management cleanup above. For non-UI features, this was done in Step 7.5. For UI features, it is deferred to here because Step 8 requires a running application.
+按上文 Service Management 的 cleanup **停止服务**。非 UI 特性已在 Step 7.5 完成。UI 特性延后到此，因为 Step 8 要求应用运行。
 
 ---
 
-## Critical Rules
+## 关键规则
 
-- **Requirements-driven**: Test cases derive from SRS/Design, validating implementation against requirements — not duplicating unit test assertions
-- **Black-box only**: Expected results must be derivable from SRS and the observable interface alone — no reading implementation code
-- **Complete after Quality Gates**: All test cases must be written, validated, and executed after TDD and quality gates pass
-- **Immutable after generation**: Test case documents are written and executed in this step and not modified after generation. Changes require the `long-task-increment` skill
-- **Traceability mandatory**: Every test case traces to a requirement; every `srs_trace` requirement traces to a test case
-- **UI consolidation**: For UI features, this skill consolidates functional and UCD compliance testing into unified test cases
-- **Template flexibility**: Users can override the default ISO/IEC/IEEE 29119 template with custom templates and style examples
-- **UI tests are mandatory**: For features with `"ui": true`, UI category test cases are NON-SKIPPABLE and require browser-based verification.
-- **ALL bugs must be fixed**: Any bug discovered during ST testing — whether frontend, backend, or integration — MUST be fixed before the feature can be marked as passing. There is no "not my code" exemption.
+- **需求驱动**：用例从 SRS/Design 派生，校验实现对需求的符合 — 非复制单元测试断言
+- **仅黑盒**：预期结果必须仅由 SRS 与可观察接口推导 — 不阅读实现代码
+- **Quality Gates 之后完成**：所有用例必须在 TDD 与 quality gates 通过之后撰写、校验并执行
+- **生成后不可变**：用例文档在本步撰写并执行，生成后不再修改。变更需 `long-task-increment` skill
+- **可追溯性强制**：每条用例追溯到需求；每条 `srs_trace` 需求追溯到用例
+- **UI 合并**：对 UI 特性，本 skill 将功能与 UCD 合规测试合并为统一用例
+- **模板弹性**：用户可用自定义模板与风格样例覆盖默认 ISO/IEC/IEEE 29119 模板
+- **UI 测试强制**：`"ui": true` 特性的 UI 类别用例**不可跳过**且需要基于浏览器的验证
+- **所有 bug 必须修**：ST 测试期间发现的任何 bug — 无论前端、后端或集成 — 在特性被标记为 passing 前**必须**修复。没有 "not my code" 豁免。
 
 ---
 
 ## Structured Return Contract
 
-Aligned with the unified contract in `skills/long-task-work/references/structured-return-contract.md`. Return EXACTLY this format:
+与 `skills/long-task-work/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
 
 ```markdown
 ## SubAgent Result: long-task-feature-st
@@ -543,4 +539,4 @@ Aligned with the unified contract in `skills/long-task-work/references/structure
 | 1 | [code] | [doc § section] | [what is missing/vague] | [which test cases affected] | [best guess or "none"] | [specific question for user] |
 ```
 
-**IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report results in the contract above.
+**重要**：**不要**在 feature-list.json 中将 feature 标记为 "passing" — 那是 orchestrator 的职责。仅在上述契约中报告结果。

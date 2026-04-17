@@ -5,10 +5,10 @@ approved_date: null
 approved_sections: []
 ---
 
-# env-guide.md — 环境契约（单一事实源）
+# env-guide.md —— 环境契约（单一事实源）
 
 > **用户可编辑。** Claude 在以下场景读取本文件：服务启停、构建/测试命令、存量代码库约束。
-> 本文件是下游流水线（Worker / TDD / Quality / Feature-ST）的**单一事实源**，任何对 §3 或 §4 的修改必须经过人工审批（更新本文件头的 `approved_by` / `approved_date` / `approved_sections`）。
+> 本文件是下游流水线（Worker / TDD / Quality / Feature-ST）的**单一事实源**，任何对 §3 或 §4 的修改都必须经过人工审批（更新本文件头的 `approved_by` / `approved_date` / `approved_sections`）。
 
 ## 目录
 - §1 服务生命周期
@@ -29,13 +29,13 @@ approved_sections: []
 |---|---|---|---|---|
 | _(待填充)_ | | | | |
 
-### Start All Services（输出捕获）
+### 启动全部服务（输出捕获）
 ```bash
 # Unix/macOS
 [start command] > /tmp/svc-<slug>-start.log 2>&1 &
 sleep 3
 head -30 /tmp/svc-<slug>-start.log
-# → Extract PID and port from output; record both in task-progress.md
+# → 从输出提取 PID 与 port；二者均记入 task-progress.md
 
 # Windows alternative
 cmd /c "start /b [command] > %TEMP%\svc-<slug>-start.log 2>&1"
@@ -43,12 +43,12 @@ timeout /t 3 /nobreak >nul
 powershell "Get-Content $env:TEMP\svc-<slug>-start.log -TotalCount 30"
 ```
 
-### Verify Services Running
+### 验证服务在运行
 ```bash
 curl -f http://localhost:<port>/health
 ```
 
-### Stop All Services（PID 优先，端口 fallback）
+### 停止全部服务（PID 优先，端口 fallback）
 ```bash
 kill <PID>                              # Unix/macOS
 taskkill /F /PID <PID>                  # Windows
@@ -58,17 +58,17 @@ lsof -ti :<port> | xargs kill -9        # Unix/macOS
 for /f "tokens=5" %a in ('netstat -ano ^| findstr :<port>') do taskkill /F /PID %a  # Windows
 ```
 
-### Verify Services Stopped
+### 验证服务已停止
 ```bash
-lsof -i :<port>                         # Unix/macOS — expect no output
-netstat -ano | findstr :<port>           # Windows — expect no output
+lsof -i :<port>                         # Unix/macOS —— 预期无输出
+netstat -ano | findstr :<port>           # Windows —— 预期无输出
 ```
 
-### Restart Protocol（4 steps）
-1. **Kill** — Stop All Services
-2. **Verify dead** — run Verify Services Stopped；poll 最多 5 秒
-3. **Start** — run Start All Services + 输出捕获 → `head -30` → 提取 PID/port → 更新 task-progress.md
-4. **Verify alive** — run Verify Services Running；poll 最多 10 秒
+### 重启协议（Restart Protocol，4 步）
+1. **Kill** —— 停止全部服务
+2. **Verify dead** —— 执行"验证服务已停止"；最多轮询 5 秒
+3. **Start** —— 执行"启动全部服务" + 输出捕获 → `head -30` → 提取 PID/port → 更新 task-progress.md
+4. **Verify alive** —— 执行"验证服务在运行"；最多轮询 10 秒
 
 ---
 

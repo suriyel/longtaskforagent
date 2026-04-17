@@ -1,85 +1,85 @@
-# Alignment Validation Execution Protocol
+# 对齐校验执行协议（Alignment Validation Execution Protocol）
 
-## When This Runs
+## 何时运行
 
-Expert track Step E10. Called by SKILL.md after Classify/Write/Validate/Granularity/Deferral (E9), before SRS Reviewer (E11).
+Expert track Step E10。由 SKILL.md 在 Classify/Write/Validate/Granularity/Deferral（E9）之后、SRS Reviewer（E11）之前调用。
 
-## Purpose
+## 目的
 
-Backward validation: given the SRS as written, does it actually solve the root problem identified in E1? This step catches the most dangerous form of requirements failure — a formally correct SRS that addresses the wrong problem.
+反向校验：给定已写好的 SRS，它是否真的解决了 E1 识别的根因问题？本步用于捕捉最危险的需求失效形态 — 形式上正确但解决错问题的 SRS。
 
-This is an internal check. No user interaction unless specific failures require it.
+这是一次内部检查。除非发现特定失败需要干预，否则不与用户交互。
 
-## E10a. Root Cause Traceability Check
+## E10a. 根因可追溯性检查
 
-For EACH row in the Pain Map (from E1, stored in Section 1.3):
+对 Pain Map（来自 E1，存于 Section 1.3）中**每一行**：
 
-1. Find at least one FR in Section 4 whose EARS statement or acceptance criteria addresses this pain point
-2. If a pain point has no addressing FR → check if it appears in Section 1.2 Out-of-Scope with an explicit exclusion reason
-3. If a pain point is neither addressed nor excluded → this is a **traceability gap**
+1. 在 Section 4 中找到至少一条 EARS 陈述或验收准则能处理此痛点的 FR
+2. 若某痛点没有对应 FR → 检查它是否显式出现在 Section 1.2 Out-of-Scope 且给出排除原因
+3. 若某痛点既未被处理也未被排除 → 这是**追溯性缺口**
 
-For the 5-Whys Root Cause (from E1):
+对 5-Whys Root Cause（来自 E1）：
 
-1. Verify that at least one FR directly addresses the root cause (not just a symptom)
-2. If the root cause is unaddressed → flag as a traceability gap
+1. 确认至少一条 FR 直接处理根因（不是仅处理症状）
+2. 若根因未被处理 → 标记为追溯性缺口
 
-**On traceability gaps**:
-- 1–2 gaps: auto-resolve by either creating a new minimal FR or adding an explicit Out-of-Scope entry (choose whichever requires less new elicitation)
-- 3+ gaps: use `AskUserQuestion` presenting the gap table and asking which gaps should become new FRs vs. explicit exclusions
+**追溯性缺口处理**：
+- 1–2 个缺口：自动解决 — 要么新增一条最小化 FR，要么追加一条显式 Out-of-Scope 条目（择新增采集更少者）
+- 3+ 个缺口：使用 `AskUserQuestion`，将缺口表呈现并询问哪些应成为新 FR、哪些应成为显式排除
 
-## E10b. JTBD Outcome Verification
+## E10b. JTBD 结果验证
 
-Locate the JTBD statement from E1 (stored in Section 1.3).
+定位 E1 产生的 JTBD 陈述（存于 Section 1.3）。
 
-Check: "If a user completes every Must-priority FR in Section 4, does that achieve the JTBD 'so I can [outcome]'?"
+检查："如果用户完成 Section 4 中全部 Must 优先级 FR，是否达成了 JTBD 的 'so I can [outcome]'？"
 
-- **YES** → proceed
-- **NO** → identify which part of the JTBD outcome is uncovered. Present the gap to the user via AskUserQuestion:
-  > "Your stated goal is '[JTBD outcome]'. The current requirements don't fully cover [missing aspect]. Should I add a requirement for this, or is the current scope sufficient?"
-  - User wants to add → create a new FR, return to E9 for classification
-  - User confirms the current scope is sufficient → record as **PARTIAL**, proceed
+- **YES** → 继续
+- **NO** → 识别 JTBD 结果中未覆盖的部分。通过 AskUserQuestion 向用户呈现缺口：
+  > "你陈述的目标是 '[JTBD outcome]'。当前需求未完全覆盖 [missing aspect]。是否需要为此新增一条需求，或当前范围已足够？"
+  - 用户选择新增 → 创建新 FR，返回 E9 分类
+  - 用户确认当前范围足够 → 记为 **PARTIAL**，继续
 
-**Gate**: JTBD verification blocks E11 until resolved. Acceptable outcomes:
-- **PASS** — JTBD fully achievable
-- **PARTIAL** — user explicitly confirmed current scope is sufficient despite incomplete JTBD coverage
+**关卡**：JTBD 校验阻塞 E11 直至解决。可接受结果：
+- **PASS** — JTBD 完全可达
+- **PARTIAL** — 用户显式确认尽管 JTBD 覆盖不完整，当前范围已足够
 
-FAIL (unresolved JTBD gap without user confirmation) cannot proceed to E11.
+FAIL（未经用户确认的未解决 JTBD 缺口）不可进入 E11。
 
 ## E10c. Pre-Mortem
 
-LLM self-assessment (no user interaction unless findings are non-trivial):
+LLM 自我评估（除非发现非平凡项，否则不与用户交互）：
 
-> "If we build everything in the SRS as written, what could still leave the user unsatisfied?"
+> "如果我们完全按 SRS 写的去建，用户仍可能不满意的是什么？"
 
-Check against:
-- Workaround probe answers from E2 — was every frustrating step in the current workaround addressed by at least one FR?
-- Scenario walkthrough narratives from E3 — were all extracted flow gaps resolved in the final FR list?
-- Hidden requirements from E5 — did every YES answer become an explicit NFR?
-- Pain Map items — are any only partially addressed (workaround eliminated but root cause remains)?
+对照检查：
+- E2 的 workaround probe 回答 — 现有变通流程中每一个令人沮丧的步骤是否都有至少一条 FR 处理？
+- E3 的场景走查叙述 — 所有提取到的流程缺口是否都在最终 FR 列表中得到解决？
+- E5 的 Hidden Requirements — 每个 YES 回答是否都变成了显式 NFR？
+- Pain Map 条目 — 是否存在只部分处理的项（变通流程被消除但根因仍在）？
 
-For each pre-mortem finding:
-- Should be an FR → add it (return to E9 for classification)
-- Should be an NFR → add it
-- Known risk but not actionable now → add to Section 11 Open Questions
+对每个 pre-mortem 发现：
+- 应为 FR → 新增（返回 E9 分类）
+- 应为 NFR → 新增
+- 已知风险但当前不可执行 → 加入 Section 11 Open Questions
 
-## E10d. Orphan FR Detection (Gold-Plating Check)
+## E10d. 孤儿 FR 检测（镀金检查）
 
-For each FR in Section 4, check if it has a traceable origin:
-- Linked to a Pain Map row (addresses a stated pain point)
-- Linked to the JTBD outcome (needed to achieve the stated goal)
-- Sourced from a walkthrough step (E3 extraction)
-- Sourced from Hidden Requirements (E5)
+对 Section 4 中每条 FR，检查其是否具有可追溯的起源：
+- 关联到 Pain Map 的某行（处理某个陈述的痛点）
+- 关联到 JTBD 结果（为达成目标所必需）
+- 来自走查步骤（E3 提取）
+- 来自 Hidden Requirements（E5）
 
-If an FR has **no traceable origin** from any of the above sources:
-- Check if any other FR depends on it (infrastructure/utility FRs are often necessary without direct pain point linkage)
-- If no dependency exists → flag in Section 11 Open Questions:
+若某 FR **无任何可追溯起源**：
+- 检查是否有其他 FR 依赖它（基础设施 / 工具类 FR 常无直接痛点关联）
+- 若无依赖 → 在 Section 11 Open Questions 中标记：
   > "FR-xxx has no traceable pain point or JTBD link — confirm in scope or defer to a future increment."
 
-Do **NOT** auto-remove orphan FRs. Surfacing them for user awareness is the action.
+**不得**自动移除孤儿 FR。呈现给用户知情就是本步的动作。
 
-## Output
+## 输出
 
-Write the alignment validation result into SRS Section 1.3:
+将对齐校验结果写入 SRS Section 1.3：
 
 ```
 **Alignment Validation**: PASS / PARTIAL / FAIL
@@ -89,5 +89,5 @@ Write the alignment validation result into SRS Section 1.3:
 - Orphan FRs flagged: N items in Open Questions / 0
 ```
 
-**PARTIAL** (with user-confirmed JTBD) is acceptable and does not block E11.
-**FAIL** on JTBD (E10b) without user confirmation blocks E11 until resolved.
+**PARTIAL**（经用户确认的 JTBD）可接受，不阻塞 E11。
+**FAIL** 于 JTBD（E10b）且未获用户确认时阻塞 E11 直至解决。

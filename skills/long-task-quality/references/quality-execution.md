@@ -1,77 +1,77 @@
-# Quality Gates — SubAgent Execution Reference
+# Quality Gates — SubAgent 执行参考
 
-You are a Quality Gates execution SubAgent. Follow these rules exactly. When finished, return your result using the **Structured Return Contract** at the bottom of this document.
+你是 Quality Gates 执行 SubAgent。严格遵循以下规则。完成后，使用本文件底部的 **Structured Return Contract** 返回结果。
 
 ---
 
-# Quality Gates & Verification
+# Quality Gates & Verification（关卡与验证）
 
-Three sequential gates that MUST pass before a feature can be marked "passing". No shortcuts, no exceptions.
+三道顺序关卡，在特性被标记为 "passing" 之前**必须**全部通过。无捷径，无例外。
 
-## The Iron Law
+## 铁律
 
 ```
 NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 ```
 
-If you haven't run the verification command in this message, you cannot claim it passes.
+若本条消息中未运行验证命令，则不得声称它通过。
 
 
-**On tool/environment errors**:
-1. **Read** error output — identify the specific tool or environment issue
-2. **Diagnose** root cause (tool not installed, env not activated, wrong path, missing config)
-3. **Attempt fix** — run `init.sh` if needed, or install the missing tool
-4. **Re-run** once
-5. **If still fails** → set Verdict to BLOCKED with error details
-6. **NEVER skip** — testing is a hard gate; no bypass allowed
+**工具 / 环境错误处理**：
+1. **读取**错误输出 — 识别具体的工具或环境问题
+2. **诊断**根因（工具未安装、环境未激活、路径错误、配置缺失）
+3. **尝试修复** — 必要时运行 `init.sh`，或安装缺失工具
+4. **重跑**一次
+5. **若仍失败** → 将 Verdict 设为 BLOCKED，附错误详情
+6. **绝不跳过** — 测试是硬关卡；不允许绕过
 
-## Gate 0: Real Test Verification
+## Gate 0：真实测试验证（Real Test Verification）
 
-Gate 0 runs BEFORE coverage. Coverage numbers are meaningless when the test suite is all-mock.
+Gate 0 在 coverage 之前运行。当测试套件全是 mock 时，覆盖率数字毫无意义。
 
-### Step 1: Run verification script
+### Step 1：运行校验脚本
 
 ```bash
 python scripts/check_real_tests.py feature-list.json --feature {current_feature_id} --require-for-deps
 ```
 
-The `--require-for-deps` flag cross-checks the feature's `required_configs[]` for connection-string keys (URL, HOST, PORT, etc.). If found, real tests are **mandatory** — pure-function exemption is blocked.
+`--require-for-deps` 标志会交叉检查特性的 `required_configs[]` 中是否含有连接串类键（URL、HOST、PORT 等）。若有，真实测试是**强制**的 — 纯函数豁免被阻止。
 
-Read script output:
-- **FAIL** (no real tests) → GATE 0 FAIL, return to TDD Red to write real tests
-- **FAIL** with "has external dependencies" → see Step 1b below
-- **WARN** (mock warnings found) → proceed to Step 2
-- **PASS** (real tests found, no mock warnings) → proceed to Step 3
+读取脚本输出：
+- **FAIL**（无真实测试） → GATE 0 FAIL，返回 TDD Red 撰写真实测试
+- **FAIL** 且 "has external dependencies" → 见下文 Step 1b
+- **WARN**（发现 mock 警告） → 进入 Step 2
+- **PASS**（发现真实测试，无 mock 警告） → 进入 Step 3
 
-### Step 1b: Dependency-blocked FAIL handling
+### Step 1b：依赖阻塞 FAIL 的处理
 
-If Gate 0 FAIL reason includes "has external dependencies but no real tests":
-1. This is NOT a code problem — it's an infrastructure/config problem
-2. Run: `python scripts/check_configs.py feature-list.json --feature {current_feature_id}`
-3. If configs are missing → set Verdict to **BLOCKED** with message: "Feature #{id} requires external dependencies ({config_names}) but configs are not provided. Use AskUserQuestion to request the user to provide the missing configs."
-4. If configs exist but services aren't running → read `env-guide.md`, start services, re-run Gate 0
-5. NEVER proceed without real tests for features with external dependencies
-6. NEVER claim pure-function exemption for features that have connection-string `required_configs[]`
+若 Gate 0 FAIL 原因含 "has external dependencies but no real tests"：
+1. 这**不是**代码问题 — 是基础设施 / 配置问题
+2. 运行：`python scripts/check_configs.py feature-list.json --feature {current_feature_id}`
+3. 若配置缺失 → 将 Verdict 设为 **BLOCKED**，信息："Feature #{id} requires external dependencies ({config_names}) but configs are not provided. Use AskUserQuestion to request the user to provide the missing configs."
+4. 若配置齐备但服务未运行 → 阅读 `env-guide.md`，启动服务，重跑 Gate 0
+5. 对有外部依赖的特性**绝不**无真实测试就继续
+6. 对含连接串 `required_configs[]` 的特性**绝不**声称纯函数豁免
 
-### Step 2: LLM sampling review (WARN only)
+### Step 2：LLM 采样评审（仅 WARN）
 
-For each mock warning flagged by the script:
-1. Read the corresponding real test function body
-2. Determine: is the mock targeting the **primary dependency** this real test claims to verify?
-   - Yes → real test is invalid; rewrite, re-run script
-   - No (mock is on an unrelated auxiliary service) → mark as legitimate, proceed
+对脚本标记的每条 mock 警告：
+1. 阅读对应真实测试函数体
+2. 判断：mock 是否针对该真实测试声称要验证的**主要依赖**？
+   - 是 → 真实测试无效；重写、重跑脚本
+   - 否（mock 在某个不相关的辅助服务上） → 视为合法，继续
 
-### Step 3: Run real tests (with skip detection)
+### Step 3：运行真实测试（含 skip 检测）
 
-Execute real tests in isolation using the run command from `env-guide.md` §3 (the Real Test Convention section in `long-task-guide.md` points to it):
-- All real tests MUST PASS
-- Any FAIL → GATE 0 FAIL, fix and re-run
-- **Skip detection (mandatory)**: Read the full test runner output. If ANY real test is reported as `skipped`, `pending`, `disabled`, or `ignored` — treat it as a GATE 0 FAIL. Real tests must execute, not skip.
-  - Common skip indicators: pytest `s` marker or "skipped" count > 0; JUnit `@Disabled`; Jest/Vitest "skipped"/"pending" count > 0; gtest "DISABLED_" prefix
-  - If skip is caused by missing infrastructure → service/DB is not running. Read `env-guide.md`, start the service, re-run.
-  - If skip is caused by an environment guard (`if not env: return`) → rewrite the test to assert-fail instead (Anti-Pattern #16). Real tests must fail loudly, not silently pass.
+使用 `env-guide.md` §3（`long-task-guide.md` 中的 Real Test Convention 章节指向它）的运行命令单独执行真实测试：
+- 所有真实测试**必须通过**
+- 任何 FAIL → GATE 0 FAIL，修复后重跑
+- **Skip 检测（强制）**：读取测试 runner 的完整输出。若**任一**真实测试被报告为 `skipped`、`pending`、`disabled` 或 `ignored` — 视为 GATE 0 FAIL。真实测试必须执行，不得跳过。
+  - 常见 skip 标志：pytest `s` 标记或 "skipped" 计数 > 0；JUnit `@Disabled`；Jest/Vitest "skipped"/"pending" 计数 > 0；gtest "DISABLED_" 前缀
+  - 若 skip 源于基础设施缺失 → 服务 / DB 未运行。阅读 `env-guide.md`，启动服务，重跑。
+  - 若 skip 源于环境 guard（`if not env: return`） → 改写测试为断言失败（反模式 #16）。真实测试必须高声失败，不得静默通过。
 
-### Evidence required
+### 所需证据
 ```
 Gate 0 Result:
 - Script output: [paste check_real_tests.py output]
@@ -81,7 +81,7 @@ Gate 0 Result:
 - Gate 0: PASS/FAIL
 ```
 
-### On Gate 0 FAIL
+### Gate 0 FAIL 时
 ```
 GATE 0 FAIL — [reason]
 Required action:
@@ -91,17 +91,22 @@ Required action:
 Do NOT skip Gate 0 and proceed to coverage.
 ```
 
-## Gate 1: Coverage
+## Gate 1：Coverage（覆盖率）
 
-After TDD Green (all tests pass), run the coverage tool.
+TDD Green 之后（全部测试通过），运行覆盖率工具。
 
-1. **Run** the coverage tool (activate env per `env-guide.md` §2; use coverage command from `env-guide.md` §3 with quiet execution — redirect output to `/tmp/cov-$$.log` and only extract on failure)
-2. **Read** the output — verify line%/branch% numbers are visible
-3. **Verify**: line coverage >= `[thresholds] line_coverage`, branch coverage >= `[thresholds] branch_coverage`
-4. **If FAIL**: identify uncovered lines/branches from the output → add tests → re-run TDD cycle for those paths
-5. **If PASS**: proceed to Gate 2
+1. **运行**覆盖率工具，采用**静默执行**（按 `env-guide.md` §2 激活环境；从 `env-guide.md` §3 读取 coverage 命令）：
+   ```bash
+   <coverage-cmd> > /tmp/cov-$$.log 2>&1; echo $? > /tmp/cov-$$.exit
+   ```
+2. **先读** `/tmp/cov-$$.exit` 的退出码：
+   - exit 0 → 仅提取覆盖率摘要行（通常 `grep -E "TOTAL|Coverage|line rate|branch rate" /tmp/cov-$$.log | tail -5`）。**不要**倾倒完整文件。
+   - 非零 → 提取最后 100 行；诊断工具错误
+3. **验证**：行覆盖率 >= `[thresholds] line_coverage`，分支覆盖率 >= `[thresholds] branch_coverage`
+4. **若覆盖率 FAIL**（低于阈值但工具成功运行）：从摘要识别未覆盖行 / 分支 → 增加测试 → 对这些路径重跑 TDD 循环。修复后重跑时，仅作用域到变更的测试文件 — 不要全量。
+5. **若 PASS**：进入 Gate 2
 
-**Evidence required:**
+**所需证据：**
 ```
 - Coverage summary showing line % and branch %
 - Line coverage >= threshold
@@ -109,78 +114,78 @@ After TDD Green (all tests pass), run the coverage tool.
 - List of uncovered lines (if any, with justification)
 ```
 
-## Gate 2: Verify & Mark
+## Gate 2：Verify & Mark（验证并标记）
 
-The final gate before marking a feature as "passing".
+将特性标记为 "passing" 前的最后一道关卡。
 
 ```
 
-1. IDENTIFY → Get test and coverage commands from `env-guide.md` §3 (single source of truth)
+1. IDENTIFY → 从 `env-guide.md` §3 获取 test 与 coverage 命令（单一事实源）
 
-2. RUN → Execute each command (fresh, in this message — not cached from earlier)
+2. RUN → 执行每个命令（在本消息内新鲜执行 — 不复用先前缓存）
 
-3. READ → Output for each command:
-   - Check exit codes (PASS/FAIL)
-   - Count test pass/fail/skip from output
-   - Read coverage percentages from output
+3. READ → 逐命令读取输出：
+   - 检查退出码（PASS/FAIL）
+   - 从输出统计 test 通过 / 失败 / 跳过 数量
+   - 从输出读取覆盖率百分比
 
-4. VERIFY → Does ALL output confirm the claim?
-   - All tests pass (0 failures)?
-   - Coverage >= thresholds?
+4. VERIFY → 所有输出是否确证声明？
+   - 全部测试通过（0 failures）？
+   - 覆盖率 >= 阈值？
 
-5. THEN CLAIM → Only now:
-   - Report results with evidence
+5. THEN CLAIM → 现在才：
+   - 带证据报告结果
 
-If ANY step fails → STOP. Do NOT claim passing. Fix the issue first.
+若任一步失败 → STOP。**不要**声称 passing。先修复问题。
 ```
 
-## Red Flag Words
+## 红旗词汇
 
-If you catch yourself using any of these, STOP and re-verify:
+若你发现自己用了下面任一说法，STOP 并重新验证：
 
 | Red Flag | Required Action |
 |----------|----------------|
-| "should pass" | Run the tests NOW |
-| "probably works" | Execute and verify NOW |
-| "seems to be working" | Get concrete test output |
-| "I believe this is correct" | Run verification command |
-| "this looks good" | Run automated tests |
-| "based on the implementation" | Tests verify behavior, not code |
-| "the tests should be green" | Run tests and read output |
-| "I've verified" (no output shown) | Show the actual output |
-| "coverage is probably fine" | Run coverage tool NOW |
+| "should pass" | 现在就运行测试 |
+| "probably works" | 现在就执行并验证 |
+| "seems to be working" | 取得具体测试输出 |
+| "I believe this is correct" | 运行验证命令 |
+| "this looks good" | 运行自动化测试 |
+| "based on the implementation" | 测试验证行为，而非代码 |
+| "the tests should be green" | 运行测试并读取输出 |
+| "I've verified"（未展示输出） | 展示实际输出 |
+| "coverage is probably fine" | 现在就运行覆盖率工具 |
 
-## Tool Setup
+## 工具配置
 
-If coverage tools are not yet configured for this project's tech stack, read `skills/long-task-quality/coverage-recipes.md` for full setup instructions per language (Python, Java, JavaScript, TypeScript, C, C++).
+若本项目技术栈尚未配置覆盖率工具，阅读 `skills/long-task-quality/coverage-recipes.md` 获取各语言（Python、Java、JavaScript、TypeScript、C、C++）的完整配置说明。
 
-## Verification Timing Summary
+## 验证时机一览
 
 | Event | What to verify |
 |-------|---------------|
-| After TDD Green + Refactor | `check_real_tests.py` output PASS, all real tests passing |
-| After TDD Green | Full test suite output |
-| After Coverage Gate | Coverage report (line% + branch%) |
-| After TDD Refactor | Full test suite (still passing) |
-| Before marking "passing" | ALL of the above + SRS acceptance criteria (via srs_trace) |
-| Before git commit | Full test suite (no broken code committed) |
+| TDD Green + Refactor 之后 | `check_real_tests.py` 输出 PASS，所有真实测试通过 |
+| TDD Green 之后 | 完整测试套件输出 |
+| Coverage Gate 之后 | 覆盖率报告（line% + branch%） |
+| TDD Refactor 之后 | 完整测试套件（仍通过） |
+| 标记 "passing" 之前 | 上述全部 + SRS 验收准则（经 srs_trace） |
+| git commit 之前 | 完整测试套件（不提交损坏代码） |
 
-## Anti-Patterns
+## 反模式
 
 | Anti-Pattern | Correct Approach |
 |---|---|
-| Mark "passing" after writing code without running tests | Run tests, read output, then mark |
-| Trust that refactoring didn't break anything | Re-run full suite after every refactor |
-| Read only the summary line of test output | Read complete output |
-| Skip re-verification at session start | Always smoke-test passing features |
-| Skip Gate 0 because "coverage will catch mock issues" | Coverage is blind to mock vs. real. Gate 0 runs first, always. |
-| Script reports WARN but proceed without reviewing | Must review each mock warning to determine if it targets the primary dependency. |
+| 写完代码未跑测试就标记 "passing" | 运行测试、读取输出，再标记 |
+| 相信重构未破坏任何东西 | 每次重构后重跑完整套件 |
+| 只读测试输出的摘要行 | 阅读完整输出 |
+| 会话开始不做复检 | 始终对 passing 特性做冒烟 |
+| 跳过 Gate 0，"覆盖率会抓到 mock 问题" | 覆盖率对 mock vs real 无感。Gate 0 始终先跑。 |
+| 脚本报 WARN 却不审阅直接继续 | 必须审阅每条 mock 警告判断其是否针对主要依赖。 |
 
 ---
 
 ## Structured Return Contract
 
-Aligned with the unified contract in `skills/long-task-work/references/structured-return-contract.md`. Return EXACTLY this format:
+与 `skills/long-task-work/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
 
 ```markdown
 ## SubAgent Result: long-task-quality
@@ -223,4 +228,4 @@ Aligned with the unified contract in `skills/long-task-work/references/structure
 | 1 | Critical/Major/Minor | [what failed, what was attempted] |
 ```
 
-**IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report results in the contract above.
+**重要**：**不要**在 feature-list.json 中将 feature 标记为 "passing" — 那是 orchestrator 的职责。在上述契约中只报告结果。

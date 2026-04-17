@@ -1,324 +1,267 @@
-# Feature-Level Detailed Design — SubAgent Execution Reference
+# Feature-Level Detailed Design — SubAgent 执行参考
 
-You are a Feature Design execution SubAgent. Follow these rules exactly. When finished, return your result using the **Structured Return Contract** at the bottom of this document.
+你是 Feature Design 执行 SubAgent。严格遵循以下规则。完成后，使用本文件底部的 **Structured Return Contract** 返回结果。
 
 ---
 
-# Feature-Level Detailed Design
+# Feature-Level Detailed Design（特性级详细设计）
 
-Produce a detailed design for a single feature, bridging system-level design (§4.N) and TDD implementation.
+为单一特性产出详细设计，在系统级设计（§4.N）与 TDD 实现之间搭桥。
 
-System design answers "WHAT classes exist and HOW they interact."
-This skill answers "WHAT each method does internally, WHAT can go wrong, and HOW to test it."
+系统设计回答 "WHAT classes exist and HOW they interact."
+本 skill 回答 "WHAT each method does（签名 + 前置 / 后置条件层面）、WHAT can go wrong、要复用的既有代码，以及 HOW to test it."
 
-## Inputs
+**设计哲学 — 务实精简**：本文档内部不再产出 flowchart、pseudocode、内部 sequence diagram、state diagram 或任务分解。TDD 直接读取 Interface Contract + Boundary Conditions + Test Inventory。实现细节用散文（"Implementation Summary"）而非 pseudocode — 代码本身是权威的实现来源。
 
-Read ALL of these BEFORE writing any design content:
+## 输入
 
-1. **Feature object** from feature-list.json — ID, title, description, srs_trace, ui flag, dependencies, priority (verification_steps if present)
-2. **System design section** — full §4.N from the design document (read the entire subsection, NOT grep)
-3. **SRS requirement** — full FR-xxx from the SRS document
-4. **UCD sections** (if `"ui": true`) — component/page prompts from the UCD document
-5. **Constraints & assumptions** from feature-list.json root
-6. **Related NFRs** — NFR-xxx from SRS traceable to this feature
-7. **Existing code** — if dependency features are passing, read their public interfaces (imports, class/function signatures)
-8. **Internal API contracts** (if §6.2 exists) — from Design Section 6.2, read rows where this feature appears as Provider or Consumer. These define cross-feature schemas that this feature's Interface Contract (§3) must align with.
+写任何设计内容**之前**先读完以下全部：
 
-## Template
+1. **Feature 对象**（来自 feature-list.json） — ID、title、description、srs_trace、ui flag、dependencies、priority（如有 verification_steps）
+2. **系统设计章节** — 设计文档中完整的 §4.N（读整个子章节，不要用 grep）
+3. **SRS 需求** — SRS 文档中完整的 FR-xxx
+4. **UCD 章节**（若 `"ui": true`） — UCD 文档中的 component/page 提示词
+5. **Constraints & assumptions**（来自 feature-list.json 根）
+6. **相关 NFR** — SRS 中可追溯到本特性的 NFR-xxx
+7. **存量代码复用候选** — 以签名、方法名模式、行为关键字在 codebase 中 grep 相似函数 / 类（见 §1c 流程）。最大化复用；**不**要重新实现已存在的东西。
+8. **Internal API 契约**（若存在 §6.2） — 读 Design Section 6.2 中本特性作为 Provider 或 Consumer 出现的行。这些定义了本特性 Interface Contract（§Interface Contract）必须对齐的跨特性 schema。
+9. **存量代码库约束** — 若 Design §13 或 `env-guide.md` §4 存在，读其中的强制内部库、禁用 API、命名约定、错误处理模式。所有新代码必须合规。
 
-Use `skills/long-task-feature-design/references/feature-design-template.md` as the structural template. Copy the template, fill each section for the target feature.
+## 模板
 
-## Checklist
+使用 `skills/long-task-feature-design/references/feature-design-template.md` 作为结构模板。复制模板，为目标特性填充各章节。
 
-You MUST complete each step in order:
+## 检查清单
 
-### 1. Load Context
+必须按顺序完成每一步：
 
-Read all input artifacts listed in Inputs above.
+### 1. 加载上下文
 
-### 1b. Ambiguity Scan
+读取上文 "输入" 中列出的所有输入工件。
 
-After reading all inputs and BEFORE writing any design content, scan for specification ambiguities that could affect design correctness. This scan uses the following taxonomy:
+### 1b. 歧义扫描
+
+读完全部输入、撰写任何设计内容**之前**，扫描可能影响设计正确性的规格歧义。此扫描使用以下分类：
 
 | Code | What to check |
 |------|---------------|
-| `SRS-VAGUE` | Acceptance criterion contains vague language ("fast", "user-friendly", "appropriate", "should handle") without measurable thresholds or concrete behaviors |
-| `SRS-DESIGN-CONFLICT` | SRS requirement and Design §4.N contradict on interface type, data format, behavior, or error handling |
-| `SRS-MISSING` | Acceptance criterion has no Given/When/Then or the expected result is not specified |
-| `ATS-MISMATCH` | ATS requires a test category (e.g., SEC) but the feature's observable behavior has no surface for that category |
-| `UCD-VAGUE` | Visual requirement is not concrete enough to derive DOM selectors or testable assertions (ui:true only) |
-| `DEP-AMBIGUOUS` | Cross-feature interface is unclear — missing or incomplete §6.2 entry for a dependency |
-| `NFR-GAP` | Referenced NFR has no measurable threshold (e.g., "should scale" without numbers) |
+| `SRS-VAGUE` | 验收准则含模糊语言（"fast"、"user-friendly"、"appropriate"、"should handle"）且无可度量阈值或具体行为 |
+| `SRS-DESIGN-CONFLICT` | SRS 需求与 Design §4.N 在接口类型、数据格式、行为或错误处理上矛盾 |
+| `SRS-MISSING` | 验收准则无 Given/When/Then 或未指定预期结果 |
+| `ATS-MISMATCH` | ATS 要求某测试类别（例如 SEC）但特性的可观察行为无对应表面 |
+| `UCD-VAGUE` | 视觉需求不够具体，无法推导 DOM 选择器或可测试断言（仅 ui:true） |
+| `DEP-AMBIGUOUS` | 跨特性接口不清晰 — 依赖的 §6.2 条目缺失或不完整 |
+| `NFR-GAP` | 引用的 NFR 无可度量阈值（如 "should scale" 而无数字） |
 
-**Scan procedure:**
+**扫描流程：**
 
-1. For each SRS acceptance criterion (from srs_trace requirements): check if it contains measurable, specific, testable conditions. Flag vague language without numeric thresholds or concrete behaviors → `SRS-VAGUE`
-2. For each SRS requirement mapped to this feature: cross-reference against Design §4.N. Flag contradictions in interface type, data format, behavior, or error handling → `SRS-DESIGN-CONFLICT`
-3. For each SRS acceptance criterion: verify Given/When/Then exists with explicit expected results → `SRS-MISSING`
-4. For each ATS-required category (if ATS doc provided): check if the feature's observable behavior has a testable surface for that category → `ATS-MISMATCH`
-5. For UCD sections (if ui:true): check if visual requirements specify concrete colors, typography, spacing, or selectors → `UCD-VAGUE`
-6. For §6.2 contracts where this feature is Provider or Consumer: check if schemas are complete (no missing fields, no ambiguous types) → `DEP-AMBIGUOUS`
-7. For referenced NFRs: verify measurable thresholds exist → `NFR-GAP`
+1. 对每条 SRS 验收准则（来自 srs_trace 需求）：检查是否含可度量、具体、可测试的条件。标记无数值阈值或具体行为的模糊语言 → `SRS-VAGUE`
+2. 对映射到本特性的每条 SRS 需求：与 Design §4.N 交叉核对。标记接口类型、数据格式、行为或错误处理上的矛盾 → `SRS-DESIGN-CONFLICT`
+3. 对每条 SRS 验收准则：验证 Given/When/Then 存在且显式给出预期结果 → `SRS-MISSING`
+4. 对每个 ATS 要求的类别（若提供了 ATS 文档）：检查特性可观察行为是否具备该类别的可测表面 → `ATS-MISMATCH`
+5. 对 UCD 章节（若 ui:true）：检查视觉需求是否指定具体颜色、字体、间距或选择器 → `UCD-VAGUE`
+6. 对本特性为 Provider 或 Consumer 的 §6.2 契约：检查 schema 是否完整（无缺失字段、无歧义类型） → `DEP-AMBIGUOUS`
+7. 对引用的 NFR：验证是否存在可度量阈值 → `NFR-GAP`
 
-**For each detected ambiguity, produce a structured record:**
+**对每个检测到的歧义，产出结构化记录：**
 ```
 - Category: [code from taxonomy]
 - Source: [document path + section/line reference]
 - Description: [what is ambiguous]
-- Impact: [which design sections cannot be completed without resolution — e.g., "§3 Interface Contract postcondition", "§7 Test Inventory expected result"]
+- Impact: [which design sections cannot be completed without resolution — e.g., "§Interface Contract postcondition", "§Test Inventory expected result"]
 - Suggested interpretation: [SubAgent's best guess based on context, if one exists; "none" if no reasonable interpretation]
 - Question for user: [specific, actionable question that would resolve the ambiguity]
 ```
 
-**For `category: "bugfix"` features**: only scan `SRS-VAGUE` and `SRS-DESIGN-CONFLICT` on the bug's acceptance criteria. Skip `UCD-VAGUE`, `ATS-MISMATCH`, and `NFR-GAP` (bugfix features focus on root cause, not full specification coverage).
+**对 `category: "bugfix"` 特性**：仅对 bug 的验收准则扫描 `SRS-VAGUE` 与 `SRS-DESIGN-CONFLICT`。跳过 `UCD-VAGUE`、`ATS-MISMATCH`、`NFR-GAP`（bugfix 聚焦根因，而非全量规格覆盖）。
 
-**Decision gate:**
-- **Zero ambiguities detected** → proceed to Step 2 normally. No friction added.
-- **All ambiguities have a reasonable suggested interpretation AND impact is LIMITED to non-critical sections** (does NOT affect Interface Contract signatures, Test Inventory expected results, or cross-feature §6.2 contracts) → proceed with assumptions. Document each assumption in the design document's `## Clarification Addendum` section with Authority = "assumed". Set Verdict to `PASS`. Include assumption count in `### Next Step Inputs`.
-- **Any ambiguity has HIGH impact** (affects Interface Contract signatures, Test Inventory expected results, or cross-feature contracts) **OR has no reasonable suggested interpretation** → set Verdict to `CLARIFY`. Include the full Ambiguities table in the Structured Return Contract. Do NOT proceed to Step 2 — the orchestrator will collect user answers and re-dispatch.
+**决策关卡：**
+- **未检测到歧义** → 正常进入 Step 1c。无额外摩擦。
+- **所有歧义均有合理的建议解释，且影响仅限于非关键章节**（**不**影响 Interface Contract 签名、Test Inventory 预期结果、跨特性 §6.2 契约） → 以假设继续。将每条假设记录在设计文档的 `## Clarification Addendum` 章节，Authority = "assumed"。Verdict 设为 `PASS`。在 `### Next Step Inputs` 中包含 assumption 数量。
+- **任一歧义有高影响**（影响 Interface Contract 签名、Test Inventory 预期结果或跨特性契约） **或无合理的建议解释** → Verdict 设为 `CLARIFY`。在 Structured Return Contract 中包含完整 Ambiguities 表。**不**要进入 Step 1c — orchestrator 会收集用户回答并重新分发。
 
-> **On re-dispatch with Clarification Addendum**: If the SubAgent prompt includes a `## Clarification Addendum (user-approved resolutions)` section, treat those resolutions as authoritative constraints. Do NOT re-flag them as ambiguities. Incorporate them into the design as if they were in the original SRS/Design documents.
+> **携带 Clarification Addendum 重新分发时**：若 SubAgent 提示词含 `## Clarification Addendum (user-approved resolutions)` 章节，将这些处置视为权威约束。**不**要再把它们标记为歧义。按其已在原 SRS / Design 文档中存在那样纳入设计。
 
-### 2. Component Data-Flow Diagram
+### 1c. 存量代码复用检查（强制 — 最大化复用原则）
 
-Show THIS feature's internal components and how data flows between them at runtime. This is NOT a copy of the system design class diagram — it is a **runtime data-flow view** showing what data enters, how it transforms, and what exits.
+**核心原则**：若既有代码已实现本特性所需，**复用**它。不要重实现。
 
-Requirements:
-- Mermaid `graph` or `flowchart` format
-- Label edges with data types (what flows between components)
-- Include external dependencies as dashed-border boxes
-- Every component maps to a class or module to be implemented
+**流程**：
 
-> **Skip rule**: If the feature is a single class with a single method and no internal component collaboration, write "N/A — single-class feature, see Interface Contract below"
+1. 从特性的 Interface Contract 草稿（方法名、参数类型）、SRS 验收准则关键字与特性标题 / 描述中的领域名词推导**复用搜索词**。
+2. **Grep 代码库**，每个词使用精确匹配与模糊变体：
+   - 方法名：`<verb><Noun>` 与 `<verb>_<noun>` 变体（如 `findUser`、`find_user`）
+   - 类名：主领域名词 + 常见后缀（`UserService`、`UserRepository`、`UserManager`）
+   - 签名：从草稿 Interface Contract 提取的返回类型 + 参数类型组合
+3. 对每个候选匹配：
+   - 读取既有函数的签名、docstring / 注释及 5-10 行函数体
+   - 判定：**covers** 本特性需求（直接复用） / **close，需扩展**（复用 + 扩展） / **unrelated**（跳过）
+4. 在设计文档 **§Implementation Summary — Existing Code Reuse** 表中记录发现：
+   - 为每个 `covers` / `close` 匹配填充一行
+   - 若搜索 ≥3 个词后无匹配，写 `N/A — searched keywords: [<terms>], no reusable match`
 
-### 3. Interface Contract
+**禁止**：若发现可复用匹配（`covers` 或 `close`），Interface Contract **必须**委托给它。默默重写可复用的 helper 是缺陷（TDD Refactor 的静态分析会捕捉，但在此处提前捕捉更好）。
 
-For each PUBLIC method this feature exposes or modifies:
+**存量代码库约束绑定**（若 Design §13 或 env-guide.md §4 存在）：
+- §13.1 / §4.1 强制内部库：新代码**必须**为相应领域（HTTP、日志、配置等）使用这些库
+- §13.2 / §4.2 禁用 API：新代码**不得**引用这些；若复用搜索发现禁用 API，不要复用 — 改搜已批准的替代
+- §13.5 / §4.3 命名约定：新方法 / 类名必须遵循
+
+### 2. Interface Contract
+
+对本特性暴露或修改的每个**公开**方法：
 
 | Method | Signature | Preconditions | Postconditions | Raises |
 |--------|-----------|---------------|----------------|--------|
-| name   | full typed signature | what must be true before call | what is guaranteed after call | exception + condition |
+| name   | 完整带类型签名 | 调用前必须成立 | 调用后被保证 | 异常 + 条件 |
 
-Rules:
-- Preconditions use Given/When style from SRS acceptance criteria
-- Postconditions are specific and testable (not "returns correct result")
-- Every SRS acceptance criterion (from srs_trace requirements) must trace to at least one method's postcondition
-- Include internal methods only if they contain non-trivial logic
-- **§6.2 alignment rule**: For methods that produce or consume cross-feature data, the method signature (parameters, return type) MUST be compatible with the schema defined in Design Section 6.2. If the feature is a **Provider**, postconditions MUST guarantee the Response Schema. If a **Consumer**, preconditions MUST assume the Request Schema format. Any deviation requires explicit justification in Design Rationale and triggers the Contract Deviation Protocol below.
+规则：
+- Preconditions 使用 SRS 验收准则的 Given/When 风格
+- Postconditions 必须具体可测（不是 "returns correct result"）
+- 每条 SRS 验收准则（来自 srs_trace 需求）必须追溯到至少一个方法的 postcondition
+- `Raises` 列是错误条件的权威来源 — TDD Rule 4 直接读取该列以推导负向测试
+- 仅当内部方法含非平凡逻辑时才包含它
+- **§6.2 对齐规则**：对产生或消费跨特性数据的方法，方法签名（参数、返回类型）**必须**与 Design Section 6.2 中定义的 schema 兼容。若本特性为 **Provider**，postconditions **必须**保证 Response Schema。若为 **Consumer**，preconditions **必须**假定 Request Schema 格式。任何偏离都需要在 Design Rationale 中显式说明并触发下文的 Contract Deviation Protocol。
 
-### Contract Deviation Protocol
+### Contract Deviation Protocol（契约偏离协议）
 
-If during feature design, a §6.2 contract is found to be incorrect, insufficient, or technically infeasible:
+若特性设计期间发现某 §6.2 契约不正确、不充分或技术不可行：
 
-1. **DO NOT silently deviate** — a mismatched contract will cause integration failures
-2. **Record the deviation** in the design document's Design Rationale section:
-   - Contract ID (e.g., IAPI-001)
-   - Original schema vs. proposed change
-   - Technical reason for the change
-   - Impact on Consumer features (list affected feature IDs)
-3. **Set Verdict to BLOCKED** with Issue: "Contract deviation requires design update"
-4. The orchestrator (long-task-work) will escalate to user via AskUserQuestion
-5. If approved: user updates §6.2 in the design doc; orchestrator re-dispatches SubAgent
-6. If rejected: SubAgent must conform to the original contract
+1. **不得**默默偏离 — 不匹配的契约会导致集成失败
+2. 在设计文档的 Design Rationale 章节**记录偏离**：
+   - Contract ID（如 IAPI-001）
+   - 原始 schema vs. 建议变更
+   - 变更的技术原因
+   - 对 Consumer 特性的影响（列出受影响的 feature ID）
+3. Verdict 设为 **BLOCKED**，Issue："Contract deviation requires design update"
+4. orchestrator（long-task-work）通过 AskUserQuestion 升级给用户
+5. 若批准：用户更新设计文档中的 §6.2；orchestrator 重新分发 SubAgent
+6. 若拒绝：SubAgent 必须遵循原契约
 
-### 3b. Visual Rendering Contract (mandatory for `"ui": true`)
+### 2b. Visual Rendering Contract（`"ui": true` 强制）
 
-For features with `"ui": true`, specify ALL visual elements the user must see. This contract is the source of truth for TDD Rule 7 (positive rendering tests) and Feature-ST (rendering verification).
+对 `"ui": true` 的特性，指定用户必须看到的所有视觉元素。本契约是 TDD Rule 7（正向渲染测试）与 Feature-ST（渲染验证）的事实源。
 
-**Source data**: Read the SRS requirement's `Visual output` field (what the user sees change) + the UCD component/page prompts (how it should look) + the system design §4.N UI/UX approach.
+**数据来源**：读取 SRS 需求的 `Visual output` 字段（用户看到的变化）+ UCD 的 component/page 提示词（外观）+ 系统设计 §4.N 的 UI/UX 方案。
 
-**How to fill each column**:
-- **Visual Element**: name each distinct visual thing the user sees (e.g., "snake body segments", "game board grid", "score counter", "food item"). NOT abstract concepts like "the UI" or "the page".
-- **DOM/Canvas Selector**: a concrete CSS selector (`canvas#game-board`, `div.snake-segment`, `#score-display`) or canvas element ID. Must be specific enough for `document.querySelector()` to find it.
-- **Rendered When**: the trigger that causes this element to appear (page load, game start, state change, user action)
-- **Visual State Variants**: different visual appearances based on state (alive=green, dead=red; selected=blue border, unselected=grey)
-- **Minimum Dimensions**: expected size (20x20px per cell, full viewport width, etc.)
-- **Data Source**: what data drives the rendering (GameState.segments[], API response, form input)
+**如何填写每列**：
+- **Visual Element**：为用户看到的每个独立视觉物命名（如 "贪吃蛇身段"、"game board grid"、"score counter"、"food item"）。**不是**抽象概念如 "the UI" 或 "the page"。
+- **DOM/Canvas Selector**：具体 CSS 选择器（`canvas#game-board`、`div.snake-segment`、`#score-display`）或 canvas 元素 ID。必须具体到 `document.querySelector()` 能找到。
+- **Rendered When**：让此元素出现的触发器（页面加载、游戏开始、状态变化、用户动作）
+- **Visual State Variants**：基于状态的不同外观（alive=green, dead=red；selected=blue border, unselected=grey）
+- **Minimum Dimensions**：预期尺寸（每格 20x20px、全视口宽度等）
+- **Data Source**：驱动渲染的数据（GameState.segments[]、API response、form input）
 
-**Positive rendering assertions**: for each element, write a testable statement of what MUST be visually present after the trigger. Not "element is visible" but "canvas has non-transparent pixels in the game board region" or "div.snake-segment count equals GameState.segments.length".
+**正向渲染断言**：对每个元素，写出触发后**必须**视觉存在的可测陈述。不要写 "element is visible"，而应写 "canvas 在 game board 区域有非透明像素" 或 "div.snake-segment 数量等于 GameState.segments.length"。
 
-**Interactive depth assertions**: for each interactive element, write what interaction it responds to and what visual change results. A rendered element that doesn't respond to its designed interaction is a "display-only" defect.
+**交互深度断言**：对每个交互元素，写出它响应哪种交互及产生的视觉变化。已渲染但不响应设计意图交互的元素即 "display-only" 缺陷。
 
-> **Skip rule**: Write "N/A — backend-only feature" ONLY if `"ui": false`. If `"ui": true`, this section is mandatory and cannot be skipped — even for features that seem "mostly backend" but have `"ui": true"`.
+> **跳过规则**：**仅当** `"ui": false` 才可写 "N/A — backend-only feature"。若 `"ui": true`，本节强制，不能跳过 — 即便特性"大部分偏后端"但 `"ui": true`。
 
-### 4. Internal Sequence Diagram
+### 3. Implementation Summary
 
-Show method-to-method calls WITHIN this feature's implementation. Unlike the system design's sequence diagram (system-wide flow), this shows the feature's own classes/functions collaborating.
+写 **3-5 段散文**描述本特性将如何构建。每段聚焦以下一个方面：
 
-Requirements:
-- Mermaid `sequenceDiagram` format
-- Must cover the main success path
-- Must cover at least one error path per Raises entry in Interface Contract
-- Participants are the feature's OWN classes/functions
+1. **要创建或修改的主要类 / 函数** — 名称与文件，不重复 Interface Contract 签名
+2. **调用链** — 运行时谁调谁（如 "HTTP handler → service → repository → DB"）
+3. **关键设计决策或非显见约束** — 为何选此方法而非替代、要注意什么陷阱
+4. **遗留 / 存量代码交互点** — 本特性触及哪些既有模块、如何与 `env-guide.md §4` 存量代码库约束对齐（强制内部库、禁用 API、命名约定）
+5. **§6.2 Internal API Contract 集成** — 若本特性是 Provider/Consumer，如何满足共享 schema
 
-> **Skip rule**: If the feature has only one class with no internal cross-method delegation worth diagramming, write "N/A — single-class implementation, error paths documented in Algorithm §5 error handling table"
+**散文指南**：目标读者是后续实现代码的人。使用具体文件路径、类名、方法名。**不**包含 pseudocode、flowchart、Mermaid 图 — 结构契约由 Interface Contract + Boundary Conditions + Test Inventory 承载。
 
-### 5. Algorithm / Core Logic
+### 3a. Boundary Conditions（除非显式 N/A 否则必填）
 
-For each non-trivial method (anything beyond simple delegation or CRUD):
-
-**a) Flow diagram** (Mermaid `flowchart TD`):
-- Decision nodes for every branching condition
-- Process nodes for transformations
-- Terminal nodes for return/raise
-
-**b) Pseudocode**:
-```
-FUNCTION name(param1: Type, param2: Type) -> ReturnType
-  // Step 1: [major step]
-  // Step 2: [formula or key decision]
-  //         e.g., score = Σ 1/(k + rank_i) for each list
-  // Step 3: [edge case handling]
-  //         IF input_list is empty THEN return []
-  RETURN result
-END
-```
-
-**c) Boundary decisions table**:
+对每个带数值范围、大小或可空输入参数的方法，填此表：
 
 | Parameter | Min | Max | Empty/Null | At boundary |
 |-----------|-----|-----|------------|-------------|
 | [param]   | [val] | [val] | [behavior] | [behavior] |
 
-**d) Error handling table**:
+TDD Rule 4 依此表推导可能的错误实现测试。若特性无非平凡参数（按 ID 纯查询、flag 切换等），写 "N/A — no non-trivial boundary parameters"。
 
-| Condition | Detection | Response | Recovery |
-|-----------|-----------|----------|----------|
-| [condition] | [how detected] | [exception or default] | [caller action] |
+### 3b. Existing Code Reuse（来自 Step 1c）
 
-> **Skip rule**: If a method is pure delegation (calls another service, returns result), write "Delegates to [X] — see Feature #N" instead of a full algorithm section. An empty section without explicit skip is a defect.
+填充 §Implementation Summary 中的 **Existing Code Reuse** 表：
 
-### 6. State Diagram (if applicable)
+| Existing Symbol | Location (file:line) | Reused Because |
+|-----------------|---------------------|----------------|
+| `UserRepository.findByEmail` | `src/repos/UserRepository.java:L42` | 既有查询已满足本特性的查找需求 |
 
-For features that manage stateful objects (entities with lifecycle):
+若 Step 1c 未找到复用候选，写 "N/A — greenfield feature" 或 "N/A — searched keywords: [<terms>], no reusable match"。
 
-- Mermaid `stateDiagram-v2` format
-- All valid states and transitions
-- Transition triggers (events/method calls)
-- Guard conditions on transitions
+### 4. Test Inventory
 
-> **Skip rule**: Write "N/A — stateless feature" if no object lifecycle exists. Most query/transform features are stateless.
-
-### 7. Test Inventory
-
-Build this table as the FINAL design step — it synthesizes all sections above into concrete test scenarios.
+作为设计的**最后**一步构建此表 — 它综合 Interface Contract、Boundary Conditions 与 Visual Rendering Contract，形成具体的测试场景。
 
 | ID | Category | Traces To | Input / Setup | Expected | Kills Which Bug? |
 |----|----------|-----------|---------------|----------|-----------------|
-| A  | FUNC/happy | FR-xxx AC-1 | [specific values] | [exact result] | [wrong impl] |
-| B  | FUNC/error | §3 Raises row | [trigger] | [exception type + msg] | [missing branch] |
-| C  | BNDRY/edge | §5c boundary table | [edge value] | [behavior] | [off-by-one] |
-| D  | FUNC/state | §6 transition | [pre-state + event] | [post-state] | [missing guard] |
-| E  | INTG/db    | §3 method + required_configs | [real DB setup] | [data persisted + queryable] | [connection not established / wrong table] |
-| F  | INTG/api   | §4.N cross-service call | [real HTTP endpoint] | [correct response schema] | [wrong endpoint / timeout not handled] |
+| A  | FUNC/happy | FR-xxx AC-1 | [具体值] | [精确结果] | [可捕获的错误实现] |
+| B  | FUNC/error | §Interface Contract Raises row | [触发] | [异常类型 + 消息] | [缺失分支] |
+| C  | BNDRY/edge | §Implementation Summary Boundary Conditions | [边界值] | [行为] | [off-by-one] |
+| D  | INTG/db    | §Interface Contract + required_configs | [真实 DB setup] | [数据已持久化且可查询] | [连接未建立 / 错表] |
+| E  | INTG/api   | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点 / 未处理 timeout] |
 
-Category format: `MAIN/subtag` where MAIN is one of `FUNC, BNDRY, SEC, UI, PERF, INTG` and subtag is a free-form label.
+Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` 之一，subtag 为自由标签。
 
-Rules:
-- Minimum 1 row per SRS acceptance criterion (from srs_trace requirements)
-- Negative tests (FUNC/error + BNDRY/*) >= 40% of total rows
-- "Traces To" references the design section the test derives from
-- "Kills Which Bug?" names a specific wrong implementation this test catches
+规则：
+- 每条 SRS 验收准则（来自 srs_trace 需求）至少 1 行
+- 负向测试（FUNC/error + BNDRY/*）>= 总行数 40%
+- "Traces To" 引用测试所推导的设计章节
+- "Kills Which Bug?" 指明本测试能捕捉的具体错误实现
 
-**ATS category alignment** (if ATS doc was provided): Every main category listed in the ATS mapping table for this feature's requirement(s) MUST appear as at least one row's Category prefix in this Test Inventory. For example, if ATS requires SEC for FR-005, at least one Test Inventory row must have Category = `SEC/*`. Missing ATS categories → add rows before proceeding to §8.
+**ATS 类别对齐**（若提供了 ATS 文档）：ATS 映射表中针对本特性需求列出的每个主要类别，**必须**在 Test Inventory 中至少作为一行 Category 前缀出现。例如，若 ATS 对 FR-005 要求 SEC，至少一行 Test Inventory 的 Category 必须为 `SEC/*`。缺失 ATS 类别 → 在进入 §5 前补充行。
 
-**Visual Rendering Coverage** (mandatory for `"ui": true`): For each positive rendering assertion in §3b (Visual Rendering Contract), add at least one `UI/render` Test Inventory row. "Traces To" = §3b Visual Rendering Contract, specific element row. "Kills Which Bug?" = the rendering failure this test catches (e.g., "render function never called", "canvas blank", "DOM element not appended"). If the Visual Rendering Contract lists N visual elements, there must be at least N `UI/render` rows.
+**视觉渲染覆盖**（`"ui": true` 强制）：对 §Visual Rendering Contract 的每条正向渲染断言，至少添加一行 `UI/render` Test Inventory。"Traces To" = §Visual Rendering Contract 中的具体元素行。"Kills Which Bug?" = 本测试能捕捉的渲染失败（如 "render function never called"、"canvas blank"、"DOM element not appended"）。若 Visual Rendering Contract 列出 N 个视觉元素，至少要有 N 行 `UI/render`。
 
-**Integration test rows (INTG category):**
-- For features with external dependencies (DB, HTTP services, file system, third-party SDK): add ≥1 `INTG/*` row per dependency type
-- Derive from: Interface Contract (§3) methods that interact with external systems + `required_configs[]` entries with connection-string keys
-- "Traces To" = §3 method + the specific external dependency
-- "Kills Which Bug?" = connection/integration failure the unit mock would miss
-- If feature is pure computation with no external deps: write "INTG: N/A — pure function, no external I/O" (mirrors TDD Rule 5 exemption)
+**集成测试行（INTG 类别）：**
+- 对有外部依赖（DB、HTTP 服务、文件系统、第三方 SDK）的特性：每类依赖至少 1 行 `INTG/*`
+- 来源：Interface Contract 中与外部系统交互的方法 + `required_configs[]` 中连接串类键
+- "Traces To" = §Interface Contract 方法 + 具体外部依赖
+- "Kills Which Bug?" = 单元 mock 会漏掉的连接 / 集成失败
+- 若特性为无外部依赖的纯计算：写 "INTG: N/A — pure function, no external I/O"（与 TDD Rule 5 豁免一致）
 
-**Relationship with TDD**: This table is the PRIMARY INPUT for TDD Red (long-task-tdd Step 1). TDD Red uses this table as its starting point and may add tests per its own Rule 1-5 (category coverage, assertion quality, real test requirements). The Test Inventory provides the design-driven scenarios; TDD adds implementation-driven scenarios discovered during coding.
+**与 TDD 的关系**：本表是 TDD Red（long-task-tdd Step 1）的**主要输入**。TDD Red 以本表为起点，并可依其自身 Rule 1-5（类别覆盖、断言质量、真实测试要求）添加测试。Test Inventory 提供设计驱动场景；TDD 添加编码过程中发现的实现驱动场景。
 
-**Design Interface Coverage Gate (mandatory — execute before proceeding to §8):**
+**Design Interface Coverage Gate（最终化前强制执行）：**
 
-1. Re-read §4.N of the system design document
-2. Extract ALL named functions, methods, endpoints, middleware, validators,
-   and authorization checks (e.g., `check_repo_access`, `validate_input`)
-3. For EACH named item: confirm at least one Test Inventory row exercises it
-   (match in "Traces To" or "Input / Setup" columns)
-4. If ANY design-specified function has zero Test Inventory coverage:
-   - Add row(s) — typically error/security category
-   - Set "Traces To" = the specific design section (e.g., "§4.5.3 ACL check")
-5. Re-verify negative test ratio ≥ 40% after additions
+1. 重新读取系统设计文档 §4.N
+2. 提取**所有**具名函数、方法、endpoint、middleware、validator、鉴权检查（如 `check_repo_access`、`validate_input`）
+3. 对**每个**具名项：确认至少一行 Test Inventory 使用它
+   （在 "Traces To" 或 "Input / Setup" 列中匹配）
+4. 若**任何**设计指定的函数无 Test Inventory 覆盖：
+   - 添加行 — 通常为 error/security 类别
+   - "Traces To" = 具体设计章节（如 "§4.5.3 ACL check"）
+5. 补充后重新确认负向测试占比 ≥ 40%
 
-This is the PRIMARY defense against spec drift. If the design says "check_repo_access
-enforces ACL" and no test row covers it, the TDD phase will silently skip it —
-causing a late-stage finding that triggers cascading mock-setup costs.
-
-### 8. TDD Task Decomposition
-
-After the design is complete, decompose into TDD tasks.
-
-**Task granularity**: Each task should be 2-5 minutes of work. If a task would take longer, split it.
-
-**Task structure**:
-
-#### Task 1: Write failing tests
-**Files**: [exact paths]
-**Steps**:
-1. Create test file with imports
-2. Write test code for each row in Test Inventory (§7):
-   - Include mock setup, specific input values, concrete assertions
-   - Test A: [matching table row A]
-   - Test B: [matching table row B]
-3. Run: `[test command]`
-4. **Expected**: All tests FAIL for the right reason
-
-#### Task 2: Implement minimal code
-**Files**: [exact paths]
-**Steps**:
-1. [Exact change referencing Algorithm §5 pseudocode]
-2. [Exact change referencing Interface Contract §3]
-3. Run: `[test command]`
-4. **Expected**: All tests PASS
-
-#### Task 3: Coverage Gate
-1. Run: `[coverage command]`
-2. Check thresholds. If below: return to Task 1.
-3. Record coverage output as evidence.
-
-#### Task 4: Refactor
-1. [Specific refactoring actions]
-2. Run full test suite. All tests PASS.
+这是对规格漂移的主要防线。若设计说 "check_repo_access enforces ACL" 而无测试行覆盖它，TDD 阶段会默默跳过 — 造成后期发现并引发连锁 mock-setup 成本。
 
 ### Verification Checklist
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Interface Contract postconditions
-- [ ] All SRS acceptance criteria (from srs_trace) traced to Test Inventory rows
-- [ ] Algorithm pseudocode covers all non-trivial methods
-- [ ] Boundary table covers all algorithm parameters
-- [ ] Error handling table covers all Raises entries
-- [ ] Test Inventory negative ratio >= 40%
-- [ ] Visual Rendering Contract complete for ui:true features (all visual elements listed, positive rendering assertions defined, interactive depth assertions defined)
-- [ ] Each Visual Rendering Contract element has ≥1 UI/render Test Inventory row
-- [ ] Every skipped section has explicit "N/A — [reason]"
-- [ ] All functions/methods named in §4.N have at least one Test Inventory row
+- [ ] 全部 SRS 验收准则（来自 srs_trace）已追溯到 Interface Contract postcondition
+- [ ] 全部 SRS 验收准则（来自 srs_trace）已追溯到 Test Inventory 行
+- [ ] Interface Contract Raises 列覆盖所有预期错误条件
+- [ ] Boundary Conditions 表覆盖所有非平凡参数（或写明 "N/A" 并给出原因）
+- [ ] Implementation Summary 为 3-5 段具体散文（含文件路径 + 类名），**非** pseudocode / flowchart
+- [ ] Existing Code Reuse 表已填充（或写明 "N/A — greenfield" 并附搜索关键字）
+- [ ] Test Inventory 负向占比 >= 40%
+- [ ] ui:true 特性的 Visual Rendering Contract 完整（列出全部视觉元素、正向渲染断言已定义、交互深度断言已定义）
+- [ ] 每个 Visual Rendering Contract 元素至少 1 行 UI/render Test Inventory
+- [ ] 每个跳过章节都写明 "N/A — [reason]"
+- [ ] §4.N 中所有函数 / 方法都至少有一行 Test Inventory
 
-## Diagram Quality Rules
+## 跳过需显式规则
 
-Concrete, verifiable rules:
+每个章节必须：
+- 按上文要求包含**完整**内容，或
+- 写明 "N/A — [具体原因说明为何本节不适用]"
 
-- **Component/flow diagrams**: every edge labeled with data type; every node maps to a class/module
-- **Sequence diagrams**: include alt/opt/loop blocks for all branches; show return types; participant names match class names from §2
-- **Flow diagrams**: every decision node has exactly 2 exits; no transitions without labeled conditions
-- **State diagrams**: every state reachable from initial; every terminal reachable; no orphan states; guard conditions on ambiguous transitions
-
-## Skip-Explicitly Rule
-
-Every section (§2-§6) must either:
-- Contain COMPLETE content per the requirements above, OR
-- State "N/A — [specific reason why this section does not apply]"
-
-An empty or half-filled section is a design defect that blocks TDD. A section that says "N/A" without a reason is also a defect.
+空章或半填的章节是阻塞 TDD 的设计缺陷。只写 "N/A" 而无原因也是缺陷。
 
 ---
 
 ## Structured Return Contract
 
-Aligned with the unified contract in `skills/long-task-work/references/structured-return-contract.md`. Return EXACTLY this format:
+与 `skills/long-task-work/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
 
 ```markdown
 ## SubAgent Result: long-task-feature-design
@@ -328,25 +271,27 @@ Aligned with the unified contract in `skills/long-task-work/references/structure
 **next_step_input**: {
   "feature_design_doc": "<path to the design document>",
   "test_inventory_count": <number of test inventory rows>,
-  "tdd_task_count": <number of TDD tasks>,
+  "existing_code_reuse_count": <number of reused symbols, 0 if greenfield>,
   "ambiguity_count": <number of unresolved ambiguities, 0 if pass>,
   "assumption_count": <number of assumptions made, 0 if none>
 }
 **blockers**: [one-sentence strings if status=blocked; otherwise empty array]
 **evidence**: [
   "Test Inventory: N rows covering <categories>",
-  "Interface Contract §3: M public methods matched to <srs_trace> acceptance criteria",
+  "Interface Contract: M public methods matched to <srs_trace> acceptance criteria",
+  "Existing Code Reuse: K reused symbols (or 'greenfield feature' if 0)",
   "Internal API Contract §6.2: this feature is Provider/Consumer for <contract IDs>"
 ]
 
 ### Metrics (extension — for task-progress.md)
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| Sections Complete | N/8 | 8/8 (or N/A justified) | PASS/FAIL |
+| Sections Complete | N/6 | 6/6 (or N/A justified) | PASS/FAIL |
 | Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
-| Verification Checklist | N/10 | 10/10 | PASS/FAIL |
+| Verification Checklist | N/11 | 11/11 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
+| Existing Code Reuse | K reused / J searched | ≥0 | INFO |
 | Visual Rendering Assertions | N | ≥ Visual Rendering Contract element count (ui:true) | PASS/FAIL/N/A |
 
 ### Issues (extension — only if fail or blocked)
@@ -364,4 +309,4 @@ Aligned with the unified contract in `skills/long-task-work/references/structure
 | 1 | [code] | [doc § section] | [what was assumed] | [why this is reasonable] |
 ```
 
-**IMPORTANT**: Write the design document to disk at the specified output path. The orchestrator expects the file to exist after this SubAgent completes.
+**重要**：将设计文档写入磁盘到指定的输出路径。orchestrator 期望此 SubAgent 完成后文件已存在。

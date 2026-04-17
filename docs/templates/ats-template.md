@@ -1,13 +1,13 @@
-# Acceptance Test Strategy (ATS) Template
+# 验收测试策略（ATS）模板
 
-> This template defines the structure for the global Acceptance Test Strategy document.
-> The LLM generates ATS content following this structure.
-> Users may override this template via `ats_template_path` in `feature-list.json` (or specify it during the ATS phase).
-> Users may also provide a style/language example via `ats_example_path`.
+> 本模板定义全局验收测试策略（Acceptance Test Strategy）文档的结构。
+> LLM 按此结构生成 ATS 内容。
+> 用户可通过 `feature-list.json` 中的 `ats_template_path` 覆盖此模板（也可在 ATS 阶段指定）。
+> 用户还可通过 `ats_example_path` 提供风格/语言参考示例。
 
 ---
 
-## Document Header
+## 文档头（Document Header）
 
 ```markdown
 # 验收测试策略: {project_title}
@@ -20,7 +20,7 @@
 **模板版本**: 1.0
 ```
 
-## Section 1: Test Scope & Strategy Overview
+## 第 1 节：测试范围与策略概览（Test Scope & Strategy Overview）
 
 ```markdown
 ## 1. 测试范围与策略概览
@@ -46,7 +46,7 @@
 | 系统测试 | 跨特性集成 + NFR 验证 | ST (long-task-st) |
 ```
 
-## Section 2: Requirement → Acceptance Scenario Mapping (Core)
+## 第 2 节：需求→验收场景映射（核心）
 
 ```markdown
 ## 2. 需求→验收场景映射
@@ -84,17 +84,17 @@
 | Manual | N |
 | **合计** | **N** |
 
-> `自动化可行性` column values (optional — if omitted, all scenarios default to `Auto`):
-> - `Auto` — standard test tooling can execute and verify (CLI, API, Chrome DevTools MCP)
-> - `Manual: physical-device` — requires hardware access (USB, printer, IoT device)
-> - `Manual: visual-judgment` — requires human visual assessment beyond automated screenshot comparison
-> - `Manual: external-action` — requires external human action (receive email, make phone call, approve in third-party system)
-> - `Manual: other: {description}` — other reason
+> `自动化可行性` 列取值（可选 —— 若省略，所有场景默认为 `Auto`）：
+> - `Auto` —— 标准测试工具可执行并验证（CLI、API、Chrome DevTools MCP）
+> - `Manual: physical-device` —— 需要硬件访问（USB、打印机、IoT 设备）
+> - `Manual: visual-judgment` —— 需要超出自动化截图对比的人工视觉判断
+> - `Manual: external-action` —— 需要外部人工动作（接收邮件、拨打电话、在第三方系统审批）
+> - `Manual: other: {description}` —— 其他原因
 >
-> Manual-flagged scenarios propagate downstream to Feature-ST as `已自动化: No` + `手动测试原因`.
+> 被标记为 Manual 的场景会向下游 Feature-ST 透传为 `已自动化: No` + `手动测试原因`。
 ```
 
-## Section 3: Test Category Strategies
+## 第 3 节：测试类别策略（Test Category Strategies）
 
 ```markdown
 ## 3. 测试类别策略
@@ -122,7 +122,7 @@
 - 三层检测模型: Layer 1 (evaluate_script), Layer 2 (EXPECT/REJECT), Layer 3 (list_console_messages)
 ```
 
-## Section 4: NFR Test Method Matrix
+## 第 4 节：NFR 测试方法矩阵（NFR Test Method Matrix）
 
 ```markdown
 ## 4. NFR 测试方法矩阵
@@ -133,7 +133,7 @@
 | ... | ... | ... | ... | ... | ... |
 ```
 
-## Section 5: Cross-Feature Integration Scenarios
+## 第 5 节：跨 Feature 集成场景（Cross-Feature Integration Scenarios）
 
 ```markdown
 ## 5. 跨 Feature 集成场景
@@ -144,7 +144,7 @@
 | ... | ... | ... | ... | ... | ... |
 ```
 
-## Section 6: Risk-Driven Test Priority
+## 第 6 节：风险驱动测试优先级（Risk-Driven Test Priority）
 
 ```markdown
 ## 6. 风险驱动测试优先级
@@ -165,7 +165,7 @@
 | 轻量 | FUNC + BNDRY 仅 |
 ```
 
-## Appendix: Review Report
+## 附录：审核报告（Review Report）
 
 ```markdown
 ## 附录: ATS 审核报告
@@ -175,21 +175,21 @@
 
 ---
 
-## Category Definitions (Reference)
+## 类别定义（参考）
 
-| Category | Abbrev | Description | When Required |
+| Category | Abbrev | 说明 | 何时必需 |
 |----------|--------|-------------|---------------|
-| `functional` | FUNC | Happy-path and error-path verification | Always — every FR |
-| `boundary` | BNDRY | Edge cases, limits, empty/max/zero values | Always — every FR |
-| `security` | SEC | Injection, authorization, data validation | FR handles user input, auth, or external data |
-| `performance` | PERF | Response time, throughput, resource usage | NFR-xxx with performance metrics |
-| `ui` | UI | Chrome DevTools MCP interaction + visual verification | Feature has `"ui": true` |
+| `functional` | FUNC | 正常路径与错误路径验证 | 始终 —— 每个 FR |
+| `boundary` | BNDRY | 边界情况、上限、空值/最大值/零值 | 始终 —— 每个 FR |
+| `security` | SEC | 注入、授权、数据校验 | FR 涉及用户输入、认证或外部数据时 |
+| `performance` | PERF | 响应时间、吞吐、资源占用 | 包含性能指标的 NFR-xxx |
+| `ui` | UI | Chrome DevTools MCP 交互与视觉验证 | feature 带 `"ui": true` |
 
-## Minimum Case Count Heuristics (Reference)
+## 最小用例数经验值（参考）
 
-| Requirement Complexity | Acceptance Criteria Count | Minimum Cases |
+| 需求复杂度 | 验收准则数 | 最小用例数 |
 |------------------------|--------------------------|---------------|
-| Simple | 1-2 | 3-5 |
-| Medium | 3-4 | 5-8 |
-| Complex | 5+ | 8-15 |
-| NFR with metrics | Any | 3-5 |
+| 简单 | 1-2 | 3-5 |
+| 中等 | 3-4 | 5-8 |
+| 复杂 | 5+ | 8-15 |
+| 带指标的 NFR | 任意 | 3-5 |

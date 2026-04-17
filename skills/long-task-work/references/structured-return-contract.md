@@ -47,7 +47,7 @@ Worker 一次 feature cycle 涉及 feature-design → tdd → quality → featur
 **blockers**: []
 **evidence**: [
   "Test Inventory: 12 rows covering FUNC/happy, FUNC/error, BNDRY, SEC",
-  "Interface Contract §3: 2 public methods matched to FR-003 acceptance criteria",
+  "Interface Contract: 2 public methods matched to FR-003 acceptance criteria",
   "Internal API Contract §6.2 cross-checked — this feature is Provider for Contract C-001"
 ]
 ```

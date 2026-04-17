@@ -1,18 +1,18 @@
-# Init Script Recipes
+# Init 脚本配方（Init Script Recipes）
 
-Templates and best practices for generating `init.sh` / `init.ps1` environment bootstrap scripts. Choose the recipe matching the project's tech stack and environment manager from the design document.
+生成 `init.sh` / `init.ps1` 环境引导脚本的模板与最佳实践。根据设计文档中的技术栈与环境管理器，选择匹配的配方。
 
-## General Rules
+## 通用规则
 
-1. **Idempotent** — re-running the script never breaks an existing working environment
-2. **Cross-platform** — generate both `init.sh` (bash) and `init.ps1` (PowerShell)
-3. **Fail-fast** — use `set -euo pipefail` (bash) / `$ErrorActionPreference = "Stop"` (PowerShell)
-4. **Version-pinned** — specify exact runtime versions from the design doc's dependency table
-5. **Self-diagnosing** — print detected tool versions at the end; exit non-zero on any failure
-6. **No interactive prompts** — all answers must be auto-accepted (`-y` flags, `--yes`, etc.)
-7. **Portable paths** — use `"$(dirname "$0")"` (bash) / `$PSScriptRoot` (PowerShell) to resolve project root
+1. **幂等（Idempotent）** — 重复执行脚本绝不能破坏已有的可用环境
+2. **跨平台（Cross-platform）** — 同时生成 `init.sh`（bash）与 `init.ps1`（PowerShell）
+3. **快速失败（Fail-fast）** — 使用 `set -euo pipefail`（bash）/ `$ErrorActionPreference = "Stop"`（PowerShell）
+4. **版本固定（Version-pinned）** — 按设计文档依赖表指定确切的运行时版本
+5. **自诊断（Self-diagnosing）** — 末尾打印检测到的工具版本；任一失败退出码非零
+6. **无交互提示（No interactive prompts）** — 所有回答必须自动接受（`-y` 标志、`--yes` 等）
+7. **可移植路径（Portable paths）** — 使用 `"$(dirname "$0")"`（bash）/ `$PSScriptRoot`（PowerShell）定位项目根
 
-## Script Skeleton
+## 脚本骨架
 
 ### init.sh (bash)
 
@@ -79,11 +79,11 @@ Write-Host "Environment ready."
 
 ---
 
-## Python Recipes
+## Python 配方
 
 ### Miniconda / Conda / Mamba
 
-Use when the design doc specifies conda, miniconda, or mamba as the environment manager. Common for data science, ML, and projects needing non-Python system dependencies.
+当设计文档指定 conda、miniconda 或 mamba 作为环境管理器时使用。常见于数据科学、机器学习及需要非 Python 系统依赖的项目。
 
 **init.sh:**
 ```bash
@@ -203,7 +203,7 @@ Write-Host "Environment ready. Run: conda activate $EnvName"
 
 ### venv (stdlib)
 
-Use when the design doc specifies Python venv with no conda requirement.
+当设计文档指定使用 Python venv 且无需 conda 时使用。
 
 **init.sh:**
 ```bash
@@ -363,7 +363,7 @@ echo "Environment ready. Run: source .venv/bin/activate"
 
 ---
 
-## Node.js Recipes
+## Node.js 配方
 
 ### nvm
 
@@ -471,7 +471,7 @@ echo "Environment ready."
 
 ---
 
-## Java Recipes
+## Java 配方
 
 ### SDKMAN!
 
@@ -516,9 +516,9 @@ echo "Environment ready."
 
 ---
 
-## C/C++ Recipes
+## C/C++ 配方
 
-### System packages
+### 系统包
 
 **init.sh:**
 ```bash
@@ -558,7 +558,7 @@ echo "Environment ready."
 
 ---
 
-## Docker / Devcontainer Recipe
+## Docker / Devcontainer 配方
 
 **init.sh:**
 ```bash
@@ -588,27 +588,27 @@ echo "Environment ready."
 
 ---
 
-## Selection Guide
+## 选型指引
 
-Use the design doc's tech stack and constraints to pick the right recipe:
+根据设计文档的技术栈与约束选择对应配方：
 
-| Signal in Design Doc | Recipe |
+| 设计文档中的信号 | 对应配方 |
 |---|---|
-| `environment.yml` or conda packages listed | Miniconda/Conda/Mamba |
-| Python + "virtual environment" or venv | venv |
-| `pyproject.toml` with `[tool.poetry]` | Poetry |
-| `pyproject.toml` with uv mentioned | uv |
-| `.nvmrc` or nvm mentioned | nvm |
-| `.node-version` or fnm mentioned | fnm |
-| Java + SDKMAN mentioned | SDKMAN |
-| `Dockerfile` or `docker-compose.yml` | Docker |
-| `.devcontainer/` directory | Devcontainer |
-| C/C++ with CMake | System packages |
-| No specific env manager | Use language default (venv for Python, nvm for Node) |
+| `environment.yml` 或列出 conda 包 | Miniconda / Conda / Mamba |
+| Python + "虚拟环境" 或 venv | venv |
+| `pyproject.toml` 含 `[tool.poetry]` | Poetry |
+| `pyproject.toml` 提及 uv | uv |
+| `.nvmrc` 或提及 nvm | nvm |
+| `.node-version` 或提及 fnm | fnm |
+| Java + 提及 SDKMAN | SDKMAN |
+| `Dockerfile` 或 `docker-compose.yml` | Docker |
+| 存在 `.devcontainer/` 目录 | Devcontainer |
+| C/C++ 使用 CMake | 系统包 |
+| 未指定环境管理器 | 使用语言默认（Python 用 venv，Node 用 nvm） |
 
-## Combining Tools
+## 组合工具
 
-Projects may need multiple tools. The init script should chain them in order:
+项目可能需要多个工具，init 脚本应按顺序串起来：
 
 ```bash
 # Example: Python (conda) + Node (nvm) + Docker (services)
@@ -619,4 +619,4 @@ Projects may need multiple tools. The init script should chain them in order:
 # 5. Verify all tools
 ```
 
-Each step must be idempotent and include a version check at the end.
+每一步都必须幂等，并在末尾加上版本校验。
