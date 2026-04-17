@@ -318,16 +318,28 @@ An empty or half-filled section is a design defect that blocks TDD. A section th
 
 ## Structured Return Contract
 
-When the design document is complete, return your result in EXACTLY this format:
+Aligned with the unified contract in `skills/long-task-work/references/structured-return-contract.md`. Return EXACTLY this format:
 
 ```markdown
-## SubAgent Result: Feature Design
-### Verdict: PASS | FAIL | BLOCKED | CLARIFY
-### Summary
-[1-3 sentences — what was designed, key architectural decisions, document completeness]
-### Artifacts
-- [docs/features/YYYY-MM-DD-<feature-name>.md]: Feature detailed design document
-### Metrics
+## SubAgent Result: long-task-feature-design
+
+**status**: pass | fail | blocked | clarify
+**artifacts_written**: ["docs/features/YYYY-MM-DD-<feature-name>.md"]
+**next_step_input**: {
+  "feature_design_doc": "<path to the design document>",
+  "test_inventory_count": <number of test inventory rows>,
+  "tdd_task_count": <number of TDD tasks>,
+  "ambiguity_count": <number of unresolved ambiguities, 0 if pass>,
+  "assumption_count": <number of assumptions made, 0 if none>
+}
+**blockers**: [one-sentence strings if status=blocked; otherwise empty array]
+**evidence**: [
+  "Test Inventory: N rows covering <categories>",
+  "Interface Contract §3: M public methods matched to <srs_trace> acceptance criteria",
+  "Internal API Contract §6.2: this feature is Provider/Consumer for <contract IDs>"
+]
+
+### Metrics (extension — for task-progress.md)
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
 | Sections Complete | N/8 | 8/8 (or N/A justified) | PASS/FAIL |
@@ -336,23 +348,20 @@ When the design document is complete, return your result in EXACTLY this format:
 | Verification Checklist | N/10 | 10/10 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
 | Visual Rendering Assertions | N | ≥ Visual Rendering Contract element count (ui:true) | PASS/FAIL/N/A |
-### Issues (only if FAIL or BLOCKED)
+
+### Issues (extension — only if fail or blocked)
 | # | Severity | Description |
 |---|----------|-------------|
-### Ambiguities (only if CLARIFY)
+
+### Ambiguities (extension — only if status=clarify)
 | # | Category | Source | Description | Impact | Suggested Interpretation | Question |
 |---|----------|--------|-------------|--------|--------------------------|----------|
 | 1 | [code] | [doc § section] | [what is ambiguous] | [affected design sections] | [best guess or "none"] | [specific question for user] |
-### Assumptions Made (only if PASS with assumptions)
+
+### Assumptions Made (extension — only if pass with assumptions)
 | # | Category | Source | Assumption | Rationale |
 |---|----------|--------|------------|-----------|
 | 1 | [code] | [doc § section] | [what was assumed] | [why this is reasonable] |
-### Next Step Inputs
-- feature_design_doc: [path to the design document]
-- test_inventory_count: [number of test inventory rows]
-- tdd_task_count: [number of TDD tasks]
-- ambiguity_count: [number of unresolved ambiguities, 0 if PASS]
-- assumption_count: [number of assumptions made, 0 if none]
 ```
 
 **IMPORTANT**: Write the design document to disk at the specified output path. The orchestrator expects the file to exist after this SubAgent completes.

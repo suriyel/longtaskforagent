@@ -145,6 +145,7 @@ If `docs/rules/` is populated with convention scan results (from Phase 0-pre cod
    - §6.2 (Internal API Contracts): libraries used must comply with §13.1 internal library mandates
    - If conflicts exist: mark with "⚠ Design Override: [reason]" and present to user for confirmation
 4. **Present §13 to user** for review (same approval flow as other sections)
+5. **Propagate to env-guide.md §4** — after approval, the init phase (`long-task-init` Step 5) copies the binding parts of §13 (internal library mandates, prohibited APIs, style baseline, build conventions) into `env-guide.md` §4. Downstream pipeline (TDD Refactor, Feature Design, Quality) reads §4 directly. `docs/rules/` remains as the traceable scan record; §13 remains as the design-layer summary; §4 is the enforcement source for Worker cycles. Any change to §4 post-init requires human approval (see Worker Step 0 env-guide approval gate).
 
 ## Step 5: Write Design Document
 

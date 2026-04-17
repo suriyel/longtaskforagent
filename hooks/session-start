@@ -26,4 +26,30 @@ if [ -f "$INIT_SCRIPT_SRC" ]; then
     printf '%s' "${PLUGIN_ROOT_HINT}" > "scripts/.long-task-plugin-root"
 fi
 
+# ── env-guide.md approval gate (advisory warning on session start) ───────────
+# Worker Step 0 enforces the gate with a hard block. This hook only surfaces an
+# early warning so the user sees pending approval state as soon as the session
+# starts, rather than discovering it mid-Worker cycle.
+APPROVAL_CHECK="${PLUGIN_ROOT}/scripts/check_env_guide_approval.py"
+if [ -f "env-guide.md" ] && [ -f "$APPROVAL_CHECK" ]; then
+    if command -v python >/dev/null 2>&1; then
+        PYBIN="python"
+    elif command -v python3 >/dev/null 2>&1; then
+        PYBIN="python3"
+    else
+        PYBIN=""
+    fi
+    if [ -n "$PYBIN" ]; then
+        APPROVAL_RC=0
+        APPROVAL_OUT=$("$PYBIN" "$APPROVAL_CHECK" env-guide.md 2>&1) || APPROVAL_RC=$?
+        if [ "$APPROVAL_RC" -eq 1 ]; then
+            # Unapproved — warn on stderr so it's visible, but DO NOT exit non-zero
+            # (hook failures would abort the session; Worker Step 0 is the hard gate).
+            echo "[long-task-agent] WARNING: env-guide.md unapproved — §3/§4 modified since last approval." >&2
+            echo "[long-task-agent] $APPROVAL_OUT" >&2
+            echo "[long-task-agent] Worker cycles will be blocked at Step 0 until frontmatter approved_by / approved_date are updated." >&2
+        fi
+    fi
+fi
+
 exit 0

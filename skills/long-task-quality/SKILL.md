@@ -18,7 +18,7 @@ You are a Quality Gates execution SubAgent.
 
 ## Your Task
 1. Read the execution rules: Read {skills_root}/long-task-quality/references/quality-execution.md
-2. Read long-task-guide.md in the project root for test/coverage commands and environment activation
+2. Read `env-guide.md` §3 (Build & Execution Commands) for test/coverage/static-analysis commands. Read `env-guide.md` §2 for environment activation. Both are the **single source of truth** — do NOT derive commands from long-task-guide.md (it only navigates; env-guide.md §3 owns commands).
 3. Execute all 3 gates in order (Gate 0 → 1 → 2)
    - **Note**: Static analysis tools (Design §13.4) are enforced during TDD Refactor, not here. If Design doc §13.7 documents code generation directories, exclude them from coverage measurement in Gate 1.
 4. If a gate fails, fix and retry per the rules (max 3 attempts per gate)
@@ -53,21 +53,21 @@ Agent(
 
 ## Step 3: Parse Result
 
-Read the SubAgent's returned text and locate the `### Verdict:` line:
+Read the SubAgent's returned text and locate the `**status**:` line (unified contract field). The legacy `### Verdict:` line may coexist for backward compatibility but the authoritative field is `**status**`.
 
-- **`### Verdict: PASS`**
-  1. Extract Metrics table (coverage %)
-  2. Extract Next Step Inputs (coverage_line, coverage_branch)
+- **`**status**: pass`**
+  1. Extract `**next_step_input**` (coverage_line, coverage_branch, all_tests_pass, test_count)
+  2. Optionally read Metrics table for task-progress.md detail
   3. Record in `task-progress.md`: "Quality Gates: PASS (line {X}%, branch {Y}%)"
   4. Proceed to next step (Feature-ST)
 
-- **`### Verdict: FAIL`**
-  1. Read the Issues table — identify which gate failed and why
+- **`**status**: fail`**
+  1. Read `**evidence**` and Issues table — identify which gate failed and why
   2. If the SubAgent already attempted fixes (per the 3-retry rule), escalate to user via `AskUserQuestion` with the failure details
   3. If fixable by re-dispatching (e.g., environment issue resolved), construct a new prompt and dispatch again (max 3 total dispatches)
 
-- **`### Verdict: BLOCKED`**
-  1. Read the Issues table — identify the blocker (tool not installed, environment error, etc.)
+- **`**status**: blocked`**
+  1. Read `**blockers**` array — identify the blocker (tool not installed, environment error, etc.)
   2. Escalate to user via `AskUserQuestion` with the blocker details and what was attempted
 
 ## Integration

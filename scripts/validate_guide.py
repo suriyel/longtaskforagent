@@ -116,6 +116,15 @@ def validate_guide(path: str, feature_list_path: str = None) -> list[str]:
         if not found:
             errors.append(f"Missing required section: {label}")
 
+    # Enforce env-guide.md §3 pointer — build/test/coverage commands must live
+    # in env-guide.md (the single source of truth), not duplicated here.
+    if not re.search(r"env-guide\.md", content, re.IGNORECASE):
+        errors.append(
+            "Missing reference to env-guide.md — the guide must delegate "
+            "build/test/coverage commands to env-guide.md §3 rather than "
+            "embedding them inline (single source of truth)."
+        )
+
     # Conditional Chrome DevTools sections — only when project has UI features
     check_ui = False
     if feature_list_path:

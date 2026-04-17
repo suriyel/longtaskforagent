@@ -7,7 +7,7 @@
 
 ## 当前会话目标
 
-**阶段 A（清理，可并行）** — 主题 1、8、10
+**阶段 B（架构重构）** — 主题 3 SubAgent-per-Step + 主题 6 env-guide 下沉审批
 
 ## 整体进度
 
@@ -16,11 +16,11 @@
 | A | 1. 去除用户呈现型报告 | ✅ 完成 | 删除 feature-report 子系统 |
 | A | 8. 完全移除变异测试 | ✅ 完成 | schema/skill/template/test 全链路清理 |
 | A | 10. 删除自定义 MCP & tool-binding | ✅ 完成 | 保留 Chrome DevTools MCP |
-| B | 3. Worker SubAgent-per-Step | ⏸ 未开始 | 需阶段 A 完成 |
-| B | 6. rules/guide 下沉到 env-guide.md + 审批 | ⏸ 未开始 | 需阶段 A 完成 |
+| B | 3. Worker SubAgent-per-Step | ✅ 完成 | DISPATCH 语法 + 统一 Return Contract + Resume 能力 |
+| B | 6. rules/guide 下沉到 env-guide.md + 审批 | ✅ 完成 | 六板块 env-guide.md + check_env_guide_approval.py 审批 gate |
 | C | 2. Increment 吸收 brownfield 适配 | ⏸ 未开始 | |
 | C | 4. 设计/Feature Design 瘦身 | ⏸ 未开始 | |
-| C | 7. 编译/UT 静默参数 | ⏸ 未开始 | |
+| C | 7. 编译/UT 静默参数 | ⏸ 未开始 | quiet execution 已纳入 env-guide.md §3 模板 |
 | C | 9. FR 合并 + ~1k LOC 颗粒度 | ⏸ 未开始 | |
 | D | 5. 中文化 | ⏸ 未开始 | 最后收口 |
 
@@ -138,6 +138,43 @@
 - [x] `python -m pytest tests/` 全绿（328 passed）
 - [x] `skills/long-task-work/SKILL.md` 不再含 Step 11a
 - [x] Chrome DevTools MCP 相关功能保留（`hooks/chrome-mcp-setup`、`scripts/check_devtools.py`、feature-st/SKILL 内 Chrome DevTools MCP 引用均保留）
+
+---
+
+## 阶段 B 任务清单
+
+### 主题 6：env-guide.md 下沉 + 人工审批
+
+- [x] T6.1 新建 `docs/templates/env-guide-template.md` 六板块模板（§1 服务生命周期 / §2 环境配置 / §3 构建与执行命令 / §4 存量代码库约束 / §5 测试环境依赖 / §6 人工审批记录）
+- [x] T6.2 更新 `skills/long-task-init/SKILL.md` Step 5 — 生成六板块 env-guide.md + YAML frontmatter（首次 `approved_by: null` 豁免）
+- [x] T6.3 新建 `scripts/check_env_guide_approval.py` — git 历史分析 §3/§4 最近变更 vs approved_date；`tests/test_check_env_guide_approval.py`（11 tests）
+- [x] T6.4 新建 `scripts/validate_env_guide.py` — 六板块标题存在性 + frontmatter 格式校验；`tests/test_validate_env_guide.py`（10 tests）
+- [x] T6.5 `skills/long-task-init/SKILL.md` Step 4 — long-task-guide.md 瘦身为"工作流导航 only"，build/test/coverage 命令下沉 env-guide.md §3
+- [x] T6.6 `skills/long-task-work/SKILL.md` 新增 **Step 0: env-guide Approval Gate** — 调 `check_env_guide_approval.py`，未审批阻断
+- [x] T6.7 `skills/long-task-quality/` + `skills/long-task-tdd/SKILL.md` 命令引用下沉到 env-guide.md §3
+- [x] T6.8 `skills/long-task-design/SKILL.md` Step 4b — §13 codebase constraints 传播到 env-guide.md §4
+- [x] T6.9 `skills/long-task-increment/SKILL.md` — 若 increment 触发 §3/§4 变更，提示用户更新 approval frontmatter
+- [x] T6.10 `hooks/session-start` — advisory warning（Worker Step 0 是硬 gate）
+- [x] T6.11 `python -m pytest tests/` 全绿（349 passed，含新增 21 tests）
+
+### 主题 3：Worker SubAgent-per-Step 架构
+
+- [x] T3.1 新建 `skills/long-task-work/references/structured-return-contract.md` — 统一契约（status / artifacts_written / next_step_input / blockers / evidence）+ DISPATCH 声明式语法说明 + Resume 协议
+- [x] T3.2 Worker SKILL 所有 "REQUIRED SUB-SKILL: Invoke X" 替换为 DISPATCH blockquote 声明（Steps 4、5-7、8、9）
+- [x] T3.3 `skills/long-task-tdd/SKILL.md` — 顶部声明 SubAgent Dispatch Mode；末尾追加 Structured Return Contract（TDD 保持单体 skill，不拆分三阶段）
+- [x] T3.4 `feature-design` / `quality` / `feature-st` Return Contract 顶层字段对齐（保留 Metrics / Risks / Issues 等 extension 子表）；SKILL parse 逻辑同时接受 `**status**:` 与 legacy `### Verdict:`
+- [x] T3.5 Worker Step 1 新增 Resume Check（读 `task-progress.md` `in-progress: step-N` 标记跳转）；Core principle 加 Resume protocol（每步 DISPATCH 前后写/更新标记）
+- [x] T3.6 `python -m pytest tests/` 全绿
+
+## 阶段 B 验收标准
+
+- [x] `python -m pytest tests/` 349 passed（含 21 个 Stage B 新增测试）
+- [x] `env-guide.md` 成为 build/test/coverage 命令与 codebase 约束的单一事实源
+- [x] 未审批的 §3/§4 修改触发 Worker Step 0 阻断
+- [x] Worker SKILL 所有 SubAgent 分发点使用 DISPATCH 声明式语法
+- [x] 四个 discipline skill（feature-design / tdd / quality / feature-st）全部支持 SubAgent dispatch + Structured Return Contract
+- [x] long-task-guide.md 仅含工作流导航；`validate_guide.py` 强制引用 env-guide.md
+- [x] TDD 保持单体（单个 SubAgent 跑完 Red → Green → Refactor）
 
 ---
 

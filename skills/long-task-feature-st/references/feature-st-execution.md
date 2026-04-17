@@ -482,17 +482,30 @@ Display-Only Defects: [count]
 
 ## Structured Return Contract
 
-When all test cases are executed (or if blocked), return your result in EXACTLY this format:
+Aligned with the unified contract in `skills/long-task-work/references/structured-return-contract.md`. Return EXACTLY this format:
 
 ```markdown
-## SubAgent Result: Feature-ST
-### Verdict: PASS | FAIL | BLOCKED | CLARIFY
-### Summary
-[1-3 sentences — how many test cases derived, how many executed, key outcomes, environment status]
-### Artifacts
-- [docs/test-cases/feature-{id}-{slug}.md]: ST test case document with executed results
-- [any other files created/modified]
-### Metrics
+## SubAgent Result: long-task-feature-st
+
+**status**: pass | fail | blocked | clarify
+**artifacts_written**: [
+  "docs/test-cases/feature-{id}-{slug}.md",
+  <any other files created or modified>
+]
+**next_step_input**: {
+  "st_case_path": "docs/test-cases/feature-{id}-{slug}.md",
+  "st_case_count": <total number of test cases>,
+  "manual_case_count": <number of manual test cases, 0 if none>,
+  "environment_cleaned": true | false
+}
+**blockers**: [one-sentence strings if status=blocked; otherwise empty array]
+**evidence**: [
+  "Derived N test cases from SRS/Design/UCD/ATS",
+  "Executed M/N cases — pass rate K%",
+  "Environment: started, verified health, cleaned up (PID recorded)"
+]
+
+### Metrics (extension — for task-progress.md)
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
 | Total Cases | N | ≥M (ATS or minimum) | PASS/FAIL |
@@ -505,30 +518,29 @@ When all test cases are executed (or if blocked), return your result in EXACTLY 
 | Manual Cases | N | N/A | INFO |
 | Visual Assessment Min Score | N | ≥3 (if ui:true) | PASS/FAIL/N/A |
 | Display-Only Defects | N | 0 (if ui:true) | PASS/FAIL/N/A |
-### Visual Assessment (only if ui:true)
+
+### Visual Assessment (extension — only if ui:true)
 | Criterion | Score (1-5) | Evidence |
 |-----------|-------------|----------|
 | Rendering Completeness | N | [observations] |
 | Interactive Depth | N | [observations] |
 | Visual Coherence | N | [observations] |
 | Functional Accuracy | N | [observations] |
-### Issues (only if FAIL or BLOCKED)
+
+### Issues (extension — only if fail or blocked)
 | # | Severity | Description |
 |---|----------|-------------|
 | 1 | Critical/Major/Minor | [failed case ID, step details, actual vs expected] |
-### Manual Test Cases (only if any 已自动化: No cases exist)
+
+### Manual Test Cases (extension — only if any cannot be automated)
 | Case ID | Test Objective | Manual Reason | Preconditions | Test Steps Summary | Verification Points |
 |---------|---------------|---------------|---------------|-------------------|---------------------|
 | ST-FUNC-005-003 | {objective} | visual-judgment | {preconditions} | {summarized steps} | {verification points} |
-### Specification Gaps (only if CLARIFY)
+
+### Specification Gaps (extension — only if status=clarify)
 | # | Category | Source | Description | Impact on Test Cases | Suggested Interpretation | Question |
 |---|----------|--------|-------------|---------------------|--------------------------|----------|
 | 1 | [code] | [doc § section] | [what is missing/vague] | [which test cases affected] | [best guess or "none"] | [specific question for user] |
-### Next Step Inputs
-- st_case_path: docs/test-cases/feature-{id}-{slug}.md
-- st_case_count: [total number of test cases]
-- manual_case_count: [number of manual test cases, 0 if none]
-- environment_cleaned: true/false
 ```
 
-**IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report the results.
+**IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report results in the contract above.

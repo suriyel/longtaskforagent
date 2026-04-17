@@ -50,85 +50,103 @@ You MUST create a TodoWrite task for each step and complete them in order:
      - `marker_pattern` matches the project's chosen real test identification method
      - `mock_patterns` covers the project's mock framework keywords
      - `test_dir` points to the correct test directory
-4. **Generate `long-task-guide.md`** — Create a project-tailored Worker session guide:
+4. **Generate `long-task-guide.md`** — Create a project-tailored Worker session navigation guide (**workflow navigation only — build/test/coverage commands live in `env-guide.md` §3**):
    - Read these files for reference:
      - `skills/long-task-work/SKILL.md` — Worker workflow
      - `skills/long-task-quality/SKILL.md` — verification enforcement
-     - `skills/long-task-quality/coverage-recipes.md` — coverage tool setup
      - `skills/using-long-task/references/architecture.md` — TDD workflow details
-   - Include ONLY the project's language-specific coverage commands (get from `python scripts/get_tool_commands.py feature-list.json`)
    - Include UI testing section ONLY if the project has UI features (`"ui": true`): use Chrome DevTools MCP tool names (`navigate_page`, `click`, etc.)
    - **Must include all required sections**: Orient, Bootstrap, Config Gate, TDD Red, TDD Green, Coverage Gate, TDD Refactor, Verification Enforcement, Inline Compliance Check, Persist, Critical Rules
-   - **Must include `Environment Commands` section** with:
-     - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate myenv`, `nvm use 20`)
-     - Direct test execution command (e.g., `pytest --cov=src tests/`)
-     - Direct coverage report command
-     - These replace the now-removed test.sh/mutate.sh wrappers — Claude runs these directly
-   - **Must include `Service Commands` section** (only if project has server processes): reference `env-guide.md` as the authoritative source for start/stop/restart commands; list health check URLs; include reminder about the Restart Protocol
+   - **Do NOT embed concrete build/test/coverage commands.** Instead, for every command reference, include a pointer: "See `env-guide.md` §3 Build & Execution Commands". This prevents the two files from drifting.
    - **Must include `Config Management` section**: describe how to add/update a config value for this project (e.g., "append `KEY=value` to `.env`" for dotenv projects, "set `key=value` in `application.properties`" for Spring Boot projects, "export KEY=value" for system-env-only projects). This section is referenced by the Worker Config Gate when prompting users for missing values.
-   - **Must include `Real Test Convention` section**: identification method (marker/folder/naming, adapted to project language), run command to execute only real tests, example real test for this project's tech stack
+   - **Must include `Real Test Convention` section**: identification method (marker/folder/naming, adapted to project language), **pointer** to env-guide.md §3 for the command that runs only real tests, example real test for this project's tech stack
+   - **Must include `Service Commands` pointer**: "See `env-guide.md` §1 Service Lifecycle" — do not duplicate start/stop/restart commands here
    - Validate:
      ```bash
      python scripts/validate_guide.py long-task-guide.md --feature-list feature-list.json
      ```
-5. **Generate `env-guide.md`** — Create an explicit service lifecycle guide at the project root (user-editable):
+5. **Generate `env-guide.md`** — Create the project's **single source of truth** for environment contracts (six sections, user-editable, human-approval-gated for §3 and §4):
 
-   - Read the design doc for service port declarations, health check URLs, and service names (API design / architecture sections)
-   - Read `.env.example` for `*_PORT=` variables
-   - Generate `env-guide.md` with the following sections:
+   > Copy the template from `docs/templates/env-guide-template.md` and populate sections based on the design doc and brownfield scan outputs (`docs/rules/`). After initial generation, leave `approved_by: null` in frontmatter — this is the first-generation exemption; approval becomes mandatory on the **next** edit to §3 or §4.
 
-   **Header note** (top of file):
-   > User-editable. Claude reads this file before managing services. Update when ports change or new services are added.
-
-   **Services table**:
-   | Service Name | Port | Start Command | Stop Command | Verify URL |
-   |---|---|---|---|---|
-   | (one row per service) | | | | |
-
-   **Start All Services** — for each service:
-   ```bash
-   # Unix/macOS
-   [start command] > /tmp/svc-<slug>-start.log 2>&1 &
-   sleep 3
-   head -30 /tmp/svc-<slug>-start.log
-   # → Extract PID and port from output; record both in task-progress.md
-
-   # Windows alternative
-   cmd /c "start /b [command] > %TEMP%\svc-<slug>-start.log 2>&1"
-   timeout /t 3 /nobreak >nul
-   powershell "Get-Content $env:TEMP\svc-<slug>-start.log -TotalCount 30"
+   **Frontmatter** (top of file):
+   ```yaml
+   ---
+   version: 1.0
+   approved_by: null        # null = first-generation exemption
+   approved_date: null
+   approved_sections: []
+   ---
    ```
 
-   **Verify Services Running** — for each service:
+   **§1 Service Lifecycle** — populate from design doc (service port declarations, health check URLs, service names) and `.env.example` `*_PORT=` variables:
+   - **Services table** with columns: Service Name, Port, Start Command, Stop Command, Verify URL
+   - **Start All Services** — for each service, emit a command with output capture:
+     ```bash
+     # Unix/macOS
+     [start command] > /tmp/svc-<slug>-start.log 2>&1 &
+     sleep 3
+     head -30 /tmp/svc-<slug>-start.log
+
+     # Windows alternative
+     cmd /c "start /b [command] > %TEMP%\svc-<slug>-start.log 2>&1"
+     timeout /t 3 /nobreak >nul
+     powershell "Get-Content $env:TEMP\svc-<slug>-start.log -TotalCount 30"
+     ```
+   - **Verify Services Running** — `curl -f http://localhost:<port>/health`
+   - **Stop All Services** — `kill <PID>` (Unix) / `taskkill /F /PID <PID>` (Windows) with port-based fallback `lsof -ti :<port> | xargs kill -9`
+   - **Verify Services Stopped** — `lsof -i :<port>` expects empty output
+   - **Restart Protocol (4 steps)**: Kill → Verify dead (poll ≤5s) → Start + capture → Verify alive (poll ≤10s)
+   - **Complex startup sequences (>2 shell commands)**: extract to `scripts/svc-<slug>-start.sh` / `.ps1`; reference the script from §1
+   - CLI-only / library-only projects: write "No server processes — environment activation only" in this section
+
+   **§2 Environment Configuration**:
+   - Environment activation command (e.g., `source .venv/bin/activate`, `conda activate <env>`, `nvm use`)
+   - Required environment variables — reference `.env.example`
+   - Config loading — reference `scripts/check_configs.py`
+
+   **§3 Build & Execution Commands** — this is the section downstream pipeline (TDD / Quality / Feature-ST) reads directly. All commands use **quiet execution**:
    ```bash
-   curl -f http://localhost:<port>/health   # or appropriate health endpoint
-   ```
+   # Build
+   <build-cmd> > /tmp/build-$$.log 2>&1; echo $? > /tmp/build-$$.exit
 
-   **Stop All Services** — kill by PID (primary) or port (fallback):
+   # Unit tests
+   <test-cmd> > /tmp/ut-$$.log 2>&1; echo $? > /tmp/ut-$$.exit
+
+   # Coverage
+   <coverage-cmd> > /tmp/cov-$$.log 2>&1; echo $? > /tmp/cov-$$.exit
+
+   # Static analysis (if Design §13.4 documents a tool)
+   <static-analysis-cmd> > /tmp/static-$$.log 2>&1; echo $? > /tmp/static-$$.exit
+   ```
+   - Include **tool version lock** entries (e.g., Python ≥ 3.11, Node ≥ 20).
+   - Include **Re-check protocol**: any failure → fix and re-run **only failed steps/tests by name**, never full reruns.
+   - **Any modification to §3 after initial generation requires human approval** (frontmatter `approved_by` / `approved_date` updated).
+
+   **§4 Codebase Constraints** — merge key content from brownfield scan (`docs/rules/`) here:
+   - §4.1 Mandatory internal libraries (what must be used, what must not be reimplemented)
+   - §4.2 Prohibited APIs (from scanner §13.2 equivalent)
+   - §4.3 Code style baseline (naming, layout, error handling)
+   - §4.4 Build system conventions (artifact dirs, lockfiles)
+   - **If the Design doc has §13 Codebase Conventions & Constraints**: §13 is the canonical summary; copy §13.1/§13.2/§13.5/§13.7 into env-guide.md §4.1/§4.2/§4.3/§4.4 respectively. §4 becomes the enforcement source for Worker cycles (Design §13 + `docs/rules/` remain as provenance).
+   - If `docs/rules/*.md` exists but no Design §13 yet: read those files and distill binding constraints into §4. Keep `docs/rules/` as the traceable scan record.
+   - **Any modification to §4 after initial generation requires human approval** (Worker Step 0 `check_env_guide_approval.py` enforces).
+   - If no brownfield scan outputs exist, leave tables as "_(empty — greenfield project)_".
+
+   **§5 Test Environment Dependencies**:
+   - Database, message queue, third-party service local replica configs
+   - Chrome DevTools MCP startup command (only if project has UI features)
+   - WireMock / MockServer / test container setup if applicable
+
+   **§6 Human Approval Record**:
+   - Approval workflow description (copy from template)
+   - History table with columns: Date, Version, Approved By, Change Summary — seed one row for initial generation
+
+   **After generation, run**:
    ```bash
-   # By PID (preferred — use PID recorded in task-progress.md)
-   kill <PID>                              # Unix/macOS
-   taskkill /F /PID <PID>                  # Windows
-
-   # By port (fallback)
-   lsof -ti :<port> | xargs kill -9        # Unix/macOS
-   for /f "tokens=5" %a in ('netstat -ano ^| findstr :<port>') do taskkill /F /PID %a  # Windows
+   python scripts/validate_env_guide.py env-guide.md
    ```
-
-   **Verify Services Stopped** — ports must show no output:
-   ```bash
-   lsof -i :<port>                         # Unix/macOS — expect no output
-   netstat -ano | findstr :<port>           # Windows — expect no output
-   ```
-
-   **Restart Protocol (4 steps)**:
-   1. **Kill** — Stop All Services (by PID from task-progress.md, or by port)
-   2. **Verify dead** — run Verify Services Stopped; poll port max 5 seconds — must not respond
-   3. **Start** — run Start All Services with output capture → `head -30` → extract new PID/port → update task-progress.md
-   4. **Verify alive** — run Verify Services Running; poll health endpoint max 10 seconds — must respond
-
-   - **Complex startup sequences**: if a service requires >2 shell commands to start (e.g., DB migration + seed + server), generate `scripts/svc-<slug>-start.sh` / `scripts/svc-<slug>-start.ps1` containing the full sequence; update env-guide.md "Start All Services" to call `bash scripts/svc-<slug>-start.sh` instead of inline commands; same for stop sequences (`scripts/svc-<slug>-stop.sh`). This keeps env-guide.md readable while versioning the logic in scripts/
-   - If the project is CLI-only or library-only (no server processes): generate a minimal `env-guide.md` with a header note "No server processes — environment activation only" and only the activation command from `long-task-guide.md`
+   Must pass before proceeding to Step 6.
 
 6. **Generate `init.sh` / `init.ps1`** — Create real, runnable bootstrap scripts:
    - Read `references/init-script-recipes.md` (in the long-task-init skill directory) for per-tool templates and best practices

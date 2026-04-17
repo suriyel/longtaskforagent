@@ -9,14 +9,35 @@ Execute multi-session software projects by implementing one feature per cycle. E
 
 **Announce at start:** "I'm using the long-task-work skill. Let me orient myself."
 
-**Core principle:** Each sub-step has its own skill. Follow the orchestration order exactly.
+**Core principle:** Each sub-step runs in an **independent SubAgent** that loads its own skill. The main Agent only dispatches and consumes **Structured Return Contracts** — never reads SubAgent internal output. See `references/structured-return-contract.md` for the contract and DISPATCH syntax.
+
+**Resume protocol:** Before each DISPATCH (Steps 4, 5-7, 8, 9), write `in-progress: step-<N>` to `task-progress.md` `## Current State`. After the SubAgent returns pass, overwrite with `completed: step-<N>`. On the next Worker cycle, Step 1 Resume Check reads this marker and jumps to the pending step if the previous cycle did not reach Step 11 Persist.
 
 ## Checklist
 
 You MUST create a TodoWrite task for each step and complete them in order:
 
+### 0. env-guide Approval Gate
+
+**Hard gate — runs before every Worker cycle.** Downstream steps (TDD, Quality, Feature-ST) read build/test/coverage commands and codebase constraints directly from `env-guide.md` §3/§4. Any edit to those sections without human approval could silently break the entire pipeline.
+
+Run:
+```bash
+python scripts/check_env_guide_approval.py env-guide.md
+```
+
+- **Exit 0** → approved; proceed to Step 1.
+- **Exit 1** → §3 or §4 modified after the current `approved_date` (or `approved_by` is null with edit history). Block and escalate to user via `AskUserQuestion`:
+  1. Show the diff: `git log -1 --patch env-guide.md` (tail ~50 lines)
+  2. Ask the user to review the change, update `env-guide.md` frontmatter (`approved_by`, `approved_date`), commit the approval, then re-run the Worker.
+  3. **Do NOT proceed** — approval is non-negotiable.
+- **Exit 2** → `env-guide.md` missing or malformed. If the project is at init state (no env-guide.md), this step is inapplicable; otherwise escalate to fix the file.
+
+**Skip condition**: if `env-guide.md` does not exist (pre-init projects, CLI-only projects with explicit "No server processes" note from init), record "env-guide gate skipped — not applicable" in `task-progress.md` and proceed.
+
 ### 1. Orient
-- Load config values if applicable — activate the project environment per `long-task-guide.md`; if the project uses a file-based config (e.g., `.env`), ensure it is sourced so required env vars are set before running checks
+- **Resume Check**: read `task-progress.md` `## Current State`. If it contains a line like `in-progress: step-<N>` (a previous Worker cycle dispatched a SubAgent but never completed Step 11 Persist), **jump directly to Step `<N>`** using the artifacts already on disk as input. If no such marker, continue normal flow from the next bullet. Record the resume decision in `task-progress.md` under the current feature heading.
+- Load config values if applicable — activate the project environment per `env-guide.md` §2; if the project uses a file-based config (e.g., `.env`), ensure it is sourced so required env vars are set before running checks
 - Read `task-progress.md` `## Current State` section — progress stats, last completed feature, next feature up
 - Read `feature-list.json` — note `constraints[]`, `assumptions[]`, `required_configs[]`, feature statuses
 - Read `long-task-guide.md` — project-specific workflow guidance
@@ -113,9 +134,12 @@ python scripts/check_configs.py feature-list.json --feature <id>
 - Quality Gates (Gate 0) will mechanically enforce this via `check_real_tests.py --require-for-deps`
 
 ### 4. Feature Detailed Design
-**REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-design` and follow it exactly.
 
-The Feature Design skill dispatches a SubAgent to produce the detailed design document. The main Agent does NOT read design/SRS/UCD document sections or write the design document — the SubAgent handles everything in its own fresh context and returns a structured summary.
+> **DISPATCH** → launch independent SubAgent to load and execute `long-task-feature-design`
+> **with input**: feature_id=<id>, feature=<compact-json>, design_doc_path=<docs/plans/*-design.md §4.N>, srs_doc_path=<docs/plans/*-srs.md FR-xxx>, ucd_doc_path=<docs/plans/*-ucd.md> (if ui:true), ats_doc_path=<docs/plans/*-ats.md> (if exists), quality_gates=<compact-json>, tech_stack=<compact-json>, constraints=<list>, assumptions=<list>, output_path=`docs/features/YYYY-MM-DD-<feature-name>.md`
+> **expect**: Structured Return Contract (`status` / `artifacts_written` / `next_step_input` / `blockers` / `evidence`) per `references/structured-return-contract.md`
+
+The Feature Design SubAgent reads design/SRS/UCD document sections in its own fresh context and writes the detailed design document. The main Agent does NOT read document sections or draft content — only consumes the structured return.
 
 > **For `category: "bugfix"` features**: feature-design is condensed. The SubAgent focuses on: (1) root cause documentation, (2) targeted fix approach, (3) regression test inventory. Full diagrams are skipped unless the bug directly touches those surfaces.
 
@@ -146,41 +170,28 @@ Output: `docs/features/YYYY-MM-DD-<feature-name>.md` (written by SubAgent) — f
 - **Same pattern applies to Feature-ST** (Step 9): the feature-st skill's CLARIFY handler manages its own loop (max 1 round); Worker sees PASS or BLOCKED.
 
 ### 5-7. TDD Cycle (Red → Green → Refactor)
-**REQUIRED SUB-SKILL:** Invoke `long-task:long-task-tdd` and follow it exactly.
 
-Context to carry forward:
-- Current feature object from feature-list.json
-- `quality_gates` and `tech_stack` from feature-list.json
-- Feature detailed design document from Step 4 (includes Test Inventory table, Interface Contract, Algorithm pseudocode) — **Test Inventory (section 7) is the primary TDD spec input**
-- Full `{srs_section}` from Document Lookup Protocol — TDD Red uses this as specification input alongside Feature Design Test Inventory; `verification_steps` are optional supplementary input
-- Full `{design_section}` from Document Lookup Protocol — architectural constraints and interface contracts
-- **Test commands**: from `long-task-guide.md` — use these directly (no wrapper scripts)
+> **DISPATCH** → launch independent SubAgent to load and execute `long-task-tdd`
+> **with input**: feature_id=<id>, feature=<compact-json>, quality_gates=<compact-json>, tech_stack=<compact-json>, feature_design_path=`docs/features/YYYY-MM-DD-<feature-name>.md` (from Step 4), srs_section_path=`docs/plans/*-srs.md#FR-xxx`, design_section_path=`docs/plans/*-design.md#4.N`, env_guide_path=`env-guide.md` (§2 activation + §3 test commands)
+> **expect**: Structured Return Contract per `references/structured-return-contract.md` — TDD stays as a single skill (Red → Green → Refactor run sequentially inside the SubAgent, not split across three SubAgents)
+
+**Important — TDD is NOT split**: the SubAgent loads `long-task-tdd` and runs the full Red → Green → Refactor cycle in its own fresh context. The main Agent receives one structured return at the end, not per-phase returns.
 
 ### 8. Quality Gates
-**REQUIRED SUB-SKILL:** Invoke `long-task:long-task-quality` and follow it exactly.
 
-The Quality skill dispatches a SubAgent to execute all 3 gates (Real Test → Coverage → Verify). The main Agent does NOT read coverage reports or test runner output — the SubAgent handles everything in its own fresh context and returns a structured summary.
+> **DISPATCH** → launch independent SubAgent to load and execute `long-task-quality`
+> **with input**: feature_id=<id>, quality_gates=<compact-json>, tech_stack=<compact-json>, working_dir=<path>, feature_test_files=<paths-from-TDD-return>, env_guide_path=`env-guide.md` (§3 coverage + test commands)
+> **expect**: Structured Return Contract per `references/structured-return-contract.md` — `next_step_input` must include `coverage_line` and `coverage_branch` percentages
 
-Context to carry forward (minimal — SubAgent reads files itself):
-- Feature ID from feature-list.json
-- `quality_gates` thresholds (compact JSON)
-- `tech_stack` (compact JSON)
-- Working directory path
-- Feature test file paths (test files written/modified during TDD for this feature)
+The Quality SubAgent runs all 3 gates (Real Test → Coverage → Verify) in its own fresh context. The main Agent does NOT read coverage reports or test runner output — only consumes the structured return.
 
 ### 9. ST Acceptance Test Cases
-**REQUIRED SUB-SKILL:** Invoke `long-task:long-task-feature-st` and follow it exactly.
 
-Execute black-box acceptance testing for the feature **after** TDD and quality gates pass. The skill dispatches a SubAgent that reads SRS/Design/UCD/ATS documents in its own fresh context, generates ISO/IEC/IEEE 29119 compliant test case documents, executes test cases, and manages service lifecycle. The main Agent does NOT read document sections, test case content, or execution output — only the structured summary.
+> **DISPATCH** → launch independent SubAgent to load and execute `long-task-feature-st`
+> **with input**: feature_id=<id>, feature=<compact-json>, quality_gates=<compact-json>, tech_stack=<compact-json>, design_doc_path, srs_doc_path, ucd_doc_path (if ui:true), ats_doc_path (if exists), feature_design_doc_path (from Step 4), env_guide_path=`env-guide.md` (§1 service lifecycle), working_dir=<path>, st_case_template_path (if set), st_case_example_path (if set)
+> **expect**: Structured Return Contract per `references/structured-return-contract.md` — `artifacts_written` must include `docs/test-cases/feature-{id}-{slug}.md`
 
-Context to carry forward (paths only — SubAgent reads file contents itself):
-- Feature ID and feature object (compact JSON)
-- `quality_gates` and `tech_stack` (compact JSON)
-- File paths: design doc, SRS doc, UCD doc (if ui:true), ATS doc (if exists), plan doc (from Step 4), env-guide.md
-- Working directory path
-- `st_case_template_path` and `st_case_example_path` from feature-list.json root (if set)
-
-Output: `docs/test-cases/feature-{id}-{slug}.md` (written by SubAgent)
+The Feature-ST SubAgent executes black-box acceptance testing **after** TDD and quality gates pass: reads SRS/Design/UCD/ATS in its own fresh context, generates ISO/IEC/IEEE 29119 compliant test cases, executes them, and manages service lifecycle. The main Agent only consumes the structured return.
 
 **Hard Gate:**
 - **No bypass allowed** — cannot skip ST for any reason
@@ -246,7 +257,7 @@ Record in `task-progress.md`:
   > **For `category: "bugfix"` features**: add entry under `### Fixed` (not `### Added`):
   > `- [<bug_severity>] <title without "Fix: "> (fixes #<fixed_feature_id>) — <root_cause one-line>`
 - Update `task-progress.md`:
-  - Update `## Current State` header: progress count (X/Y passing), last completed feature (#id title, date), next feature (#id title)
+  - Update `## Current State` header: progress count (X/Y passing), last completed feature (#id title, date), next feature (#id title), and **remove any `in-progress: step-N` marker** (cycle completed successfully)
   - Append session entry below the log separator; session entry format:
     ```
     ### Feature #id: Title — PASS

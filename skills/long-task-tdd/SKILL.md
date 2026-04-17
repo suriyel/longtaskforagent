@@ -9,6 +9,10 @@ Write the test first. Watch it fail. Write minimal code to pass. Refactor.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
+## SubAgent Dispatch Mode
+
+This skill is dispatched by `long-task-work` Step 5-7 as an **independent SubAgent** (fresh context). The SubAgent loads this SKILL.md, runs the full Red → Green → Refactor cycle in one pass, and returns the **Structured Return Contract** at the end of this document. The main Worker agent does NOT consume TDD intermediate output — only the final contract. See `skills/long-task-work/references/structured-return-contract.md` for the contract definition.
+
 ## The Iron Law
 
 ```
@@ -143,7 +147,7 @@ Reference: `testing-anti-patterns.md` Anti-Pattern #1 (mock only external servic
 
 **Rule 5a: Real Test Standalone Section (mandatory)**
 
-Every feature with external dependencies MUST have identifiable real tests in its test file(s). The specific marking mechanism is determined by the project language and test framework (documented in `long-task-guide.md` Real Test Convention section), but MUST satisfy these invariants:
+Every feature with external dependencies MUST have identifiable real tests in its test file(s). The specific marking mechanism is determined by the project language and test framework (documented in `long-task-guide.md` Real Test Convention section — which points to `env-guide.md` §3 for the exact run command), but MUST satisfy these invariants:
 
 | Invariant | Description |
 |-----------|-------------|
@@ -231,7 +235,7 @@ See `references/ui-error-detection.md` § Layer 1b for the reusable positive ren
 
 Run the test suite. **All tests must FAIL.** If any test passes → it tests nothing useful, rewrite it.
 
-**Running tests**: Activate environment per `long-task-guide.md` → run test command directly. If tool is missing or environment not activated: diagnose root cause, run `init.sh` if needed, escalate to user if still failing. **Never skip.**
+**Running tests**: Activate environment per `env-guide.md` §2 → run test command from `env-guide.md` §3 with quiet execution (`<test-cmd> > /tmp/ut-$$.log 2>&1; echo $? > /tmp/ut-$$.exit`). On success: no need to read logs. On failure: read last 100 lines + extract `FAIL`/`ERROR` lines. If tool is missing or environment not activated: diagnose root cause, run `init.sh` if needed, escalate to user if still failing. **Never skip.**
 
 **Real Test Verification (before proceeding to Green):**
 Run `python scripts/check_real_tests.py feature-list.json --feature {id}` and confirm:
@@ -292,8 +296,42 @@ Full catalog of 15 anti-patterns: Read `skills/long-task-tdd/testing-anti-patter
 
 ## Integration
 
-**Called by:** long-task-work (Steps 6-8)
-**Dispatches:** implementer subagent (`skills/long-task-tdd/prompts/implementer-prompt.md`)
+**Called by:** long-task-work (Steps 5-7) — dispatched as an independent SubAgent per `references/structured-return-contract.md`
+**Dispatches:** implementer subagent (`skills/long-task-tdd/prompts/implementer-prompt.md`) internally
 **Requires:** Feature detailed design exists (from Work Step 4, via `long-task:long-task-feature-design`)
-**Produces:** Passing tests + implementation code
-**Chains to:** long-task-quality (via Work Step 9)
+**Produces:** Passing tests + implementation code + Structured Return Contract
+**Chains to:** long-task-quality (via Work Step 8)
+
+## Structured Return Contract
+
+When the full Red → Green → Refactor cycle completes (or if blocked), return your result in EXACTLY this format:
+
+```markdown
+## SubAgent Result: long-task-tdd
+
+**status**: pass | fail | blocked
+**artifacts_written**: [test file paths, implementation file paths — all modified during this cycle, relative to project root]
+**next_step_input**: {
+  "feature_test_files": [test file paths for Quality Gate to measure],
+  "all_tests_pass": true | false,
+  "test_count": <total test count in this feature>,
+  "red_green_refactor_complete": true | false
+}
+**blockers**: [one-sentence strings if status=blocked; otherwise empty array]
+**evidence**: [
+  "Red: N tests written, all failed as expected (example: test_login_valid_creds FAIL)",
+  "Green: all N tests PASS after minimal implementation",
+  "Refactor: static analysis clean (tool=<name>, 0 violations)"
+]
+```
+
+**Fail conditions** (`status: fail`):
+- Tests cannot be made to pass after 3 Green attempts
+- Refactor introduces regressions that cannot be fixed
+
+**Blocked conditions** (`status: blocked`):
+- Test framework not installed / environment not bootstrapped
+- Specification ambiguity unresolvable without user input (escalate via CLARIFY)
+- External dependency unavailable (database down, API credentials missing)
+
+**IMPORTANT**: Do NOT mark the feature as `"passing"` in `feature-list.json` — that is Worker's responsibility at Step 11 Persist. Only report results in the contract above.

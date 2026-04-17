@@ -87,9 +87,9 @@ Agent(
 
 ## Step 4: Parse Result
 
-Read the SubAgent's returned text and locate the `### Verdict:` line:
+Read the SubAgent's returned text and locate the `**status**:` line (unified contract field; legacy `### Verdict:` line may coexist for backward compatibility).
 
-- **`### Verdict: PASS`**
+- **`**status**: pass`** (legacy: `### Verdict: PASS`)
   1. Verify the design document file exists at `output_path`
   2. **Visual Rendering Contract spot-check (ui:true only):** The main Agent (not the SubAgent) reads the `## Visual Rendering Contract` section from the produced document and verifies:
      - At least one visual element is listed with a concrete DOM/Canvas selector (not generic like "the page" or "the UI")
@@ -102,7 +102,7 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
   5. If `assumption_count > 0`: append to `task-progress.md`: "({K} assumptions documented in Clarification Addendum)"
   6. Proceed to TDD (Steps 5-7)
 
-- **`### Verdict: CLARIFY`**
+- **`**status**: clarify`** (legacy: `### Verdict: CLARIFY`)
   1. Read the Ambiguities table — extract all categorized questions
   2. Present to user via `AskUserQuestion` in a structured format:
      ```
@@ -151,12 +151,12 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
      - If user provides final answers: incorporate and re-dispatch one last time
      - If still unresolvable: set to BLOCKED
 
-- **`### Verdict: FAIL`**
+- **`**status**: fail`** (legacy: `### Verdict: FAIL`)
   1. Read the Issues table — identify which sections are incomplete
   2. Re-dispatch SubAgent with additional context if needed (max 2 retries)
   3. If still failing, escalate to user via `AskUserQuestion`
 
-- **`### Verdict: BLOCKED`**
+- **`**status**: blocked`** (legacy: `### Verdict: BLOCKED`)
   1. Read the Issues table — identify the blocker
   2. Escalate to user via `AskUserQuestion`
 

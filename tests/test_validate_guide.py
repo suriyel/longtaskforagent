@@ -86,7 +86,10 @@ NEVER mark "passing" without fresh evidence — run tests, read output
 
 ### Real Test Convention
 Real test marker: @pytest.mark.real_test
-Run real tests only: pytest -m real_test
+Run real tests only — see `env-guide.md` §3 for the exact command
+
+## Environment Commands
+See `env-guide.md` §3 Build & Execution Commands for all build, test, and coverage commands.
 
 ## Critical Rules
 - NEVER write implementation before tests
@@ -216,6 +219,9 @@ git commit, update task-progress.md.
 
 ### Real test identification
 Real test marker convention for this project.
+
+## Environment Commands
+See `env-guide.md` §3 for all build/test/coverage commands.
 
 ## Critical Rules
 - Must never skip TDD

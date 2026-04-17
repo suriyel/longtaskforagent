@@ -63,7 +63,7 @@ For each mock warning flagged by the script:
 
 ### Step 3: Run real tests (with skip detection)
 
-Execute real tests in isolation using the run command declared in `long-task-guide.md` Real Test Convention section:
+Execute real tests in isolation using the run command from `env-guide.md` §3 (the Real Test Convention section in `long-task-guide.md` points to it):
 - All real tests MUST PASS
 - Any FAIL → GATE 0 FAIL, fix and re-run
 - **Skip detection (mandatory)**: Read the full test runner output. If ANY real test is reported as `skipped`, `pending`, `disabled`, or `ignored` — treat it as a GATE 0 FAIL. Real tests must execute, not skip.
@@ -95,7 +95,7 @@ Do NOT skip Gate 0 and proceed to coverage.
 
 After TDD Green (all tests pass), run the coverage tool.
 
-1. **Run** the coverage tool (activate env per `long-task-guide.md`)
+1. **Run** the coverage tool (activate env per `env-guide.md` §2; use coverage command from `env-guide.md` §3 with quiet execution — redirect output to `/tmp/cov-$$.log` and only extract on failure)
 2. **Read** the output — verify line%/branch% numbers are visible
 3. **Verify**: line coverage >= `[thresholds] line_coverage`, branch coverage >= `[thresholds] branch_coverage`
 4. **If FAIL**: identify uncovered lines/branches from the output → add tests → re-run TDD cycle for those paths
@@ -115,7 +115,7 @@ The final gate before marking a feature as "passing".
 
 ```
 
-1. IDENTIFY → Get test and coverage commands from `long-task-guide.md`
+1. IDENTIFY → Get test and coverage commands from `env-guide.md` §3 (single source of truth)
 
 2. RUN → Execute each command (fresh, in this message — not cached from earlier)
 
@@ -180,22 +180,34 @@ If coverage tools are not yet configured for this project's tech stack, read `sk
 
 ## Structured Return Contract
 
-When all gates are complete (or if blocked), return your result in EXACTLY this format:
+Aligned with the unified contract in `skills/long-task-work/references/structured-return-contract.md`. Return EXACTLY this format:
 
 ```markdown
-## SubAgent Result: Quality Gates
-### Verdict: PASS | FAIL | BLOCKED
-### Summary
-[1-3 sentences — what gates were run, key outcomes]
-### Artifacts
-- [any files created or modified during gate execution]
-### Metrics
+## SubAgent Result: long-task-quality
+
+**status**: pass | fail | blocked
+**artifacts_written**: [file paths created or modified during gate execution, relative to project root]
+**next_step_input**: {
+  "coverage_line": <actual line coverage %>,
+  "coverage_branch": <actual branch coverage %>,
+  "all_tests_pass": true | false,
+  "test_count": <total test count>
+}
+**blockers**: [one-sentence strings if status=blocked; otherwise empty array]
+**evidence**: [
+  "Gate 0 (Real Test): PASS/FAIL — N real tests executed, 0 skipped",
+  "Line coverage: N% (threshold X%)",
+  "Branch coverage: N% (threshold X%)"
+]
+
+### Metrics (extension — for task-progress.md)
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
 | Gate 0 (Real Test) | PASS/FAIL | PASS | PASS/FAIL |
 | Line Coverage | N% | ≥X% | PASS/FAIL |
 | Branch Coverage | N% | ≥X% | PASS/FAIL |
-### Risks
+
+### Risks (extension — omit if empty)
 <!-- Output even on PASS. Omit this section only if the list is empty. -->
 | # | Category | Location | Description |
 |---|----------|----------|-------------|
@@ -204,15 +216,11 @@ When all gates are complete (or if blocked), return your result in EXACTLY this 
 <!-- Category rules:
   Coverage — any metric within +5% of its threshold, or known uncovered boundary
   Dependency — third-party library with a known security patch or breaking change not yet applied -->
-### Issues (only if FAIL or BLOCKED)
+
+### Issues (extension — only if fail or blocked)
 | # | Severity | Description |
 |---|----------|-------------|
 | 1 | Critical/Major/Minor | [what failed, what was attempted] |
-### Next Step Inputs
-- coverage_line: [actual line coverage %]
-- coverage_branch: [actual branch coverage %]
-- all_tests_pass: true/false
-- test_count: [total test count]
 ```
 
-**IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report the results.
+**IMPORTANT**: Do NOT mark the feature as "passing" in feature-list.json — that is the orchestrator's responsibility. Only report results in the contract above.

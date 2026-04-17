@@ -146,7 +146,10 @@ Update the existing design document **in place** for affected sections:
 4. For **deprecated** requirements:
    - Add `[DEPRECATED - Wave N]` marker to the corresponding design section
    - Do NOT delete the section (preserve history context)
-5. **§13 Codebase Conventions** (if exists): carry forward as-is unless new constraints surface. If the increment introduces new internal libraries, prohibits additional APIs, or adds static analysis tools, update the corresponding §13 subsections. If codebase conventions have materially changed since the original scan, consider re-scanning (delete `docs/rules/` and re-run in a new session).
+5. **§13 Codebase Conventions** (if exists): carry forward as-is unless new constraints surface. If the increment introduces new internal libraries, prohibits additional APIs, or adds static analysis tools, update the corresponding §13 subsections. If codebase conventions have materially changed since the original scan, consider re-scanning (delete `docs/rules/` and re-run in a new session). **If §13 changes, also propagate to `env-guide.md` §4**; and if the increment introduces new build/test/coverage commands (e.g. a new service added to the build), update `env-guide.md` §3 too. **Both §3/§4 changes require human approval** — after edit, prompt the user:
+   > "env-guide.md §3/§4 was modified by this increment. Please review the diff, then update the frontmatter `approved_by` / `approved_date` / `approved_sections` before the next Worker cycle (Worker Step 0 enforces)."
+
+   Run `python scripts/check_env_guide_approval.py env-guide.md` at the end of the increment to verify the new state; if unapproved, block until the user commits the approval.
 6. Get user approval section-by-section
 7. Git commit the design update with descriptive message:
    ```

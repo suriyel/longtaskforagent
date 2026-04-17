@@ -80,16 +80,16 @@ Agent(
 
 ## Step 4: Parse Result
 
-Read the SubAgent's returned text and locate the `### Verdict:` line:
+Read the SubAgent's returned text and locate the `**status**:` line (unified contract field; legacy `### Verdict:` line may coexist).
 
-- **`### Verdict: PASS`**
+- **`**status**: pass`** (legacy: `### Verdict: PASS`)
   1. Extract Next Step Inputs: `st_case_path`, `st_case_count`, `environment_cleaned`
   2. If feature is `"ui": true`: extract Visual Assessment scores. If any score ≤ 2 or Display-Only Defects > 0, treat as FAIL (SubAgent should have already done this, but double-check).
   3. Record in `task-progress.md`: "Feature-ST: PASS ({N} cases, all passed)" — for ui:true, append visual assessment min score
   4. If `environment_cleaned` is false, run cleanup per `env-guide.md` yourself
   5. Proceed to next step (Inline Check + Persist)
 
-- **`### Verdict: FAIL`** or **`### Verdict: BLOCKED`**
+- **`**status**: fail`** or **`**status**: blocked`** (legacy: `### Verdict: FAIL` / `### Verdict: BLOCKED`)
   1. Read the Issues table — identify failure details
   2. **Main Agent classifies each issue** into one of two categories:
      - **Human manual testing** (escalate immediately via `AskUserQuestion`): missing `required_configs[]` secrets or credentials the AI cannot provide, UI verification requiring physical device or visual judgment beyond Chrome DevTools MCP capability, external human action required (third-party approval, manual account setup, hardware interaction)
@@ -98,7 +98,7 @@ Read the SubAgent's returned text and locate the `### Verdict:` line:
   4. For human manual testing issues: escalate via `AskUserQuestion` with issue details. Feature stays BLOCKED until human responds.
   5. **No bypass allowed** — every failure must be resolved (by AI or human) before proceeding to Persist.
 
-- **`### Verdict: CLARIFY`**
+- **`**status**: clarify`** (legacy: `### Verdict: CLARIFY`)
   1. Read the Specification Gaps table — extract all categorized questions
   2. **Cross-check**: read the Feature Design document's `## Clarification Addendum` section (at `plan_doc_path`). Filter out any gaps that were already resolved there — do NOT re-ask.
   3. For genuinely new gaps: present to user via `AskUserQuestion`:
