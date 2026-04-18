@@ -13,10 +13,6 @@ description: "Use when starting any session in a long-task project - routes to t
 
 ## 如何访问 Skill
 
-使用 `Skill` 工具按名称调用 skill（例如 `long-task:long-task-work`）。被调用时，skill 内容会加载并呈现给你——直接按其执行。永远不要对 skill 文件使用 Read 工具。
-
-## 阶段检测
-
 ```bash
 python scripts/phase_route.py --json
 ```
