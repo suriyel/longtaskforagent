@@ -39,6 +39,28 @@ const copyInitScript = (directory) => {
   }
 };
 
+// ─── Copy phase_route.py + import deps (count_pending, validate_features) ────
+// phase_route.py imports its siblings via sys.path insert, so all three must
+// land together in the project's scripts/ dir — including pre-init, where
+// `long-task-init` hasn't yet populated scripts/.
+const copyRouterScripts = (directory) => {
+  const routerScripts = ['phase_route.py', 'count_pending.py', 'validate_features.py'];
+  try {
+    const targetScriptsDir = path.join(directory, 'scripts');
+    if (!fs.existsSync(targetScriptsDir)) {
+      fs.mkdirSync(targetScriptsDir, { recursive: true });
+    }
+    for (const name of routerScripts) {
+      const src = path.join(pluginRoot, 'scripts', name);
+      if (fs.existsSync(src)) {
+        fs.copyFileSync(src, path.join(targetScriptsDir, name));
+      }
+    }
+  } catch {
+    // Non-fatal — never break the session
+  }
+};
+
 // ─── Chrome DevTools MCP auto-setup ──────────────────────────────────────────
 
 const CHROME_MCP_KEY = 'chrome-devtools';
@@ -93,6 +115,7 @@ const setupChromeMcp = () => {
 export const LongTaskPlugin = async ({ client, directory }) => {
   setupChromeMcp();
   copyInitScript(directory);
+  copyRouterScripts(directory);
   return {
     // ─── AskUserQuestion signal file for auto_loop detection ─────────
     // When an interactive tool is called, write a signal file so that

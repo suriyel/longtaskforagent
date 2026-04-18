@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # SessionStart hook for long-task-agent plugin
-# Copies init_project.py to the consumer project so that the Init phase
-# skill instruction `python scripts/init_project.py …` works out of the box.
+# Copies init_project.py and the unified phase router (phase_route.py plus its
+# sibling import deps) into the consumer project's scripts/ dir so the
+# `using-long-task` router works on every session — including pre-init, where
+# `long-task-init` hasn't yet populated scripts/.
 
 set -euo pipefail
 
@@ -25,6 +27,17 @@ if [ -f "$INIT_SCRIPT_SRC" ]; then
     fi
     printf '%s' "${PLUGIN_ROOT_HINT}" > "scripts/.long-task-plugin-root"
 fi
+
+# ── Copy phase_route.py + import deps (count_pending, validate_features) ─────
+# phase_route.py imports its siblings via sys.path insert, so all three must
+# land together in the project's scripts/ dir.
+for _ROUTER_SCRIPT in phase_route.py count_pending.py validate_features.py; do
+    _SRC="${PLUGIN_ROOT}/scripts/${_ROUTER_SCRIPT}"
+    if [ -f "$_SRC" ]; then
+        mkdir -p "scripts"
+        cp "$_SRC" "scripts/${_ROUTER_SCRIPT}"
+    fi
+done
 
 # ── env-guide.md approval gate (advisory warning on session start) ───────────
 # Worker Step 0 enforces the gate with a hard block. This hook only surfaces an
