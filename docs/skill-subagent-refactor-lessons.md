@@ -547,6 +547,68 @@ ATS 场景揭示 `blockers[]` 可双用：
 - 用户不希望会话被切断（"我想一口气做完"）
 - 每次会话的启动成本（重读 5 件事）>> 节省的上下文污染成本
 
+## long-task-tdd 骨架化（R/G/R 三 SubAgent 并列）
+
+延续 increment / requirements / init 的 orchestrator→SubAgent 骨架化模式对 `long-task-tdd`（383 行单体）做拆分，但存在**两个独有特征**：
+
+1. **3 SubAgent 间无用户审批** —— 与 increment 不同，TDD R/G/R 是全内部流水线。`approval-revise-loop.md` 被"降维使用"：仅保留 fail/blocked 分支 + Failure / Clarification Addendum 组装；没有 approve / revise / escalate 人类闸门（escalate 转为 orchestrator 级 `blocked` 返上层 `long-task-work-tdd`）。**复用但不新写** loop 模板。
+2. **嵌套深度 = 2，与改造前等深** —— 原 `main → work-tdd → tdd → implementer(template)` 已是 depth 2；本次改为 `main → work-tdd → tdd → {red/green/refactor}` 仍是 depth 2。**骨架化的净收益是"模板分发"换成"skill 分发"**：消除 `implementer-prompt.md` 的三占位符同步负担，Red / Green / Refactor 每阶段获得独立上下文隔离，且沿用既有 Structured Return Contract 机制。
+
+### 新模式 D：skill 分发替代 prompt 模板分发
+
+旧模式（本次清理掉的反模式）：
+```
+orchestrator SKILL.md:
+  "Step 2: 用 prompts/implementer-prompt.md 模板分发 implementer SubAgent，
+   填入 {{FEATURE_DESIGN_INTERFACE_CONTRACT}} / {{FEATURE_DESIGN_IMPLEMENTATION_SUMMARY}} /
+   {{FEATURE_DESIGN_DATA_MODEL}} / {{FULL_TASK_TEXT}} / {{TECH_STACK}} / {{TEST_COMMAND}} / ..."
+```
+
+反模式症候：
+- 占位符两处维护（orchestrator 抽取 + 模板消费）
+- 模板是"半拉 skill"：有指令语义但无 frontmatter、无独立契约、无法被 Skill 工具加载
+- orchestrator 要做"读设计 → 抽三节 → 填模板 → 启动 SubAgent"四步，SubAgent 本可自己做后三步
+
+新模式：
+```
+orchestrator SKILL.md:
+  "Step 2: DISPATCH long-task-tdd-green SubAgent，input 传 feature_design_path"
+green SKILL.md:
+  "启动时读 feature_design_path §4/§6/§8；按下述一致性铁律实现..."
+```
+- Orchestrator 只传动态路径；静态文档定位由 sub-skill 自行 glob（对齐 §坑 1）
+- Sub-skill 与其它 sub-skill 同形：frontmatter + 步骤 + Structured Return Contract
+- 无"半拉 skill"、无占位符同步
+
+### 判据表：Skill 分发 vs 模板分发
+
+| 信号 | 选择 |
+|-----|------|
+| 任务有若干动态输入 + 一份静态定位的文档切片 | Skill 分发（动态入 input，静态自解析） |
+| 任务本质是一次 LLM prompt 填空（如 "扩写此段"） | 模板分发可接受 |
+| SubAgent 要求返 Structured Return Contract | Skill 分发（模板无契约） |
+| 同一模板被多处调用 | Skill 分发（升级为共享 sub-skill） |
+
+### 数据对比
+
+| 指标 | 前 | 后 |
+|-----|----|----|
+| `long-task-tdd/SKILL.md` | 383 | ~145（orchestrator 骨架） |
+| 新 sub-skill 数 | 0 | 3（red / green / refactor） |
+| sub-skill 平均行数 | — | ~120 |
+| 新共享 references | 0 | 2（`silent-execution.md` / `drift-protocol.md`） |
+| 移除的 prompt 模板 | 1 (`implementer-prompt.md`, 41 行) | 0 |
+| SubAgent 嵌套深度 | 2（带 implementer） | 2（带 red/green/refactor）|
+| 返回契约数 | 1（仅最外层） | 4（3 个子契约 + 1 聚合；主 agent 仍只看聚合） |
+| 上下文隔离粒度 | R/G/R 同 SubAgent | R/G/R 各自全新 SubAgent |
+
+### 关键设计决策
+
+- **三阶段路径解析两次**：orchestrator 先解析一次（用于组装各 DISPATCH 的 input），sub-skill 启动后自己再 glob 一次。**接受这个重复**——§跨会话 "一致性保证 > token 效率" 原则对跨 SubAgent 同样适用。
+- **不新建 `long-task-tdd/references/approval-revise-loop.md`**：直接复用 `../long-task-work/references/approval-revise-loop.md`。该文件既承载 work-tdd 对 tdd 的调用处理，也承载 tdd 对 sub-skill 的调用处理 —— 规则同构（fail/blocked 前缀、Addendum 组装、2 轮封顶）。符合 §坑 1 "单一事实源"。
+- **`drift-protocol.md` / `silent-execution.md` 归属 `long-task-tdd`**，不上移到 work：它们是 TDD 特有的动作协议（Green / Refactor 独家使用；work-tdd 自身不做测试 / 实现 / 静态分析）。
+- **`[CONTRACT-DEVIATION]` 直通返上层**：Green / Refactor 的设计偏离 blocker 不被 orchestrator 做 Clarification 重分发，直接转 blocked 返 work-tdd——因为该决策跨 Step（可能影响已完成的 Red 测试断言），orchestrator 不具裁决权。
+
 ## 参考
 
 - 主 SKILL.md：`skills/long-task-increment/SKILL.md`
@@ -559,8 +621,15 @@ ATS 场景揭示 `blockers[]` 可双用：
 - Design 剃刀评审计划：`/home/machine/.claude/plans/long-task-design-roi-melodic-origami.md`
 - ATS 剃刀 + reviewer 规范化：`docs/templates/ats-template.md`、`skills/long-task-ats/SKILL.md`、`skills/long-task-ats/references/approval-revise-loop.md`、`agents/ats-reviewer.md`
 - ATS 剃刀评审计划：`/home/machine/.claude/plans/long-task-ats-docs-skill-subagent-refac-joyful-codd.md`
-- **跨会话 Phase 拆分（本次）**：
+- **跨会话 Phase 拆分**：
   - 路由壳：`skills/long-task-work/SKILL.md`
   - 3 个 phase skill：`skills/long-task-work-{design,tdd,st}/SKILL.md`
   - sub_status schema：`scripts/validate_features.py` + `scripts/count_pending.py` + `scripts/migrate_sub_status.py`
   - 评审计划：`/home/machine/.claude/plans/3-feature-design-fluttering-cookie.md`
+- **TDD 三 SubAgent 骨架化（本次）**：
+  - Orchestrator：`skills/long-task-tdd/SKILL.md`
+  - 3 个 sub-skill：`skills/long-task-tdd-{red,green,refactor}/SKILL.md`
+  - 共享 references：`skills/long-task-tdd/references/{silent-execution,drift-protocol}.md`
+  - 复用 loop：`skills/long-task-work/references/approval-revise-loop.md`
+  - 移除：`skills/long-task-tdd/prompts/implementer-prompt.md`
+  - 评审计划：`/home/machine/.claude/plans/long-task-tdd-docs-skill-subagent-refac-structured-swing.md`

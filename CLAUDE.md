@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 30 skills loaded on-demand via the `Skill` tool (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 33 skills loaded on-demand via the `Skill` tool (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -36,7 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 30-Skill System (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills)
+### 33-Skill System (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills)
 
 #### Phase Skills
 
@@ -70,7 +70,7 @@ One SubAgent per phase skill. Each SubAgent receives `feature_design_path` and r
 | Skill | Purpose | Dispatched by |
 |-------|---------|---------------|
 | `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory | `long-task-work-design` |
-| `long-task-tdd` | TDD Red-Green-Refactor (R/G/R each independently consume §4/§6/§8) | `long-task-work-tdd` |
+| `long-task-tdd` | TDD orchestrator — dispatches `long-task-tdd-{red,green,refactor}` SubAgents and aggregates their contracts | `long-task-work-tdd` |
 | `long-task-quality` | Coverage Gate | `long-task-work-tdd` |
 | `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, Chrome DevTools MCP + ISO/IEC/IEEE 29119) | `long-task-work-st` |
 
@@ -106,6 +106,16 @@ All dispatched by `long-task-init` orchestrator; each returns a Structured Retur
 | `long-task-init-bootstrap` | Step 4 — generate `init.sh` / `init.ps1` from recipes + tech_stack; zero-approval with internal `bash -n` + PowerShell syntax self-check |
 | `long-task-init-features` | Step 5 — generate `long-task-guide.md` + populate `feature-list.json` + `.env.example` + project-specific `scripts/check_configs.py` + validate; returns LOC distribution for sizing gate |
 
+#### Discipline Skills (sub-skills of long-task-tdd)
+
+All dispatched by `long-task-tdd` orchestrator as independent SubAgents (depth 2 from main agent); each returns a Structured Return Contract; orchestrator aggregates into the unified `long-task-tdd` contract. Approval handling via `skills/long-task-work/references/approval-revise-loop.md` (no user approval mid-cycle — fail/blocked escalate to `long-task-work-tdd`).
+
+| Skill | Purpose |
+|-------|---------|
+| `long-task-tdd-red` | Step 1 — write failing tests driven by §7 test inventory; apply Rule 1-7 (category coverage, negative ratio, assertion quality, wrong-impl challenge, real tests, UI positive render) |
+| `long-task-tdd-green` | Step 2 — minimal implementation strictly aligned with feature design §4/§6/§8; env-guide sync; startup output requirements |
+| `long-task-tdd-refactor` | Step 3 — cleanup while keeping tests green; design alignment re-check; static analysis gate from env-guide §3 |
+
 #### Meta Skills
 
 | Skill | Purpose |
@@ -140,7 +150,10 @@ using-long-task (router — delegates to scripts/phase_route.py)
    │      ├─→ long-task-work-design (feature has sub_status=design_pending)
    │      │       └─→ long-task-feature-design (SubAgent)
    │      ├─→ long-task-work-tdd (feature has sub_status=tdd_pending)
-   │      │       ├─→ long-task-tdd (SubAgent; R/G/R each re-reads design)
+   │      │       ├─→ long-task-tdd (SubAgent; orchestrates R/G/R)
+   │      │       │       ├─→ long-task-tdd-red (SubAgent — write failing tests)
+   │      │       │       ├─→ long-task-tdd-green (SubAgent — minimal impl + design align)
+   │      │       │       └─→ long-task-tdd-refactor (SubAgent — cleanup + static gate)
    │      │       └─→ long-task-quality (SubAgent)
    │      └─→ long-task-work-st (feature has sub_status=st_pending)
    │              └─→ long-task-feature-st (SubAgent) → Inline Check → Persist
@@ -310,7 +323,12 @@ long-task-agent/
 │   ├── long-task-work-st/SKILL.md (Phase 2c — Feature-ST + Inline + Persist)
 │   ├── long-task-feature-st/SKILL.md + prompts/e2e-scenario-prompt.md
 │   ├── long-task-st/SKILL.md + references/st-recipes.md
-│   ├── long-task-tdd/SKILL.md + testing-anti-patterns.md + references/ui-error-detection.md + prompts/implementer-prompt.md
+│   ├── long-task-tdd/SKILL.md (orchestrator — DISPATCH red/green/refactor)
+│   │     + testing-anti-patterns.md
+│   │     + references/{ui-error-detection,silent-execution,drift-protocol}.md
+│   ├── long-task-tdd-red/SKILL.md (Step 1 — failing tests, Rule 1-7)
+│   ├── long-task-tdd-green/SKILL.md (Step 2 — minimal impl, design align §4/§6/§8)
+│   ├── long-task-tdd-refactor/SKILL.md (Step 3 — cleanup + static analysis gate)
 │   ├── long-task-quality/SKILL.md + coverage-recipes.md
 │   ├── long-task-finalize/SKILL.md
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
