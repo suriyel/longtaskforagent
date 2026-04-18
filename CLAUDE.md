@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 29 skills loaded on-demand via the `Skill` tool (18 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills); bootstrap router (`using-long-task`) routes to the correct phase based on project state + feature-list sub_status. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 30 skills loaded on-demand via the `Skill` tool (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -27,6 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Check real tests | `python scripts/check_real_tests.py feature-list.json [--feature N] [--require-for-deps] [--json]` |
 | Count pending per phase | `python scripts/count_pending.py feature-list.json [--json]` |
 | Migrate to sub_status schema | `python scripts/migrate_sub_status.py feature-list.json [--dry-run] [--force]` |
+| Unified phase router | `python scripts/phase_route.py [--root DIR] [--json]` |
 | Run all tests | `python -m pytest tests/` |
 | Run single test | `python -m pytest tests/test_<script_name>.py` |
 | Auto-loop (Claude Code) | `python scripts/auto_loop.py feature-list.json [--max-iterations 30] [--log-dir logs] [--cooldown 10]` |
@@ -35,16 +36,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 29-Skill System (18 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills)
+### 30-Skill System (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills)
 
 #### Phase Skills
 
 | Skill | Phase | Trigger |
 |-------|-------|---------|
-| `using-long-task` | Bootstrap | Routes to correct phase; invoked by LLM at session start based on skill description |
+| `using-long-task` | Bootstrap | Routes to correct phase; invoked by LLM at session start; delegates to `scripts/phase_route.py` |
 | `long-task-hotfix` | Hotfix | `bugfix-request.json` exists (HIGHEST priority) |
 | `long-task-increment` | Phase 1.5 | `increment-request.json` exists |
-| `codebase-scanner` (SubAgent) | Phase 0-pre | No SRS/rules docs, >3 source files — brownfield scan |
+| `long-task-brownfield-scan` | Phase 0-pre | No `docs/rules/`, >3 source files, ≥5 git commits — brownfield scan (dispatches `codebase-scanner` SubAgent) |
 | `long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json |
 | `long-task-ucd` | Phase 0b | SRS exists, no UCD/design doc, no feature-list.json |
 | `long-task-design` | Phase 0c | SRS + UCD exist (or no UI), no design doc, no feature-list.json |
@@ -114,8 +115,9 @@ All dispatched by `long-task-init` orchestrator; each returns a Structured Retur
 #### Skill Call Graph
 
 ```
-using-long-task (router)
-   ├─→ codebase-scanner SubAgent (brownfield, no docs/rules/) ──→ long-task-requirements
+using-long-task (router — delegates to scripts/phase_route.py)
+   ├─→ long-task-brownfield-scan (brownfield, no docs/rules/)
+   │      └─→ codebase-scanner SubAgent ──→ long-task-requirements
    ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ long-task-work
    │      ├─→ long-task-requirements-quality (Step 7–11)
    │      ├─→ long-task-requirements-alignment (Expert E10; auto-skip for Lite)
@@ -156,7 +158,7 @@ long-task-explore (standalone — no pipeline dependency)
 
 | Phase | Skill | Key Output |
 |-------|-------|------------|
-| 0-pre: Codebase Scan (brownfield) | `codebase-scanner` SubAgent | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns, commit conventions |
+| 0-pre: Codebase Scan (brownfield) | `long-task-brownfield-scan` (dispatches `codebase-scanner` SubAgent) | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns, commit conventions |
 | 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds) |
 | 0b: UCD Style Guide | `long-task-ucd` | `docs/plans/*-ucd.md` (auto-skips if no UI features) |
 | 0c: Design | `long-task-design` | `docs/plans/*-design.md` (6 sections: architecture / feature integration specs / data model / internal API contracts / external interfaces / task decomposition) |
@@ -193,7 +195,7 @@ long-task-explore (standalone — no pipeline dependency)
 - **Startup output in code**: Servers must print bound port, PID, and ready signal at startup.
 - **Real tests mandatory for external-dependency features**: Features with `required_configs[]` containing URL/HOST/PORT/DSN/URI/CONNECTION/ENDPOINT keys cannot use pure-function exemption. Use `check_real_tests.py --require-for-deps`.
 - **2/3方件 constraints binding**: `env-guide.md §4.1` mandatory internal libraries and `§4.2` prohibited APIs (sourced from `docs/rules/coding-constraints.md`) are binding for all new code.
-- **Codebase scan before requirements (brownfield)**: >3 source files + ≥5 commits → run codebase-scanner first.
+- **Codebase scan before requirements (brownfield)**: >3 source files + ≥5 commits → `phase_route.py` routes to `long-task-brownfield-scan` first.
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
 
@@ -286,6 +288,7 @@ long-task-agent/
 │   ├── long-task-requirements-finalize/SKILL.md
 │   ├── long-task-ucd/SKILL.md
 │   ├── long-task-hotfix/SKILL.md
+│   ├── long-task-brownfield-scan/SKILL.md (Phase 0-pre — dispatches codebase-scanner SubAgent)
 │   ├── long-task-increment/SKILL.md + references/{brownfield-adaptation,approval-revise-loop}.md
 │   ├── long-task-increment-impact/SKILL.md
 │   ├── long-task-increment-design/SKILL.md
@@ -316,7 +319,7 @@ long-task-agent/
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
 ├── scripts/{get_tool_commands,validate_features,validate_guide,check_configs,check_devtools,
 │           check_st_readiness,validate_ats,check_ats_coverage,check_real_tests,
-│           count_pending,migrate_sub_status,
+│           count_pending,migrate_sub_status,phase_route,
 │           validate_bugfix_request,validate_increment_request,validate_st_cases,
 │           auto_loop,auto_loop_opencode}.py
 └── tests/test_<script_name>.py  (one file per script)
