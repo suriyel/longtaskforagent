@@ -5,7 +5,7 @@ description: "Thin router — reads feature-list.json sub_status and delegates t
 
 # Worker Router
 
-`using-long-task` 已通过 `scripts/phase_route.py` 路由到具体 phase skill；若用户直接入本 skill：
+通过 `scripts/phase_route.py` 路由到具体 phase skill：
 
 ```bash
 python scripts/phase_route.py feature-list.json --json
