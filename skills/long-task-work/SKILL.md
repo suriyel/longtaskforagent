@@ -19,9 +19,3 @@ python scripts/phase_route.py feature-list.json --json
 4. `next_skill == null` 且 `counts.total == 0` → 提示用户 feature-list 无活跃特性，可能需要 `long-task-increment`。
 
 > **自 2026-04 重构**：原 11 个 Step 已拆分到 3 个 top-level 阶段 skill（`long-task-work-design` / `long-task-work-tdd` / `long-task-work-st`）。理由：SubAgent 嵌套受限；跨会话 phase 边界天然切断上下文污染；每阶段独立重读 feature design 保证一致性。详见 `docs/skill-subagent-refactor-lessons.md`。
-
-## 参考
-
-- 阶段 skill：`skills/long-task-work-design/SKILL.md` / `skills/long-task-work-tdd/SKILL.md` / `skills/long-task-work-st/SKILL.md`
-- 路由脚本：`scripts/phase_route.py`
-- 共享资产：`references/structured-return-contract.md` / `references/approval-revise-loop.md` / `references/systematic-debugging.md` / `references/subagent-development.md` / `references/worktree-isolation.md`
