@@ -99,6 +99,7 @@ python scripts/validate_bugfix_request.py bugfix-request.json
   "description": "<actual_behavior from bugfix-request.json> — Root cause: <confirmed root cause>",
   "priority": "<Critical|Major → 'high', Minor → 'medium', Cosmetic → 'low'>",
   "status": "failing",
+  "sub_status": "design_pending",
   "srs_trace": ["<FR-xxx from linked feature, or new FR-xxx if unlinked>"],
   "dependencies": [<fixed_feature_id>],
   "ui": <copy from linked feature's ui field, or false if feature_id is null>,
@@ -116,6 +117,7 @@ python scripts/validate_bugfix_request.py bugfix-request.json
 - `dependencies`：非空则置为 `[fixed_feature_id]`（确保 Worker 先处理原特性再做此修复）；为空则置 `[]`
 - `ui`：若 `feature_id` 非空，使用关联特性的 `ui` 字段；否则 `false`
 - `wave`：使用 `feature-list.json` `waves` 数组中当前最大的 wave id
+- `sub_status`：始终置为 `"design_pending"` —— 即使是 bugfix，`long-task-work-design` 也会产出精简的特性详细设计（根因记录 + 定向修复方式 + 回归测试清单），再进入 TDD
 - **ATS 提示**：若 `fixed_feature_id` 非空且 ATS 文档存在（`docs/plans/*-ats.md`），在 ATS 映射表中查找关联特性的需求。将 `srs_trace` 设为包含关联特性的需求 ID，以便下游 feature-st 能从 SRS 验收标准推导所需测试用例
 
 新增后校验：

@@ -25,7 +25,6 @@ digraph phase_detection {
     "bugfix-request.json exists?" [shape=diamond];
     "increment-request.json exists?" [shape=diamond];
     "feature-list.json exists?" [shape=diamond];
-    "All active features passing?" [shape=diamond];
     "Design doc (*-design.md) in docs/plans/?" [shape=diamond];
     "ATS doc (*-ats.md) in docs/plans/?" [shape=diamond];
     "UCD doc (*-ucd.md) in docs/plans/?" [shape=diamond];
@@ -40,17 +39,14 @@ digraph phase_detection {
     "Invoke long-task:long-task-design" [shape=box style=filled fillcolor=lightblue];
     "Invoke long-task:long-task-ats" [shape=box style=filled fillcolor=lightskyblue];
     "Invoke long-task:long-task-init" [shape=box style=filled fillcolor=lightyellow];
-    "Invoke long-task:long-task-work" [shape=box style=filled fillcolor=lightgreen];
-    "Invoke long-task:long-task-st" [shape=box style=filled fillcolor=lightcoral];
+    "Invoke long-task:long-task-work\n(router — dispatches by sub_status)" [shape=box style=filled fillcolor=lightgreen];
 
     "Session Start" -> "bugfix-request.json exists?";
     "bugfix-request.json exists?" -> "Invoke long-task:long-task-hotfix" [label="yes"];
     "bugfix-request.json exists?" -> "increment-request.json exists?" [label="no"];
     "increment-request.json exists?" -> "Invoke long-task:long-task-increment" [label="yes"];
     "increment-request.json exists?" -> "feature-list.json exists?" [label="no"];
-    "feature-list.json exists?" -> "All active features passing?" [label="yes"];
-    "All active features passing?" -> "Invoke long-task:long-task-st" [label="yes"];
-    "All active features passing?" -> "Invoke long-task:long-task-work" [label="no"];
+    "feature-list.json exists?" -> "Invoke long-task:long-task-work\n(router — dispatches by sub_status)" [label="yes"];
     "feature-list.json exists?" -> "ATS doc (*-ats.md) in docs/plans/?" [label="no"];
     "ATS doc (*-ats.md) in docs/plans/?" -> "Invoke long-task:long-task-init" [label="yes"];
     "ATS doc (*-ats.md) in docs/plans/?" -> "Design doc (*-design.md) in docs/plans/?" [label="no"];
@@ -71,9 +67,7 @@ digraph phase_detection {
 0. 检查项目根目录下的 `bugfix-request.json` → 如果存在 → `long-task-hotfix` **（最高优先级）**
    注意：如果 `bugfix-request.json` 和 `increment-request.json` 同时存在，hotfix 先执行；`increment-request.json` 被保留，下次会话处理。
 1. 检查项目根目录下的 `increment-request.json` → 如果存在 → `long-task-increment`
-2. 检查项目根目录下的 `feature-list.json` → 如果存在：
-   - 运行 `python scripts/check_st_readiness.py feature-list.json` —— 如果 exit 0（所有激活特性通过，排除弃用）→ `long-task-st`
-   - 否则（存在激活特性未通过）→ `long-task-work`
+2. 检查项目根目录下的 `feature-list.json` → 如果存在 → `long-task-work`（它是薄路由壳，内部按 `sub_status` 分发到 `work-design` / `work-tdd` / `work-st`，或在全部 `done` 时转 `long-task-st`，并在首次遇到缺 sub_status 时幂等运行 `migrate_sub_status.py`）。using-long-task 不在这一层做分桶判断——单源路由在 `long-task-work`。
 3. 检查 `docs/plans/*-ats.md` → 如有匹配 → `long-task-init`（ATS 完成，进入 init）
 4. 检查 `docs/plans/*-design.md` → 如有匹配 → `long-task-ats`（Design 完成，进入 ATS）
 5. 检查 `docs/plans/*-ucd.md` → 如有匹配 → `long-task-design`（UCD 完成，进入 design）
@@ -97,21 +91,24 @@ digraph phase_detection {
 | `long-task:long-task-design` | 阶段 0c | SRS + UCD 都存在（或无 UI 特性）、无设计文档、无 feature-list.json |
 | `long-task:long-task-ats` | 阶段 0d | 设计文档存在、无 ATS 文档、无 feature-list.json |
 | `long-task:long-task-init` | 阶段 1 | ATS 文档存在（或对微型项目自动跳过）、无 feature-list.json |
-| `long-task:long-task-work` | 阶段 2 | feature-list.json 存在、存在未通过的激活特性 |
-| `long-task:long-task-st` | 阶段 3 | feature-list.json 存在、所有激活特性均通过 |
+| `long-task:long-task-work` | 阶段 2 路由壳 | feature-list.json 存在——**using-long-task 唯一的后 init 出口**；内部按 sub_status 分发 |
+| `long-task:long-task-work-design` | 阶段 2a | 由 `long-task-work` 路由壳按 `sub_status=design_pending` 分发（不由 using-long-task 直接调用）|
+| `long-task:long-task-work-tdd` | 阶段 2b | 由 `long-task-work` 路由壳按 `sub_status=tdd_pending` 分发 |
+| `long-task:long-task-work-st` | 阶段 2c | 由 `long-task-work` 路由壳按 `sub_status=st_pending` 分发 |
+| `long-task:long-task-st` | 阶段 3 | 由 `long-task-work` 路由壳在全部特性 `sub_status=done` 时转发（系统级 ST）|
 
 ### 独立 Skill（独立调用——无流水线依赖）
 | Skill | 用途 | 触发 |
 |-------|---------|---------|
 | `long-task:long-task-explore` | 存量代码库深度探索——架构、数据流、领域模型、API 表面、依赖、代码健康度 | 按需通过 `/deep-explore [quick\|standard\|deep] [--focus area] [--path dir]` 触发 |
 
-### 专业 Skill（由 long-task-work 作为子 skill 调用——禁止直接调用）
-| Skill | 用途 |
-|-------|---------|
-| `long-task:long-task-feature-design` | Feature 详细设计——接口契约、算法伪代码、状态图、边界矩阵、测试清单（桥接系统设计 → TDD）|
-| `long-task:long-task-feature-st` | 黑盒 Feature 验收测试——自管 start/cleanup 生命周期、Chrome DevTools MCP 执行、ISO/IEC/IEEE 29119 测试用例文档（按特性、在覆盖率关卡后）|
-| `long-task:long-task-tdd` | TDD Red-Green-Refactor |
-| `long-task:long-task-quality` | 覆盖率关卡 |
+### 专业 Skill（由 long-task-work-{design,tdd,st} 作为 SubAgent 调用——禁止直接调用）
+| Skill | 用途 | 调用方 |
+|-------|---------|-------|
+| `long-task:long-task-feature-design` | Feature 详细设计——接口契约、算法伪代码、状态图、边界矩阵、测试清单 | `long-task-work-design` |
+| `long-task:long-task-tdd` | TDD Red-Green-Refactor（R/G/R 均独立重读 feature design）| `long-task-work-tdd` |
+| `long-task:long-task-quality` | 覆盖率关卡 | `long-task-work-tdd` |
+| `long-task:long-task-feature-st` | 黑盒 Feature 验收测试——自管 start/cleanup 生命周期、Chrome DevTools MCP 执行、ISO/IEC/IEEE 29119 测试用例文档 | `long-task-work-st` |
 
 ### 元 Skill（由阶段 skill 按需调用——禁止直接调用）
 | Skill | 用途 |

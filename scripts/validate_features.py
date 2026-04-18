@@ -29,6 +29,7 @@ import sys
 REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status"}
 SRS_TRACE_PATTERN = re.compile(r"^(?:FR|NFR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
+VALID_SUB_STATUSES = {"design_pending", "tdd_pending", "st_pending", "done"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
 QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min"}
@@ -236,6 +237,24 @@ def validate(path: str) -> tuple[list[str], list[str]]:
         if status and status not in VALID_STATUSES:
             errors.append(f"{prefix} (id={fid}): invalid status '{status}', must be one of {VALID_STATUSES}")
 
+        # Check sub_status (optional for backward compat; if present, validate enum + status consistency)
+        sub_status = feat.get("sub_status")
+        if sub_status is not None:
+            if sub_status not in VALID_SUB_STATUSES:
+                errors.append(
+                    f"{prefix} (id={fid}): invalid sub_status '{sub_status}', "
+                    f"must be one of {sorted(VALID_SUB_STATUSES)}"
+                )
+            elif status in VALID_STATUSES:
+                if sub_status == "done" and status != "passing":
+                    errors.append(
+                        f"{prefix} (id={fid}): sub_status='done' requires status='passing' (got '{status}')"
+                    )
+                elif sub_status != "done" and status != "failing":
+                    errors.append(
+                        f"{prefix} (id={fid}): sub_status='{sub_status}' requires status='failing' (got '{status}')"
+                    )
+
         # Check priority
         priority = feat.get("priority")
         if priority and priority not in VALID_PRIORITIES:
@@ -408,6 +427,19 @@ def main():
         if deprecated_count > 0:
             summary += f", {deprecated_count} deprecated"
         summary += ")"
+
+        # Sub-status breakdown (only shown if any feature declares sub_status)
+        sub_status_counts = {}
+        for f in active_features:
+            ss = f.get("sub_status")
+            if ss:
+                sub_status_counts[ss] = sub_status_counts.get(ss, 0) + 1
+        if sub_status_counts:
+            parts = []
+            for key in ("design_pending", "tdd_pending", "st_pending", "done"):
+                if sub_status_counts.get(key):
+                    parts.append(f"{key}={sub_status_counts[key]}")
+            summary += " | sub_status: " + ", ".join(parts)
 
         # Show quality gates if configured
         qg = data.get("quality_gates")

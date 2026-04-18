@@ -443,6 +443,110 @@ ATS 场景揭示 `blockers[]` 可双用：
 - 考虑为新 sub-skill 添加 frontmatter schema 校验脚本（目前未做；sub-skill 数增长时值得投入）
 - `approval-revise-loop.md` 作为硬约定，若未来要改返工封顶规则（2 轮 → N 轮），只动这一处
 
+## 跨会话 Phase 拆分模式（long-task-work 经验）
+
+`long-task-increment` 的 orchestrator→SubAgent 骨架化模式有一个隐性前提：**SubAgent 能在同一会话内顺序调用**。但这在 `long-task-work` 上不适用——work 的每个 step（Feature Design / TDD / Quality / Feature-ST）都需要**独立上下文**来保证对 `feature_design_path` 的一致性消费，而 SubAgent 不能再调用 SubAgent（嵌套受限），也不能跨 orchestrator 会话边界共享结构化状态。
+
+本次（2026-04）对 `long-task-work` 的重构走的是**第三条路**：拆成 3 个 **top-level phase skill**，每个阶段是主 agent 的一次独立会话，会话间通过 `feature-list.json.sub_status` 字段传递状态。
+
+### 何时选跨会话拆分而非 orchestrator 骨架化
+
+| 信号 | 选择 |
+|-----|------|
+| 步骤 ≤5 + 步骤间靠 JSON 结构化衔接 + 单会话够用 | orchestrator + SubAgent（见 increment 模式）|
+| 步骤 ≥3 + 每步都要重读同一份大文档 + **允许会话边界切断上下文** | top-level phase skill（本次模式）|
+| 步骤间需要用户在阶段之间显式审视产出（而非只在最后一次审视） | top-level phase skill |
+| SubAgent 嵌套深度 >2 已经不可行 | top-level phase skill |
+
+关键判据：**用户是否愿意"每阶段开一次新会话"？** 是 → 跨会话拆分可行；否 → 退回 orchestrator。
+
+### feature-list 子状态驱动的路由
+
+新增 `sub_status ∈ {design_pending, tdd_pending, st_pending, done}` 字段；`status` (`failing`/`passing`) 由 sub_status 派生（`done` ↔ `passing`）。`validate_features.py` 强制两者一致。
+
+每个阶段 skill 末尾：
+1. **不自动推进下一阶段**——翻转 sub_status + commit + 输出会话终止横幅
+2. 用户开新会话 → `using-long-task` 读 `count_pending.py` → 路由到下一阶段 skill
+
+路由优先级：**阶段靠前优先**（design > tdd > st）——让多特性并行时 TDD/ST 阶段有更多对象，而不是所有特性堵在同一阶段。
+
+### 重复读是特性不是 bug
+
+每个阶段 skill 启动时**独立重读** `feature_design_path`，即便上一阶段刚读过。lessons 其他章节一直在做"去冗余"，但**一致性保证**场景例外：
+- TDD SubAgent 在 Red 读 design §7 测试清单；Green / Refactor 各自再读 §4/§6/§8；ST 阶段再次从磁盘读全文
+- 工程上"缓存上一阶段读过的内容"会制造跨会话上下文依赖，违反"会话边界天然切断"的收益前提
+- **规则**：一致性保证 > token 效率。跨会话 phase 拆分必须接受重复 I/O。
+
+### Init 模板注入：单源 + 奥卡姆剃刀
+
+用户项目的 `CLAUDE.md` / `AGENTS.md` 是 init 阶段产物；添加路由指引**不应**手工创建文件，而改 init 模板（`skills/long-task-init/scripts/init_project.py::_LONG_TASK_REFERENCE_BODY`）。本次同时应用剃刀：
+
+| 删除 | 原因 |
+|------|------|
+| "27 skills / 16 top-level + ..." 计数 | 数字随重构漂移；对 agent 运行无分支作用 |
+| "Flow: Codebase Scan → Requirements → UCD → ..." 箭头图 | 与插件 CLAUDE.md 的 Phase Workflow Summary 双写；把 brownfield/UCD 条件压扁成线性误导 |
+| "Incremental development: ..." 段落 | 细节归 `long-task-increment` 自身 frontmatter description |
+| "Key files: docs/rules/\*.md, docs/plans/\*-srs.md, ..." 完整列表 | 与插件 CLAUDE.md Generated Artifacts 表双写；用户项目读一次白烧 token |
+| "brownfield only"/"UI projects only"/"reviewed by ats-reviewer" 等限定 | 路由无关细节；归各阶段 skill |
+
+保留的 5 项，每项都有执行消费者（agent 启动时 grep 命中）：sub_status 枚举 / override 信号文件 / "一特性一阶段一会话"约束 / count_pending.py 命令 / "feature-list.json 是状态单源" 声明。
+
+### TDD 内部 R-G-R 的设计对齐补强
+
+跨会话拆分解决了**阶段之间**的一致性，但 **TDD 内部 R/G/R 的 SubAgent 单次调用**仍可能在 Green/Refactor 阶段对设计失去引用。本次一并补强：
+- `prompts/implementer-prompt.md` 新增 3 个占位符：`{{FEATURE_DESIGN_INTERFACE_CONTRACT}}` / `{{FEATURE_DESIGN_IMPLEMENTATION_SUMMARY}}` / `{{FEATURE_DESIGN_DATA_MODEL}}`
+- Step 2 Green 开头插入"设计对齐前置"——实现前必读 §4/§6/§8
+- Step 3 Refactor 静态分析前插入"设计对齐回查"——列出重构改动的公共符号并对照设计
+- "契约—实现漂移协议"从仅覆盖"视觉渲染契约（§5）"扩展为通用（§4/§5/§6/§8）
+- Structured Return evidence 新增一行 `"Design alignment verified: §4=..., §6=..., §8=...; drift=<none | updated:§X commit abc1234>"`
+- blocked 前缀新增 `[CONTRACT-DEVIATION]` 用于"设计契约与实现的偏离无法本地消解需用户裁决"场景
+
+### 薄路由壳代替完全删除旧 skill
+
+`long-task-work` 原 358 行拆空后**保留为 ~77 行薄路由壳**——理由：
+- 用户可能在 muscle memory 下直接调 `/long-task-work`；壳接住后分流到正确 phase skill
+- `using-long-task` 不是唯一入口；直接入口的兼容是值得的 77 行
+- 壳里不能写任何阶段指令，只能 "读 sub_status → 分流"；否则退化回 orchestrator 嵌套误区
+
+**reference 资产继续留在 `skills/long-task-work/references/`**（structured-return-contract / approval-revise-loop / systematic-debugging / subagent-development / worktree-isolation）——3 个新 phase skill 以 `../long-task-work/references/...` 相对路径引用。不复制，因为这些是**真·共享基础设施**，不随阶段变化（与 lessons §坑 4 的"各自维护"规则互斥：那条针对的是带阶段差异的 loop.md）。
+
+### 数据对比（本次）
+
+| 指标 | 前 | 后 |
+|------|----|----|
+| `long-task-work/SKILL.md` 行数 | 358 | 77（路由壳）|
+| 新增 skill（top-level phase）| 0 | 3（work-{design,tdd,st}）|
+| 每次 Worker session 主 agent 读入的 SKILL.md | 358 行 + references | 120-180 行（一个 phase skill）+ references |
+| 全流程完成一特性的会话数 | 1 | 3（手动；`auto_loop.py` 自动串）|
+| feature-list.json 新字段 | — | `sub_status`（4 值枚举）|
+| 新脚本 | — | `count_pending.py`, `migrate_sub_status.py` + 14 个新测试 |
+| 旧脚本 schema 兼容 | — | `validate_features.py` 加 `VALID_SUB_STATUSES` + 一致性校验 |
+| 跨文件漂移源 | 1（work SKILL.md 全量指令）| 3（3 phase skill）—— 但每份职责单一，不重复 |
+
+**权衡**：跨文件漂移源从 1 升到 3，因为 3 个 phase skill 各有自己的 env-guide gate / Orient / End Session 段落（约 40 行共同骨架）。判断是否值得：
+- 3 × 40 = 120 行表面冗余
+- 但 3 个 phase skill 的"启动 5 件事"因阶段不同而内容不同（各自重读不同文档），共同骨架其实是"模板化的变体"
+- 本次评估是值得的：每个 phase 的独立性让未来微调（如 ST 阶段加新检查）不波及其他阶段
+
+### 跨 phase 错位的新子类：阶段 skill 内写后续阶段指令
+
+本次新增风险（坑 4 的延伸）：3 个新 phase skill 可能**互相规定对方行为**。例如 work-design 的 End Session 写"记得下一会话要做 TDD 的前置校验"—— 这违反"跨 phase 生命周期错位"规则（下一 phase 的 SKILL.md 不会被当前 phase 加载）。
+
+**自检**：每份 phase skill 的正文只写**本阶段**的 5 件启动事 + 本阶段 steps + 本阶段会话终止 + 本阶段 sub_status 翻转。下一阶段的内容一律不写（包括"记得"、"为下一阶段准备"等暗示语）。
+
+### 识别启发式（给后续评估用）
+
+以下信号出现时，考虑跨会话 phase 拆分而不是 orchestrator 骨架化：
+1. 单体 SKILL.md > 300 行且结构清晰分 ≥3 组
+2. 每组都需重读同一份"骨干文档"（design / SRS / 合同表）
+3. 组之间存在天然用户审视点（阶段性产物值得中途看一眼）
+4. 已存在 SubAgent 嵌套（orchestrator 骨架化会再加一层，达到 3 层时预期会脆弱）
+
+反信号（保持单体或用 orchestrator 骨架化）：
+- 步骤间强耦合（中间态难以结构化）
+- 用户不希望会话被切断（"我想一口气做完"）
+- 每次会话的启动成本（重读 5 件事）>> 节省的上下文污染成本
+
 ## 参考
 
 - 主 SKILL.md：`skills/long-task-increment/SKILL.md`
@@ -455,3 +559,8 @@ ATS 场景揭示 `blockers[]` 可双用：
 - Design 剃刀评审计划：`/home/machine/.claude/plans/long-task-design-roi-melodic-origami.md`
 - ATS 剃刀 + reviewer 规范化：`docs/templates/ats-template.md`、`skills/long-task-ats/SKILL.md`、`skills/long-task-ats/references/approval-revise-loop.md`、`agents/ats-reviewer.md`
 - ATS 剃刀评审计划：`/home/machine/.claude/plans/long-task-ats-docs-skill-subagent-refac-joyful-codd.md`
+- **跨会话 Phase 拆分（本次）**：
+  - 路由壳：`skills/long-task-work/SKILL.md`
+  - 3 个 phase skill：`skills/long-task-work-{design,tdd,st}/SKILL.md`
+  - sub_status schema：`scripts/validate_features.py` + `scripts/count_pending.py` + `scripts/migrate_sub_status.py`
+  - 评审计划：`/home/machine/.claude/plans/3-feature-design-fluttering-cookie.md`

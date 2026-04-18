@@ -242,11 +242,14 @@ Rule 6 检测 UI **错误**（渲染损坏）。Rule 7 验证 UI **存在性**�
 
 可复用的正向渲染校验脚本见 `references/ui-error-detection.md` § Layer 1b。
 
-**契约—实现漂移协议**：若在 TDD Green 中实现使用了与视觉渲染契约不一致的选择器、canvas ID 或组件结构：
-1. 更新特性设计文档中的视觉渲染契约以匹配实际实现
-2. 重新确认所有正向渲染断言仍有对应的 UI/render 测试清单行
-3. 将更新后的契约与实现代码放在同一次 git 提交中
-4. 理由：选择器不匹配会导致令人困惑的测试失败（错误的选择器，而非缺少渲染）。让契约作为与现实保持一致的"活文档"。
+**契约—实现漂移协议（通用版，覆盖 §4/§5/§6/§8）**：若在 TDD Green 或 Refactor 中实现使用了与特性设计文档不一致的**公共符号**（接口签名 §4 / 视觉渲染选择器 §5 / 模块职责与调用链 §6 / 数据结构字段 §8）：
+
+1. 更新特性设计文档中对应章节以匹配实际实现（哪节漂移改哪节）
+2. 重新确认所有测试清单行仍有对应测试（§4 变化 → 复查 Test Inventory；§5 变化 → 复查 UI/render 行；§6 变化 → 复查模块边界测试；§8 变化 → 复查数据断言）
+3. 将更新后的设计文档与实现代码放在**同一次 git 提交**中
+4. 理由：任何契约—实现不一致都会导致后续 Inline Check（P2/T2/D3/U1）拦截或令人困惑的测试失败。让设计文档作为与现实保持一致的"活文档"。
+
+**注意**：该协议适用于"设计需要跟进实现"场景。若实现端的偏离不合理（随意重命名、越权跨模块），应**回滚实现**而不是修改设计——设计是权威源。判据：偏离是否带来独立的价值或必要性？是 → 更新设计；否 → 修实现。
 
 ### 写完测试之后
 
@@ -274,10 +277,23 @@ Rule 6 检测 UI **错误**（渲染损坏）。Rule 7 验证 UI **存在性**�
 
 只写**刚好**能让测试通过的代码。
 
+**设计对齐前置（强制，在写任何实现代码前执行）**：
+
+Green 阶段独立重读 `{feature_design_path}`——与 Red 阶段同一份文档，但是本阶段重新消费，**一致性优先于去重**。提取 3 块放入 implementer-prompt.md 的对应占位符：
+- **§4 Interface Contract**：每个 PUBLIC 方法的签名（名称、参数名与类型、返回类型、抛出异常）→ 填入 `{{FEATURE_DESIGN_INTERFACE_CONTRACT}}`
+- **§6 Implementation Summary**：模块职责表 + 调用链散文 → 填入 `{{FEATURE_DESIGN_IMPLEMENTATION_SUMMARY}}`
+- **§8 Data Model**（如存在）：数据结构字段与类型 → 填入 `{{FEATURE_DESIGN_DATA_MODEL}}`
+
+**实现端一致性铁律（与测试绿并列的硬性出口条件）**：
+- 公共方法名 / 参数 / 返回类型 / 异常类型 **必须与 §4 字面一致**
+- 模块划分 / 调用链 **必须与 §6 一致**（不把 Service 职责下沉到 Controller，不把 Controller 职责上浮到路由层）
+- 数据结构字段名 / 类型 / 可空性 **必须与 §8 一致**
+- 发现无法字面对齐（设计有歧义、实现方式更优等）→ 不偷偷偏离，按 Step 3 末尾"契约—实现漂移协议"走（更新设计 OR 修实现，同一 commit）；或返回 blocker `[CONTRACT-DEVIATION]`
+
 subagent 模式下使用 `skills/long-task-tdd/prompts/implementer-prompt.md` 模板分发：
-- 提供完整任务文本（不要让 subagent 自己读文件）
+- 提供完整任务文本 + 填充 3 个设计占位符（不要让 subagent 自己读文件）
 - 包含 tech_stack、test command、coverage command
-- 退出条件：所有测试通过，无回归
+- 退出条件：所有测试通过，无回归，设计对齐自检通过
 
 **规则：**
 - 基于测试从零实现 —— 绝不参考在铁律中"删除"的原有代码
@@ -308,7 +324,13 @@ subagent 模式下使用 `skills/long-task-tdd/prompts/implementer-prompt.md` �
 - 抽取重复，改进命名，简化
 - 每次改动后以**静默执行**运行测试（见 Step 1 的 "After Writing Tests" 协议）。仅重跑触及改动文件的测试（不要跑全量）—— 重构全部完成后，做一次全量套件通过以确认无回归。
 - 本步骤不引入新功能
-- **静态分析关卡**（若 `env-guide.md §3` 列出了静态分析命令）：重构全部完成后，以静默执行运行每个工具的命令：
+- **设计对齐回查（强制，在静态分析之前）**：
+  1. 独立重读 `{feature_design_path}` §4 Interface Contract + §6 Implementation Summary + §8 Data Model（允许与 Green 阶段重复读，一致性优先）
+  2. 列出本次重构改动的**公共符号**：新增 / 重命名的方法、改动的参数类型或异常类型、跨模块移动的函数、新增或调整的数据字段
+  3. 对每个改动符号，核对是否仍与 §4/§6/§8 对应行字面一致
+  4. 不一致处：按"契约—实现漂移协议"走——更新对应设计章节 + 重确认测试清单 + 将设计更新与代码放同一 commit；若实现偏离不合理则回滚重构
+  5. 设计对齐未通过**不得**进入静态分析（偏离符号被静态工具忽略将导致后续 Inline Check P2/D3 拦截）
+- **静态分析关卡**（若 `env-guide.md §3` 列出了静态分析命令）：设计对齐通过且重构全部完成后，以静默执行运行每个工具的命令：
   ```bash
   <static-cmd> > /tmp/static-$$.log 2>&1; echo $? > /tmp/static-$$.exit
   ```
@@ -343,6 +365,7 @@ subagent 模式下使用 `skills/long-task-tdd/prompts/implementer-prompt.md` �
 **evidence**: [
   "Red: N tests written, all failed as expected (example: test_login_valid_creds FAIL)",
   "Green: all N tests PASS after minimal implementation",
+  "Design alignment verified: §4=<signatures list / 'matches'>, §6=<modules/chain summary / 'matches'>, §8=<fields list / 'matches' / 'N/A'>; drift=<none | updated:§X commit abc1234>",
   "Refactor: static analysis clean (tool=<name>, 0 violations)"
 ]
 ```
@@ -355,5 +378,6 @@ subagent 模式下使用 `skills/long-task-tdd/prompts/implementer-prompt.md` �
 - 测试框架未安装 / 环境未初始化 → `[ENV-ERROR]`
 - 规约歧义在无用户输入时无法解决 → `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]`（按 `skills/long-task-work/references/approval-revise-loop.md` 前缀约定）
 - 外部依赖不可用（数据库宕机、API 凭据缺失） → `[ENV-ERROR]` 或 `[INSUFFICIENT_EVIDENCE]`
+- 设计契约与实现的偏离无法本地消解（需要用户裁决是改设计还是改实现）→ `[CONTRACT-DEVIATION]`
 
 **IMPORTANT**：**不要**在 `feature-list.json` 中把特性标记为 `"passing"` —— 那是 Worker 在 Step 11 Persist 的职责。只在上述契约中汇报结果。

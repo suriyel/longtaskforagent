@@ -338,18 +338,26 @@ def test_idempotent_claude_md():
         shutil.rmtree(tmp)
 
 
-def test_claude_md_contains_key_file_references():
-    """CLAUDE.md should reference key project files: feature-list.json, task-progress.md, docs/plans."""
+def test_claude_md_contains_routing_references():
+    """CLAUDE.md should reference the state source (feature-list.json), sub_status routing,
+    override signals (bugfix/increment), and the quick-status command. Phase-specific docs
+    (task-progress.md, docs/plans) are discovered by phase skills on demand and intentionally
+    NOT listed here (Occam — avoid duplicating CLAUDE.md Generated Persistent Artifacts table).
+    """
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp)
         cm_path = os.path.join(tmp, "CLAUDE.md")
         with open(cm_path, "r", encoding="utf-8") as f:
             content = f.read()
-        assert "feature-list.json" in content, "Should reference feature list"
-        assert "task-progress.md" in content, "Should reference progress log"
-        assert "docs/plans" in content, "Should reference docs/plans for SRS/design/UCD"
-        assert "increment-request.json" in content, "Should reference increment signal file"
+        assert "feature-list.json" in content, "Should reference state source"
+        assert "increment-request.json" in content, "Should reference increment override"
+        assert "bugfix-request.json" in content, "Should reference bugfix override"
+        assert "sub_status" in content, "Should describe sub_status routing"
+        assert "long-task-work-design" in content, "Should list work-design phase skill"
+        assert "long-task-work-tdd" in content, "Should list work-tdd phase skill"
+        assert "long-task-work-st" in content, "Should list work-st phase skill"
+        assert "count_pending.py" in content, "Should reference quick-status command"
     finally:
         shutil.rmtree(tmp)
 
@@ -401,18 +409,20 @@ def test_idempotent_agents_md():
         shutil.rmtree(tmp)
 
 
-def test_agents_md_contains_key_file_references():
-    """AGENTS.md should reference key project files: feature-list.json, task-progress.md, docs/plans."""
+def test_agents_md_contains_routing_references():
+    """AGENTS.md must mirror CLAUDE.md: same sub_status routing + override signals + quick-status command."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp)
         am_path = os.path.join(tmp, "AGENTS.md")
         with open(am_path, "r", encoding="utf-8") as f:
             content = f.read()
-        assert "feature-list.json" in content, "Should reference feature list"
-        assert "task-progress.md" in content, "Should reference progress log"
-        assert "docs/plans" in content, "Should reference docs/plans"
-        assert "increment-request.json" in content, "Should reference increment signal file"
+        assert "feature-list.json" in content, "Should reference state source"
+        assert "increment-request.json" in content, "Should reference increment override"
+        assert "bugfix-request.json" in content, "Should reference bugfix override"
+        assert "sub_status" in content, "Should describe sub_status routing"
+        assert "long-task-work-design" in content, "Should list work-design phase skill"
+        assert "count_pending.py" in content, "Should reference quick-status command"
     finally:
         shutil.rmtree(tmp)
 
@@ -446,15 +456,14 @@ if __name__ == "__main__":
         test_creates_claude_md,
         test_appends_to_existing_claude_md,
         test_idempotent_claude_md,
-        test_claude_md_contains_guide_reference,
+        test_claude_md_contains_routing_references,
         test_creates_agents_md,
         test_appends_to_existing_agents_md,
         test_idempotent_agents_md,
-        test_agents_md_contains_key_file_references,
+        test_agents_md_contains_routing_references,
         test_stdout_mentions_llm_todo,
         test_feature_list_has_constraints,
         test_feature_list_has_assumptions,
-        test_claude_md_references_project_context,
     ]
     passed = 0
     failed = 0

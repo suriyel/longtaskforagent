@@ -40,6 +40,7 @@ description: "Use when dispatched by long-task-init Step 5 — generate long-tas
    - `priority` ← P0/P1 → `high`，P2 → `medium`，P3 → `low`
    - `dependencies` ← §6.2 依赖链图
    - `status` 始终 `"failing"`
+   - `sub_status` 始终 `"design_pending"`（新建特性默认进入设计阶段；`work-design` 完成设计时翻转为 `tdd_pending`）
    - UI 特性（srs_trace 任一 FR 的 ATS 类别含 UI）→ `ui: true` + `ui_entry: "/path"`；至少 1 条带 `[devtools]` 前缀的 verification_step 断言**正面视觉存在**
    - 前端特性 `dependencies[]` 必须列出后端 API 依赖特性
    - 排序遵循 §6.1 行顺序（Design 已按优先级 + backend/frontend 配对）

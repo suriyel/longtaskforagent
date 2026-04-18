@@ -46,22 +46,19 @@ _LONG_TASK_REFERENCE_BODY = (
     "- 以下内容保留英文原样，不翻译：代码标识符、函数/变量/字段名（如 `srs_trace`、`feature_id`）、命令行示例、工具名（`Skill` / `Agent` / `Grep` / `mvn test` 等）、YAML frontmatter 的 `name` / `description` 字段、commit message、文件路径。\n"
     "- 已成标识符的缩写保留英文：`SRS` / `FR` / `NFR` / `ATS` / `UCD` / `ST` / `TDD` / `UT` / `E2E`（首次出现可在括号内注中文）。\n"
     "- 术语统一参考 `docs/templates/glossary.md`（若存在），避免漂移。\n\n"
-    "This project uses a multi-session agent workflow with 13 skills loaded on-demand.\n"
-    "The `using-long-task` skill routes to the correct phase based on project state.\n"
-    "Flow: Codebase Scan (brownfield) → Requirements (SRS) → UCD (UI projects) → Design → ATS → Init → Worker cycles → System Testing → Finalize.\n"
-    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design/UCD in place → new features appended → Worker cycles → ST.\n\n"
-    "Key files: `docs/rules/*.md` (codebase conventions — brownfield only; projected into env-guide.md §4), "
-    "`docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), "
-    "`docs/plans/*-ucd.md` (UCD style guide), "
-    "`docs/plans/*-design.md` (design — 6 sections: architecture / feature integration specs / data model / internal API contracts / external interfaces / task decomposition), "
-    "`docs/plans/*-ats.md` (ATS — acceptance test strategy with requirement→scenario mapping, reviewed by ats-reviewer subagent), "
-    "`feature-list.json` (task inventory), "
-    "`task-progress.md` (session log), "
-    "`RELEASE_NOTES.md` (changelog), "
-    "`docs/features/*.md` (per-feature detailed design), "
-    "`docs/test-cases/feature-*.md` (per-feature ST test cases), "
-    "`docs/plans/*-st-report.md` (ST report), "
-    "`increment-request.json` (increment signal).\n"
+    "Multi-session workflow. `using-long-task` skill routes by project state:\n\n"
+    "**Pre-init** (no `feature-list.json`):\n"
+    "  requirements → ucd (if UI) → design → ats → init\n\n"
+    "**Post-init** (has `feature-list.json`): route by each feature's `sub_status`:\n"
+    "  - `design_pending` → `long-task-work-design`\n"
+    "  - `tdd_pending`    → `long-task-work-tdd`\n"
+    "  - `st_pending`     → `long-task-work-st`\n"
+    "  - all `done`       → `long-task-st` (system-wide)\n\n"
+    "Override signals: `bugfix-request.json` or `increment-request.json` at project root\n"
+    "→ `long-task-hotfix` / `long-task-increment` runs first (highest priority).\n\n"
+    "One feature × one phase per session. Sessions terminate explicitly (no auto-loop).\n\n"
+    "Quick status: `python scripts/count_pending.py feature-list.json`\n"
+    "State source of truth: `feature-list.json`.\n"
     "<!-- /long-task-agent -->\n"
 )
 
@@ -311,6 +308,8 @@ def main():
         "check_st_readiness.py",
         "check_real_tests.py",
         "check_ats_coverage.py",
+        "count_pending.py",
+        "migrate_sub_status.py",
         "auto_loop.py",
         "auto_loop_opencode.py",
     ]

@@ -1377,6 +1377,13 @@ if __name__ == "__main__":
         test_simple_verification_step_warning,
         test_rich_verification_step_no_warning,
         test_short_step_with_chaining_no_warning,
+        test_valid_sub_status_design_pending,
+        test_valid_sub_status_done_with_passing,
+        test_invalid_sub_status_enum,
+        test_sub_status_done_requires_passing,
+        test_sub_status_pending_requires_failing,
+        test_feature_without_sub_status_ok,
+        test_sub_status_in_summary,
     ]
     passed = 0
     failed = 0
@@ -1391,3 +1398,85 @@ if __name__ == "__main__":
 
     print(f"\n{passed} passed, {failed} failed")
     sys.exit(1 if failed > 0 else 0)
+
+
+def _base_feature(**overrides):
+    base = {
+        "id": 1, "category": "core", "title": "T",
+        "description": "D", "priority": "high", "status": "failing",
+        "verification_steps": ["given x when y then z"], "dependencies": [],
+    }
+    base.update(overrides)
+    return base
+
+
+def test_valid_sub_status_design_pending():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "features": [_base_feature(sub_status="design_pending")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0, f"Expected exit 0, got {code}: {stdout}"
+
+
+def test_valid_sub_status_done_with_passing():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "features": [_base_feature(status="passing", sub_status="done")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0, f"Expected exit 0, got {code}: {stdout}"
+
+
+def test_invalid_sub_status_enum():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "features": [_base_feature(sub_status="wip")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code != 0, f"Expected failure for invalid sub_status: {stdout}"
+    assert "sub_status" in stdout
+
+
+def test_sub_status_done_requires_passing():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "features": [_base_feature(status="failing", sub_status="done")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code != 0, f"Expected failure for done+failing mismatch: {stdout}"
+    assert "done" in stdout and "passing" in stdout
+
+
+def test_sub_status_pending_requires_failing():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "features": [_base_feature(status="passing", sub_status="tdd_pending")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code != 0, f"Expected failure for tdd_pending+passing mismatch: {stdout}"
+
+
+def test_feature_without_sub_status_ok():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "features": [_base_feature()],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0, f"Expected exit 0 when sub_status absent: {stdout}"
+
+
+def test_sub_status_in_summary():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "features": [
+            _base_feature(id=1, sub_status="design_pending"),
+            _base_feature(id=2, sub_status="tdd_pending"),
+            _base_feature(id=3, status="passing", sub_status="done"),
+        ],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0, f"Expected exit 0: {stdout}"
+    assert "sub_status:" in stdout
+    assert "design_pending=1" in stdout
+    assert "done=1" in stdout
