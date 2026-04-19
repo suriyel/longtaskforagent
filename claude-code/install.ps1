@@ -3,7 +3,7 @@
 # =============================================================================
 #
 # Usage:
-#   irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/claude-code/install.ps1 | iex
 #
 # After installation, use Claude Code to install plugins:
 #   /plugin install long-task@longtaskforagent
@@ -16,6 +16,7 @@ $ErrorActionPreference = "Stop"
 # =============================================================================
 
 $MarketplaceGitUrl = "https://github.com/suriyel/longtaskforagent.git"
+$MarketplaceBranch = "main-improvement"
 $MarketplaceName = "longtaskforagent"
 
 # =============================================================================
@@ -82,7 +83,7 @@ if (-not (Test-Path $MarketplacesDir)) {
     New-Item -ItemType Directory -Force -Path $MarketplacesDir | Out-Null
 }
 
-git clone --depth 1 $MarketplaceGitUrl $TargetDir
+git clone --depth 1 --branch $MarketplaceBranch $MarketplaceGitUrl $TargetDir
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Failed to clone repository" -ForegroundColor Red
     exit 1

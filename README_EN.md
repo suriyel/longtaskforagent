@@ -27,13 +27,13 @@ Then install the plugin from this marketplace:
 **macOS / Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/claude-code/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/claude-code/install.ps1 | iex
 ```
 
 The script automatically:
@@ -53,13 +53,13 @@ If you use [OpenCode](https://opencode.ai):
 **macOS / Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/install.sh | bash
 ```
 
 **Windows (PowerShell — requires Developer Mode or Administrator):**
 
 ```powershell
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/install.ps1 | iex
 ```
 
 Restart OpenCode after installation. See the [OpenCode Installation Guide](docs/README.opencode.md) for full details.

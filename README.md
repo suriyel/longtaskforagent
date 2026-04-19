@@ -27,13 +27,13 @@
 **macOS / Linux：**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/claude-code/install.sh | bash
 ```
 
 **Windows（PowerShell）：**
 
 ```powershell
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/claude-code/install.ps1 | iex
 ```
 
 脚本会自动：
@@ -53,13 +53,13 @@ irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/
 **macOS / Linux：**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/install.sh | bash
 ```
 
 **Windows（PowerShell，需开发者模式或管理员权限）：**
 
 ```powershell
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/install.ps1 | iex
 ```
 
 安装完成后重启 OpenCode 即可激活。完整说明请参阅 [OpenCode 安装指南](docs/README.opencode.md)。

@@ -4,7 +4,7 @@
 # =============================================================================
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/claude-code/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/claude-code/install.sh | bash
 #
 # After installation, use Claude Code to install plugins:
 #   /plugin install long-task@longtaskforagent
@@ -16,6 +16,7 @@ set -euo pipefail
 # =============================================================================
 
 MARKETPLACE_GIT_URL="https://github.com/suriyel/longtaskforagent.git"
+MARKETPLACE_BRANCH="main-improvement"
 MARKETPLACE_NAME="longtaskforagent"
 
 # =============================================================================
@@ -73,7 +74,7 @@ fi
 # Clone repository
 info "Cloning from: $MARKETPLACE_GIT_URL"
 mkdir -p "$MARKETPLACES_DIR"
-git clone --depth 1 "$MARKETPLACE_GIT_URL" "$TARGET_DIR"
+git clone --depth 1 --branch "$MARKETPLACE_BRANCH" "$MARKETPLACE_GIT_URL" "$TARGET_DIR"
 
 # Update known_marketplaces.json
 info "Registering marketplace..."

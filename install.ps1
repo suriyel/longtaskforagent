@@ -1,5 +1,5 @@
 # Long-Task Agent installer for OpenCode (Windows PowerShell)
-# Usage:  irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 | iex
+# Usage:  irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main-improvement/install.ps1 | iex
 #
 # Requirements: Developer Mode enabled -OR- run as Administrator (for symlinks)
 #   Windows 10: Settings → Update & Security → For developers
@@ -11,16 +11,19 @@ $installDir = "$env:USERPROFILE\.config\opencode\long-task-agent"
 $pluginsDir = "$env:USERPROFILE\.config\opencode\plugins"
 $skillsDir  = "$env:USERPROFILE\.config\opencode\skills"
 $repoUrl    = "https://github.com/suriyel/longtaskforagent.git"
+$repoBranch = "main-improvement"
 
 Write-Host "Installing long-task-agent for OpenCode..."
 
 # Clone or update
 if (Test-Path (Join-Path $installDir ".git")) {
     Write-Host "  -> Updating existing installation..."
-    git -C $installDir pull --ff-only
+    git -C $installDir fetch origin $repoBranch
+    git -C $installDir checkout $repoBranch
+    git -C $installDir pull --ff-only origin $repoBranch
 } else {
-    Write-Host "  -> Cloning repository..."
-    git clone $repoUrl $installDir
+    Write-Host "  -> Cloning repository (branch: $repoBranch)..."
+    git clone --branch $repoBranch $repoUrl $installDir
 }
 
 # Create directories
