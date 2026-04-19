@@ -161,27 +161,6 @@
 - Z2 单 AC FR：LLM-FIXABLE（添加错误/边界 AC）或 USER-INPUT（询问合并到哪个相关 FR）
 - Z3 数据回显 FR：LLM-FIXABLE（作为垂直切片合并到产出 FR；消除被吸收条目）
 
-### Group P: Problem Alignment Checks (P1-P4)
-
-仅当 SRS 中存在第 1.3 节（问题陈述）时应用。此章节由运行了问题框架化和对齐验证步骤的 Expert 路线项目产出。
-
-| # | Check | YES/NO | Evidence |
-|---|-------|--------|----------|
-| P1 | 第 1.3 节中每个痛点地图行被第 4 节中 ≥1 个 FR 解决或明确列在第 1.2 节排除范围中并附理由 — 无未确认的痛点 | | |
-| P2 | 第 1.3 节中的 JTBD 声明可通过完成第 4 节中所有 Must 优先级 FR 实现 — 陈述的"以便 [结果]"被完全覆盖 | | |
-| P3 | 第 4 节中无 FR 缺乏可追溯来源：无痛点地图行、无 JTBD 链接、无场景走查步骤、无隐藏需求（E5）来源 — 无未追溯的镀金 | | |
-| P4 | 第 1.3 节对齐验证字段已填充（PASS 或 PARTIAL 含摘要）— 此阶段不接受 FAIL | | |
-
-**判决规则**：P1-P4 全部 YES 方可 PASS 此组。
-
-**跳过规则**：若第 1.3 节不存在或标记"[Not applicable]"（Lite 路线项目），将整组标记为 **PASS-SKIPPED** 并注明"Lite track — no Section 1.3"。不因缺少第 1.3 节而 FAIL。
-
-**解决类型指引：**
-- P1 未解决的痛点：USER-INPUT（业务决策 — 排除还是构建？）
-- P2 JTBD 不可实现：USER-INPUT（基本范围决策）
-- P3 孤立 FR：LLM-FIXABLE（添加 Source = "inferred from [走查步骤 / 上下文]" 或在开放问题中标记）
-- P4 占位对齐验证：LLM-FIXABLE（从第 1.3 节数据运行反向验证）
-
 ### Group Verdicts
 
 | Group | Checks | PASS/FAIL | Failing Checks |
@@ -194,7 +173,6 @@
 | D: Diagram Presence & Validity | D1-D4 | | |
 | G: Granularity | G1-G3 | | |
 | Z: Sizing | Z1-Z3 | | |
-| P: Problem Alignment | P1-P4 | | |
 
 ### Clarification Questions (仅 USER-INPUT 项)
 
