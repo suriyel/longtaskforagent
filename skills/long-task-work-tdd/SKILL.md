@@ -9,7 +9,11 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 
 **开始时宣告：** "I'm using the long-task-work-tdd skill. Let me orient myself."
 
-**核心原则：** TDD 与 Quality 各自在**独立 SubAgent**中运行（`long-task-tdd` → `long-task-quality`）。主 Agent 仅消费 Structured Return Contract。契约见 `../long-task-work/references/structured-return-contract.md`；返回按 `../long-task-work/references/approval-revise-loop.md` 处理。
+**核心原则：**
+- `long-task-tdd` 在**主 agent 上下文**以 Skill 调用（orchestrator），由它在主 agent 内 DISPATCH Red/Green/Refactor 三个 SubAgent；主 agent 聚合三个子契约为一条 TDD 契约供本 Step 4 消费。
+- `long-task-quality` 以**独立 SubAgent**运行。
+
+契约见 `../long-task-work/references/structured-return-contract.md`；SubAgent 返回按 `../long-task-work/references/approval-revise-loop.md` 处理。
 
 **一致性重读（强制，每次本阶段会话启动都要做）：**
 1. 读 `feature-list.json` → 按 `sub_status == tdd_pending` 选 lowest-id 特性
@@ -51,17 +55,18 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
   - `dependencies[]` 引用 DB 建表/迁移/服务初始化特性
   - feature design §6 Implementation Summary 指明外部服务交互
 
-### 3. DISPATCH TDD SubAgent
+### 3. 调用 TDD Orchestrator Skill（主 agent 内）
 
-> **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-tdd`
-> **input**: `feature_id`, `feature_list_path`, `feature_design_path=docs/features/YYYY-MM-DD-<slug>.md`
-> **expect**: Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `all_tests_pass` / `red_green_refactor_complete` / `test_count`
+> **INVOKE Skill** → `long-task-tdd`（在**当前主 agent 上下文**加载并执行，**不**启动 SubAgent）
+> **input**（作为 skill args 透传）: `feature_id`, `feature_list_path`, `feature_design_path=docs/features/YYYY-MM-DD-<slug>.md`
+> **expect**: 聚合后的 Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `all_tests_pass` / `red_green_refactor_complete` / `test_count`
 >
-> **重要**：TDD 不拆分——SubAgent 在自己上下文里顺序跑 Red → Green → Refactor。主 Agent 最后收到一个返回，不是三段式。
+> **重要**：TDD orchestrator 自己在主 agent 内 DISPATCH 三个独立 SubAgent（Red / Green / Refactor）完成 R-G-R 三段式；聚合契约由 orchestrator 组装后直接在主 agent 内可用。主 agent（本 work-tdd）把聚合契约视作单次 skill 返回。
 
 **返回处理**（按 `../long-task-work/references/approval-revise-loop.md`）：
-- `status: fail` → Failure Addendum 重分发（计入 2 轮上限）
-- `status: blocked` 带 `[INSUFFICIENT_EVIDENCE]` / `[ENV-ERROR]` / `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]` → Clarification Addendum 重分发（不计入上限）
+- `status: fail` → Failure Addendum 重入 `long-task-tdd`（计入 2 轮上限）
+- `status: blocked` 带 `[INSUFFICIENT_EVIDENCE]` / `[ENV-ERROR]` / `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]` → Clarification Addendum 重入（不计入上限）
+- `status: blocked` 带 `[CONTRACT-DEVIATION]` → AskUserQuestion 裁决（orchestrator 已决定无法本地解决）
 - `status: pass` → 进入 Step 4
 
 ### 4. DISPATCH Quality Gates SubAgent
@@ -117,7 +122,8 @@ git commit -m "tdd: feature #<id> <slug> — tests green, coverage ≥<N>%/<M>%"
 ## 关键规则
 
 - **每会话一个特性的一个阶段** —— 本阶段只做 TDD + Quality，不做 Feature-ST 也不做 Persist 到 passing
-- **TDD / Quality SubAgent 不可协商** —— 必须通过 Skill 工具分发
+- **TDD orchestrator 在主 agent 内以 Skill 调用；Quality 走独立 SubAgent** —— 不可混淆
+- **R/G/R 三个子步必须各自独立 SubAgent** —— TDD orchestrator 内部强制 DISPATCH，不在主 agent 内联执行
 - **无新鲜证据不得翻转 sub_status** —— 测试必须实跑绿，覆盖率必须达标
 - **feature design 文档必读** —— 缺失即 BLOCKED
 - **一致性优先于去重** —— 允许 SubAgent 内部 R/G/R 各自重读 feature design

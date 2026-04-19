@@ -63,16 +63,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |-------|---------|---------|
 | `long-task-explore` | Deep codebase exploration — architecture, data flow, domain model, API surface, dependencies, code health | On-demand via `/deep-explore` |
 
-#### Discipline Skills (SubAgents dispatched by work-{design,tdd,st} phase skills)
+#### Discipline Skills (invoked by work-{design,tdd,st} phase skills)
 
-One SubAgent per phase skill. Each SubAgent receives `feature_design_path` and re-reads the design doc independently — consistency over deduplication.
+Each SubAgent receives `feature_design_path` and re-reads the design doc independently — consistency over deduplication. **Note**: `long-task-tdd` is the sole exception — it runs **in the main agent context** as a Skill (not a SubAgent) and itself dispatches R/G/R as SubAgents; all other rows below run as independent SubAgents.
 
-| Skill | Purpose | Dispatched by |
-|-------|---------|---------------|
-| `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory | `long-task-work-design` |
-| `long-task-tdd` | TDD orchestrator — dispatches `long-task-tdd-{red,green,refactor}` SubAgents and aggregates their contracts | `long-task-work-tdd` |
-| `long-task-quality` | Coverage Gate | `long-task-work-tdd` |
-| `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, Chrome DevTools MCP + ISO/IEC/IEEE 29119) | `long-task-work-st` |
+| Skill | Purpose | Invoked by | Mode |
+|-------|---------|------------|------|
+| `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory | `long-task-work-design` | SubAgent |
+| `long-task-tdd` | TDD orchestrator — dispatches `long-task-tdd-{red,green,refactor}` SubAgents and aggregates their contracts | `long-task-work-tdd` | **Skill in main agent** |
+| `long-task-quality` | Coverage Gate | `long-task-work-tdd` | SubAgent |
+| `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, Chrome DevTools MCP + ISO/IEC/IEEE 29119) | `long-task-work-st` | SubAgent |
 
 #### Discipline Skills (sub-skills of long-task-increment)
 
@@ -108,7 +108,7 @@ All dispatched by `long-task-init` orchestrator; each returns a Structured Retur
 
 #### Discipline Skills (sub-skills of long-task-tdd)
 
-All dispatched by `long-task-tdd` orchestrator as independent SubAgents (depth 2 from main agent); each returns a Structured Return Contract; orchestrator aggregates into the unified `long-task-tdd` contract. Approval handling via `skills/long-task-work/references/approval-revise-loop.md` (no user approval mid-cycle — fail/blocked escalate to `long-task-work-tdd`).
+`long-task-tdd` orchestrator runs **in the main agent context** (invoked as a Skill by `long-task-work-tdd`; **NOT** wrapped as a SubAgent). It dispatches R/G/R as independent SubAgents (depth 1 from main agent). Each R/G/R returns a Structured Return Contract; the main-agent orchestrator aggregates them into the unified `long-task-tdd` contract consumed by `long-task-work-tdd` Step 4. Approval handling via `skills/long-task-work/references/approval-revise-loop.md` (no user approval mid-cycle — fail/blocked escalate to `long-task-work-tdd`).
 
 | Skill | Purpose |
 |-------|---------|
@@ -150,7 +150,7 @@ using-long-task (router — delegates to scripts/phase_route.py)
    │      ├─→ long-task-work-design (feature has sub_status=design_pending)
    │      │       └─→ long-task-feature-design (SubAgent)
    │      ├─→ long-task-work-tdd (feature has sub_status=tdd_pending)
-   │      │       ├─→ long-task-tdd (SubAgent; orchestrates R/G/R)
+   │      │       ├─→ long-task-tdd (Skill in main agent; orchestrates R/G/R)
    │      │       │       ├─→ long-task-tdd-red (SubAgent — write failing tests)
    │      │       │       ├─→ long-task-tdd-green (SubAgent — minimal impl + design align)
    │      │       │       └─→ long-task-tdd-refactor (SubAgent — cleanup + static gate)

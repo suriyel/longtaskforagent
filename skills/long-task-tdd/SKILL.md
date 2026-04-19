@@ -9,11 +9,14 @@ description: "Use when implementing a feature through TDD in a long-task project
 
 **违反规则的文字就是违反规则的精神。**
 
-## SubAgent 分发模式
+## 调用模式
 
-本 skill 由 `long-task-work-tdd` 以 **独立 SubAgent（全新上下文）** 方式分发。本 SubAgent 是 **orchestrator**，依次 DISPATCH 三个独立 SubAgent 分别执行 Red / Green / Refactor；每个子 SubAgent 返回自己的 Structured Return Contract，orchestrator **聚合**成统一契约返回给 `long-task-work-tdd`。主 Worker agent 只消费最终聚合契约，不消费三个子契约的原文。
+本 skill 由 `long-task-work-tdd` 通过 Skill 工具**在主 agent 上下文**直接调用（**不**封装为 SubAgent）。本 skill 作为 **orchestrator**，在主 agent 上下文依次 DISPATCH 三个独立 SubAgent 分别执行 Red / Green / Refactor；每个子 SubAgent 返回自己的 Structured Return Contract，主 agent **聚合**成统一契约交由 `long-task-work-tdd` Step 4 消费（供 Quality Gates 取 `feature_test_files` / `test_count`）。
 
-嵌套深度：main → work-tdd → tdd(1) → {red/green/refactor}(2)，= depth 2。
+- 主 agent 只消费三个子契约的 `next_step_input` + `evidence` 关键字段，不消费其 thinking 原文。
+- 三个子契约原文由主 agent 组装为一条聚合契约后丢弃，不再回流。
+
+嵌套深度：main（work-tdd + tdd 同在此层）→ {red/green/refactor}(1)，= depth 1。
 
 ## Input Contract & Self-Resolution
 
@@ -101,10 +104,10 @@ digraph tdd {
 
 ## 聚合 Structured Return Contract
 
-三步全部 pass 后，orchestrator 组装统一契约返回 `long-task-work-tdd`：
+三步全部 pass 后，主 agent（作为本 orchestrator）把三个子契约聚合为统一契约，交由 `long-task-work-tdd` Step 4 消费：
 
 ```markdown
-## SubAgent Result: long-task-tdd
+## Aggregated Skill Result: long-task-tdd
 
 **status**: pass
 **artifacts_written**: [Red 的 test files ∪ Green 的 impl files ∪ Refactor 中被修改的文件；去重]
@@ -123,7 +126,7 @@ digraph tdd {
 ]
 ```
 
-任一步最终为 `fail` / `blocked`（超轮次或 `[CONTRACT-DEVIATION]`）→ orchestrator 返回同状态，`blockers` 聚合所有子步阻塞条目，`artifacts_written` 列出至此已产出的文件，`evidence` 附最后一次失败现场。
+任一步最终为 `fail` / `blocked`（超轮次或 `[CONTRACT-DEVIATION]`）→ 主 agent 以同状态结束本 skill，`blockers` 聚合所有子步阻塞条目，`artifacts_written` 列出至此已产出的文件，`evidence` 附最后一次失败现场，交由 `long-task-work-tdd` 的 `approval-revise-loop.md` 决定后续动作。
 
 ## 失败 / 阻塞条件聚合
 
@@ -136,4 +139,4 @@ digraph tdd {
 
 ## IMPORTANT
 
-**不要**在 `feature-list.json` 中把特性标记为 `"passing"` —— 那是 `long-task-work-tdd` Step 5 Persist 的职责。本 SubAgent 只返聚合契约。
+**不要**在 `feature-list.json` 中把特性标记为 `"passing"` —— 那是 `long-task-work-tdd` Step 5 Persist 的职责。本 skill（运行于主 agent 内）只负责在主 agent 上下文组装聚合契约交回 `long-task-work-tdd`。
