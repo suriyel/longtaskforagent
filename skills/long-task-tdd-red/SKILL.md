@@ -211,7 +211,7 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
 
 ## Structured Return Contract
 
-严格按以下格式返回。`next_step_input` 仅含 Green / Refactor 真正消费的 2 个字段；Rule 1-7 的质量指标在 `evidence` 中以 `Rule N <key>=<value>` 形式逐行报告（便于 orchestrator/审计 grep）。
+严格按以下格式返回
 
 ```markdown
 ## SubAgent Result: long-task-tdd-red
