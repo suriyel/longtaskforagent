@@ -1,6 +1,6 @@
 # 审批-返工循环（Approval-Revise Loop · Worker 版）
 
-> Worker 阶段的主 orchestrator 分发 Step 4（feature-design）/ Step 5-7（tdd）/ Step 8（quality）/ Step 9（feature-st）后按本模板处理返回。配合 `skills/long-task-work/references/structured-return-contract.md` 的 5 字段契约使用。
+> Worker phase skill（`long-task-work-design` / `long-task-work-tdd` / `long-task-work-st`）分发各自 SubAgent（feature-design / tdd-red/green/refactor / quality / feature-st）后按本模板处理返回。下表「来源 Step」列标注每个前缀适用的 phase。配合 `skills/using-long-task/references/structured-return-contract.md` 的 5 字段契约使用。
 
 ## 主 Agent 循环
 

@@ -87,7 +87,7 @@ Agent(
 
 ## Step 4: 解析结果
 
-读取 SubAgent 返回的文本，定位 `**status**:` 行（统一契约字段）。所有用户裁决一律由主 agent（本 Worker orchestrator）按 `skills/long-task-work/references/approval-revise-loop.md` 处理；本 sub-skill **绝不**自行发起 AskUserQuestion。
+读取 SubAgent 返回的文本，定位 `**status**:` 行（统一契约字段）。所有用户裁决一律由主 agent（本 Worker orchestrator）按 `skills/using-long-task/references/approval-revise-loop.md` 处理；本 sub-skill **绝不**自行发起 AskUserQuestion。
 
 - **`**status**: pass`**
   1. 确认设计文档文件已写入 `output_path`
@@ -104,7 +104,7 @@ Agent(
 
 - **`**status**: blocked`**
   1. 读 blockers[] —— 每条以前缀 `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]` / `[ATS-MISMATCH]` / `[ATS-BUGFIX-REGRESSION-MISSING]` / `[UCD-VAGUE]` / `[DEP-AMBIGUOUS]` / `[NFR-GAP]` / `[CONTRACT-DEVIATION]` 开头
-  2. 按 `skills/long-task-work/references/approval-revise-loop.md` 的 Blockers 前缀约定表组装 AskUserQuestion（每个前缀的 A/B/C 选项见该表）
+  2. 按 `skills/using-long-task/references/approval-revise-loop.md` 的 Blockers 前缀约定表组装 AskUserQuestion（每个前缀的 A/B/C 选项见该表）
   3. 收集用户裁决 → 组装 Clarification Addendum → 重分发（不计入 revise 上限）
   4. 若同一前缀累计 3 次仍 blocked，升级为 escalate（建议 `long-task-increment` 修订上游 SRS/Design/ATS/UCD）
 

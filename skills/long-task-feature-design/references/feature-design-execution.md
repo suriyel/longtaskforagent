@@ -83,7 +83,7 @@
 **决策关卡：**
 - **未检测到歧义** → 正常进入 Step 1c。无额外摩擦。
 - **所有歧义均有合理的建议解释，且影响仅限于非关键章节**（**不**影响 Interface Contract 签名、Test Inventory 预期结果、跨特性 §4 契约） → 以假设继续。将每条假设记录在设计文档的 `## Clarification Addendum` 章节，Authority = "assumed"。`status` 设为 `pass`。在 `next_step_input.assumption_count` 中包含 assumption 数量（主 agent 用该字段决定是否触发审批关卡）。
-- **任一歧义有高影响**（影响 Interface Contract 签名、Test Inventory 预期结果或跨特性契约） **或无合理的建议解释** → `status` 设为 `blocked`。为每条高影响歧义追加一条 blockers[] 条目，严格使用前缀约定（见下表）。**不**要进入 Step 1c — orchestrator 会按 `skills/long-task-work/references/approval-revise-loop.md` 收集用户裁决并以 Clarification Addendum 重分发。
+- **任一歧义有高影响**（影响 Interface Contract 签名、Test Inventory 预期结果或跨特性契约） **或无合理的建议解释** → `status` 设为 `blocked`。为每条高影响歧义追加一条 blockers[] 条目，严格使用前缀约定（见下表）。**不**要进入 Step 1c — orchestrator 会按 `skills/using-long-task/references/approval-revise-loop.md` 收集用户裁决并以 Clarification Addendum 重分发。
 - **任一歧义类别为 `ATS-BUGFIX-REGRESSION-MISSING`** → 此类不可以 assumption 绕过。`status` 必须为 `blocked`（不能 `pass`），对应 blocker 的建议解释为 `"none — bugfix regression anchor required"`，主 agent 会呈 A/B/C 选项给用户。
 
 ### blockers[] 前缀约定（本 sub-skill）
@@ -168,7 +168,7 @@
    - 变更的技术原因
    - 对 Consumer 特性的影响（列出受影响的 feature ID）
 3. `status` 设为 **blocked**；追加 blocker：`[CONTRACT-DEVIATION] §4 <Contract ID>: <原 schema 摘要> → <建议变更> | 影响 Consumer=[<feature IDs>] | Q: (A) approve schema change / (B) keep original and SubAgent will comply`
-4. orchestrator（long-task-work-design）按 `skills/long-task-work/references/approval-revise-loop.md` 处理，向用户呈 A/B 选项
+4. orchestrator（long-task-work-design）按 `skills/using-long-task/references/approval-revise-loop.md` 处理，向用户呈 A/B 选项
 5. 若批准：用户（或 orchestrator 在授权下）更新设计文档的 §4；orchestrator 以 Clarification Addendum 重分发 SubAgent
 6. 若拒绝：Clarification Addendum 指令 "comply with original §4"，SubAgent 必须遵循原契约
 
@@ -295,7 +295,7 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 
 ## Structured Return Contract
 
-与 `skills/long-task-work/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
+与 `skills/using-long-task/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
 
 ```markdown
 ## SubAgent Result: long-task-feature-design

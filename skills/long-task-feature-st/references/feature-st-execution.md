@@ -139,7 +139,7 @@ TDD（long-task-tdd）已从内部验证实现：
 - **无缺口** → 正常进入 Step 2（加载模板）。无额外摩擦。
 - **所有缺口由 Feature Design Clarification Addendum 解决** → 按处置继续。在测试用例文档头部注记："Specification resolutions applied from Feature Design Clarification Addendum."
 - **存在新缺口但均有合理建议解释** → 以假设继续。在测试用例文档头部按此记录每条："Assumed: [interpretation] (not user-approved)."
-- **新缺口对预期结果有高影响且无合理解释** → `status` 设为 `blocked`。为每条高影响缺口追加一条 blockers[] 条目，使用 `[SRS-MISSING]` / `[SRS-VAGUE]` / `[ATS-CATEGORY-MISSING-ST]` 前缀（详见下方前缀约定）。**不**要进入 Step 2 —— orchestrator 会按 `skills/long-task-work/references/approval-revise-loop.md` 收集用户裁决并以 Clarification Addendum 重分发。
+- **新缺口对预期结果有高影响且无合理解释** → `status` 设为 `blocked`。为每条高影响缺口追加一条 blockers[] 条目，使用 `[SRS-MISSING]` / `[SRS-VAGUE]` / `[ATS-CATEGORY-MISSING-ST]` 前缀（详见下方前缀约定）。**不**要进入 Step 2 —— orchestrator 会按 `skills/using-long-task/references/approval-revise-loop.md` 收集用户裁决并以 Clarification Addendum 重分发。
 
 > **携带 Clarification Addendum 重新分发时**：若 SubAgent 提示词含 `## Clarification Addendum (from blocked return)` 或 `## Specification Gap Addendum (user-approved resolutions)` 章节，将其处置视为权威。**不**要再次标记。依此派生测试用例的预期结果。
 
@@ -494,7 +494,7 @@ Display-Only Defects: [count]
 
 ## Structured Return Contract
 
-与 `skills/long-task-work/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
+与 `skills/using-long-task/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
 
 ```markdown
 ## SubAgent Result: long-task-feature-st

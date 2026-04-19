@@ -21,7 +21,7 @@ description: "Use when ATS doc exists (or auto-skipped) but feature-list.json no
 
 ## 共享资产
 
-- **返回契约**：`skills/long-task-work/references/structured-return-contract.md`
+- **返回契约**：`skills/using-long-task/references/structured-return-contract.md`
 - **审批-返工循环**：`references/approval-revise-loop.md`（approve / revise / escalate；2 轮封顶；sizing 关卡与 env §3/§4 双闸门规则；Addendum 组装）
 
 ## 清单

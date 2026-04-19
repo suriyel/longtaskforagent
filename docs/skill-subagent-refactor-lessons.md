@@ -39,7 +39,7 @@
 **evidence**: [关键断言的最小证据]
 ```
 
-复用 `skills/long-task-work/references/structured-return-contract.md`。**Reviewer / evaluator / analyzer 类 SubAgent 同样必须返这五字段** —— "独立分发 ≠ 自由格式"。
+复用 `skills/using-long-task/references/structured-return-contract.md`。**Reviewer / evaluator / analyzer 类 SubAgent 同样必须返这五字段** —— "独立分发 ≠ 自由格式"。
 
 ### 1.4 持久化 vs 过程量
 

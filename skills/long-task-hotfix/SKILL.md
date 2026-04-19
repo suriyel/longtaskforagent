@@ -69,7 +69,7 @@ python scripts/validate_bugfix_request.py bugfix-request.json
 
 ## Step 5: 根因分析
 
-执行 `skills/long-task-work/references/systematic-debugging.md` 的 **4 阶段系统性调试流程**：
+执行 `skills/using-long-task/references/systematic-debugging.md` 的 **4 阶段系统性调试流程**：
 
 **Phase 1 —— 根因调查**：收集完整错误证据，找到最小复现，检查近期 git 变更，从入口点追踪数据流到失败点。
 

@@ -75,7 +75,7 @@ Each SubAgent receives `feature_design_path` and re-reads the design doc indepen
 
 #### Discipline Skills (sub-skills of long-task-increment)
 
-All dispatched by `long-task-increment` orchestrator; each returns a Structured Return Contract (see `skills/long-task-work/references/structured-return-contract.md`); main agent handles approval via `skills/long-task-increment/references/approval-revise-loop.md`.
+All dispatched by `long-task-increment` orchestrator; each returns a Structured Return Contract (see `skills/using-long-task/references/structured-return-contract.md`); main agent handles approval via `skills/long-task-increment/references/approval-revise-loop.md`.
 
 | Skill | Purpose |
 |-------|---------|
@@ -107,7 +107,7 @@ All dispatched by `long-task-init` orchestrator; each returns a Structured Retur
 
 #### Discipline Skills (sub-skills of long-task-work-tdd)
 
-Dispatched by `long-task-work-tdd` Step 3a/3b/3c as three independent SubAgents via the `Agent` tool (depth 1 from main agent). Each returns a Structured Return Contract; `long-task-work-tdd` Step 3d aggregates them into the TDD-layer evidence consumed by Step 4 Quality Gates. Approval handling via `skills/long-task-work/references/approval-revise-loop.md` (no user approval mid-cycle — fail/blocked escalate to `long-task-work-tdd`). **No intermediate `long-task-tdd` orchestrator skill exists** — the orchestration is inlined into `long-task-work-tdd/SKILL.md` Step 3, keeping all Skill-tool routing decisions inside `scripts/phase_route.py`.
+Dispatched by `long-task-work-tdd` Step 3a/3b/3c as three independent SubAgents via the `Agent` tool (depth 1 from main agent). Each returns a Structured Return Contract; `long-task-work-tdd` Step 3d aggregates them into the TDD-layer evidence consumed by Step 4 Quality Gates. Approval handling via `skills/using-long-task/references/approval-revise-loop.md` (no user approval mid-cycle — fail/blocked escalate to `long-task-work-tdd`). **No intermediate `long-task-tdd` orchestrator skill exists** — the orchestration is inlined into `long-task-work-tdd/SKILL.md` Step 3, keeping all Skill-tool routing decisions inside `scripts/phase_route.py`.
 
 | Skill | Purpose |
 |-------|---------|
@@ -343,9 +343,9 @@ long-task-agent/
 - [skills/using-long-task/references/roadmap.md](skills/using-long-task/references/roadmap.md) — Future enhancements
 - [agents/codebase-scanner.md](agents/codebase-scanner.md) — Brownfield codebase scanner
 - [agents/ats-reviewer.md](agents/ats-reviewer.md) — ATS reviewer (7 dimensions)
-- [skills/long-task-work/references/systematic-debugging.md](skills/long-task-work/references/systematic-debugging.md) — Systematic debugging
-- [skills/long-task-work/references/subagent-development.md](skills/long-task-work/references/subagent-development.md) — Subagent-driven development
-- [skills/long-task-work/references/worktree-isolation.md](skills/long-task-work/references/worktree-isolation.md) — Worktree isolation
+- [skills/using-long-task/references/systematic-debugging.md](skills/using-long-task/references/systematic-debugging.md) — Systematic debugging
+- [skills/using-long-task/references/subagent-development.md](skills/using-long-task/references/subagent-development.md) — Subagent-driven development
+- [skills/using-long-task/references/worktree-isolation.md](skills/using-long-task/references/worktree-isolation.md) — Worktree isolation
 - [skills/long-task-tdd-red/references/ui-error-detection.md](skills/long-task-tdd-red/references/ui-error-detection.md) — UI error detection
 - [skills/long-task-st/references/st-recipes.md](skills/long-task-st/references/st-recipes.md) — ST tool recipes per language
 - [skills/long-task-explore/SKILL.md](skills/long-task-explore/SKILL.md) — Standalone deep codebase exploration

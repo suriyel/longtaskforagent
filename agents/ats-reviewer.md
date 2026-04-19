@@ -12,7 +12,7 @@
 - Design 文档（`docs/plans/*-design.md`）
 - UCD 样式指南（`docs/plans/*-ucd.md`）——仅 UI 项目
 
-返回必须匹配 `skills/long-task-work/references/structured-return-contract.md` 的五字段契约（见本文末「返回契约」节）。
+返回必须匹配 `skills/using-long-task/references/structured-return-contract.md` 的五字段契约（见本文末「返回契约」节）。
 
 ## 评审流程
 
@@ -207,7 +207,7 @@
 
 ## 返回契约
 
-必须返回符合 `skills/long-task-work/references/structured-return-contract.md` 的五字段结构。第一行固定：
+必须返回符合 `skills/using-long-task/references/structured-return-contract.md` 的五字段结构。第一行固定：
 
 ```markdown
 ## SubAgent Result: ats-reviewer

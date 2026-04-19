@@ -76,11 +76,11 @@ Agent(
 
 - **`**status**: fail`**
   1. 读 evidence 定位代码 bug / 环境问题 —— 这些由 SubAgent 内部修复，不应返 fail；出现 fail 意味着 SubAgent 已超出自修能力或 ST 策略决定上报。
-  2. 按 `skills/long-task-work/references/approval-revise-loop.md` 的 Failure Addendum 规则重分发（计入 revise 上限 2 轮）。
+  2. 按 `skills/using-long-task/references/approval-revise-loop.md` 的 Failure Addendum 规则重分发（计入 revise 上限 2 轮）。
   3. 超限 → escalate，AskUserQuestion 收集手工诊断后重分发。
 
 - **`**status**: blocked`**
-  1. 读 blockers[]。每条以前缀开头，按 `long-task-work/references/approval-revise-loop.md` 的前缀表分流：
+  1. 读 blockers[]。每条以前缀开头，按 `using-long-task/references/approval-revise-loop.md` 的前缀表分流：
      - `[MANUAL_TEST_REQUIRED]` —— 缺凭据、需物理设备、需人工视觉判断。主 agent 展示测试步骤，AskUserQuestion 等待用户手工完成并回报结果。
      - `[SRS-MISSING]` / `[SRS-VAGUE]` —— 规范缺口，Feature Design 未捕获。主 agent 呈 A/B/C：(A) 补 SRS / (B) 以建议解释作 assumption / (C) 打回 `long-task-increment`。
      - `[ATS-CATEGORY-MISSING-ST]` —— ATS 必须类别无 ST 用例。主 agent 呈 A/B：(A) 扩 ST 用例（Clarification Addendum 重分发） / (B) 豁免该类别（需显式授权，留痕）。

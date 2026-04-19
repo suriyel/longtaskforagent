@@ -16,7 +16,7 @@ description: "Use when increment-request.json exists - collect incremental requi
 
 ## 共享资产
 
-- **返回契约**：`skills/long-task-work/references/structured-return-contract.md`
+- **返回契约**：`skills/using-long-task/references/structured-return-contract.md`
 - **审批-返工循环**：`references/approval-revise-loop.md`（approve / revise / escalate；2 轮封顶；Addendum 组装）
 - **brownfield 适配**：`references/brownfield-adaptation.md`（§A 在 Step 1；§B/C 在 Step 2；§D/E/F 由 sub-skill 内部加载）
 

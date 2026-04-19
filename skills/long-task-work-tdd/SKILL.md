@@ -11,7 +11,7 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 
 **核心原则：** Red / Green / Refactor 三个 SubAgent（`long-task-tdd-{red,green,refactor}`）+ Quality Gates SubAgent（`long-task-quality`）**共四个**独立 SubAgent，均由本 skill 直接用 Agent 工具 DISPATCH。本 skill 不再经过 `long-task-tdd` 中间层——路由决策全部收敛到 `scripts/phase_route.py` 的顶层 skill 路由；会话内只剩 SubAgent 分发，无 Skill-to-Skill 调用。
 
-契约见 `../long-task-work/references/structured-return-contract.md`；SubAgent 返回按 `../long-task-work/references/approval-revise-loop.md` 处理。
+契约见 `../using-long-task/references/structured-return-contract.md`；SubAgent 返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
 **一致性重读（强制，每次本阶段会话启动都要做）：**
 1. 读 `feature-list.json` → 按 `sub_status == tdd_pending` 选 lowest-id 特性
@@ -58,8 +58,8 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 **共享铁律**：`NO IMPLEMENTATION CODE WITHOUT A FAILING TEST FIRST`。先写了实现就删掉、重来，没有例外。
 
 **共享资产**（所有 3 个 SubAgent 可引用）：
-- 结构化返回契约：`../long-task-work/references/structured-return-contract.md`
-- 审批-返工循环：`../long-task-work/references/approval-revise-loop.md`（TDD 内部无用户审批闸门；fail/blocked 按下文各 step 处置）
+- 结构化返回契约：`../using-long-task/references/structured-return-contract.md`
+- 审批-返工循环：`../using-long-task/references/approval-revise-loop.md`（TDD 内部无用户审批闸门；fail/blocked 按下文各 step 处置）
 - 契约-实现漂移协议：`references/drift-protocol.md`（Green / Refactor 共享）
 - 静默执行协议：`references/silent-execution.md`（三阶段共享）
 - 测试反模式清单：`references/testing-anti-patterns.md`（Red 主用，Green / Refactor 参考）

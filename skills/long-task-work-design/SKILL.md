@@ -9,7 +9,7 @@ description: "Use when feature-list.json has a feature with sub_status=design_pe
 
 **开始时宣告：** "I'm using the long-task-work-design skill. Let me orient myself."
 
-**核心原则：** Feature Design 子步骤在**独立 SubAgent**中运行（`long-task-feature-design`）。主 Agent 仅分发并消费 **Structured Return Contract** —— 契约与 DISPATCH 语法参见 `../long-task-work/references/structured-return-contract.md`；SubAgent 返回按 `../long-task-work/references/approval-revise-loop.md` 处理。
+**核心原则：** Feature Design 子步骤在**独立 SubAgent**中运行（`long-task-feature-design`）。主 Agent 仅分发并消费 **Structured Return Contract** —— 契约与 DISPATCH 语法参见 `../using-long-task/references/structured-return-contract.md`；SubAgent 返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
 **一致性重读（允许重复读，一致性优先）：** 启动 5 件事：
 1. 读 `feature-list.json` → 按 `sub_status == design_pending` 选 lowest-id 特性
@@ -58,7 +58,7 @@ python scripts/check_configs.py feature-list.json --feature <id>
 
 > **对 `category: "bugfix"`**：feature-design 精简，聚焦根因记录 + 定向修复 + 回归测试清单。
 
-**返回处理**（按 `../long-task-work/references/approval-revise-loop.md`）：
+**返回处理**（按 `../using-long-task/references/approval-revise-loop.md`）：
 - `status: blocked` → 按 blockers[] 前缀（`[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[ATS-MISMATCH]` / `[ATS-BUGFIX-REGRESSION-MISSING]` / `[UCD-VAGUE]` / `[DEP-AMBIGUOUS]` / `[NFR-GAP]` / `[CONTRACT-DEVIATION]`）组装 AskUserQuestion；收集裁决后以 Clarification Addendum 重分发（不计入 revise 上限）
 - `status: fail` → Failure Addendum 重分发（计入 revise 上限 2 轮）
 - `status: pass` 且 `next_step_input.assumption_count > 0` → 审批关卡（approve / revise / skip-feature / escalate）让用户确认 assumptions

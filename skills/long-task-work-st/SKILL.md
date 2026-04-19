@@ -9,7 +9,7 @@ description: "Use when feature-list.json has a feature with sub_status=st_pendin
 
 **开始时宣告：** "I'm using the long-task-work-st skill. Let me orient myself."
 
-**核心原则：** Feature-ST 子步骤在**独立 SubAgent**（`long-task-feature-st`）中运行；Inline Check 与 Persist 直接在主 agent 执行（无 SubAgent）。契约见 `../long-task-work/references/structured-return-contract.md`；返回按 `../long-task-work/references/approval-revise-loop.md` 处理。
+**核心原则：** Feature-ST 子步骤在**独立 SubAgent**（`long-task-feature-st`）中运行；Inline Check 与 Persist 直接在主 agent 执行（无 SubAgent）。契约见 `../using-long-task/references/structured-return-contract.md`；返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
 **一致性重读（强制）：**
 1. 读 `feature-list.json` → 按 `sub_status == st_pending` 选 lowest-id 特性
@@ -55,7 +55,7 @@ description: "Use when feature-list.json has a feature with sub_status=st_pendin
   - `[SRS-MISSING]`（规范缺口）
   - `[ATS-CATEGORY-MISSING-ST]`（ATS 必须类别无 ST 用例）
 
-主 agent 按 `../long-task-work/references/approval-revise-loop.md` 前缀表组装 AskUserQuestion，收集裁决后 Clarification Addendum 重分发。
+主 agent 按 `../using-long-task/references/approval-revise-loop.md` 前缀表组装 AskUserQuestion，收集裁决后 Clarification Addendum 重分发。
 
 ### 4. Inline 合规检查（无 SubAgent）
 

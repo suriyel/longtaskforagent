@@ -48,7 +48,7 @@ python scripts/check_real_tests.py feature-list.json --feature {current_feature_
 若 Gate 0 FAIL 原因含 "has external dependencies but no real tests"：
 1. 这**不是**代码问题 — 是基础设施 / 配置问题
 2. 运行：`python scripts/check_configs.py feature-list.json --feature {current_feature_id}`
-3. 若配置缺失 → 返 `status: blocked`，追加 blocker `[ENV-ERROR] Feature #{id} requires external dependencies ({config_names}) but configs are not provided | Suggested: none | Q: please provide the listed configs in .env or env-guide §3`。主 agent 按 `skills/long-task-work/references/approval-revise-loop.md` 组装 AskUserQuestion 收集缺失值。
+3. 若配置缺失 → 返 `status: blocked`，追加 blocker `[ENV-ERROR] Feature #{id} requires external dependencies ({config_names}) but configs are not provided | Suggested: none | Q: please provide the listed configs in .env or env-guide §3`。主 agent 按 `skills/using-long-task/references/approval-revise-loop.md` 组装 AskUserQuestion 收集缺失值。
 4. 若配置齐备但服务未运行 → 阅读 `env-guide.md`，启动服务，重跑 Gate 0
 5. 对有外部依赖的特性**绝不**无真实测试就继续
 6. 对含连接串 `required_configs[]` 的特性**绝不**声称纯函数豁免
@@ -236,7 +236,7 @@ TDD Green 之后（全部测试通过），运行覆盖率工具。
 
 ## Structured Return Contract
 
-与 `skills/long-task-work/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
+与 `skills/using-long-task/references/structured-return-contract.md` 中的统一契约对齐。严格按此格式返回：
 
 ```markdown
 ## SubAgent Result: long-task-quality

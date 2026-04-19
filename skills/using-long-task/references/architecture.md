@@ -379,7 +379,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | 特性工作前跳过配置检查 | 配置缺失时浪费规划 / TDD 循环 | 对有外部依赖的特性始终跑 Config Gate |
 | 跳过需求阶段 | 不完整 / 模糊需求导致返工 | 跑需求采集，先产出批准的 SRS |
 | 跳过设计阶段 | 临时设计导致不一致与返工 | SRS 之后跑设计阶段，先获批 |
-| 猜测式调试 | 随机修复浪费时间且可能引入新 bug | 遵循系统性调试 — 追根因。见 [systematic-debugging.md](../../long-task-work/references/systematic-debugging.md) |
+| 猜测式调试 | 随机修复浪费时间且可能引入新 bug | 遵循系统性调试 — 追根因。见 [systematic-debugging.md](./systematic-debugging.md) |
 | 无证据声称 "it works" | 未经校验的声明导致虚假信心 | 标记 passing 前展示实际测试输出。见 [verification-enforcement.md](verification-enforcement.md) |
 | 接受低价值断言 | 仅做 None/isinstance/import 的测试零捕 bug 能力 | 强制低价值断言占比 <= 20%。见 [testing-anti-patterns.md](../../long-task-work-tdd/references/testing-anti-patterns.md) #14 |
 | UI 测试缺 REJECT 子句 | LLM 只确认正向期望，漏掉显而易见的 UI 错误 | 所有 `[devtools]` 步骤要求 EXPECT/REJECT 格式。见 [ui-error-detection.md](../../long-task-tdd-red/references/ui-error-detection.md) |

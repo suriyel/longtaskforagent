@@ -1,6 +1,6 @@
 # 审批-返工循环（Approval-Revise Loop · 共享模板）
 
-> 所有 `long-task-increment-*` sub-skill 返回 Structured Return Contract 后，主 agent 按本模板统一处理"呈给用户 → 审批 → 返工"。本模板复用 `skills/long-task-work/references/structured-return-contract.md` 的 5 字段契约与 DISPATCH 声明式语法。
+> 所有 `long-task-increment-*` sub-skill 返回 Structured Return Contract 后，主 agent 按本模板统一处理"呈给用户 → 审批 → 返工"。本模板复用 `skills/using-long-task/references/structured-return-contract.md` 的 5 字段契约与 DISPATCH 声明式语法。
 
 ## 为什么存在
 
