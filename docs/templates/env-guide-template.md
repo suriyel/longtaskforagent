@@ -129,6 +129,12 @@ conda activate <env-name>
 - 任何命令失败 → 修复后**仅重跑失败的测试/步骤**（by name），不整轮重跑
 - 临时文件清理：`trap 'rm -f /tmp/*-$$.log /tmp/*-$$.exit' EXIT` 或使用 `mktemp`
 
+### 工具/环境故障 Fallback
+命令本身异常退出（如 `ModuleNotFoundError` / `mvn: command not found` / 连接测试 DB 超时）：
+1. 诊断根因（测试栈未装 / env 未激活 / 服务未启动）
+2. 视情况跑 `init.sh` / `init.ps1`，或按 §1 启动依赖服务
+3. 重试一次仍失败 → SubAgent 返回 `status: blocked`，evidence 前缀 `[ENV-ERROR]` 附故障摘要；**绝不跳过**测试继续推进
+
 ### 工具版本锁定
 记录关键工具的最低版本要求（node / python / java / 构建工具）。
 

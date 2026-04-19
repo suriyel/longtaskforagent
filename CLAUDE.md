@@ -314,7 +314,7 @@ long-task-agent/
 │   ├── long-task-feature-design/SKILL.md + references/feature-design-template.md
 │   ├── long-task-work-design/SKILL.md (Phase 2a — per-feature design)
 │   ├── long-task-work-tdd/SKILL.md (Phase 2b — TDD Step 3a/3b/3c DISPATCH + Step 4 Quality)
-│   │     + references/{testing-anti-patterns,silent-execution,drift-protocol}.md (shared by R/G/R SubAgents)
+│   │     + references/{testing-anti-patterns,drift-protocol}.md (shared by R/G/R SubAgents)
 │   ├── long-task-work-st/SKILL.md (Phase 2c — Feature-ST + Inline + Persist)
 │   ├── long-task-feature-st/SKILL.md + prompts/e2e-scenario-prompt.md
 │   ├── long-task-st/SKILL.md + references/st-recipes.md

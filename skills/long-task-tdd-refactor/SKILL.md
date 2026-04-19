@@ -17,7 +17,7 @@ description: "Use when dispatched by long-task-work-tdd Step 3c — clean up whi
 ## 重构规则
 
 - 抽取重复、改进命名、简化分支结构
-- 每次改动按 `../long-task-work-tdd/references/silent-execution.md` 静默执行，**仅**重跑触及改动文件的测试
+- 每次改动按 `env-guide.md §3` 静默执行，**仅**重跑触及改动文件的测试
 - 重构全部完成后跑一次全量套件，确认无回归
 - **不新增功能**；新增功能应回到 Red 写新测试驱动
 
@@ -40,7 +40,7 @@ description: "Use when dispatched by long-task-work-tdd Step 3c — clean up whi
 
 若 `env-guide.md §3` 列出静态分析命令（Checkstyle / Ruff / Pylint / ESLint / cppcheck 等）：
 
-1. 设计对齐通过且重构全部完成后，按 `../long-task-work-tdd/references/silent-execution.md` 静默执行每个工具
+1. 设计对齐通过且重构全部完成后，按 `env-guide.md §3` 静默执行每个工具
 2. 退出码非零 → `grep -E "error|warning" /tmp/static-$$.log` 提取违规
 3. **退出重构之前修复全部违规** —— 违规是阻塞性的
 4. 工具自行读取配置（`.pylintrc` / `checkstyle.xml` / `eslint.config.js` 等）；**不要**手动解析配置

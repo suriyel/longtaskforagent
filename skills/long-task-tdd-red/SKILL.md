@@ -198,7 +198,7 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
 
 ## 运行测试
 
-按 `../long-task-work-tdd/references/silent-execution.md` 静默执行。**本阶段 exit != 0 是预期**；exit = 0 意味着测试未真正失败（实现已存在 / 断言过弱），必须重写。
+按 `env-guide.md §3` 静默执行。**本阶段 exit != 0 是预期**；exit = 0 意味着测试未真正失败（实现已存在 / 断言过弱），必须重写。
 
 确认失败原因正确：`ImportError` / `AttributeError` / 预期值上的 `AssertionError` 均可接受。
 

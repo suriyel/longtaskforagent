@@ -63,7 +63,7 @@ description: "Use when dispatched by long-task-work-tdd Step 3b — minimal impl
 
 ## 运行测试
 
-按 `../long-task-work-tdd/references/silent-execution.md` 静默执行。**本阶段 exit = 0 是预期**；exit != 0 意味着实现有问题，提取最后 100 行日志诊断。
+按 `env-guide.md §3` 静默执行。**本阶段 exit = 0 是预期**；exit != 0 意味着实现有问题，提取最后 100 行日志诊断。
 
 修复后**只重跑触及的测试**，不跑全套；最终再跑一次全量确认无回归。
 

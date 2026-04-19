@@ -45,6 +45,7 @@ approved_sections: []
 - 覆盖 Build / Unit tests / Coverage / Static analysis（仅当 `docs/rules/coding-constraints.md` 含 Static Analysis Tools 表）
 - 工具版本锁条目（例如 Python ≥ 3.11、Node ≥ 20）
 - Re-check 协议：任何失败 → 修复后按名字重跑失败项，永不全量重跑
+- 工具/环境故障 Fallback 段落（boilerplate 原样写入）：诊断 → `init.sh` 或按 §1 启服务 → 重试一次 → 仍失败 `status: blocked` 前缀 `[ENV-ERROR]`
 
 **§4 存量代码库约束**（直接从 `docs/rules/` 提取）：
 - §4.1 强制内部库 ← `docs/rules/coding-constraints.md` 的 "Mandatory Internal Libraries" 表

@@ -142,7 +142,8 @@ SubAgent 嵌套 **深度 ≤ 2**（主 agent → sub-skill，或主 agent → or
 |---|---|---|
 | 真·共享基础设施（不随阶段变化） | 留一处，其他 phase 用相对路径引用 | `structured-return-contract.md`, `systematic-debugging.md`, `subagent-development.md`, `worktree-isolation.md` |
 | 带阶段差异的 loop / 行为协议 | 各 phase / 各 skill 独立维护 | `approval-revise-loop.md`（同名文件可多份；规则同构但语境不同） |
-| 阶段内 TDD / 静态分析等动作协议 | 归该阶段 skill | `drift-protocol.md`, `silent-execution.md` 归 TDD，不上移 |
+| 阶段内 TDD / 静态分析等动作协议 | 归该阶段 skill | `drift-protocol.md` 归 TDD，不上移 |
+| 项目级运行时命令契约（quiet-exec / re-check / 故障 fallback） | 下沉到 `env-guide.md` 作为用户可编辑单一事实源 | `silent-execution.md` §1/§3 与 env-guide §3 重复 → 整文件删除，§4 吸收为 env-guide §3 fallback 段落 |
 
 ### 2.8 跨 phase 拆分后，§ 1 骨架化在每个 phase 内独立应用
 
@@ -156,7 +157,12 @@ Phase skill 本身仍可能长 —— 仍按 § 1 判据决定是否拆 orchestr
 
 ### 3.1 核心判据
 
-**"如果删了这段，AI 下一步的动作会变吗？"** 不变 → 删。
+两层级联，先粗后细：
+
+1. **段落级** —— **"如果删了这段，AI 下一步的动作会变吗？"** 不变 → 删。
+2. **字符级** —— **"每个字符都要有价值"**。通过段落级的保留章节再过一遍字符剃：冗余修饰（"其实"、"实际上"、"一般来说"、"通常情况下"）、同义复述、寒暄过渡、无触发条件的限定句，凡删了不损 AI 决策信息的一律剃。段落级防死代码，字符级防活章节里藏死字符。
+
+运行时文档每轮循环都灌进上下文，字符冗余 = 持续 token 税。
 
 ### 3.2 执行路径消费者清单
 
@@ -198,6 +204,8 @@ Phase skill 本身仍可能长 —— 仍按 § 1 判据决定是否拆 orchestr
 | 权威源已存在即冗余 | 内容可从 `feature-list.json` / `env-guide.md` / 包清单直读 |
 | 操作性缺失即删 | 章节写了但无动作触发条件（风险登记、遗留问题） |
 | 单源已足够即删 | 中间摘要层无独立价值 |
+
+**案例**：`silent-execution.md`（4 处 TDD 引用）§1 quiet-exec 模板、§3 Re-check 协议与 `env-guide.md §3` 100% 重复；§2 TDD 三阶段 exit-code 判读表在 R/G/R sub-skill 本地各自一句完整表达（下游重生）；§4 `[ENV-ERROR]` 升级协议 4 行，不够独立文件门槛 → 整文件删除，§4 吸收为 env-guide §3 fallback 段落，跨文件漂移源 2→1。
 
 ### 3.6 剃刀后必做：幻影引用审计
 
