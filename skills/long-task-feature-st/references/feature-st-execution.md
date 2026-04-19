@@ -18,7 +18,7 @@
 
 ## 黑盒测试理念
 
-TDD（long-task-tdd）已从内部验证实现：
+TDD（long-task-work-tdd）已从内部验证实现：
 单元测试行使代码路径；coverage gate 校验完备性。
 
 本 skill 从**外部**验证 — 站在用户或外部系统的视角：
@@ -273,7 +273,7 @@ ST-{CATEGORY}-{FEATURE_ID(3 digits)}-{SEQ(3 digits)}
 
 **f) 正向渲染验证**（所有 `"ui": true` 特性强制）：
 
-每条 UI 类别 ST 用例**必须**至少含一步验证预期视觉元素**正向存在**，不仅无错。使用 `references/ui-error-detection.md`（在 long-task-tdd）中的 Layer 1b 正向渲染校验脚本。
+每条 UI 类别 ST 用例**必须**至少含一步验证预期视觉元素**正向存在**，不仅无错。使用 `skills/long-task-tdd-red/references/ui-error-detection.md` 中的 Layer 1b 正向渲染校验脚本。
 
 对 Feature Design 的 Visual Rendering Contract（特性设计文档的 §Visual Rendering Contract）中列出的每个视觉元素：
 1. 导航到契约指定的页面或触发渲染条件

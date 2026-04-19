@@ -2,9 +2,10 @@
 """
 Unified phase router for long-task-agent.
 
-Replaces ``using-long-task`` detection rules and ``long-task-work``
-Step 1-4 with a single call. Outputs the next skill to invoke plus
-any state the caller needs (validation errors, migration flag, counts).
+Single source of truth for phase routing. ``using-long-task`` delegates
+here; no Skill-to-Skill routing anywhere else. Outputs the next skill to
+invoke plus any state the caller needs (validation errors, migration
+flag, counts).
 
 Routing precedence:
     1. bugfix-request.json            -> long-task-hotfix

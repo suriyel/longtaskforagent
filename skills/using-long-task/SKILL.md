@@ -48,7 +48,7 @@ python scripts/phase_route.py --json
 |---------|---------|
 | "先看一下代码吧" | 先调用阶段 skill。它会告诉你如何定位。|
 | "我知道该做哪个特性" | Worker skill 有 Orient 步骤。照着走。|
-| "这个特性简单，跳过 TDD" | long-task-tdd 不可协商。|
+| "这个特性简单，跳过 TDD" | long-task-work-tdd 不可协商。|
 | "测试通过了，可以标记完成" | 必须先通过 long-task-quality 关卡。|
 | "我记得工作流" | Skill 在演化。通过 Skill 工具加载当前版本。|
 | "我需要先获取更多上下文" | Skill 检查先于探索。|

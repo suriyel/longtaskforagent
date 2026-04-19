@@ -247,10 +247,12 @@ using-long-task (引导路由器 — 始终加载)
 | `long-task-design` | 带权衡分析的技术设计 |
 | `long-task-ats` | 验收测试策略 — 需求→场景映射 + 独立 subagent 审核 |
 | `long-task-init` | 项目脚手架和功能分解 |
-| `long-task-work` | 工作编排器（每周期一个功能） |
-| `long-task-tdd` | TDD 红→绿→重构纪律 |
-| `long-task-quality` | 覆盖率门禁 + 变异门禁 |
-| `long-task-feature-st` | 每功能黑盒验收测试（Chrome DevTools MCP + ISO/IEC/IEEE 29119） |
+| `long-task-work-design` | 阶段 2a：每特性详细设计（一会话一特性） |
+| `long-task-work-tdd` | 阶段 2b：TDD 红→绿→重构 + 覆盖率门禁（一会话一特性） |
+| `long-task-work-st` | 阶段 2c：每特性 Feature-ST + Inline Check + Persist（一会话一特性） |
+| `long-task-tdd-red` / `-green` / `-refactor` | 由 work-tdd 分发的 R/G/R SubAgent |
+| `long-task-quality` | 覆盖率门禁（由 work-tdd Step 4 分发） |
+| `long-task-feature-st` | 每功能黑盒验收测试（Chrome DevTools MCP + ISO/IEC/IEEE 29119；由 work-st 分发） |
 | `long-task-increment` | 带影响分析的发布后功能添加 |
 | `long-task-st` | 带 Go/No-Go 结论的 IEEE 829 系统测试 |
 
@@ -456,9 +458,13 @@ long-task-agent/
 │   ├── long-task-design/            # 阶段 0c：设计
 │   ├── long-task-ats/               # 阶段 0d：验收测试策略（含独立审核 subagent）
 │   ├── long-task-init/              # 阶段 1：初始化
-│   ├── long-task-work/              # 阶段 2：工作编排器
-│   ├── long-task-tdd/               # TDD 纪律
-│   ├── long-task-quality/           # 覆盖率 + 变异门禁
+│   ├── long-task-work-design/       # 阶段 2a：每特性详细设计
+│   ├── long-task-work-tdd/          # 阶段 2b：TDD + 覆盖率门禁
+│   ├── long-task-work-st/           # 阶段 2c：Feature-ST + Inline + Persist
+│   ├── long-task-tdd-red/           # R/G/R 子 skill（由 work-tdd 分发）
+│   ├── long-task-tdd-green/
+│   ├── long-task-tdd-refactor/
+│   ├── long-task-quality/           # 覆盖率门禁
 │   ├── long-task-feature-st/        # 每功能黑盒验收测试
 │   ├── long-task-increment/         # 增量开发
 │   ├── long-task-st/                # 系统测试

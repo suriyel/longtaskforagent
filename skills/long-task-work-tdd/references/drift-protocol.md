@@ -39,7 +39,7 @@ Green 或 Refactor 阶段发现实现的**公共符号**与 `docs/features/YYYY-
 
 - 返回 `status: blocked`
 - `blockers[]` 添加前缀 `[CONTRACT-DEVIATION]` 的条目，描述两种走向的取舍
-- orchestrator（`long-task-tdd`）聚合后转给 `long-task-work-tdd` 由用户裁决（approval-revise-loop 的 `[CONTRACT-DEVIATION]` 行定义了 A/B 选项）
+- `long-task-work-tdd` 在 Step 3d 聚合后由主 agent 组装用户裁决（approval-revise-loop 的 `[CONTRACT-DEVIATION]` 行定义了 A/B 选项）
 
 ## 理由
 

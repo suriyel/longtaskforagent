@@ -255,7 +255,7 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 - "Kills Which Bug?" = 单元 mock 会漏掉的连接 / 集成失败
 - 若特性为无外部依赖的纯计算：写 "INTG: N/A — pure function, no external I/O"（与 TDD Rule 5 豁免一致）
 
-**与 TDD 的关系**：本表是 TDD Red（long-task-tdd Step 1）的**主要输入**。TDD Red 以本表为起点，并可依其自身 Rule 1-5（类别覆盖、断言质量、真实测试要求）添加测试。Test Inventory 提供设计驱动场景；TDD 添加编码过程中发现的实现驱动场景。
+**与 TDD 的关系**：本表是 TDD Red（`long-task-tdd-red`，由 `long-task-work-tdd` Step 3a 分发）的**主要输入**。TDD Red 以本表为起点，并可依其自身 Rule 1-5（类别覆盖、断言质量、真实测试要求）添加测试。Test Inventory 提供设计驱动场景；TDD 添加编码过程中发现的实现驱动场景。
 
 **Design Interface Coverage Gate（最终化前强制执行）：**
 

@@ -246,10 +246,12 @@ using-long-task (bootstrap router — always loaded)
 | `long-task-design` | Technical design with trade-off analysis |
 | `long-task-ats` | Acceptance Test Strategy — requirement→scenario mapping + independent subagent review |
 | `long-task-init` | Project scaffolding and feature decomposition |
-| `long-task-work` | Worker orchestrator (one feature per cycle) |
-| `long-task-tdd` | TDD Red→Green→Refactor discipline |
-| `long-task-quality` | Coverage gate |
-| `long-task-feature-st` | Per-feature black-box acceptance testing (Chrome DevTools MCP + ISO/IEC/IEEE 29119) |
+| `long-task-work-design` | Phase 2a: per-feature detailed design (one feature per session) |
+| `long-task-work-tdd` | Phase 2b: TDD Red→Green→Refactor + coverage gate (one feature per session) |
+| `long-task-work-st` | Phase 2c: per-feature Feature-ST + Inline Check + Persist (one feature per session) |
+| `long-task-tdd-red` / `-green` / `-refactor` | R/G/R SubAgents dispatched by work-tdd |
+| `long-task-quality` | Coverage gate (dispatched by work-tdd Step 4) |
+| `long-task-feature-st` | Per-feature black-box acceptance testing (Chrome DevTools MCP + ISO/IEC/IEEE 29119; dispatched by work-st) |
 | `long-task-increment` | Post-launch feature additions with impact analysis |
 | `long-task-st` | IEEE 829 system testing with Go/No-Go verdict |
 
@@ -461,8 +463,12 @@ long-task-agent/
 │   ├── long-task-design/            # Phase 0c: Design
 │   ├── long-task-ats/               # Phase 0d: Acceptance Test Strategy (with independent reviewer subagent)
 │   ├── long-task-init/              # Phase 1: Initialization
-│   ├── long-task-work/              # Phase 2: Worker orchestrator
-│   ├── long-task-tdd/               # TDD discipline
+│   ├── long-task-work-design/       # Phase 2a: per-feature detailed design
+│   ├── long-task-work-tdd/          # Phase 2b: TDD + coverage gate
+│   ├── long-task-work-st/           # Phase 2c: Feature-ST + Inline + Persist
+│   ├── long-task-tdd-red/           # R/G/R sub-skills (dispatched by work-tdd)
+│   ├── long-task-tdd-green/
+│   ├── long-task-tdd-refactor/
 │   ├── long-task-quality/           # Coverage gate
 │   ├── long-task-feature-st/        # Per-feature black-box acceptance testing
 │   ├── long-task-increment/         # Incremental development
