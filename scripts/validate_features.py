@@ -29,7 +29,7 @@ import sys
 REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status"}
 SRS_TRACE_PATTERN = re.compile(r"^(?:FR|NFR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
-VALID_SUB_STATUSES = {"design_pending", "tdd_pending", "st_pending", "done"}
+VALID_PHASES = {"design", "tdd", "st"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
 QUALITY_GATE_KEYS = {"line_coverage_min", "branch_coverage_min"}
@@ -211,6 +211,25 @@ def validate(path: str) -> tuple[list[str], list[str]]:
     if not isinstance(features, list):
         return ['"features" must be an array'], []
 
+    # Validate root `current` shape (structural — reference checks below need ids_seen)
+    cur = data.get("current")
+    current_feature_id = None
+    if cur is not None:
+        if not isinstance(cur, dict):
+            errors.append('"current" must be null or an object with feature_id+phase')
+        else:
+            cfid = cur.get("feature_id")
+            cphase = cur.get("phase")
+            if cfid is None or not isinstance(cfid, int):
+                errors.append('current.feature_id must be an integer')
+            else:
+                current_feature_id = cfid
+            if cphase not in VALID_PHASES:
+                errors.append(
+                    f"current.phase must be one of {sorted(VALID_PHASES)}, "
+                    f"got {cphase!r}"
+                )
+
     ids_seen = set()
 
     for i, feat in enumerate(features):
@@ -237,23 +256,9 @@ def validate(path: str) -> tuple[list[str], list[str]]:
         if status and status not in VALID_STATUSES:
             errors.append(f"{prefix} (id={fid}): invalid status '{status}', must be one of {VALID_STATUSES}")
 
-        # Check sub_status (optional for backward compat; if present, validate enum + status consistency)
-        sub_status = feat.get("sub_status")
-        if sub_status is not None:
-            if sub_status not in VALID_SUB_STATUSES:
-                errors.append(
-                    f"{prefix} (id={fid}): invalid sub_status '{sub_status}', "
-                    f"must be one of {sorted(VALID_SUB_STATUSES)}"
-                )
-            elif status in VALID_STATUSES:
-                if sub_status == "done" and status != "passing":
-                    errors.append(
-                        f"{prefix} (id={fid}): sub_status='done' requires status='passing' (got '{status}')"
-                    )
-                elif sub_status != "done" and status != "failing":
-                    errors.append(
-                        f"{prefix} (id={fid}): sub_status='{sub_status}' requires status='failing' (got '{status}')"
-                    )
+        # Legacy: sub_status field removed in favor of root `current`.
+        # validate stays quiet; `phase_route.py` short-circuits to
+        # needs_migration when `count_pending.legacy_sub_status > 0`.
 
         # Check priority
         priority = feat.get("priority")
@@ -348,6 +353,24 @@ def validate(path: str) -> tuple[list[str], list[str]]:
     # Second pass: validate all dependencies and supersedes reference existing IDs
     all_ids = {f.get("id") for f in features if isinstance(f, dict)}
     id_to_feature = {f.get("id"): f for f in features if isinstance(f, dict)}
+
+    # Validate current.feature_id reference + state consistency
+    if current_feature_id is not None:
+        cfeat = id_to_feature.get(current_feature_id)
+        if cfeat is None:
+            errors.append(
+                f"current.feature_id={current_feature_id} does not exist"
+            )
+        else:
+            if cfeat.get("deprecated"):
+                errors.append(
+                    f"current.feature_id={current_feature_id} is deprecated"
+                )
+            if cfeat.get("status") == "passing":
+                errors.append(
+                    f"current.feature_id={current_feature_id} has "
+                    f"status='passing'; a locked feature must be 'failing'"
+                )
     for feat in features:
         if not isinstance(feat, dict):
             continue
@@ -428,18 +451,18 @@ def main():
             summary += f", {deprecated_count} deprecated"
         summary += ")"
 
-        # Sub-status breakdown (only shown if any feature declares sub_status)
-        sub_status_counts = {}
-        for f in active_features:
-            ss = f.get("sub_status")
-            if ss:
-                sub_status_counts[ss] = sub_status_counts.get(ss, 0) + 1
-        if sub_status_counts:
-            parts = []
-            for key in ("design_pending", "tdd_pending", "st_pending", "done"):
-                if sub_status_counts.get(key):
-                    parts.append(f"{key}={sub_status_counts[key]}")
-            summary += " | sub_status: " + ", ".join(parts)
+        # Current lock
+        cur = data.get("current")
+        if cur and isinstance(cur, dict):
+            summary += (f" | current=#{cur.get('feature_id')}"
+                        f"({cur.get('phase')})")
+        else:
+            summary += " | current=none"
+
+        # Legacy sub_status signal (migration pending)
+        legacy = sum(1 for f in active_features if "sub_status" in f)
+        if legacy:
+            summary += f" | legacy_sub_status={legacy} (run migrate_sub_status.py)"
 
         # Show quality gates if configured
         qg = data.get("quality_gates")

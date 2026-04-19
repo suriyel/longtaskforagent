@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 31 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. **Routing discipline**: all `Skill` tool targets come from `phase_route.py`; within a session, only `Agent`-tool SubAgent dispatch — no Skill-to-Skill invocation. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` root `current = {feature_id, phase}` is the single source of truth for phase routing (one feature locked at a time; `phase ∈ {design, tdd, st}`; `null` means no active work — router picks next dependency-ready feature). 31 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. **Routing discipline**: all `Skill` tool targets come from `phase_route.py`; within a session, only `Agent`-tool SubAgent dispatch — no Skill-to-Skill invocation. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Get tool commands | `python scripts/get_tool_commands.py feature-list.json [--json]` |
 | Check real tests | `python scripts/check_real_tests.py feature-list.json [--feature N] [--require-for-deps] [--json]` |
 | Count pending per phase | `python scripts/count_pending.py feature-list.json [--json]` |
-| Migrate to sub_status schema | `python scripts/migrate_sub_status.py feature-list.json [--dry-run] [--force]` |
+| Migrate legacy sub_status → current | `python scripts/migrate_sub_status.py feature-list.json [--dry-run] [--force]` |
 | Unified phase router | `python scripts/phase_route.py [--root DIR] [--json]` (mirrored read-only as symlinks under `skills/using-long-task/scripts/`; byte-identity gated by `tests/test_scripts_mirror.py`) |
 | Run all tests | `python -m pytest tests/` |
 | Run single test | `python -m pytest tests/test_<script_name>.py` |
@@ -51,10 +51,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-design` | Phase 0c | SRS + UCD exist (or no UI), no design doc, no feature-list.json |
 | `long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
 | `long-task-init` | Phase 1 | ATS doc exists (or auto-skipped), no feature-list.json |
-| `long-task-work-design` | Phase 2a | Feature has `sub_status=design_pending` (per-feature detailed design) |
-| `long-task-work-tdd` | Phase 2b | Feature has `sub_status=tdd_pending` (Red-Green-Refactor + Quality Gates) |
-| `long-task-work-st` | Phase 2c | Feature has `sub_status=st_pending` (Feature-ST + Inline + Persist) |
-| `long-task-st` | Phase 3 | feature-list.json exists, ALL active features `sub_status=done` |
+| `long-task-work-design` | Phase 2a | Router emits `next_skill=long-task-work-design` (current.phase=design, or starting_new pick) |
+| `long-task-work-tdd` | Phase 2b | Router emits `next_skill=long-task-work-tdd` (current.phase=tdd) |
+| `long-task-work-st` | Phase 2c | Router emits `next_skill=long-task-work-st` (current.phase=st) |
+| `long-task-st` | Phase 3 | feature-list.json exists, current=null, ALL active features `status=passing` |
 
 #### Standalone Skills (no pipeline dependency)
 
@@ -127,7 +127,7 @@ Dispatched by `long-task-work-tdd` Step 3a/3b/3c as three independent SubAgents 
 using-long-task (router — delegates to scripts/phase_route.py)
    ├─→ long-task-brownfield-scan (brownfield, no docs/rules/)
    │      └─→ codebase-scanner SubAgent ──→ long-task-requirements
-   ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ [new session; using-long-task routes by sub_status]
+   ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ [new session; using-long-task routes by current]
    │      ├─→ long-task-requirements-quality (Step 7–11)
    │      ├─→ long-task-requirements-alignment (Expert E10; auto-skip for Lite)
    │      └─→ long-task-requirements-finalize (Step 15)
@@ -145,17 +145,17 @@ using-long-task (router — delegates to scripts/phase_route.py)
    │      ├─→ long-task-increment-ats (Step 4b; auto-skip if no ATS)
    │      ├─→ long-task-increment-ucd (Step 5; auto-skip if no UI)
    │      └─→ long-task-increment-srs (Step 6) → [new session; using-long-task routes]
-   ├─→ long-task-work-design (feature has sub_status=design_pending)
+   ├─→ long-task-work-design (router: current.phase=design OR starting_new pick)
    │      └─→ long-task-feature-design (SubAgent)
-   ├─→ long-task-work-tdd (feature has sub_status=tdd_pending)
+   ├─→ long-task-work-tdd (router: current.phase=tdd)
    │      ├─→ long-task-tdd-red (SubAgent — Step 3a — write failing tests)
    │      ├─→ long-task-tdd-green (SubAgent — Step 3b — minimal impl + design align)
    │      ├─→ long-task-tdd-refactor (SubAgent — Step 3c — cleanup + static gate)
    │      └─→ long-task-quality (SubAgent — Step 4)
-   ├─→ long-task-work-st (feature has sub_status=st_pending)
+   ├─→ long-task-work-st (router: current.phase=st)
    │      └─→ long-task-feature-st (SubAgent) → Inline Check → Persist
-   └─→ long-task-st (ALL active features sub_status=done)
-          ├─→ [defects found → new session; using-long-task routes by reset sub_status]
+   └─→ long-task-st (current=null AND ALL active features status=passing)
+          ├─→ [defects found → new session; mark feature failing + reset current; router routes to matching phase]
           └─→ long-task-finalize (Go verdict)
 
 long-task-explore (standalone — no pipeline dependency)
@@ -176,9 +176,9 @@ long-task-explore (standalone — no pipeline dependency)
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design/UCD updated in place; new features appended with `wave` metadata |
 | 1: Init | `long-task-init` | `feature-list.json`, `long-task-guide.md`, project skeleton, initial git commit |
-| 2a: Worker Design | `long-task-work-design` | Per-feature design doc (`docs/features/*.md`); flips `sub_status: design_pending → tdd_pending`; session terminates |
-| 2b: Worker TDD | `long-task-work-tdd` | Tests + implementation + coverage ≥ gates; flips `sub_status: tdd_pending → st_pending`; session terminates |
-| 2c: Worker ST | `long-task-work-st` | Feature-ST test cases + Inline Check + Persist commit; flips `sub_status: st_pending → done` and `status: passing`; session terminates |
+| 2a: Worker Design | `long-task-work-design` | Per-feature design doc (`docs/features/*.md`); if `starting_new`, writes `current = {id, "design"}`; advances `current.phase: design → tdd`; session terminates |
+| 2b: Worker TDD | `long-task-work-tdd` | Tests + implementation + coverage ≥ gates; advances `current.phase: tdd → st`; session terminates |
+| 2c: Worker ST | `long-task-work-st` | Feature-ST test cases + Inline Check + Persist commit; clears `current = null` and flips `status: failing → passing`; session terminates |
 | 3: System Testing | `long-task-st` | ST plan/report; Go/No-Go verdict; chains to Finalize |
 
 ### Critical Rules
@@ -191,7 +191,7 @@ long-task-explore (standalone — no pipeline dependency)
 - **Inline compliance after every feature**: interface contract, test inventory, dependency versions, UCD tokens (no SubAgent).
 - **Systematic debugging**: Never guess-and-fix; trace root cause first.
 - **One feature × one phase per session**: Each of the 3 Worker phases (Design / TDD / ST) runs in its own session and terminates explicitly. Multi-phase/multi-feature automation via `scripts/auto_loop.py` — every iteration is a fresh context.
-- **sub_status is the routing source of truth**: `feature-list.json` `sub_status` ∈ `{design_pending, tdd_pending, st_pending, done}`; `status` (`failing`/`passing`) is derived (`done` ↔ `passing`). `validate_features.py` enforces consistency. Quick check: `python scripts/count_pending.py feature-list.json`.
+- **`current` is the routing source of truth**: `feature-list.json` root `current = {"feature_id": N, "phase": "design"|"tdd"|"st"} | null`. One feature locked at a time; `status` (`failing`/`passing`) is orthogonal — `status=passing` means fully done (only set by `long-task-work-st` Persist, which also clears `current`). When `current=null` and any feature is `failing`, `phase_route.py` picks the lowest-priority+id dependency-ready feature and emits `starting_new=true`. Quick check: `python scripts/count_pending.py feature-list.json`.
 - **TDD design alignment (R/G/R)**: Green reads `{feature_design_path}` §4 Interface Contract + §6 Implementation Summary + §8 Data Model before implementing; Refactor re-reads and runs a "design alignment re-check" before static analysis. Drift resolved via "Contract-Implementation Drift Protocol" (update design OR revert implementation, same commit).
 - **UI features**: Mark `"ui": true`; require Chrome DevTools MCP testing; Feature Design must include Visual Rendering Contract (selectors, render triggers, positive + interactive assertions); TDD asserts elements present AND interactive; Feature-ST verifies rendering then performs Exploratory Visual Assessment (Rendering Completeness, Interactive Depth, Visual Coherence, Functional Accuracy). Blank canvas = failing. Display-only elements = Major defect.
 - **System testing before release**: ST phase required (regression, integration, E2E, NFR, exploratory); no release without Go verdict.
@@ -221,15 +221,15 @@ long-task-explore (standalone — no pipeline dependency)
 | `docs/plans/*-ats.md` | 0d | Approved ATS (req→scenario mapping; reviewed by ats-reviewer) |
 | `bugfix-request.json` | Hotfix | Signal file (deleted after processing) |
 | `increment-request.json` | Increment | Signal file (deleted after processing) |
-| `feature-list.json` | 1 | Task inventory with `status` / `sub_status` (routing source of truth), constraints, assumptions, waves |
+| `feature-list.json` | 1 | Task inventory with root `current` lock (routing source of truth) + per-feature `status`, constraints, assumptions, waves |
 | `long-task-guide.md` | 1 | Worker session guide (env activation, test/coverage commands) |
 | `env-guide.md` | 1 | Service lifecycle commands (start/stop/restart/verify) |
 | `task-progress.md` | 1 | `## Current State` + session log |
 | `RELEASE_NOTES.md` | 1 | Keep a Changelog format |
 | `init.sh` / `init.ps1` | 1 | Environment bootstrap |
 | `.env.example` | 1 | Required env config template |
-| `CLAUDE.md` / `AGENTS.md` | 1 | Injected "## Long-Task Agent" section: pre/post-init routing, sub_status enum, `count_pending.py` quick command |
-| `docs/features/YYYY-MM-DD-<name>.md` | 2a | Per-feature detailed design (flips `sub_status: design_pending → tdd_pending`) |
+| `CLAUDE.md` / `AGENTS.md` | 1 | Injected "## Long-Task Agent" section: pre/post-init routing, `current` lock semantics, `count_pending.py` quick command |
+| `docs/features/YYYY-MM-DD-<name>.md` | 2a | Per-feature detailed design (advances `current.phase: design → tdd`) |
 | `docs/test-cases/feature-*.md` | 2c | Per-feature ST test cases (ISO/IEC/IEEE 29119); produced by work-st |
 | `docs/plans/*-st-plan.md` | 3 | ST plan with RTM |
 | `docs/plans/*-st-report.md` | 3 | ST report with Go/No-Go verdict |
@@ -244,6 +244,7 @@ long-task-explore (standalone — no pipeline dependency)
 {
   "project": "name",
   "created": "2025-01-15",
+  "current": null,
   "tech_stack": { "language": "python|java|typescript|c|cpp", "test_framework": "...", "coverage_tool": "..." },
   "quality_gates": { "line_coverage_min": 90, "branch_coverage_min": 80 },
   "waves": [{ "id": 0, "date": "2025-01-15", "description": "Initial release" }],
@@ -260,13 +261,16 @@ long-task-explore (standalone — no pipeline dependency)
 }
 ```
 
+`current` is the single source of truth for phase routing:
+- `null` → no feature locked; router picks next dep-ready feature and emits `starting_new=true`
+- `{"feature_id": N, "phase": "design"|"tdd"|"st"}` → router routes directly to the matching Worker skill
+
 Each feature:
 ```json
 {
   "id": 1, "wave": 0, "category": "core|bugfix",
   "title": "...", "description": "...", "priority": "high|medium|low",
   "status": "failing|passing",
-  "sub_status": "design_pending|tdd_pending|st_pending|done",
   "srs_trace": ["FR-001"], "verification_steps": ["optional scenario"],
   "dependencies": [], "ui": false, "ui_entry": "/optional-path",
   "deprecated": false, "deprecated_reason": null, "supersedes": null,
@@ -281,10 +285,11 @@ Each feature:
 Key field notes:
 - `srs_trace`: required; maps feature to SRS requirements for ATS lookup and ST traceability
 - `git_sha`: 7–40 char hex; set by `long-task-work-st` at Persist; validated by `validate_features.py`
-- `status` / `sub_status` consistency: `sub_status=done` ↔ `status=passing`; any `*_pending` ↔ `status=failing`; `validate_features.py` enforces this invariant
+- `status`: `"failing"` until `long-task-work-st` Persist flips it to `"passing"` and clears `current` atomically
+- `current.feature_id` must reference a non-deprecated feature with `status=failing`; `validate_features.py` enforces this
 - `deprecated: true` → `deprecated_reason` required; excluded from Worker/ST/routing
 - `waves[]`: increment batch tracking; `wave` on feature = which wave introduced/modified it
-- Migration: existing projects without `sub_status` → `python scripts/migrate_sub_status.py feature-list.json` (idempotent; `passing→done`, `failing+git_sha→st_pending`, `failing→design_pending`)
+- Migration: legacy projects with per-feature `sub_status` → `python scripts/migrate_sub_status.py feature-list.json` (idempotent; picks smallest non-done `sub_status` feature as initial `current`, removes all `sub_status` fields)
 
 ## File Structure
 
@@ -363,11 +368,12 @@ Multi-session workflow. `using-long-task` skill routes by project state:
 **Pre-init** (no `feature-list.json`):
   requirements → ucd (if UI) → design → ats → init
 
-**Post-init** (has `feature-list.json`): route by each feature's `sub_status`:
-  - `design_pending` → `long-task-work-design`
-  - `tdd_pending`    → `long-task-work-tdd`
-  - `st_pending`     → `long-task-work-st`
-  - all `done`       → `long-task-st` (system-wide)
+**Post-init** (has `feature-list.json`): route by root `current` lock:
+  - `current = {feature_id: N, phase: "design"}` → `long-task-work-design`
+  - `current = {feature_id: N, phase: "tdd"}`    → `long-task-work-tdd`
+  - `current = {feature_id: N, phase: "st"}`     → `long-task-work-st`
+  - `current = null` AND any feature `status=failing` → router picks next dep-ready feature, emits `starting_new=true` → `long-task-work-design` writes current atomically
+  - `current = null` AND all features `status=passing` → `long-task-st` (system-wide)
 
 Override signals: `bugfix-request.json` or `increment-request.json` at project root
 → `long-task-hotfix` / `long-task-increment` runs first (highest priority).

@@ -80,27 +80,22 @@ def load_feature_status(path: str) -> tuple[int, int, int]:
     return len(active), passing, failing
 
 
-def load_sub_status_counts(path: str) -> dict:
-    """Return {design, tdd, st, done, no_sub_status} counts over active features.
+def load_current_state(path: str) -> dict:
+    """Return {"current": {feature_id, phase}|None, "legacy_sub_status": N}.
 
-    Used to report phase-per-session progress. Falls back to empty dict if the
-    file predates the sub_status schema or cannot be parsed.
+    `legacy_sub_status > 0` signals the project predates the current-lock
+    refactor and needs `scripts/migrate_sub_status.py`.
     """
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
     except (json.JSONDecodeError, FileNotFoundError):
-        return {}
+        return {"current": None, "legacy_sub_status": 0}
     features = data.get("features", [])
-    buckets = {"design": 0, "tdd": 0, "st": 0, "done": 0, "no_sub_status": 0}
-    short = {"design_pending": "design", "tdd_pending": "tdd",
-             "st_pending": "st", "done": "done"}
-    for f in features:
-        if not isinstance(f, dict) or f.get("deprecated"):
-            continue
-        ss = f.get("sub_status")
-        buckets[short.get(ss, "no_sub_status")] += 1
-    return buckets
+    legacy = sum(1 for f in features
+                 if isinstance(f, dict) and "sub_status" in f
+                 and not f.get("deprecated"))
+    return {"current": data.get("current"), "legacy_sub_status": legacy}
 
 
 def check_all_passing(path: str) -> bool:
@@ -233,16 +228,18 @@ def write_log(log_dir: str, iteration: int, result_text: str,
         lf.write(result_text)
         lf.write("\n")
 
-        # Feature status (includes per-phase sub_status breakdown)
+        # Feature status + current lock
         try:
             total, passing, failing = load_feature_status(feature_list_path)
             lf.write(f"\n---\n\n**Status**: {passing}/{total} passing, {failing} failing")
-            buckets = load_sub_status_counts(feature_list_path)
-            if buckets and any(v for k, v in buckets.items() if k != "no_sub_status"):
-                phase_parts = [f"{k}={buckets[k]}" for k in ("design", "tdd", "st", "done") if buckets.get(k)]
-                lf.write(f" | sub_status: {', '.join(phase_parts)}")
-                if buckets.get("no_sub_status"):
-                    lf.write(f" | no_sub_status={buckets['no_sub_status']}")
+            state = load_current_state(feature_list_path)
+            cur = state["current"]
+            if cur and isinstance(cur, dict):
+                lf.write(f" | current=#{cur.get('feature_id')}({cur.get('phase')})")
+            else:
+                lf.write(" | current=none")
+            if state["legacy_sub_status"]:
+                lf.write(f" | legacy_sub_status={state['legacy_sub_status']}")
             lf.write("\n")
         except Exception:
             pass
@@ -475,15 +472,16 @@ def main() -> int:
         print(f"Project dir: {project_dir}")
         print(f"Tool: {args.tool}")
         print(f"Features: {total} total, {passing} passing, {failing} failing")
-        buckets = load_sub_status_counts(feature_list_path)
-        if buckets and any(v for k, v in buckets.items() if k != "no_sub_status"):
-            phase_parts = [f"{k}={buckets[k]}" for k in ("design", "tdd", "st", "done") if buckets.get(k)]
-            print(f"Phase distribution: {', '.join(phase_parts)}", end="")
-            if buckets.get("no_sub_status"):
-                print(f", no_sub_status={buckets['no_sub_status']}", end="")
-            print()
-        elif buckets.get("no_sub_status"):
-            print(f"NOTE: {buckets['no_sub_status']} feature(s) lack sub_status — router will run "
+        state = load_current_state(feature_list_path)
+        cur = state["current"]
+        if cur and isinstance(cur, dict):
+            print(f"Current lock: feature #{cur.get('feature_id')} "
+                  f"({cur.get('phase')})")
+        else:
+            print("Current lock: none (next session will pick a new feature)")
+        if state["legacy_sub_status"]:
+            print(f"NOTE: {state['legacy_sub_status']} feature(s) still carry "
+                  f"legacy sub_status — router will run "
                   f"migrate_sub_status.py on first iteration")
         print(f"Max iterations: {args.max_iterations}, Cooldown: {args.cooldown}s")
         print(f"Log dir: {log_dir}")

@@ -114,4 +114,4 @@ DISPATCH 语义：
 
 ## Resume 支持
 
-Worker Step 1 Orient 读取 `task-progress.md` `## Current State` 时，若发现形如 `in-progress: step-N` 的标识（某 SubAgent 曾分发但未完成），跳到 step-N 重跑对应 SubAgent（携带当前磁盘上的 artifacts 作为输入）。无标识则从 Step 1 常规流程开始。
+会话级 Resume 由 `feature-list.json` 根 `current = {feature_id, phase}` 驱动——下一次会话 Worker Step 1 调 `phase_route.py` 读到 `feature_id` 与相应阶段 skill，从 Step 1 常规流程开始。会话内的子步骤状态不跨会话持久化；SubAgent 大多幂等，重跑会自动接续磁盘上已产出的 artifacts。

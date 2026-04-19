@@ -1,18 +1,18 @@
 ---
 name: long-task-work-st
-description: "Use when feature-list.json has a feature with sub_status=st_pending - run feature-level ST acceptance + inline compliance + final persist, then terminate session"
+description: "Use when router emits next_skill=long-task-work-st - run feature-level ST acceptance + inline compliance + final persist, clear current lock, then terminate session"
 ---
 
 # Worker — 阶段 C：Feature-ST + Inline Check + Persist
 
-每会话处理**一个特性**的黑盒 ST 验收测试 + 内联合规扫描 + 最终落盘。完成后**翻转 `sub_status: st_pending → done`** 并同步 `status: failing → passing`，然后**终止会话**。
+每会话处理**一个特性**的黑盒 ST 验收测试 + 内联合规扫描 + 最终落盘。完成后**清空 `current = null`** 并同步 `target_feature.status: failing → passing`，然后**终止会话**。
 
 **开始时宣告：** "I'm using the long-task-work-st skill. Let me orient myself."
 
 **核心原则：** Feature-ST 子步骤在**独立 SubAgent**（`long-task-feature-st`）中运行；Inline Check 与 Persist 直接在主 agent 执行（无 SubAgent）。契约见 `../using-long-task/references/structured-return-contract.md`；返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
 **一致性重读（强制）：**
-1. 读 `feature-list.json` → 按 `sub_status == st_pending` 选 lowest-id 特性
+1. 调 `python scripts/phase_route.py --json` 读 `next_skill` / `feature_id`（`target_feature`）
 2. 读 `docs/features/YYYY-MM-DD-<slug>.md` **全文**（用于 ST 用例生成 + Inline 契约/测试清单交叉检查）
 3. 读 `docs/plans/*-srs.md` 中 `srs_trace` 指向的 FR/NFR 节（ST 用例验收标准来源）
 4. 读 `docs/plans/*-ats.md`（如存在）—— ATS 类别约束 ST 必须覆盖哪些场景
@@ -25,9 +25,12 @@ description: "Use when feature-list.json has a feature with sub_status=st_pendin
 ### 0. env-guide 审批关卡
 运行 `python scripts/check_env_guide_approval.py env-guide.md`。行为与 work-design/work-tdd 一致。
 
-### 1. Orient —— 选取 st_pending 特性
-- 读 `feature-list.json` → 筛 `sub_status == "st_pending"` 且 `deprecated != true`；按优先级 + id 升序挑第一个（`target_feature`）
-- **若无匹配** → 终止会话并提示：`No feature has sub_status=st_pending. If all features done → run long-task-st for system-wide testing. Start a new session.`
+### 1. Orient —— 读 router 锁定的 target_feature
+- 调 `python scripts/phase_route.py --json` 读 `next_skill` / `feature_id` / `starting_new`
+  - `next_skill != "long-task-work-st"` → AskUserQuestion 升级
+  - `ok == false` → 呈现 `errors` 并终止会话
+  - `starting_new == true` → AskUserQuestion 升级（ST 阶段不应是新 feature 的入口；状态机错位）
+- `target_feature` = `feature-list.json` 中 `id == feature_id` 的条目
 - **硬前置**：
   - `docs/features/YYYY-MM-DD-<slug>.md` 必须存在
   - `target_feature.git_sha`（若已设置，说明前阶段异常打包）或依赖测试文件存在
@@ -100,8 +103,8 @@ git commit -m "<commit-msg>"
 - bugfix → `### Fixed`，条目格式：`- [<bug_severity>] <title> (fixes #<fixed_feature_id>) — <root_cause>`
 
 **5c. 翻转 feature-list.json**：
-- `target_feature.sub_status`: `st_pending` → `done`
 - `target_feature.status`: `failing` → `passing`
+- 根 `current`: 当前 `{feature_id, phase: "st"}` → `null`（清空锁，下一会话 router 会挑下一个）
 - 设置 `target_feature.git_sha = {commit_sha}`
 - 设置 `target_feature.st_case_path = "docs/test-cases/feature-<id>-<slug>.md"`
 - 设置 `target_feature.st_case_count = <from Feature-ST next_step_input>`
@@ -112,8 +115,7 @@ python scripts/validate_features.py feature-list.json
 ```
 
 **5e. 更新 task-progress.md**：
-- `## Current State` 头部：进度计数（X/Y passing）、上个完成特性、下一个特性；**移除任何 `in-progress: step-N` 标记**
-- 日志分隔线下追加 session 条目：
+- 日志分隔线下追加 session 条目（**不写 `## Current State` 进度条——单一事实源是 `feature-list.json` 的 `current` + 各 feature 的 `status`**）：
 ```
 ### Feature #<id>: <title> — PASS
 - Completed: YYYY-MM-DD
@@ -132,23 +134,23 @@ python scripts/validate_features.py feature-list.json
 **5f. 再次 git commit**（进度文件）：
 ```bash
 git add feature-list.json task-progress.md RELEASE_NOTES.md
-git commit -m "chore: update progress — feature #<id> passing (sub_status=done)"
+git commit -m "chore: update progress — feature #<id> passing (current cleared)"
 ```
 
 ### 6. End Session
 
 **6a. 输出会话终止横幅**：
 ```
-## Phase ST Complete for Feature #<id> (<title>) — DONE
+## Phase ST Complete for Feature #<id> (<title>) — PASSING
 
-- sub_status: st_pending → done
+- current: {...} → null
 - status: failing → passing
 - Git: {commit_sha}
 ```
 
-**6b. 若无剩余 `sub_status != done` 的非弃用特性**：
+**6b. 若所有非弃用特性均 `status=passing`**：
 ```
-All active features sub_status=done → next session begins system-wide testing via long-task-st.
+All active features passing → next session begins system-wide testing via long-task-st.
 ```
 否则：
 ```
@@ -166,7 +168,7 @@ Next: long-task-work-<phase> in a NEW session (check: python scripts/count_pendi
 - **每会话一个特性的一个阶段** —— 本阶段只做 Feature-ST + Inline + Persist
 - **ST 不可绕过** —— AI 可修的内部修；人类介入的 blocked
 - **Inline Check 全绿才 Persist** —— §4 违规必须就地修复
-- **翻转 sub_status=done 同步 status=passing** —— 两者必须一致，`validate_features.py` 强制校验
+- **status=passing 同步清空 current** —— 两者原子更新；`validate_features.py` 强制校验（passing 特性不得再被 current 锁住）
 - **RELEASE_NOTES.md 与 Git SHA 在同一轮 Persist 内更新** —— 避免漂移
 
 ## 红旗信号
@@ -175,6 +177,6 @@ Next: long-task-work-<phase> in a NEW session (check: python scripts/count_pendi
 |---|---|
 | "ST 环境炸了，我跳过" | BLOCKED，不是 skipped。Feature-ST SubAgent 内部修；真不可自修才升级。|
 | "Inline Check P2 不匹配但代码对" | 更新 feature design（§4 契约扩展协议）或回 work-tdd 修代码。|
-| "忘了 git commit SHA 就翻 sub_status" | 严禁。先 commit，抓 SHA，再翻 sub_status。|
+| "忘了 git commit SHA 就翻 status" | 严禁。先 commit，抓 SHA，再翻 status + 清 current。|
 | "ATS 类别缺 ST 用例，我就把 ATS 改小点" | 不行。回 Step 3 扩 ST 用例，或通过 `long-task-increment` 正式修订 ATS。|
 | "全部 passing 了我顺便跑系统级 ST" | 终止。system-wide ST 是 `long-task-st`，下一会话。|

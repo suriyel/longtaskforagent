@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for migrate_sub_status.py"""
+"""Unit tests for migrate_sub_status.py (legacy sub_status → root current)."""
 
 import json
 import os
@@ -37,44 +37,99 @@ def _f(id_, **kw):
     return d
 
 
-def test_passing_becomes_done():
-    code, out, result = run({"features": [_f(1, status="passing")]})
+def test_design_pending_becomes_current_design():
+    code, out, result = run({"features": [_f(1, sub_status="design_pending")]})
     assert code == 0
-    assert result["features"][0]["sub_status"] == "done"
-    assert "updated=1" in out
+    assert result["current"] == {"feature_id": 1, "phase": "design"}
+    assert "sub_status" not in result["features"][0]
+    assert "cleared sub_status from 1" in out
 
 
-def test_failing_no_git_sha_becomes_design_pending():
-    code, _, result = run({"features": [_f(1)]})
+def test_tdd_pending_becomes_current_tdd():
+    code, _, result = run({"features": [_f(1, sub_status="tdd_pending")]})
     assert code == 0
-    assert result["features"][0]["sub_status"] == "design_pending"
+    assert result["current"] == {"feature_id": 1, "phase": "tdd"}
 
 
-def test_failing_with_git_sha_becomes_st_pending():
-    code, _, result = run({"features": [_f(1, git_sha="abc1234")]})
+def test_st_pending_becomes_current_st():
+    code, _, result = run({"features": [_f(1, sub_status="st_pending")]})
     assert code == 0
-    assert result["features"][0]["sub_status"] == "st_pending"
+    assert result["current"] == {"feature_id": 1, "phase": "st"}
 
 
-def test_existing_valid_sub_status_skipped():
-    code, out, result = run({"features": [_f(1, sub_status="tdd_pending")]})
+def test_most_advanced_phase_wins():
+    """Migration should preserve in-flight work: F8 tdd beats F1 design."""
+    data = {"features": [
+        _f(1, sub_status="design_pending"),
+        _f(7, sub_status="design_pending"),
+        _f(8, sub_status="tdd_pending"),
+        _f(5, status="passing", sub_status="done"),
+    ]}
+    code, _, result = run(data)
     assert code == 0
-    assert result["features"][0]["sub_status"] == "tdd_pending"
-    assert "skipped=1" in out
+    assert result["current"] == {"feature_id": 8, "phase": "tdd"}
+    for f in result["features"]:
+        assert "sub_status" not in f
 
 
-def test_force_overrides_existing():
-    code, out, result = run(
-        {"features": [_f(1, status="passing", sub_status="design_pending")]},
-        "--force",
-    )
+def test_smallest_id_tiebreaks_same_phase():
+    """When multiple features share the same (most-advanced) phase, lowest id wins."""
+    data = {"features": [
+        _f(5, sub_status="tdd_pending"),
+        _f(3, sub_status="tdd_pending"),
+        _f(1, sub_status="design_pending"),  # less advanced → ignored
+    ]}
+    code, _, result = run(data)
     assert code == 0
-    assert result["features"][0]["sub_status"] == "done"
-    assert "updated=1" in out
+    assert result["current"] == {"feature_id": 3, "phase": "tdd"}
+
+
+def test_all_done_becomes_current_null():
+    data = {"features": [
+        _f(1, status="passing", sub_status="done"),
+        _f(2, status="passing", sub_status="done"),
+    ]}
+    code, out, result = run(data)
+    assert code == 0
+    assert result["current"] is None
+    assert "current=null (all done)" in out
+
+
+def test_deprecated_features_skipped_when_picking_current():
+    """Deprecated features with sub_status should be ignored when picking current."""
+    data = {"features": [
+        _f(1, sub_status="design_pending", deprecated=True, deprecated_reason="old"),
+        _f(2, sub_status="tdd_pending"),
+    ]}
+    code, _, result = run(data)
+    assert code == 0
+    assert result["current"] == {"feature_id": 2, "phase": "tdd"}
+    # But the sub_status field is still cleared from all features including deprecated
+    for f in result["features"]:
+        assert "sub_status" not in f
+
+
+def test_idempotent_second_run_noop():
+    """Already-migrated file (current set, no sub_status) is left alone."""
+    data = {"current": {"feature_id": 1, "phase": "design"},
+            "features": [_f(1)]}
+    code, out, result = run(data)
+    assert code == 0
+    assert "already migrated" in out
+    assert result["current"] == {"feature_id": 1, "phase": "design"}
+
+
+def test_force_re_runs_even_if_migrated():
+    """--force re-picks current from sub_status even if current already exists."""
+    data = {"current": {"feature_id": 99, "phase": "st"},
+            "features": [_f(1, sub_status="design_pending")]}
+    code, _, result = run(data, "--force")
+    assert code == 0
+    assert result["current"] == {"feature_id": 1, "phase": "design"}
 
 
 def test_dry_run_does_not_write():
-    data = {"features": [_f(1)]}
+    data = {"features": [_f(1, sub_status="design_pending")]}
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as fh:
         json.dump(data, fh)
         tmp = fh.name
@@ -87,52 +142,40 @@ def test_dry_run_does_not_write():
         assert "[dry-run]" in r.stdout
         with open(tmp) as f:
             content = json.load(f)
-        assert "sub_status" not in content["features"][0]
+        # File unchanged: sub_status still there, no `current` injected
+        assert content["features"][0]["sub_status"] == "design_pending"
+        assert "current" not in content
     finally:
         os.unlink(tmp)
 
 
-def test_idempotent_second_run_is_noop():
-    data = {"features": [_f(1, status="passing")]}
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as fh:
-        json.dump(data, fh)
-        tmp = fh.name
-    try:
-        subprocess.run([sys.executable, SCRIPT_PATH, tmp], capture_output=True, text=True)
-        r2 = subprocess.run([sys.executable, SCRIPT_PATH, tmp], capture_output=True, text=True)
-        assert r2.returncode == 0
-        assert "skipped=1" in r2.stdout
-        assert "updated=0" in r2.stdout
-    finally:
-        os.unlink(tmp)
-
-
-def test_mixed_migration():
-    data = {"features": [
-        _f(1, status="passing"),
-        _f(2, status="failing"),
-        _f(3, status="failing", git_sha="deadbeef"),
-        _f(4, status="passing", sub_status="done"),  # already valid, skipped
-    ]}
-    code, out, result = run(data)
+def test_reference_scenario_f8_tdd():
+    """Mirrors reference/feature-list.json: F1-F7, F9-F12 are design_pending;
+    F8 is tdd_pending. Migration should pick F8 (most-advanced phase)."""
+    features = [
+        _f(1, sub_status="design_pending"),
+        _f(2, sub_status="design_pending"),
+        _f(3, sub_status="design_pending"),
+        _f(4, sub_status="design_pending"),
+        _f(5, sub_status="design_pending"),
+        _f(6, sub_status="design_pending"),
+        _f(7, sub_status="design_pending"),
+        _f(8, sub_status="tdd_pending"),
+        _f(9, sub_status="design_pending"),
+        _f(10, sub_status="design_pending"),
+        _f(11, sub_status="design_pending"),
+        _f(12, sub_status="design_pending"),
+    ]
+    code, _, result = run({"features": features})
     assert code == 0
-    statuses = [f["sub_status"] for f in result["features"]]
-    assert statuses == ["done", "design_pending", "st_pending", "done"]
-    assert "updated=3" in out
-    assert "skipped=1" in out
+    # F8 tdd beats all design_pending (most-advanced phase wins)
+    assert result["current"] == {"feature_id": 8, "phase": "tdd"}
 
 
 if __name__ == "__main__":
-    tests = [
-        test_passing_becomes_done,
-        test_failing_no_git_sha_becomes_design_pending,
-        test_failing_with_git_sha_becomes_st_pending,
-        test_existing_valid_sub_status_skipped,
-        test_force_overrides_existing,
-        test_dry_run_does_not_write,
-        test_idempotent_second_run_is_noop,
-        test_mixed_migration,
-    ]
+    import inspect
+    tests = [t for name, t in sorted(globals().items())
+             if name.startswith("test_") and inspect.isfunction(t)]
     passed = failed = 0
     for t in tests:
         try:

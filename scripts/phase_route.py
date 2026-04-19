@@ -10,7 +10,8 @@ flag, counts).
 Routing precedence:
     1. bugfix-request.json            -> long-task-hotfix
     2. increment-request.json         -> long-task-increment
-    3. feature-list.json              -> validate + count_pending bucketing
+    3. feature-list.json              -> validate + route by root `current`
+                                         (or pick next dep-ready feature)
     4. docs/plans/*-ats.md            -> long-task-init
     5. docs/plans/*-design.md         -> long-task-ats
     6. docs/plans/*-ucd.md            -> long-task-design
@@ -18,6 +19,13 @@ Routing precedence:
     8. docs/rules/*.md (>=1)          -> long-task-requirements
     9. brownfield heuristic           -> long-task-brownfield-scan
    10. otherwise                      -> long-task-requirements
+
+Post-init emit fields:
+    next_skill    — skill to invoke next
+    feature_id    — id of the feature to work on (None for system-level skills)
+    starting_new  — True when this is a fresh pick (Worker-design must
+                    atomically write root `current` before proceeding)
+    needs_migration — True when features still carry legacy `sub_status`
 
 Exit codes:
     0 — ok
@@ -42,6 +50,28 @@ from validate_features import validate as _validate
 _SRC_EXTS = (".py", ".js", ".ts", ".java", ".c", ".cpp", ".go", ".rs")
 _EXCLUDE_DIRS = {".git", "node_modules", "venv", ".venv",
                  "dist", "build", "__pycache__", "target"}
+
+_PHASE_TO_SKILL = {
+    "design": "long-task-work-design",
+    "tdd":    "long-task-work-tdd",
+    "st":     "long-task-work-st",
+}
+_PRIORITY_RANK = {"high": 0, "medium": 1, "low": 2}
+
+
+def _select_next(features: list) -> tuple:
+    """Return (pick_feature, blocked_ids). pick=None + blocked_ids non-empty
+    means all failing features are dep-blocked (cycle / misconfig)."""
+    active = [x for x in features if not x.get("deprecated")]
+    passing = {x["id"] for x in active if x.get("status") == "passing"}
+    failing = [x for x in active if x.get("status") != "passing"]
+    eligible = [x for x in failing
+                if all(d in passing for d in x.get("dependencies", []))]
+    if not eligible:
+        return None, [x["id"] for x in failing]
+    eligible.sort(key=lambda f: (_PRIORITY_RANK.get(f.get("priority"), 3),
+                                 f["id"]))
+    return eligible[0], []
 
 
 def _is_brownfield(root: str) -> bool:
@@ -70,6 +100,8 @@ def route(root: str = ".") -> dict:
         "needs_migration": False,
         "counts": None,
         "next_skill": None,
+        "feature_id": None,
+        "starting_new": False,
     }
     j = lambda *p: os.path.join(root, *p)
     has_glob = lambda pat: bool(sorted(glob.glob(j(*pat.split("/")))))
@@ -82,7 +114,7 @@ def route(root: str = ".") -> dict:
         out["next_skill"] = "long-task-increment"
         return out
 
-    # 3. Post-init: feature-list.json exists — validate + bucket
+    # 3. Post-init: feature-list.json exists
     fl = j("feature-list.json")
     if os.path.isfile(fl):
         errors, _ = _validate(fl)
@@ -97,18 +129,44 @@ def route(root: str = ".") -> dict:
             out["errors"] = [f"count_pending: {e}"]
             return out
         out["counts"] = counts
-        if counts["no_sub_status"] > 0:
+        if counts["legacy_sub_status"] > 0:
             out["needs_migration"] = True
             return out
-        if counts["design"] > 0:
-            out["next_skill"] = "long-task-work-design"
-        elif counts["tdd"] > 0:
-            out["next_skill"] = "long-task-work-tdd"
-        elif counts["st"] > 0:
-            out["next_skill"] = "long-task-work-st"
-        elif counts["total"] > 0 and counts["done"] == counts["total"]:
+
+        with open(fl, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        features = data.get("features", [])
+        cur = data.get("current")
+
+        if cur and isinstance(cur, dict) and cur.get("feature_id") is not None:
+            phase = cur.get("phase")
+            if phase not in _PHASE_TO_SKILL:
+                out["ok"] = False
+                out["errors"] = [f"current.phase invalid: {phase!r}"]
+                return out
+            out["next_skill"] = _PHASE_TO_SKILL[phase]
+            out["feature_id"] = cur["feature_id"]
+            return out
+
+        # current is null: either pick next or route to system ST
+        if counts["total"] == 0:
+            return out  # no active features
+        if counts["passing"] == counts["total"]:
             out["next_skill"] = "long-task-st"
-        # else: total == 0 — no active features; next_skill stays None
+            return out
+
+        pick, blocked_ids = _select_next(features)
+        if pick is None:
+            out["ok"] = False
+            out["errors"] = [
+                f"No dependency-ready feature among {len(blocked_ids)} failing "
+                f"features (ids={blocked_ids}); check dependencies[] for "
+                f"cycles or unfinished upstream deps"
+            ]
+            return out
+        out["next_skill"] = "long-task-work-design"
+        out["feature_id"] = pick["id"]
+        out["starting_new"] = True
         return out
 
     # 4-7. Pre-init ladder
@@ -148,10 +206,16 @@ def main():
         json.dump(r, sys.stdout)
         print()
     else:
+        extra = ""
+        if r["feature_id"] is not None:
+            extra += f" feature_id={r['feature_id']}"
+        if r["starting_new"]:
+            extra += " starting_new=True"
+        if r["errors"]:
+            extra += f" errors={r['errors']}"
         print(f"next={r['next_skill']} ok={r['ok']} "
               f"migration={r['needs_migration']} "
-              f"counts={r['counts']}"
-              + (f" errors={r['errors']}" if r["errors"] else ""))
+              f"counts={r['counts']}" + extra)
     sys.exit(0 if r["ok"] else 2)
 
 

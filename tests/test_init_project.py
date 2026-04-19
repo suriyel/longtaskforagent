@@ -202,16 +202,22 @@ def test_feature_list_has_assumptions():
         shutil.rmtree(tmp)
 
 
-def test_task_progress_has_current_state_header():
-    """task-progress.md should contain a ## Current State header for session orientation."""
+def test_task_progress_is_session_log_only():
+    """task-progress.md should be session log only; current state lives in feature-list.json."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp)
         tp_path = os.path.join(tmp, "task-progress.md")
         with open(tp_path, "r", encoding="utf-8") as f:
             content = f.read()
-        assert "## Current State" in content, "task-progress.md must have ## Current State header"
-        assert "Progress:" in content, "## Current State must include Progress field"
+        assert "## Session Log" in content, "task-progress.md must have ## Session Log header"
+        assert "## Current State" not in content, (
+            "task-progress.md must NOT duplicate current state "
+            "(single source of truth is feature-list.json)"
+        )
+        assert "feature-list.json" in content, (
+            "task-progress.md should point readers to feature-list.json"
+        )
     finally:
         shutil.rmtree(tmp)
 
@@ -339,7 +345,7 @@ def test_idempotent_claude_md():
 
 
 def test_claude_md_contains_routing_references():
-    """CLAUDE.md should reference the state source (feature-list.json), sub_status routing,
+    """CLAUDE.md should reference the state source (feature-list.json), current-lock routing,
     override signals (bugfix/increment), and the quick-status command. Phase-specific docs
     (task-progress.md, docs/plans) are discovered by phase skills on demand and intentionally
     NOT listed here (Occam — avoid duplicating CLAUDE.md Generated Persistent Artifacts table).
@@ -353,7 +359,7 @@ def test_claude_md_contains_routing_references():
         assert "feature-list.json" in content, "Should reference state source"
         assert "increment-request.json" in content, "Should reference increment override"
         assert "bugfix-request.json" in content, "Should reference bugfix override"
-        assert "sub_status" in content, "Should describe sub_status routing"
+        assert "current" in content, "Should describe current-lock routing"
         assert "long-task-work-design" in content, "Should list work-design phase skill"
         assert "long-task-work-tdd" in content, "Should list work-tdd phase skill"
         assert "long-task-work-st" in content, "Should list work-st phase skill"
@@ -410,7 +416,7 @@ def test_idempotent_agents_md():
 
 
 def test_agents_md_contains_routing_references():
-    """AGENTS.md must mirror CLAUDE.md: same sub_status routing + override signals + quick-status command."""
+    """AGENTS.md must mirror CLAUDE.md: same current-lock routing + override signals + quick-status command."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp)
@@ -420,7 +426,7 @@ def test_agents_md_contains_routing_references():
         assert "feature-list.json" in content, "Should reference state source"
         assert "increment-request.json" in content, "Should reference increment override"
         assert "bugfix-request.json" in content, "Should reference bugfix override"
-        assert "sub_status" in content, "Should describe sub_status routing"
+        assert "current" in content, "Should describe current-lock routing"
         assert "long-task-work-design" in content, "Should list work-design phase skill"
         assert "count_pending.py" in content, "Should reference quick-status command"
     finally:

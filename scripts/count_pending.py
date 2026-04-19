@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
-Count pending features per phase by sub_status.
+Summarize feature-list.json state.
 
-Outputs one line:
-    design=N tdd=N st=N done=N (total=N)
+Output shape:
+    {
+      "total":     int,   # active (non-deprecated) features
+      "passing":   int,   # status == "passing"
+      "failing":   int,   # status == "failing" (includes current-locked feature)
+      "current":   {"feature_id": N, "phase": "design"|"tdd"|"st"} | None,
+      "deprecated": int,
+      "legacy_sub_status": int  # features still carrying sub_status field
+    }
 
-Only active (non-deprecated) features are counted. Features without a
-sub_status field are reported under 'no_sub_status' (indicates the project
-predates the phase-per-session refactor and needs migration via
-scripts/migrate_sub_status.py).
+`legacy_sub_status > 0` signals the project predates the current-lock refactor
+and needs `scripts/migrate_sub_status.py`.
 
 Exit codes:
-    0 — read OK (even if all zero)
+    0 — read OK
     2 — file missing / invalid JSON / no features key
 
 Usage:
@@ -24,15 +29,6 @@ import json
 import sys
 
 
-PHASES = ("design_pending", "tdd_pending", "st_pending", "done")
-SHORT = {
-    "design_pending": "design",
-    "tdd_pending": "tdd",
-    "st_pending": "st",
-    "done": "done",
-}
-
-
 def count(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -40,10 +36,14 @@ def count(path: str) -> dict:
     if not isinstance(features, list):
         raise ValueError('"features" key missing or not a list')
 
-    result = {SHORT[p]: 0 for p in PHASES}
-    result["no_sub_status"] = 0
-    result["total"] = 0
-    result["deprecated"] = 0
+    result = {
+        "total": 0,
+        "passing": 0,
+        "failing": 0,
+        "current": data.get("current"),
+        "deprecated": 0,
+        "legacy_sub_status": 0,
+    }
 
     for feat in features:
         if not isinstance(feat, dict):
@@ -52,29 +52,37 @@ def count(path: str) -> dict:
             result["deprecated"] += 1
             continue
         result["total"] += 1
-        ss = feat.get("sub_status")
-        if ss in PHASES:
-            result[SHORT[ss]] += 1
+        if feat.get("status") == "passing":
+            result["passing"] += 1
         else:
-            result["no_sub_status"] += 1
+            result["failing"] += 1
+        if "sub_status" in feat:
+            result["legacy_sub_status"] += 1
     return result
 
 
 def format_line(counts: dict) -> str:
-    parts = [f"{SHORT[p]}={counts[SHORT[p]]}" for p in PHASES]
-    line = " ".join(parts) + f" (total={counts['total']}"
-    if counts["no_sub_status"]:
-        line += f", no_sub_status={counts['no_sub_status']}"
+    cur = counts["current"]
+    cur_str = (f"current=#{cur['feature_id']}({cur['phase']})"
+               if cur and isinstance(cur, dict) else "current=none")
+    parts = [
+        cur_str,
+        f"passing={counts['passing']}",
+        f"failing={counts['failing']}",
+        f"(total={counts['total']}",
+    ]
     if counts["deprecated"]:
-        line += f", deprecated={counts['deprecated']}"
-    line += ")"
-    return line
+        parts[-1] += f", deprecated={counts['deprecated']}"
+    if counts["legacy_sub_status"]:
+        parts[-1] += f", legacy_sub_status={counts['legacy_sub_status']}"
+    parts[-1] += ")"
+    return " ".join(parts)
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("path", help="Path to feature-list.json")
-    ap.add_argument("--json", action="store_true", help="Emit JSON instead of one-line format")
+    ap.add_argument("--json", action="store_true", help="Emit JSON")
     args = ap.parse_args()
 
     try:

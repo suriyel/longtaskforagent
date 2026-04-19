@@ -1,11 +1,11 @@
 ---
 name: long-task-work-tdd
-description: "Use when feature-list.json has a feature with sub_status=tdd_pending - run full TDD Red-Green-Refactor + Quality Gates, then terminate session"
+description: "Use when router emits next_skill=long-task-work-tdd - run full TDD Red-Green-Refactor + Quality Gates, advance current.phase, then terminate session"
 ---
 
 # Worker — 阶段 B：TDD + Quality Gates
 
-每会话处理**一个特性**的 TDD 红绿重构循环 + 覆盖率关卡。完成后**翻转 `sub_status: tdd_pending → st_pending`** 并**终止会话**。
+每会话处理**一个特性**的 TDD 红绿重构循环 + 覆盖率关卡。完成后**推进 `current.phase: tdd → st`** 并**终止会话**。
 
 **开始时宣告：** "I'm using the long-task-work-tdd skill. Let me orient myself."
 
@@ -18,11 +18,13 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 ### 0. env-guide 审批关卡
 运行 `python scripts/check_env_guide_approval.py env-guide.md`。Exit 0 继续；Exit 1 阻塞升级；Exit 2 若 env-guide 缺失（CLI-only 项目）则跳过。
 
-### 1. Orient —— 选取 tdd_pending 特性
-- 读 `feature-list.json` → 筛 `sub_status == "tdd_pending"` 且 `deprecated != true` 的特性；按优先级 + id 升序挑第一个（`target_feature`）
-- **若无匹配** → 终止会话并提示：`No feature has sub_status=tdd_pending. Run: python scripts/count_pending.py feature-list.json; start a new session.`
-- 依赖满足检查：`dependencies[]` 中所有 id 必须 `status=passing`。未满足则跳过挑下一个；全部不满足 → AskUserQuestion 升级
-- **硬前置**：`docs/features/YYYY-MM-DD-<slug>.md` 必须存在（design 阶段已产出）。用 Glob 确认存在——**不读全文**；路径存为 `{feature_design_path}`（仅作为 SubAgent dispatch input）。若缺失 → BLOCKED：`Feature design doc missing for #<id>; sub_status inconsistent with disk state. Run migrate_sub_status.py --force or resume design phase.`
+### 1. Orient —— 读 router 锁定的 target_feature
+- 调 `python scripts/phase_route.py --json` 读 `next_skill` / `feature_id` / `starting_new`
+  - `next_skill != "long-task-work-tdd"` → AskUserQuestion 升级
+  - `ok == false` → 呈现 `errors` 并终止会话
+  - `starting_new == true` → AskUserQuestion 升级（TDD 阶段不应是新 feature 的入口；状态机错位）
+- `target_feature` = `feature-list.json` 中 `id == feature_id` 的条目
+- **硬前置**：`docs/features/YYYY-MM-DD-<slug>.md` 必须存在（design 阶段已产出）。用 Glob 确认存在——**不读全文**；路径存为 `{feature_design_path}`（仅作为 SubAgent dispatch input）。若缺失 → BLOCKED：`Feature design doc missing for #<id>; current.phase inconsistent with disk state. Resume design phase or reset current.phase to "design".`
 - `git log --oneline -10`
 - 在 `task-progress.md` 当前特性标题下记录：target_feature.id / title / feature_design_path
 
@@ -106,14 +108,14 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 
 ### 5. Persist & End Session
 
-**5a. 翻转 sub_status**：
-编辑 `feature-list.json`，把 `target_feature.sub_status` 从 `tdd_pending` 改为 `st_pending`。`status` 保持 `failing` 不变（ST 未完，总体仍 failing）。
+**5a. 推进 current.phase**：
+编辑 `feature-list.json`，把根 `current.phase` 从 `"tdd"` 改为 `"st"`。`target_feature.status` 保持 `failing` 不变（ST 未完，总体仍 failing）。
 
 **5b. 更新 task-progress.md**：
 ```
 - TDD: green ✓ (R-G-R complete)
 - Quality: line=<N>%, branch=<M>%, srs_trace_coverage=OK
-- sub_status: tdd_pending → st_pending
+- current.phase: tdd → st
 ```
 
 **5c. 校验**：
@@ -131,7 +133,7 @@ git commit -m "tdd: feature #<id> <slug> — tests green, coverage ≥<N>%/<M>%"
 ```
 ## Phase TDD Complete for Feature #<id> (<title>)
 
-- sub_status: tdd_pending → st_pending
+- current.phase: tdd → st
 - Tests: <test_count> passing; line=<N>%, branch=<M>%
 - Next: long-task-work-st in a NEW session (feature ST acceptance)
 - Quick status: python scripts/count_pending.py feature-list.json
@@ -147,14 +149,14 @@ git commit -m "tdd: feature #<id> <slug> — tests green, coverage ≥<N>%/<M>%"
 
 - **每会话一个特性的一个阶段** —— 本阶段只做 TDD + Quality，不做 Feature-ST 也不做 Persist 到 passing
 - **R/G/R / Quality 四个 SubAgent 不可协商** —— 本 skill 必须用 Agent 工具分别 DISPATCH，不在主 agent 内联执行；会话内**不**调任何其它 Skill
-- **无新鲜证据不得翻转 sub_status** —— 测试必须实跑绿，覆盖率必须达标
+- **无新鲜证据不得推进 current.phase** —— 测试必须实跑绿，覆盖率必须达标
 - **feature design 文档必须存在** —— 缺失即 BLOCKED；主 agent 不读全文，仅传路径
 
 ## 红旗信号
 
 | 逃避 | 正确动作 |
 |---|---|
-| "测试通过就翻 sub_status" | 先调 long-task-quality。|
+| "测试通过就推进 current.phase" | 先调 long-task-quality。|
 | "覆盖率差一点就凑" | 阈值是硬关卡。扩测或用 `long-task-increment` 修订 srs_trace。|
 | "我顺便做了 ST" | 终止。ST 是下一会话的 work-st。|
 | "feature design 不对，我自己改一下" | 不改。返 `[SRS-DESIGN-CONFLICT]` 走 Clarification 或建议 `long-task-increment`。|

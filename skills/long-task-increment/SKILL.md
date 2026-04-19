@@ -113,8 +113,7 @@ New features: <ids>  Modified: <ids>  Deprecated: <ids>
 1. 删除 `increment-request.json`
 2. 最终校验：`python scripts/validate_features.py feature-list.json`
 3. Git commit 所有变更
-4. 更新 `task-progress.md`：
-   - `## Current State` 头部：进度计数、last event（Increment Wave M，日期）、next up
+4. 更新 `task-progress.md`（**不写 `## Current State` 进度条——单一事实源是 `feature-list.json`**）：
    - 追加会话记录：
      ```
      ## Session N — Increment Wave M

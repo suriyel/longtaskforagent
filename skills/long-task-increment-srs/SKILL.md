@@ -30,7 +30,7 @@ description: "Use when dispatched by long-task-increment Step 6 — update SRS i
    - `id`：当前最大 + 1（持续递增）
    - `wave`：当前批次号
    - `status`：`"failing"`
-   - `sub_status`：`"design_pending"`（新建特性默认进入设计阶段；后续 work-design 完成设计时翻转）
+   - **不写 `sub_status`**（已废弃）；router 会在 `current=null` 时挑依赖就绪者作为下一 current，从 design 阶段开始
    - `srs_trace`：新需求 ID 数组
    - `verification_steps`：可选（来自新验收标准）
    - `dependencies`：按需
@@ -38,10 +38,10 @@ description: "Use when dispatched by long-task-increment Step 6 — update SRS i
 
    **Hard Impact 特性**（来自 impact_matrix）：
    - `status` 重置为 `"failing"`
-   - `sub_status` 重置为 `"design_pending"`（设计可能需要重做；若明确仅影响实现可改为 `"tdd_pending"`）
    - 更新 `srs_trace` 反映修订后 ID
    - `wave` 更新为当前批次
    - 若出现在 `api_changes[].impact_features` → 在 description 加注 `[Wave N API change — <strategy>]`
+   - 若根 `current` 指向该特性，需决定是保留当前阶段锁（仅实现变动）还是把 `current.phase` 重置为 `"design"`（设计可能需要重做）——由用户裁决
 
    **Soft Impact 特性**：仅更新 `wave` 标识被影响批次；`status` 保持（仅回归）
 

@@ -19,20 +19,20 @@ python scripts/phase_route.py --json
 
 按返回字段动作：
 
-1. `ok == false` → 呈 `errors` 给用户停。
+1. `ok == false` → 呈 `errors` 给用户停（常见：依赖环、配置错误，需人工修 `feature-list.json`）。
 2. `needs_migration == true` → 先运行：
    ```bash
    python scripts/migrate_sub_status.py feature-list.json
-   git add feature-list.json && git commit -m "chore: migrate feature-list to sub_status schema"
+   git add feature-list.json && git commit -m "chore: migrate feature-list sub_status → current"
    ```
    然后重跑 `phase_route.py`。
-3. `next_skill` 非空 → 用 Skill 工具直接调用对应 skill。
+3. `next_skill` 非空 → 用 Skill 工具直接调用对应 skill（Worker skill 会自行重读 router 拿到 `feature_id` 与 `starting_new`；无需透传参数）。
 4. `next_skill == null` 且 `counts.total == 0` → 提示用户 feature-list 无活跃特性，可能需要 `long-task-increment`。
 
 **Fallback**（`phase_route.py` 因任何原因不可用时）：按顺序 glob，命中即路由：
 - `bugfix-request.json` → `long-task-hotfix`
 - `increment-request.json` → `long-task-increment`
-- `feature-list.json` → 读 `features[*].sub_status`，按最小 id 活跃特性取阶段：`design_pending` → `long-task-work-design`；`tdd_pending` → `long-task-work-tdd`；`st_pending` → `long-task-work-st`；全部 `done` → `long-task-st`
+- `feature-list.json` → 读根 `current`：非空按 `current.phase` 路由到 `long-task-work-{design,tdd,st}`；空且所有特性 `status=passing` → `long-task-st`；空且有 `status=failing` → 不可 fallback（需 router 挑下一个 feature），告诉用户修复 `phase_route.py`。
 - `docs/plans/*-ats.md` → `long-task-init`
 - `docs/plans/*-design.md` → `long-task-ats`
 - `docs/plans/*-ucd.md` → `long-task-design`

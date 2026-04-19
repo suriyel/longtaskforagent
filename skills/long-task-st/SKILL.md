@@ -45,7 +45,7 @@ To skip: respond SKIP {reason}
 python scripts/check_st_readiness.py feature-list.json
 ```
 
-- 所有特性都 `"status": "passing"` —— 如有 failing，停止本 ST，开新会话让 `using-long-task` 按重置的 `sub_status` 路由到对应 phase skill
+- 所有特性都 `"status": "passing"` 且根 `current == null` —— 如有 failing 或 current 非空，停止本 ST，开新会话让 `using-long-task` 按 `current` 路由到对应 phase skill
 - SRS 文档存在（`docs/plans/*-srs.md`）；Design 文档存在（`docs/plans/*-design.md`）
 - 适用时加载 config 值——按 `long-task-guide.md` 激活环境；若项目使用基于文件的 config，在运行检查前确保其已加载
 - **启动 ST 运行时服务**：使用 `env-guide.md` 中的命令启动服务（CLI/仅库项目则跳过）
@@ -290,8 +290,8 @@ Charter: Explore [feature area]
 |---|----------|-------------|----------|-------------|--------|---------|
 
 **修复循环**（若存在 Critical/Major 缺陷）：
-1. 在 `feature-list.json` 将受影响特性标 `"status": "failing"`；在 `task-progress.md` 记录
-2. 开新会话；`using-long-task` 会按重置后的 `sub_status` 路由到对应 phase skill（通常 `long-task-work-tdd`）进行修复
+1. 在 `feature-list.json` 将受影响特性标 `"status": "failing"`；若需要返回某个阶段修复，写根 `current = {"feature_id": N, "phase": "tdd"|"design"}`；在 `task-progress.md` 记录
+2. 开新会话；`using-long-task` 会按 `current` 路由到对应 phase skill（通常 `long-task-work-tdd`）进行修复
 3. 修复后：重跑受影响的 ST 测试类别（不跑完整 ST）
 4. 回到 triage —— 重复至无 Critical/Major 剩余
 

@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
 """
-Migrate existing feature-list.json to include sub_status field.
+Migrate legacy feature-list.json from per-feature `sub_status` to root `current`.
 
-Rules (conservative — never regresses a feature):
-    status=passing               → sub_status=done
-    status=failing + git_sha set → sub_status=st_pending
-    status=failing, no git_sha   → sub_status=design_pending
+Pick priority (preserves in-flight work):
+    most-advanced phase first: st_pending > tdd_pending > design_pending
+    then smallest `id` as tiebreaker
 
-Idempotent: features that already have a valid sub_status are left alone
-(unless --force is passed). Writes back to the same file with pretty JSON.
-Prints a summary of migrations performed.
+Mapping:
+    sub_status == "design_pending" → phase = "design"
+    sub_status == "tdd_pending"    → phase = "tdd"
+    sub_status == "st_pending"     → phase = "st"
+
+After migration:
+    - Every feature's `sub_status` field is removed.
+    - Root `current` is set to {"feature_id": N, "phase": P} or null if all done.
+
+Idempotent: if `current` key already exists on the root and no feature still
+carries `sub_status`, the file is left untouched.
 
 Usage:
     python migrate_sub_status.py feature-list.json
@@ -22,32 +29,53 @@ import json
 import sys
 
 
-VALID = {"design_pending", "tdd_pending", "st_pending", "done"}
-
-
-def infer(feat: dict) -> str:
-    status = feat.get("status")
-    if status == "passing":
-        return "done"
-    if feat.get("git_sha"):
-        return "st_pending"
-    return "design_pending"
+_SUB_TO_PHASE = {
+    "design_pending": "design",
+    "tdd_pending":    "tdd",
+    "st_pending":     "st",
+}
+# Higher rank = more advanced = higher priority when picking `current`.
+_PHASE_RANK = {"st_pending": 2, "tdd_pending": 1, "design_pending": 0}
 
 
 def migrate(data: dict, force: bool = False) -> dict:
     features = data.get("features", [])
-    stats = {"updated": 0, "skipped": 0, "invalid": 0}
-    for feat in features:
-        if not isinstance(feat, dict):
-            continue
-        existing = feat.get("sub_status")
-        if existing in VALID and not force:
-            stats["skipped"] += 1
-            continue
-        if existing is not None and existing not in VALID:
-            stats["invalid"] += 1
-        feat["sub_status"] = infer(feat)
-        stats["updated"] += 1
+    stats = {"cleared": 0, "current_set": False, "all_done": False, "noop": False}
+
+    any_sub_status = any(
+        isinstance(f, dict) and "sub_status" in f for f in features
+    )
+    already_migrated = "current" in data
+
+    if already_migrated and not any_sub_status and not force:
+        stats["noop"] = True
+        return stats
+
+    pending = sorted(
+        [f for f in features
+         if isinstance(f, dict)
+         and not f.get("deprecated")
+         and f.get("sub_status") in _SUB_TO_PHASE],
+        # Most-advanced phase first (preserves in-flight work), then smallest id.
+        key=lambda f: (-_PHASE_RANK[f["sub_status"]], f["id"]),
+    )
+
+    if pending:
+        p = pending[0]
+        data["current"] = {
+            "feature_id": p["id"],
+            "phase": _SUB_TO_PHASE[p["sub_status"]],
+        }
+        stats["current_set"] = True
+    else:
+        data["current"] = None
+        stats["all_done"] = True
+
+    for f in features:
+        if isinstance(f, dict) and "sub_status" in f:
+            del f["sub_status"]
+            stats["cleared"] += 1
+
     return stats
 
 
@@ -55,7 +83,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("path", help="Path to feature-list.json")
     ap.add_argument("--dry-run", action="store_true", help="Preview without writing")
-    ap.add_argument("--force", action="store_true", help="Re-infer even if sub_status already valid")
+    ap.add_argument("--force", action="store_true",
+                    help="Re-run even if root `current` already exists")
     args = ap.parse_args()
 
     with open(args.path, "r", encoding="utf-8") as f:
@@ -63,8 +92,16 @@ def main():
 
     stats = migrate(data, force=args.force)
 
-    print(f"migrate_sub_status: updated={stats['updated']}, "
-          f"skipped={stats['skipped']}, invalid={stats['invalid']}")
+    if stats["noop"]:
+        print("migrate_sub_status: already migrated; no changes")
+        return
+
+    desc = "current=null (all done)" if stats["all_done"] else (
+        f"current={{feature_id:{data['current']['feature_id']}, "
+        f"phase:{data['current']['phase']}}}"
+    )
+    print(f"migrate_sub_status: cleared sub_status from {stats['cleared']} "
+          f"features; {desc}")
 
     if args.dry_run:
         print("[dry-run] no file written")

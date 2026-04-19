@@ -1377,13 +1377,13 @@ if __name__ == "__main__":
         test_simple_verification_step_warning,
         test_rich_verification_step_no_warning,
         test_short_step_with_chaining_no_warning,
-        test_valid_sub_status_design_pending,
-        test_valid_sub_status_done_with_passing,
-        test_invalid_sub_status_enum,
-        test_sub_status_done_requires_passing,
-        test_sub_status_pending_requires_failing,
-        test_feature_without_sub_status_ok,
-        test_sub_status_in_summary,
+        test_valid_current_null,
+        test_valid_current_lock,
+        test_current_invalid_phase,
+        test_current_references_nonexistent_feature,
+        test_current_references_passing_feature_rejected,
+        test_current_references_deprecated_feature_rejected,
+        test_legacy_sub_status_tolerated_but_signalled,
     ]
     passed = 0
     failed = 0
@@ -1410,73 +1410,78 @@ def _base_feature(**overrides):
     return base
 
 
-def test_valid_sub_status_design_pending():
+def test_valid_current_null():
     data = {
-        "project": "p", "created": "2025-01-01",
-        "features": [_base_feature(sub_status="design_pending")],
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0, got {code}: {stdout}"
-
-
-def test_valid_sub_status_done_with_passing():
-    data = {
-        "project": "p", "created": "2025-01-01",
-        "features": [_base_feature(status="passing", sub_status="done")],
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0, got {code}: {stdout}"
-
-
-def test_invalid_sub_status_enum():
-    data = {
-        "project": "p", "created": "2025-01-01",
-        "features": [_base_feature(sub_status="wip")],
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected failure for invalid sub_status: {stdout}"
-    assert "sub_status" in stdout
-
-
-def test_sub_status_done_requires_passing():
-    data = {
-        "project": "p", "created": "2025-01-01",
-        "features": [_base_feature(status="failing", sub_status="done")],
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected failure for done+failing mismatch: {stdout}"
-    assert "done" in stdout and "passing" in stdout
-
-
-def test_sub_status_pending_requires_failing():
-    data = {
-        "project": "p", "created": "2025-01-01",
-        "features": [_base_feature(status="passing", sub_status="tdd_pending")],
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected failure for tdd_pending+passing mismatch: {stdout}"
-
-
-def test_feature_without_sub_status_ok():
-    data = {
-        "project": "p", "created": "2025-01-01",
+        "project": "p", "created": "2025-01-01", "current": None,
         "features": [_base_feature()],
     }
     code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 when sub_status absent: {stdout}"
+    assert code == 0, f"Expected exit 0, got {code}: {stdout}"
 
 
-def test_sub_status_in_summary():
+def test_valid_current_lock():
     data = {
         "project": "p", "created": "2025-01-01",
-        "features": [
-            _base_feature(id=1, sub_status="design_pending"),
-            _base_feature(id=2, sub_status="tdd_pending"),
-            _base_feature(id=3, status="passing", sub_status="done"),
-        ],
+        "current": {"feature_id": 1, "phase": "tdd"},
+        "features": [_base_feature()],
     }
     code, stdout, _ = run_validator(data)
     assert code == 0, f"Expected exit 0: {stdout}"
-    assert "sub_status:" in stdout
-    assert "design_pending=1" in stdout
-    assert "done=1" in stdout
+    assert "current=#1(tdd)" in stdout
+
+
+def test_current_invalid_phase():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "current": {"feature_id": 1, "phase": "wip"},
+        "features": [_base_feature()],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code != 0, f"Expected failure for invalid phase: {stdout}"
+    assert "phase" in stdout
+
+
+def test_current_references_nonexistent_feature():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "current": {"feature_id": 99, "phase": "design"},
+        "features": [_base_feature()],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code != 0, f"Expected failure for non-existent current ref: {stdout}"
+    assert "99" in stdout
+
+
+def test_current_references_passing_feature_rejected():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "current": {"feature_id": 1, "phase": "tdd"},
+        "features": [_base_feature(status="passing")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code != 0, f"Expected failure: current must point at failing feature"
+    assert "passing" in stdout
+
+
+def test_current_references_deprecated_feature_rejected():
+    data = {
+        "project": "p", "created": "2025-01-01",
+        "current": {"feature_id": 1, "phase": "design"},
+        "features": [_base_feature(deprecated=True, deprecated_reason="old")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code != 0, f"Expected failure: current must not be deprecated"
+    assert "deprecated" in stdout
+
+
+def test_legacy_sub_status_tolerated_but_signalled():
+    """Feature still carrying sub_status field is accepted by validate
+    (migration is handled elsewhere); the summary flags it."""
+    data = {
+        "project": "p", "created": "2025-01-01", "current": None,
+        "features": [_base_feature(sub_status="design_pending")],
+    }
+    code, stdout, _ = run_validator(data)
+    assert code == 0, f"legacy sub_status must not block validate: {stdout}"
+    assert "legacy_sub_status=1" in stdout
+    assert "migrate_sub_status" in stdout

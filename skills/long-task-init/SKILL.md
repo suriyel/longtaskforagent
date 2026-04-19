@@ -99,12 +99,12 @@ git commit -m "chore: initialize long-task project scaffold
 
 ### 9. 更新 task-progress.md
 
-- `## Current State` 头部：`0/N features passing`、`last event: init scaffold`、`next up: Feature 1`
 - 追加 `## Session 0 — Init` 条目：SRS / Design / ATS 路径引用、特性总数、UI 特性数、config 数
+- **不**写 `## Current State` 进度条——当前状态的单一事实源是 `feature-list.json`（`current` 锁 + 各 feature `status`）。查询用 `python scripts/count_pending.py feature-list.json`。
 
 ### 10. 开始首次 Worker 循环
 
-**移交**：提示用户开新会话；`using-long-task` 会按首批特性 `sub_status=design_pending` 自动路由至 `long-task-work-design`。主 agent 在此保留 handoff 控制权（不在任何 sub-skill 内自动触发，也不自动开新会话）。
+**移交**：提示用户开新会话；`using-long-task` 调 `phase_route.py`，router 会从 `current=null` 出发挑第一个依赖就绪的特性、emit `starting_new=true`，自动路由至 `long-task-work-design`。主 agent 在此保留 handoff 控制权（不在任何 sub-skill 内自动触发，也不自动开新会话）。
 
 ## Feature List Schema
 

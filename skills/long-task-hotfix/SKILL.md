@@ -40,7 +40,7 @@ python scripts/validate_bugfix_request.py bugfix-request.json
 2. `feature-list.json` —— 找到关联的特性（若 `feature_id` 非空），读取 `tech_stack`、`quality_gates`；确定下一个可用的特性 `id`
 3. `long-task-guide.md` —— 环境激活命令
 4. `env-guide.md`（若存在）—— 服务启动/停止命令
-5. `task-progress.md` 的 `## Current State` 章节 —— 近期会话历史
+5. `task-progress.md` —— 最近的 `## Session` 条目提供会话历史上下文
 6. `git log --oneline -10` —— 近期提交上下文
 
 若 `feature_id` 非空：从 `feature-list.json` 读取关联特性的条目以理解上下文（其 `ui` 字段、现有 `srs_trace`、`st_case_path`）。
@@ -99,7 +99,6 @@ python scripts/validate_bugfix_request.py bugfix-request.json
   "description": "<actual_behavior from bugfix-request.json> — Root cause: <confirmed root cause>",
   "priority": "<Critical|Major → 'high', Minor → 'medium', Cosmetic → 'low'>",
   "status": "failing",
-  "sub_status": "design_pending",
   "srs_trace": ["<FR-xxx from linked feature, or new FR-xxx if unlinked>"],
   "dependencies": [<fixed_feature_id>],
   "ui": <copy from linked feature's ui field, or false if feature_id is null>,
@@ -117,7 +116,7 @@ python scripts/validate_bugfix_request.py bugfix-request.json
 - `dependencies`：非空则置为 `[fixed_feature_id]`（确保 Worker 先处理原特性再做此修复）；为空则置 `[]`
 - `ui`：若 `feature_id` 非空，使用关联特性的 `ui` 字段；否则 `false`
 - `wave`：使用 `feature-list.json` `waves` 数组中当前最大的 wave id
-- `sub_status`：始终置为 `"design_pending"` —— 即使是 bugfix，`long-task-work-design` 也会产出精简的特性详细设计（根因记录 + 定向修复方式 + 回归测试清单），再进入 TDD
+- **不写 `sub_status`**（已废弃）。新 bugfix 特性 `status=failing` 即可；router 会在 `current` 为 null 时按依赖挑选，bugfix 依赖其被修特性已 passing 时方可就绪，自然走完整 design → tdd → st 流水线
 - **ATS 提示**：若 `fixed_feature_id` 非空且 ATS 文档存在（`docs/plans/*-ats.md`），在 ATS 映射表中查找关联特性的需求。将 `srs_trace` 设为包含关联特性的需求 ID，以便下游 feature-st 能从 SRS 验收标准推导所需测试用例
 
 新增后校验：
@@ -131,7 +130,7 @@ python scripts/validate_features.py feature-list.json
 
 ## Step 7: 更新 task-progress.md
 
-在当前 `## Current State` 内容之后追加一条 hotfix 会话记录：
+追加一条 hotfix 会话记录（**不动 `## Current State` 头——单一事实源是 `feature-list.json`**）：
 
 ```markdown
 ## Hotfix Session — YYYY-MM-DD: <bug title>
@@ -139,10 +138,8 @@ python scripts/validate_features.py feature-list.json
 - **Bugfix Feature ID**: #<new id>
 - **Fixed Feature**: #<fixed_feature_id> <feature title> (or "Unlinked")
 - **Root Cause**: <one sentence>
-- **Status**: Enqueued — Worker will handle TDD/Quality/ST/Review
+- **Status**: Enqueued — Worker will handle Design/TDD/Quality/ST/Review
 ```
-
-同时更新 `## Current State` 头部以反映新的 failing 特性。
 
 ---
 
@@ -158,7 +155,7 @@ python scripts/validate_features.py feature-list.json
    Root cause: <one sentence>
    Worker will handle: TDD → Quality → ST → Review
    ```
-4. 移交：开新会话；`using-long-task` 会按 `sub_status` 路由到 `long-task-work-tdd`（新入队的 bugfix 特性由 `long-task-init-features` / `validate_features.py` 设为 `sub_status=tdd_pending`，直接进入 TDD 修复循环）
+4. 移交：开新会话；`using-long-task` 调 router。若 `current == null` 且该 bugfix 特性的 `fixed_feature_id` 依赖已 passing，router 挑 bugfix 作为下一 current，走完整 Design → TDD → ST 流水线完成修复
 
 ---
 

@@ -49,11 +49,12 @@ _LONG_TASK_REFERENCE_BODY = (
     "Multi-session workflow. `using-long-task` skill routes by project state:\n\n"
     "**Pre-init** (no `feature-list.json`):\n"
     "  requirements → ucd (if UI) → design → ats → init\n\n"
-    "**Post-init** (has `feature-list.json`): route by each feature's `sub_status`:\n"
-    "  - `design_pending` → `long-task-work-design`\n"
-    "  - `tdd_pending`    → `long-task-work-tdd`\n"
-    "  - `st_pending`     → `long-task-work-st`\n"
-    "  - all `done`       → `long-task-st` (system-wide)\n\n"
+    "**Post-init** (has `feature-list.json`): route by root `current` lock:\n"
+    "  - `current = {feature_id: N, phase: \"design\"}` → `long-task-work-design`\n"
+    "  - `current = {feature_id: N, phase: \"tdd\"}`    → `long-task-work-tdd`\n"
+    "  - `current = {feature_id: N, phase: \"st\"}`     → `long-task-work-st`\n"
+    "  - `current = null` AND any feature `status=failing` → router picks next dep-ready feature\n"
+    "  - `current = null` AND all features `status=passing` → `long-task-st` (system-wide)\n\n"
     "Override signals: `bugfix-request.json` or `increment-request.json` at project root\n"
     "→ `long-task-hotfix` / `long-task-increment` runs first (highest priority).\n\n"
     "One feature × one phase per session. Sessions terminate explicitly (no auto-loop).\n\n"
@@ -159,10 +160,11 @@ LANG_PRESETS = {
 def create_progress_log(project_name: str) -> str:
     return f"""# Task Progress — {project_name}
 
-## Current State
-Progress: 0/0 · Last: — · Next: —
-
----
+> Session log only. Current project state (which feature is locked, which
+> phase it's in, how many features are passing) lives in
+> `feature-list.json` — single source of truth. Query it with:
+>
+>     python scripts/count_pending.py feature-list.json
 
 ## Session Log
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for count_pending.py"""
+"""Unit tests for count_pending.py (current-lock summary)."""
 
 import json
 import os
@@ -25,7 +25,7 @@ def run(data, *extra):
         os.unlink(tmp)
 
 
-def _feat(id_, sub_status=None, status="failing", deprecated=False):
+def _feat(id_, status="failing", deprecated=False, sub_status=None):
     d = {
         "id": id_, "category": "core", "title": f"T{id_}",
         "description": "D", "priority": "high", "status": status,
@@ -38,46 +38,52 @@ def _feat(id_, sub_status=None, status="failing", deprecated=False):
     return d
 
 
-def test_empty_features_all_zero():
-    code, out, _ = run({"project": "p", "features": []})
+def _data(features, current=None):
+    return {"project": "p", "features": features, "current": current}
+
+
+def test_empty_features():
+    code, out, _ = run(_data([]))
     assert code == 0
-    assert "design=0 tdd=0 st=0 done=0 (total=0)" == out.strip()
+    assert "current=none" in out
+    assert "passing=0" in out
+    assert "failing=0" in out
+    assert "total=0" in out
 
 
-def test_mixed_distribution():
-    data = {"project": "p", "features": [
-        _feat(1, "design_pending"),
-        _feat(2, "tdd_pending"),
-        _feat(3, "tdd_pending"),
-        _feat(4, "st_pending"),
-        _feat(5, "done", status="passing"),
-        _feat(6, "done", status="passing"),
-    ]}
+def test_current_lock_reported():
+    data = _data([_feat(1), _feat(2, "passing")],
+                 current={"feature_id": 1, "phase": "tdd"})
     code, out, _ = run(data)
-    assert code == 0, out
-    assert "design=1" in out
-    assert "tdd=2" in out
-    assert "st=1" in out
-    assert "done=2" in out
-    assert "total=6" in out
+    assert code == 0
+    assert "current=#1(tdd)" in out
+    assert "passing=1" in out
+    assert "failing=1" in out
+    assert "total=2" in out
 
 
-def test_deprecated_excluded():
-    data = {"project": "p", "features": [
-        _feat(1, "done", status="passing"),
-        _feat(2, deprecated=True),
-    ]}
+def test_null_current_no_lock():
+    data = _data([_feat(1, "passing"), _feat(2, "passing")], current=None)
+    code, out, _ = run(data)
+    assert "current=none" in out
+    assert "passing=2" in out
+    assert "failing=0" in out
+
+
+def test_deprecated_excluded_from_total():
+    data = _data([_feat(1, "passing"), _feat(2, deprecated=True)])
     code, out, _ = run(data)
     assert code == 0
     assert "total=1" in out
     assert "deprecated=1" in out
 
 
-def test_no_sub_status_bucket():
-    data = {"project": "p", "features": [_feat(1)]}
+def test_legacy_sub_status_signalled():
+    """Feature carrying legacy sub_status field shows legacy_sub_status count."""
+    data = _data([_feat(1, sub_status="design_pending")])
     code, out, _ = run(data)
     assert code == 0
-    assert "no_sub_status=1" in out
+    assert "legacy_sub_status=1" in out
 
 
 def test_missing_file_exits_2():
@@ -88,22 +94,32 @@ def test_missing_file_exits_2():
     assert r.returncode == 2
 
 
-def test_json_output():
-    data = {"project": "p", "features": [_feat(1, "tdd_pending")]}
+def test_json_output_fields():
+    data = _data([_feat(1), _feat(2, "passing")],
+                 current={"feature_id": 1, "phase": "design"})
     code, out, _ = run(data, "--json")
     assert code == 0
     parsed = json.loads(out)
-    assert parsed["tdd"] == 1
-    assert parsed["design"] == 0
-    assert parsed["total"] == 1
+    assert parsed["total"] == 2
+    assert parsed["passing"] == 1
+    assert parsed["failing"] == 1
+    assert parsed["current"] == {"feature_id": 1, "phase": "design"}
+    assert parsed["deprecated"] == 0
+    assert parsed["legacy_sub_status"] == 0
+
+
+def test_json_legacy_sub_status_reported():
+    data = _data([_feat(1, sub_status="tdd_pending"),
+                  _feat(2, sub_status="design_pending")])
+    code, out, _ = run(data, "--json")
+    parsed = json.loads(out)
+    assert parsed["legacy_sub_status"] == 2
 
 
 if __name__ == "__main__":
-    tests = [
-        test_empty_features_all_zero, test_mixed_distribution,
-        test_deprecated_excluded, test_no_sub_status_bucket,
-        test_missing_file_exits_2, test_json_output,
-    ]
+    import inspect
+    tests = [t for name, t in sorted(globals().items())
+             if name.startswith("test_") and inspect.isfunction(t)]
     passed = failed = 0
     for t in tests:
         try:
