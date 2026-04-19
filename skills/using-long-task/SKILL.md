@@ -32,7 +32,7 @@ python scripts/phase_route.py --json
 **Fallback**（`phase_route.py` 因任何原因不可用时）：按顺序 glob，命中即路由：
 - `bugfix-request.json` → `long-task-hotfix`
 - `increment-request.json` → `long-task-increment`
-- `feature-list.json` → `long-task-work`
+- `feature-list.json` → 读 `features[*].sub_status`，按最小 id 活跃特性取阶段：`design_pending` → `long-task-work-design`；`tdd_pending` → `long-task-work-tdd`；`st_pending` → `long-task-work-st`；全部 `done` → `long-task-st`
 - `docs/plans/*-ats.md` → `long-task-init`
 - `docs/plans/*-design.md` → `long-task-ats`
 - `docs/plans/*-ucd.md` → `long-task-design`

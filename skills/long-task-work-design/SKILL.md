@@ -23,7 +23,7 @@ description: "Use when feature-list.json has a feature with sub_status=design_pe
 ## Checklist
 
 ### 0. env-guide 审批关卡
-与 `long-task-work` Step 0 一致。运行 `python scripts/check_env_guide_approval.py env-guide.md`：Exit 0 继续；Exit 1 阻塞并 AskUserQuestion 升级；Exit 2 若无 env-guide.md（pre-init / CLI-only）则跳过。
+运行 `python scripts/check_env_guide_approval.py env-guide.md`：Exit 0 继续；Exit 1 阻塞并 AskUserQuestion 升级；Exit 2 若无 env-guide.md（pre-init / CLI-only）则跳过。
 
 ### 1. Orient —— 选取 design_pending 特性
 - 读 `feature-list.json` → 筛 `sub_status == "design_pending"` 且 `deprecated != true` 的特性；按优先级 + id 升序挑第一个（称为 `target_feature`）
@@ -48,7 +48,7 @@ description: "Use when feature-list.json has a feature with sub_status=design_pe
 ```bash
 python scripts/check_configs.py feature-list.json --feature <id>
 ```
-缺失 config 按 `long-task-work` Step 3 协议处理（AskUserQuestion 文本输入 → 保存到项目 config → 重跑直至通过）。设计阶段仍需 config 存在性校验，以便 Feature Design SubAgent 能够准确描述外部接口。
+缺失 config 处理：用 AskUserQuestion 文本输入收集缺失值 → 写入 `.env` 或项目 config 文件 → 重跑 `python scripts/check_configs.py feature-list.json --feature <id>`，直至通过。设计阶段仍需 config 存在性校验，以便 Feature Design SubAgent 能够准确描述外部接口。
 
 ### 4. DISPATCH Feature Design SubAgent
 

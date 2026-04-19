@@ -168,7 +168,7 @@
    - 变更的技术原因
    - 对 Consumer 特性的影响（列出受影响的 feature ID）
 3. `status` 设为 **blocked**；追加 blocker：`[CONTRACT-DEVIATION] §4 <Contract ID>: <原 schema 摘要> → <建议变更> | 影响 Consumer=[<feature IDs>] | Q: (A) approve schema change / (B) keep original and SubAgent will comply`
-4. orchestrator（long-task-work）按 `skills/long-task-work/references/approval-revise-loop.md` 处理，向用户呈 A/B 选项
+4. orchestrator（long-task-work-design）按 `skills/long-task-work/references/approval-revise-loop.md` 处理，向用户呈 A/B 选项
 5. 若批准：用户（或 orchestrator 在授权下）更新设计文档的 §4；orchestrator 以 Clarification Addendum 重分发 SubAgent
 6. 若拒绝：Clarification Addendum 指令 "comply with original §4"，SubAgent 必须遵循原契约
 

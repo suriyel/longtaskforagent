@@ -104,7 +104,7 @@ git commit -m "chore: initialize long-task project scaffold
 
 ### 10. 开始首次 Worker 循环
 
-**必需子 skill：** 调用 `long-task:long-task-work`。主 agent 在此保留 handoff 控制权（不在任何 sub-skill 内自动触发）。
+**移交**：提示用户开新会话；`using-long-task` 会按首批特性 `sub_status=design_pending` 自动路由至 `long-task-work-design`。主 agent 在此保留 handoff 控制权（不在任何 sub-skill 内自动触发，也不自动开新会话）。
 
 ## Feature List Schema
 

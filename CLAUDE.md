@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 32 skills loaded on-demand via the `Skill` tool (18 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. **Routing discipline**: all `Skill` tool targets come from `phase_route.py`; within a session, only `Agent`-tool SubAgent dispatch — no Skill-to-Skill invocation. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 31 skills loaded on-demand via the `Skill` tool (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. **Routing discipline**: all `Skill` tool targets come from `phase_route.py`; within a session, only `Agent`-tool SubAgent dispatch — no Skill-to-Skill invocation. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -36,7 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 32-Skill System (18 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd)
+### 31-Skill System (17 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd)
 
 #### Phase Skills
 
@@ -51,7 +51,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-design` | Phase 0c | SRS + UCD exist (or no UI), no design doc, no feature-list.json |
 | `long-task-ats` | Phase 0d | Design doc exists, no ATS doc, no feature-list.json |
 | `long-task-init` | Phase 1 | ATS doc exists (or auto-skipped), no feature-list.json |
-| `long-task-work` | Phase 2 router | feature-list.json exists; thin router to work-design/tdd/st by sub_status |
 | `long-task-work-design` | Phase 2a | Feature has `sub_status=design_pending` (per-feature detailed design) |
 | `long-task-work-tdd` | Phase 2b | Feature has `sub_status=tdd_pending` (Red-Green-Refactor + Quality Gates) |
 | `long-task-work-st` | Phase 2c | Feature has `sub_status=st_pending` (Feature-ST + Inline + Persist) |
@@ -128,7 +127,7 @@ Dispatched by `long-task-work-tdd` Step 3a/3b/3c as three independent SubAgents 
 using-long-task (router — delegates to scripts/phase_route.py)
    ├─→ long-task-brownfield-scan (brownfield, no docs/rules/)
    │      └─→ codebase-scanner SubAgent ──→ long-task-requirements
-   ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ long-task-work
+   ├─→ long-task-requirements ──→ long-task-ucd ──→ long-task-design ──→ long-task-ats ──→ long-task-init ──→ [new session; using-long-task routes by sub_status]
    │      ├─→ long-task-requirements-quality (Step 7–11)
    │      ├─→ long-task-requirements-alignment (Expert E10; auto-skip for Lite)
    │      └─→ long-task-requirements-finalize (Step 15)
@@ -137,27 +136,26 @@ using-long-task (router — delegates to scripts/phase_route.py)
    │                                                                    long-task-init orchestrator:
    │                                                                    ├─→ long-task-init-env (Step 3)
    │                                                                    ├─→ long-task-init-bootstrap (Step 4)
-   │                                                                    └─→ long-task-init-features (Step 5) → long-task-work
+   │                                                                    └─→ long-task-init-features (Step 5) → [new session; using-long-task routes]
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
-   │      └─→ validate → reproduce → root cause → enqueue as category=bugfix → long-task-work
+   │      └─→ validate → reproduce → root cause → enqueue as category=bugfix → [new session; using-long-task routes to work-tdd]
    ├─→ long-task-increment (increment-request.json)
    │      ├─→ long-task-increment-impact (Step 3)
    │      ├─→ long-task-increment-design (Step 4)
    │      ├─→ long-task-increment-ats (Step 4b; auto-skip if no ATS)
    │      ├─→ long-task-increment-ucd (Step 5; auto-skip if no UI)
-   │      └─→ long-task-increment-srs (Step 6) → long-task-work
-   ├─→ long-task-work (thin router — reads sub_status and forwards)
-   │      ├─→ long-task-work-design (feature has sub_status=design_pending)
-   │      │       └─→ long-task-feature-design (SubAgent)
-   │      ├─→ long-task-work-tdd (feature has sub_status=tdd_pending)
-   │      │       ├─→ long-task-tdd-red (SubAgent — Step 3a — write failing tests)
-   │      │       ├─→ long-task-tdd-green (SubAgent — Step 3b — minimal impl + design align)
-   │      │       ├─→ long-task-tdd-refactor (SubAgent — Step 3c — cleanup + static gate)
-   │      │       └─→ long-task-quality (SubAgent — Step 4)
-   │      └─→ long-task-work-st (feature has sub_status=st_pending)
-   │              └─→ long-task-feature-st (SubAgent) → Inline Check → Persist
+   │      └─→ long-task-increment-srs (Step 6) → [new session; using-long-task routes]
+   ├─→ long-task-work-design (feature has sub_status=design_pending)
+   │      └─→ long-task-feature-design (SubAgent)
+   ├─→ long-task-work-tdd (feature has sub_status=tdd_pending)
+   │      ├─→ long-task-tdd-red (SubAgent — Step 3a — write failing tests)
+   │      ├─→ long-task-tdd-green (SubAgent — Step 3b — minimal impl + design align)
+   │      ├─→ long-task-tdd-refactor (SubAgent — Step 3c — cleanup + static gate)
+   │      └─→ long-task-quality (SubAgent — Step 4)
+   ├─→ long-task-work-st (feature has sub_status=st_pending)
+   │      └─→ long-task-feature-st (SubAgent) → Inline Check → Persist
    └─→ long-task-st (ALL active features sub_status=done)
-          ├─→ long-task-work (defects found → re-enter routing)
+          ├─→ [defects found → new session; using-long-task routes by reset sub_status]
           └─→ long-task-finalize (Go verdict)
 
 long-task-explore (standalone — no pipeline dependency)
@@ -314,9 +312,6 @@ long-task-agent/
 │   ├── long-task-init-bootstrap/SKILL.md + references/init-script-recipes.md
 │   ├── long-task-init-features/SKILL.md
 │   ├── long-task-feature-design/SKILL.md + references/feature-design-template.md
-│   ├── long-task-work/SKILL.md (thin router — sub_status dispatch)
-│   │     + references/{systematic-debugging,subagent-development,worktree-isolation,
-│   │                    structured-return-contract,approval-revise-loop}.md (shared by phase skills)
 │   ├── long-task-work-design/SKILL.md (Phase 2a — per-feature design)
 │   ├── long-task-work-tdd/SKILL.md (Phase 2b — TDD Step 3a/3b/3c DISPATCH + Step 4 Quality)
 │   │     + references/{testing-anti-patterns,silent-execution,drift-protocol}.md (shared by R/G/R SubAgents)

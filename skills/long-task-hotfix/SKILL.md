@@ -158,7 +158,7 @@ python scripts/validate_features.py feature-list.json
    Root cause: <one sentence>
    Worker will handle: TDD → Quality → ST → Review
    ```
-4. 移交：`long-task:long-task-work`
+4. 移交：开新会话；`using-long-task` 会按 `sub_status` 路由到 `long-task-work-tdd`（新入队的 bugfix 特性由 `long-task-init-features` / `validate_features.py` 设为 `sub_status=tdd_pending`，直接进入 TDD 修复循环）
 
 ---
 

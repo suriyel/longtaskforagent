@@ -11,7 +11,7 @@ description: "Use when dispatched by long-task-init Step 5 — generate long-tas
 
 ### A. 生成 `long-task-guide.md`
 
-1. 读 `skills/long-task-work/SKILL.md`、`skills/long-task-quality/SKILL.md`、`skills/using-long-task/references/architecture.md`（参考）
+1. 读 `skills/long-task-work-design/SKILL.md`、`skills/long-task-work-tdd/SKILL.md`、`skills/long-task-work-st/SKILL.md`、`skills/long-task-quality/SKILL.md`、`skills/using-long-task/references/architecture.md`（参考）
 2. 读 `feature-list.json.tech_stack` 确认语言与测试框架
 3. 读 `env-guide.md`（已存在）确认 §1/§3 指引路径
 4. 写项目根 `long-task-guide.md`：**仅工作流导航**，不嵌具体命令

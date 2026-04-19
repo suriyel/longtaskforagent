@@ -13,7 +13,7 @@ description: "Use before TDD in a long-task project — produce feature-level de
 
 - Worker Step 4，TDD（Steps 5-7）之前
 - 每一个特性都要运行（`category: "bugfix"` 的特性使用精简版）
-- 由 `long-task-work` 作为子 skill 调用（路由不会直接调用）
+- 由 `long-task-work-design` 作为子 skill 调用（路由不会直接调用）
 
 > **对于 `category: "bugfix"` 的特性**：SubAgent 应聚焦于：(1) 根因文档（来自 `root_cause` 字段）；(2) 针对性修复方案；(3) 基于 SRS 验收标准的回归测试清单（通过 `srs_trace`）。除非缺陷直接涉及，否则跳过完整接口契约、数据流图与状态图。
 

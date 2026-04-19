@@ -211,7 +211,7 @@ use skill tool to list skills
 Use OpenCode's native `skill` tool to load a specific skill:
 
 ```
-use skill tool to load long-task/long-task-work
+use skill tool to load long-task/long-task-work-design
 ```
 
 ### Phase Skill Invocations
@@ -224,7 +224,9 @@ Invoke each phase skill directly in OpenCode:
 | UCD Style Guide (Phase 0b) | `use skill long-task/long-task-ucd` |
 | Design (Phase 0c) | `use skill long-task/long-task-design` |
 | Init (Phase 1) | `use skill long-task/long-task-init` |
-| Worker (Phase 2) | `use skill long-task/long-task-work` |
+| Worker Design (Phase 2a) | `use skill long-task/long-task-work-design` |
+| Worker TDD (Phase 2b) | `use skill long-task/long-task-work-tdd` |
+| Worker ST (Phase 2c) | `use skill long-task/long-task-work-st` |
 | System Testing (Phase 3) | `use skill long-task/long-task-st` |
 | Increment (Phase 1.5) | `use skill long-task/long-task-increment` |
 
@@ -319,10 +321,12 @@ Skills written for Claude Code are automatically adapted via the bootstrap injec
 | `long-task-ucd` | Phase 0b | UCD style guide |
 | `long-task-design` | Phase 0c | Design document |
 | `long-task-init` | Phase 1 | Project initialization |
-| `long-task-work` | Phase 2 | Worker orchestrator |
+| `long-task-work-design` | Phase 2a | Per-feature detailed design |
+| `long-task-work-tdd` | Phase 2b | TDD + Quality Gates |
+| `long-task-work-st` | Phase 2c | Feature ST + Inline + Persist |
 | `long-task-st` | Phase 3 | System testing |
 | `long-task-increment` | Phase 1.5 | Incremental development |
-| `long-task-tdd` | Discipline | TDD Red-Green-Refactor |
+| `long-task-tdd-red`/`-green`/`-refactor` | Discipline | TDD Red-Green-Refactor SubAgents |
 | `long-task-quality` | Discipline | Coverage gate |
 | `long-task-feature-st` | Discipline | Per-feature acceptance testing |
 
