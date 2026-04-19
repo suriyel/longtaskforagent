@@ -9,7 +9,7 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 
 **开始时宣告：** "I'm using the long-task-work-tdd skill. Let me orient myself."
 
-**核心原则：** Red / Green / Refactor 三个 SubAgent（`long-task-tdd-{red,green,refactor}`）+ Quality Gates SubAgent（`long-task-quality`）**共四个**独立 SubAgent，均由本 skill 直接用 Agent 工具 DISPATCH。本 skill 不再经过 `long-task-tdd` 中间层——路由决策全部收敛到 `scripts/phase_route.py` 的顶层 skill 路由；会话内只剩 SubAgent 分发，无 Skill-to-Skill 调用。
+**核心原则：** Red / Green / Refactor 三个 SubAgent（`long-task-tdd-{red,green,refactor}`）+ Quality Gates SubAgent（`long-task-quality`）**共四个**独立 SubAgent，均由本 skill 直接用 Agent 工具 DISPATCH。路由决策全部收敛到 `scripts/phase_route.py` 的顶层 skill 路由；会话内只剩 SubAgent 分发，无 Skill-to-Skill 调用。
 
 契约见 `../using-long-task/references/structured-return-contract.md`；SubAgent 返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
