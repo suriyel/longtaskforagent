@@ -307,7 +307,7 @@ Initializer 在 SRS 与设计都批准后**运行一次**。它读取**两份**�
     - 在 `[devtools]` 验证步骤中使用 EXPECT/REJECT 格式
     - 通过 `evaluate_script()` 调用自动化 UI 错误检测脚本
     - 通过 `list_console_messages(types=["error"])` 调用 console error gate
-    - 完整规范见 [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md)
+    - 完整规范见 [ui-error-detection.md](../../long-task-tdd-red/references/ui-error-detection.md)
 
 ### Phase 4：TDD Green — 实现以通过测试
 11. 写最小代码使**全部**测试通过（单元 + 功能）
@@ -381,8 +381,8 @@ Requirements → SRS approved → Design → design approved → Initializer →
 | 跳过设计阶段 | 临时设计导致不一致与返工 | SRS 之后跑设计阶段，先获批 |
 | 猜测式调试 | 随机修复浪费时间且可能引入新 bug | 遵循系统性调试 — 追根因。见 [systematic-debugging.md](../../long-task-work/references/systematic-debugging.md) |
 | 无证据声称 "it works" | 未经校验的声明导致虚假信心 | 标记 passing 前展示实际测试输出。见 [verification-enforcement.md](verification-enforcement.md) |
-| 接受低价值断言 | 仅做 None/isinstance/import 的测试零捕 bug 能力 | 强制低价值断言占比 <= 20%。见 [testing-anti-patterns.md](../../long-task-tdd/testing-anti-patterns.md) #14 |
-| UI 测试缺 REJECT 子句 | LLM 只确认正向期望，漏掉显而易见的 UI 错误 | 所有 `[devtools]` 步骤要求 EXPECT/REJECT 格式。见 [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md) |
+| 接受低价值断言 | 仅做 None/isinstance/import 的测试零捕 bug 能力 | 强制低价值断言占比 <= 20%。见 [testing-anti-patterns.md](../../long-task-work-tdd/references/testing-anti-patterns.md) #14 |
+| UI 测试缺 REJECT 子句 | LLM 只确认正向期望，漏掉显而易见的 UI 错误 | 所有 `[devtools]` 步骤要求 EXPECT/REJECT 格式。见 [ui-error-detection.md](../../long-task-tdd-red/references/ui-error-detection.md) |
 
 ## 验证策略
 
@@ -404,7 +404,7 @@ Requirements → SRS approved → Design → design approved → Initializer →
   - **Layer 1**：通过 `evaluate_script()` 的自动化错误检测脚本 — 发现错误硬 FAIL
   - **Layer 2**：验证步骤的 EXPECT/REJECT 格式 — 强制找错
   - **Layer 3**：`list_console_messages(types=["error"])` 的 console error 关卡 — 有错硬 FAIL
-  - 完整规范见 [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md)
+  - 完整规范见 [ui-error-detection.md](../../long-task-tdd-red/references/ui-error-detection.md)
 - 测试流：navigate → wait → error detection → snapshot → EXPECT/REJECT → interact → error detection → snapshot → console check
 
 ### 所有特性通用（Coverage 强制）：
@@ -483,7 +483,7 @@ python scripts/check_devtools.py feature-list.json --feature <id>
 - `[devtools] <page-path> | EXPECT: <positive criteria> | REJECT: <negative criteria>`
 - **EXPECT**：必须存在的元素、文本或状态
 - **REJECT**：不得存在的条件（强制找错行为）
-- 两个子句都必需 — 详见 [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md)
+- 两个子句都必需 — 详见 [ui-error-detection.md](../../long-task-tdd-red/references/ui-error-detection.md)
 - 示例：`"[devtools] /login | EXPECT: email input, password input, submit button | REJECT: placeholder 'TODO', overlapping elements, console errors"`
 
 每个 `[devtools]` 步骤的**测试序列**：
@@ -502,7 +502,7 @@ python scripts/check_devtools.py feature-list.json --feature <id>
 12. Check for console errors:      list_console_messages(types=["error"])  ← HARD FAIL if count > 0
 ```
 
-自动化检测脚本与三层检测模型见 [ui-error-detection.md](../../long-task-tdd/references/ui-error-detection.md)。
+自动化检测脚本与三层检测模型见 [ui-error-detection.md](../../long-task-tdd-red/references/ui-error-detection.md)。
 
 ## 多语言工具快速参考
 

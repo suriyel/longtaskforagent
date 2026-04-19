@@ -1,6 +1,6 @@
 ---
 name: long-task-tdd-red
-description: "Use when dispatched by long-task-tdd Step 1 — write failing tests per feature design §7 test inventory, apply Rule 1-7 (category coverage, negative ratio, assertion quality, wrong-impl challenge, real tests, UI positive render)"
+description: "Use when dispatched by long-task-work-tdd Step 3a — write failing tests per feature design §7 test inventory, apply Rule 1-7 (category coverage, negative ratio, assertion quality, wrong-impl challenge, real tests, UI positive render)"
 ---
 
 # TDD Red — 编写失败测试
@@ -100,7 +100,7 @@ def test_user_validation_logic(): ...
 def test_user_persisted_to_db(): ...
 ```
 
-参考：`../long-task-tdd/testing-anti-patterns.md` 反模式 #1、#3。
+参考：`../long-task-work-tdd/references/testing-anti-patterns.md` 反模式 #1、#3。
 
 ### 测试编写顺序（强制）
 
@@ -136,7 +136,7 @@ def test_user_persisted_to_db(): ...
 
 **校验**：`python scripts/check_real_tests.py feature-list.json --feature {feature_id}` —— 机械扫描 + grep；FAIL 则 `status: blocked` 带前缀 `[ENV-ERROR]` 或 `[INSUFFICIENT_EVIDENCE]`。
 
-参考：`../long-task-tdd/testing-anti-patterns.md` 反模式 #15、#16。
+参考：`../long-task-work-tdd/references/testing-anti-patterns.md` 反模式 #15、#16。
 
 ## Rule 6 — UI 错误检测（当 `"ui": true`）
 
@@ -159,7 +159,7 @@ def test_user_persisted_to_db(): ...
 
 通过 `evaluate_script()` 执行自动化错误检测；`list_console_messages(types=["error"])` 必须返回 0 错误（除非 `[expect-console-error: <pattern>]`）。
 
-完整检测脚本与集成流程见 `../long-task-tdd/references/ui-error-detection.md`。
+完整检测脚本与集成流程见 `references/ui-error-detection.md`。
 
 ## Rule 7 — 正向渲染验证（当 `"ui": true`）
 
@@ -184,7 +184,7 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
 
 **最低**：§7 每行 `UI/render` ≥ 1 个正向渲染测试。
 
-可复用校验脚本见 `../long-task-tdd/references/ui-error-detection.md` § Layer 1b。
+可复用校验脚本见 `references/ui-error-detection.md` § Layer 1b。
 
 ## 测试反模式（Top 5 警示）
 
@@ -194,11 +194,11 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
 4. **为覆盖率凑数** —— 无断言的测试"执行"但未验证
 5. **低价值断言** —— `assertNotNull` / `isinstance` / `len>0`；最多 20%
 
-完整 15 条见 `../long-task-tdd/testing-anti-patterns.md`。
+完整 15 条见 `../long-task-work-tdd/references/testing-anti-patterns.md`。
 
 ## 运行测试
 
-按 `../long-task-tdd/references/silent-execution.md` 静默执行。**本阶段 exit != 0 是预期**；exit = 0 意味着测试未真正失败（实现已存在 / 断言过弱），必须重写。
+按 `../long-task-work-tdd/references/silent-execution.md` 静默执行。**本阶段 exit != 0 是预期**；exit = 0 意味着测试未真正失败（实现已存在 / 断言过弱），必须重写。
 
 确认失败原因正确：`ImportError` / `AttributeError` / 预期值上的 `AssertionError` 均可接受。
 

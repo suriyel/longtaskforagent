@@ -9,9 +9,7 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 
 **开始时宣告：** "I'm using the long-task-work-tdd skill. Let me orient myself."
 
-**核心原则：**
-- `long-task-tdd` 在**主 agent 上下文**以 Skill 调用（orchestrator），由它在主 agent 内 DISPATCH Red/Green/Refactor 三个 SubAgent；主 agent 聚合三个子契约为一条 TDD 契约供本 Step 4 消费。
-- `long-task-quality` 以**独立 SubAgent**运行。
+**核心原则：** Red / Green / Refactor 三个 SubAgent（`long-task-tdd-{red,green,refactor}`）+ Quality Gates SubAgent（`long-task-quality`）**共四个**独立 SubAgent，均由本 skill 直接用 Agent 工具 DISPATCH。本 skill 不再经过 `long-task-tdd` 中间层——路由决策全部收敛到 `scripts/phase_route.py` 的顶层 skill 路由；会话内只剩 SubAgent 分发，无 Skill-to-Skill 调用。
 
 契约见 `../long-task-work/references/structured-return-contract.md`；SubAgent 返回按 `../long-task-work/references/approval-revise-loop.md` 处理。
 
@@ -22,7 +20,7 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 4. 读 `env-guide.md §3`（测试/覆盖率/静态分析命令）+ `§4`（codebase constraints）
 5. 读 `docs/plans/*-design.md` 中 `§4` Internal API Contracts 本特性相关行
 
-**允许重复读同一份 feature design** —— TDD SubAgent 内部 R/G/R 各步也会再读；一致性优先，不做缓存优化。
+**允许重复读同一份 feature design** —— R/G/R 三个 SubAgent 各自也会再读；一致性优先，不做缓存优化。
 
 **静默执行协议：** 所有测试 / 覆盖率 / 静态命令都重定向到 `/tmp/<slug>-$$.log` + exit 文件。永不倾倒完整输出。
 
@@ -55,19 +53,68 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
   - `dependencies[]` 引用 DB 建表/迁移/服务初始化特性
   - feature design §6 Implementation Summary 指明外部服务交互
 
-### 3. 调用 TDD Orchestrator Skill（主 agent 内）
+### 3. TDD R-G-R 三段式（本 skill 直接 DISPATCH 三个独立 SubAgent）
 
-> **INVOKE Skill** → `long-task-tdd`（在**当前主 agent 上下文**加载并执行，**不**启动 SubAgent）
-> **input**（作为 skill args 透传）: `feature_id`, `feature_list_path`, `feature_design_path=docs/features/YYYY-MM-DD-<slug>.md`
-> **expect**: 聚合后的 Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `all_tests_pass` / `red_green_refactor_complete` / `test_count`
->
-> **重要**：TDD orchestrator 自己在主 agent 内 DISPATCH 三个独立 SubAgent（Red / Green / Refactor）完成 R-G-R 三段式；聚合契约由 orchestrator 组装后直接在主 agent 内可用。主 agent（本 work-tdd）把聚合契约视作单次 skill 返回。
+**共享铁律**：`NO IMPLEMENTATION CODE WITHOUT A FAILING TEST FIRST`。先写了实现就删掉、重来，没有例外。
 
-**返回处理**（按 `../long-task-work/references/approval-revise-loop.md`）：
-- `status: fail` → Failure Addendum 重入 `long-task-tdd`（计入 2 轮上限）
-- `status: blocked` 带 `[INSUFFICIENT_EVIDENCE]` / `[ENV-ERROR]` / `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]` → Clarification Addendum 重入（不计入上限）
-- `status: blocked` 带 `[CONTRACT-DEVIATION]` → AskUserQuestion 裁决（orchestrator 已决定无法本地解决）
-- `status: pass` → 进入 Step 4
+**共享资产**（所有 3 个 SubAgent 可引用）：
+- 结构化返回契约：`../long-task-work/references/structured-return-contract.md`
+- 审批-返工循环：`../long-task-work/references/approval-revise-loop.md`（TDD 内部无用户审批闸门；fail/blocked 按下文各 step 处置）
+- 契约-实现漂移协议：`references/drift-protocol.md`（Green / Refactor 共享）
+- 静默执行协议：`references/silent-execution.md`（三阶段共享）
+- 测试反模式清单：`references/testing-anti-patterns.md`（Red 主用，Green / Refactor 参考）
+
+**3a. Red — DISPATCH SubAgent**
+
+> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-tdd-red`
+> **input**: `feature_id`, `feature_list_path`, `feature_design_path`
+> **expect**: Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `test_count`；`evidence` 以 `Rule N <key>=<value>` 形式逐行报告 Rule 1-7 关键指标（categories / negative_ratio / low_value_ratio / real_test_count）
+
+**返回处理**：
+- `status: fail` → Failure Addendum 重分发（计入 2 轮上限；超限 → AskUserQuestion 升级）
+- `status: blocked` 带 `[ENV-ERROR]` / `[SRS-VAGUE]` / `[SRS-DESIGN-CONFLICT]` / `[SRS-MISSING]` / `[INSUFFICIENT_EVIDENCE]` → Clarification Addendum 重分发（不计入上限）
+- `status: pass` → 进入 3b
+
+**3b. Green — DISPATCH SubAgent**
+
+> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-tdd-green`
+> **input**: `feature_id`, `feature_list_path`, `feature_design_path`, `feature_test_files`（从 3a next_step_input）, `test_count`
+> **expect**: Structured Return Contract；`next_step_input` 含 `impl_files[]` / `all_tests_pass` / `design_alignment: {§4, §6, §8, drift}` / `env_guide_synced`
+
+**返回处理**：
+- `status: fail` → Failure Addendum 重分发（计入 2 轮上限）
+- `status: blocked` 带 `[CONTRACT-DEVIATION]` → AskUserQuestion 裁决（跨 Step 决策，需用户；本地不解决）
+- `status: blocked` 带 `[SRS-*]` / `[ENV-ERROR]` → Clarification Addendum 重分发
+- `status: pass` → 进入 3c
+
+**3c. Refactor — DISPATCH SubAgent**
+
+> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-tdd-refactor`
+> **input**: `feature_id`, `feature_list_path`, `feature_design_path`, `feature_test_files`, `impl_files`
+> **expect**: Structured Return Contract；`next_step_input` 含 `static_analysis_ok` / `static_tool` / `static_violations` / `design_alignment_final` / `tests_still_pass`
+
+**返回处理**：
+- `status: fail` → Failure Addendum 重分发
+- `status: blocked` 带 `[CONTRACT-DEVIATION]` → AskUserQuestion 裁决
+- `status: blocked` 带 `[ENV-ERROR]` → Clarification Addendum 重分发
+- `status: pass` → 进入 3d
+
+**3d. 聚合 TDD 层证据（供 Step 4 Quality Gates 消费）**
+
+三步全部 pass 后，本 skill 在主 agent 内汇总三个子契约的关键字段供 Step 4：
+
+- `feature_test_files` ← 3a.next_step_input
+- `impl_files` ← 3b.next_step_input
+- `test_count` ← 3a.next_step_input
+- `all_tests_pass` ← 3b.next_step_input
+- `red_green_refactor_complete` ← true
+- 证据摘要（供 Step 5 commit 与 `task-progress.md` 记录）：
+  - Red: N tests written, categories=..., negative_ratio=..., all FAILED
+  - Green: all N tests PASS after minimal implementation
+  - Design alignment: §4=<matches|updated:...>, §6=..., §8=...; drift=<none|resolved>
+  - Refactor: static analysis clean (tool=..., 0 violations); tests still green
+
+**任一子步终态 fail（超 2 轮）或 blocked 带 `[CONTRACT-DEVIATION]` 未恢复** → 本 skill 整体停止，向用户呈聚合证据，**不进入 Step 4**；`artifacts_written` 列出至此已产出的文件。
 
 ### 4. DISPATCH Quality Gates SubAgent
 
@@ -122,11 +169,10 @@ git commit -m "tdd: feature #<id> <slug> — tests green, coverage ≥<N>%/<M>%"
 ## 关键规则
 
 - **每会话一个特性的一个阶段** —— 本阶段只做 TDD + Quality，不做 Feature-ST 也不做 Persist 到 passing
-- **TDD orchestrator 在主 agent 内以 Skill 调用；Quality 走独立 SubAgent** —— 不可混淆
-- **R/G/R 三个子步必须各自独立 SubAgent** —— TDD orchestrator 内部强制 DISPATCH，不在主 agent 内联执行
+- **R/G/R / Quality 四个 SubAgent 不可协商** —— 本 skill 必须用 Agent 工具分别 DISPATCH，不在主 agent 内联执行；会话内**不**调任何其它 Skill
 - **无新鲜证据不得翻转 sub_status** —— 测试必须实跑绿，覆盖率必须达标
 - **feature design 文档必读** —— 缺失即 BLOCKED
-- **一致性优先于去重** —— 允许 SubAgent 内部 R/G/R 各自重读 feature design
+- **一致性优先于去重** —— 允许 R/G/R 三个 SubAgent 各自重读 feature design
 
 ## 红旗信号
 
@@ -136,4 +182,5 @@ git commit -m "tdd: feature #<id> <slug> — tests green, coverage ≥<N>%/<M>%"
 | "覆盖率差一点就凑" | 阈值是硬关卡。扩测或用 `long-task-increment` 修订 srs_trace。|
 | "我顺便做了 ST" | 终止。ST 是下一会话的 work-st。|
 | "feature design 不对，我自己改一下" | 不改。返 `[SRS-DESIGN-CONFLICT]` 走 Clarification 或建议 `long-task-increment`。|
-| "静态分析警告忽略" | 阻塞——Refactor 内部已关卡，此处视为 SubAgent 漏判，重分发。|
+| "静态分析警告忽略" | 阻塞——Refactor SubAgent 内部已关卡，此处视为漏判，重分发。|
+| "把三个 SubAgent 合成一个省事" | 不。R/G/R 独立沙箱各自返契约；合并会污染三步之间的证据边界。|

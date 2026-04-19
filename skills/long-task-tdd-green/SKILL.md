@@ -1,6 +1,6 @@
 ---
 name: long-task-tdd-green
-description: "Use when dispatched by long-task-tdd Step 2 — minimal implementation strictly aligned with feature design §4/§6/§8; respect env-guide §4 constraints; emit server startup output"
+description: "Use when dispatched by long-task-work-tdd Step 3b — minimal implementation strictly aligned with feature design §4/§6/§8; respect env-guide §4 constraints; emit server startup output"
 ---
 
 # TDD Green — 最小化实现
@@ -30,7 +30,7 @@ description: "Use when dispatched by long-task-tdd Step 2 — minimal implementa
 - 公共方法名 / 参数 / 返回类型 / 异常类型 **必须与 §4 字面一致**
 - 模块划分 / 调用链 **必须与 §6 一致**
 - 数据结构字段名 / 类型 / 可空性 **必须与 §8 一致**
-- 发现无法字面对齐（设计有歧义 / 实现方式客观更优）→ **不偷偷偏离**，按 `../long-task-tdd/references/drift-protocol.md` 走（更新设计 OR 修实现，同一 commit）；无法本地消解 → `blocker` 前缀 `[CONTRACT-DEVIATION]`
+- 发现无法字面对齐（设计有歧义 / 实现方式客观更优）→ **不偷偷偏离**，按 `../long-task-work-tdd/references/drift-protocol.md` 走（更新设计 OR 修实现，同一 commit）；无法本地消解 → `blocker` 前缀 `[CONTRACT-DEVIATION]`
 
 ## 最小实现规则
 
@@ -63,7 +63,7 @@ description: "Use when dispatched by long-task-tdd Step 2 — minimal implementa
 
 ## 运行测试
 
-按 `../long-task-tdd/references/silent-execution.md` 静默执行。**本阶段 exit = 0 是预期**；exit != 0 意味着实现有问题，提取最后 100 行日志诊断。
+按 `../long-task-work-tdd/references/silent-execution.md` 静默执行。**本阶段 exit = 0 是预期**；exit != 0 意味着实现有问题，提取最后 100 行日志诊断。
 
 修复后**只重跑触及的测试**，不跑全套；最终再跑一次全量确认无回归。
 

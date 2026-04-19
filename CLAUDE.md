@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 33 skills loaded on-demand via the `Skill` tool (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. Standalone `/deep-explore` skill for on-demand codebase exploration.
+**Claude Code skill plugin** (`long-task-agent`) enabling multi-session execution of complex software projects. Implements: Requirements → UCD → Design → ATS → Init → Worker (Design / TDD / ST phases, one session each) → System-ST → Finalize, with Hotfix and Increment re-entry points. State bridges via on-disk artifacts; `feature-list.json` `sub_status` field is the single source of truth for phase routing. 32 skills loaded on-demand via the `Skill` tool (18 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd); bootstrap router (`using-long-task`) delegates phase detection to `scripts/phase_route.py` which emits `next_skill` for direct Skill-tool dispatch. **Routing discipline**: all `Skill` tool targets come from `phase_route.py`; within a session, only `Agent`-tool SubAgent dispatch — no Skill-to-Skill invocation. Standalone `/deep-explore` skill for on-demand codebase exploration.
 
 ## Key Commands
 
@@ -36,7 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### 33-Skill System (19 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills)
+### 32-Skill System (18 top-level + 5 increment sub-skills + 3 requirements sub-skills + 3 init sub-skills + 3 tdd sub-skills dispatched by work-tdd)
 
 #### Phase Skills
 
@@ -65,14 +65,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 #### Discipline Skills (invoked by work-{design,tdd,st} phase skills)
 
-Each SubAgent receives `feature_design_path` and re-reads the design doc independently — consistency over deduplication. **Note**: `long-task-tdd` is the sole exception — it runs **in the main agent context** as a Skill (not a SubAgent) and itself dispatches R/G/R as SubAgents; all other rows below run as independent SubAgents.
+Each SubAgent receives `feature_design_path` and re-reads the design doc independently — consistency over deduplication. All rows below run as independent SubAgents dispatched via the `Agent` tool.
 
-| Skill | Purpose | Invoked by | Mode |
-|-------|---------|------------|------|
-| `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory | `long-task-work-design` | SubAgent |
-| `long-task-tdd` | TDD orchestrator — dispatches `long-task-tdd-{red,green,refactor}` SubAgents and aggregates their contracts | `long-task-work-tdd` | **Skill in main agent** |
-| `long-task-quality` | Coverage Gate | `long-task-work-tdd` | SubAgent |
-| `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, Chrome DevTools MCP + ISO/IEC/IEEE 29119) | `long-task-work-st` | SubAgent |
+| Skill | Purpose | Dispatched by |
+|-------|---------|---------------|
+| `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, diagrams, test inventory | `long-task-work-design` |
+| `long-task-tdd-red` / `-green` / `-refactor` | TDD R/G/R three SubAgents (see `#### sub-skills of long-task-work-tdd` below) | `long-task-work-tdd` Step 3a/3b/3c |
+| `long-task-quality` | Coverage Gate | `long-task-work-tdd` Step 4 |
+| `long-task-feature-st` | Black-Box Feature Acceptance Testing (self-managed lifecycle, Chrome DevTools MCP + ISO/IEC/IEEE 29119) | `long-task-work-st` |
 
 #### Discipline Skills (sub-skills of long-task-increment)
 
@@ -106,15 +106,15 @@ All dispatched by `long-task-init` orchestrator; each returns a Structured Retur
 | `long-task-init-bootstrap` | Step 4 — generate `init.sh` / `init.ps1` from recipes + tech_stack; zero-approval with internal `bash -n` + PowerShell syntax self-check |
 | `long-task-init-features` | Step 5 — generate `long-task-guide.md` + populate `feature-list.json` + `.env.example` + project-specific `scripts/check_configs.py` + validate; returns LOC distribution for sizing gate |
 
-#### Discipline Skills (sub-skills of long-task-tdd)
+#### Discipline Skills (sub-skills of long-task-work-tdd)
 
-`long-task-tdd` orchestrator runs **in the main agent context** (invoked as a Skill by `long-task-work-tdd`; **NOT** wrapped as a SubAgent). It dispatches R/G/R as independent SubAgents (depth 1 from main agent). Each R/G/R returns a Structured Return Contract; the main-agent orchestrator aggregates them into the unified `long-task-tdd` contract consumed by `long-task-work-tdd` Step 4. Approval handling via `skills/long-task-work/references/approval-revise-loop.md` (no user approval mid-cycle — fail/blocked escalate to `long-task-work-tdd`).
+Dispatched by `long-task-work-tdd` Step 3a/3b/3c as three independent SubAgents via the `Agent` tool (depth 1 from main agent). Each returns a Structured Return Contract; `long-task-work-tdd` Step 3d aggregates them into the TDD-layer evidence consumed by Step 4 Quality Gates. Approval handling via `skills/long-task-work/references/approval-revise-loop.md` (no user approval mid-cycle — fail/blocked escalate to `long-task-work-tdd`). **No intermediate `long-task-tdd` orchestrator skill exists** — the orchestration is inlined into `long-task-work-tdd/SKILL.md` Step 3, keeping all Skill-tool routing decisions inside `scripts/phase_route.py`.
 
 | Skill | Purpose |
 |-------|---------|
-| `long-task-tdd-red` | Step 1 — write failing tests driven by §7 test inventory; apply Rule 1-7 (category coverage, negative ratio, assertion quality, wrong-impl challenge, real tests, UI positive render) |
-| `long-task-tdd-green` | Step 2 — minimal implementation strictly aligned with feature design §4/§6/§8; env-guide sync; startup output requirements |
-| `long-task-tdd-refactor` | Step 3 — cleanup while keeping tests green; design alignment re-check; static analysis gate from env-guide §3 |
+| `long-task-tdd-red` | Step 3a — write failing tests driven by §7 test inventory; apply Rule 1-7 (category coverage, negative ratio, assertion quality, wrong-impl challenge, real tests, UI positive render) |
+| `long-task-tdd-green` | Step 3b — minimal implementation strictly aligned with feature design §4/§6/§8; env-guide sync; startup output requirements |
+| `long-task-tdd-refactor` | Step 3c — cleanup while keeping tests green; design alignment re-check; static analysis gate from env-guide §3 |
 
 #### Meta Skills
 
@@ -150,11 +150,10 @@ using-long-task (router — delegates to scripts/phase_route.py)
    │      ├─→ long-task-work-design (feature has sub_status=design_pending)
    │      │       └─→ long-task-feature-design (SubAgent)
    │      ├─→ long-task-work-tdd (feature has sub_status=tdd_pending)
-   │      │       ├─→ long-task-tdd (Skill in main agent; orchestrates R/G/R)
-   │      │       │       ├─→ long-task-tdd-red (SubAgent — write failing tests)
-   │      │       │       ├─→ long-task-tdd-green (SubAgent — minimal impl + design align)
-   │      │       │       └─→ long-task-tdd-refactor (SubAgent — cleanup + static gate)
-   │      │       └─→ long-task-quality (SubAgent)
+   │      │       ├─→ long-task-tdd-red (SubAgent — Step 3a — write failing tests)
+   │      │       ├─→ long-task-tdd-green (SubAgent — Step 3b — minimal impl + design align)
+   │      │       ├─→ long-task-tdd-refactor (SubAgent — Step 3c — cleanup + static gate)
+   │      │       └─→ long-task-quality (SubAgent — Step 4)
    │      └─→ long-task-work-st (feature has sub_status=st_pending)
    │              └─→ long-task-feature-st (SubAgent) → Inline Check → Persist
    └─→ long-task-st (ALL active features sub_status=done)
@@ -319,16 +318,15 @@ long-task-agent/
 │   │     + references/{systematic-debugging,subagent-development,worktree-isolation,
 │   │                    structured-return-contract,approval-revise-loop}.md (shared by phase skills)
 │   ├── long-task-work-design/SKILL.md (Phase 2a — per-feature design)
-│   ├── long-task-work-tdd/SKILL.md (Phase 2b — TDD + Quality)
+│   ├── long-task-work-tdd/SKILL.md (Phase 2b — TDD Step 3a/3b/3c DISPATCH + Step 4 Quality)
+│   │     + references/{testing-anti-patterns,silent-execution,drift-protocol}.md (shared by R/G/R SubAgents)
 │   ├── long-task-work-st/SKILL.md (Phase 2c — Feature-ST + Inline + Persist)
 │   ├── long-task-feature-st/SKILL.md + prompts/e2e-scenario-prompt.md
 │   ├── long-task-st/SKILL.md + references/st-recipes.md
-│   ├── long-task-tdd/SKILL.md (orchestrator — DISPATCH red/green/refactor)
-│   │     + testing-anti-patterns.md
-│   │     + references/{ui-error-detection,silent-execution,drift-protocol}.md
-│   ├── long-task-tdd-red/SKILL.md (Step 1 — failing tests, Rule 1-7)
-│   ├── long-task-tdd-green/SKILL.md (Step 2 — minimal impl, design align §4/§6/§8)
-│   ├── long-task-tdd-refactor/SKILL.md (Step 3 — cleanup + static analysis gate)
+│   ├── long-task-tdd-red/SKILL.md (Step 3a — failing tests, Rule 1-7)
+│   │     + references/ui-error-detection.md
+│   ├── long-task-tdd-green/SKILL.md (Step 3b — minimal impl, design align §4/§6/§8)
+│   ├── long-task-tdd-refactor/SKILL.md (Step 3c — cleanup + static analysis gate)
 │   ├── long-task-quality/SKILL.md + coverage-recipes.md
 │   ├── long-task-finalize/SKILL.md
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
@@ -353,7 +351,7 @@ long-task-agent/
 - [skills/long-task-work/references/systematic-debugging.md](skills/long-task-work/references/systematic-debugging.md) — Systematic debugging
 - [skills/long-task-work/references/subagent-development.md](skills/long-task-work/references/subagent-development.md) — Subagent-driven development
 - [skills/long-task-work/references/worktree-isolation.md](skills/long-task-work/references/worktree-isolation.md) — Worktree isolation
-- [skills/long-task-tdd/references/ui-error-detection.md](skills/long-task-tdd/references/ui-error-detection.md) — UI error detection
+- [skills/long-task-tdd-red/references/ui-error-detection.md](skills/long-task-tdd-red/references/ui-error-detection.md) — UI error detection
 - [skills/long-task-st/references/st-recipes.md](skills/long-task-st/references/st-recipes.md) — ST tool recipes per language
 - [skills/long-task-explore/SKILL.md](skills/long-task-explore/SKILL.md) — Standalone deep codebase exploration
 - [agents/codebase-locator.md](agents/codebase-locator.md) — Codebase structure locator (breadth-first)

@@ -1,6 +1,6 @@
 ---
 name: long-task-tdd-refactor
-description: "Use when dispatched by long-task-tdd Step 3 — clean up while keeping tests green, re-verify §4/§6/§8 alignment, run static analysis gate from env-guide §3"
+description: "Use when dispatched by long-task-work-tdd Step 3c — clean up while keeping tests green, re-verify §4/§6/§8 alignment, run static analysis gate from env-guide §3"
 ---
 
 # TDD Refactor — 清理
@@ -17,7 +17,7 @@ description: "Use when dispatched by long-task-tdd Step 3 — clean up while kee
 ## 重构规则
 
 - 抽取重复、改进命名、简化分支结构
-- 每次改动按 `../long-task-tdd/references/silent-execution.md` 静默执行，**仅**重跑触及改动文件的测试
+- 每次改动按 `../long-task-work-tdd/references/silent-execution.md` 静默执行，**仅**重跑触及改动文件的测试
 - 重构全部完成后跑一次全量套件，确认无回归
 - **不新增功能**；新增功能应回到 Red 写新测试驱动
 
@@ -30,7 +30,7 @@ description: "Use when dispatched by long-task-tdd Step 3 — clean up while kee
    - 跨模块移动的函数
    - 新增或调整的数据字段
 3. 对每个改动符号，核对是否仍与 §4 / §6 / §8 对应行字面一致
-4. 不一致 → 按 `../long-task-tdd/references/drift-protocol.md` 处理：
+4. 不一致 → 按 `../long-task-work-tdd/references/drift-protocol.md` 处理：
    - 偏离合理 → 更新对应设计节 + 复查 §7 Test Inventory + 设计与代码**同一 commit**
    - 偏离不合理 → **回滚重构**
    - 无法本地消解 → blocker `[CONTRACT-DEVIATION]`
@@ -40,7 +40,7 @@ description: "Use when dispatched by long-task-tdd Step 3 — clean up while kee
 
 若 `env-guide.md §3` 列出静态分析命令（Checkstyle / Ruff / Pylint / ESLint / cppcheck 等）：
 
-1. 设计对齐通过且重构全部完成后，按 `../long-task-tdd/references/silent-execution.md` 静默执行每个工具
+1. 设计对齐通过且重构全部完成后，按 `../long-task-work-tdd/references/silent-execution.md` 静默执行每个工具
 2. 退出码非零 → `grep -E "error|warning" /tmp/static-$$.log` 提取违规
 3. **退出重构之前修复全部违规** —— 违规是阻塞性的
 4. 工具自行读取配置（`.pylintrc` / `checkstyle.xml` / `eslint.config.js` 等）；**不要**手动解析配置
