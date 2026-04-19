@@ -115,7 +115,7 @@ Lite 挖掘期间，如出现下列任一，无缝切换至 Expert 轨道：
 
 3. 以上下文驱动的参数分发 `long-task-explore`：
 
-   > **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-explore`
+   > **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-explore`
    > **input**: `depth`（由上文档位决定，或省略触发自动检测）, `focus`（推断的维度列表）,
    >   `path`（推断路径或 `.`）, `user_question`（用户描述摘要）
    > **expect**: 仅结构化摘要，含下列 JSON-like keys —
@@ -242,7 +242,7 @@ Lite 挖掘后，进入 Step 7–11（DISPATCH quality sub-skill）→ Step 11b 
 
 ### E10：一致性校验 [仅 Expert]
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-requirements-alignment`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-requirements-alignment`
 > **input**: `pain_map`, `jtbd`, `workarounds`, `walkthrough_findings`, `hidden_reqs_yes_answers`,
 >   `fr_list`, `nfr_list`（从 quality 的 `draft_sections` 提取）
 > **expect**: Structured Return Contract；`next_step_input` 含 `alignment_report` /
@@ -267,7 +267,7 @@ pass 后：`new_requirements` 并入 SRS FR/NFR 列表；`open_questions` 进 §
 | ≤ 200K tokens | `standard` | 3-12 | 约 200-600 行代码 + 测试 |
 | > 200K tokens | `extended` | 5-20 | 约 500-3000 行代码 + 测试 |
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-requirements-quality`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-requirements-quality`
 > **input**: `raw_requirements`, `raw_nfrs`, `roles`, `constraints`, `glossary_terms`,
 >   `interfaces`, `exclusions`, `sizing_tier`, `srs_template_path`
 > **expect**: Structured Return Contract；`next_step_input` 含 `draft_sections` /
@@ -298,7 +298,7 @@ pass 后：`new_requirements` 并入 SRS FR/NFR 列表；`open_questions` 进 §
 
 ## Step 13：SRS 合规评审
 
-> **DISPATCH** → 启动独立 SubAgent 执行 reviewer（加载 `prompts/srs-reviewer-prompt.md`）
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载 `prompts/srs-reviewer-prompt.md` 并执行 reviewer
 > **input**: `project_context`, `srs_draft`（来自 quality 的 `next_step_input.draft_sections`），
 >   `requirement_id_list`, `track`（`lite` / `expert`，决定 Group P 是否 PASS-SKIPPED）
 > **expect**: Structured Return Contract；`evidence` 含 Group R/A/C/S/D/G/Z/P 裁决列表；
@@ -330,7 +330,7 @@ Cycle 2 仍 fail → escalate。
 
 ### Step 15：保存 SRS 文档与延后待办清单
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-requirements-finalize`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-requirements-finalize`
 > **input**: `approved_srs_sections`（Step 14 审批通过的章节 map）, `deferred_items`（Step 7–11 第 3 步确认的延后清单，可空）, `topic_name`, `single_round_flag`, `alignment_summary_text`（Expert 轨道；Lite 省略）, `srs_template_path`
 > **expect**: Structured Return Contract；`artifacts_written` 含 SRS 路径 + 可选 deferred 路径；`next_step_input` 含 `srs_path` / `topic`
 

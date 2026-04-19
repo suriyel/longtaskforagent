@@ -47,7 +47,7 @@ python scripts/init_project.py <project-name> --path . --lang <python|java|types
 
 ### 3. 生成 env-guide.md
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-init-env`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-init-env`
 > **input**: `project_lang`（来自 init_project.py 写入的 feature-list.json.tech_stack）
 > **expect**: Structured Return Contract；`artifacts_written=["env-guide.md"]`；`next_step_input` 含 `services[]` / `env_activation_cmd` / `build_cmd` / `test_cmd` / `coverage_cmd` / `tool_version_pins` / `ui_detected`
 
@@ -55,7 +55,7 @@ python scripts/init_project.py <project-name> --path . --lang <python|java|types
 
 ### 4. 生成 init.sh / init.ps1
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-init-bootstrap`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-init-bootstrap`
 > **input**: （从 feature-list.json.tech_stack + env-guide.md §2 / §3 自行定位）
 > **expect**: Structured Return Contract；`artifacts_written=["init.sh", "init.ps1"]`；`next_step_input` 含 `env_manager` / `runtime_version` / `install_commands`；`evidence` 必含 `"bash -n clean"` 与 PowerShell parser 通过记录
 
@@ -63,7 +63,7 @@ python scripts/init_project.py <project-name> --path . --lang <python|java|types
 
 ### 5. 生成 long-task-guide.md 与 feature-list.json 特性
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-init-features`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-init-features`
 > **input**: （从 SRS / Design / ATS / env-guide.md / feature-list.json.tech_stack 自行定位）
 > **expect**: Structured Return Contract；`artifacts_written` 含 `long-task-guide.md` / `feature-list.json` / `.env.example` / `.gitignore` / `scripts/check_configs.py`；`next_step_input` 含 `feature_count` / `loc_distribution` / `feature_summary` / `ui_feature_count` / `config_count`
 

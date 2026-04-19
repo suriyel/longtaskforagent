@@ -19,15 +19,17 @@
 ### 1.2 DISPATCH stub 编写规则
 
 ```markdown
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-increment-impact`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-increment-impact`
 > **input**: `new_reqs`, `wave`, `brownfield_esi`
 > **expect**: Structured Return Contract；`next_step_input` 含 `impact_matrix`
 ```
 
-- "启动独立 SubAgent" 字面不可省 —— 表达"新空上下文、不继承主 agent 历史"
+- "创建独立 SubAgent" 字面不可省 —— 表达"新空上下文、不继承主 agent 历史"
 - 固定路径（`feature-list.json`、`docs/plans/*-<kind>.md`）**不入 `input`**；sub-skill 自行 glob 定位
 - 仅主 agent 知道的动态值（用户输入、上一步 `next_step_input` 片段）才入 `input`
 - stub 越短，主 agent 组装 prompt 的成本越低
+- **分层调用**：stub 里 `` skill `long-task:X` `` 指 SubAgent 启动后**内部**用 Skill tool 加载的 skill 名；Agent tool 的 `subagent_type` 填 harness 通用壳 —— Claude Code 用 `Agent`，OpenCode 用 `General`。主 agent 先起壳，壳里再 Skill tool 分发
+- **反模式**：把 skill 名（如 `long-task-requirements-quality`）直接作为 Agent tool 的 `subagent_type` —— harness 会报 `Agent type 'xxx' not found`。skill 名走 subagent 内部的 Skill tool；壳名走 Agent tool 的 `subagent_type`，两层不可混
 
 ### 1.3 五字段返回契约
 

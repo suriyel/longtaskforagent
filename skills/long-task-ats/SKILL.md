@@ -146,7 +146,7 @@ ATS 把这些决策前置，使 Init 与 feature-st 有可审计的具体约束�
 
 ### 8. ATS 合规评审
 
-> **DISPATCH** → 启动独立 SubAgent 执行 reviewer（加载 `agents/ats-reviewer.md`）
+> **DISPATCH** → 创建独立 SubAgent（subagent_type=`long-task:ats-reviewer`），加载 `agents/ats-reviewer.md` 并执行 reviewer
 > **input**: `ats_draft`, `srs_path`, `design_path`, `ucd_path`（可选）
 > **expect**: Structured Return Contract；`evidence` 含 R1-R6 + R8 裁决列表；`blockers` 含 `[CROSS-REF CONFLICT]` 条目（若有）；`next_step_input` 含 `major_defect_count` / `minor_defect_count` / `review_report_markdown`
 

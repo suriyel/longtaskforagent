@@ -159,7 +159,7 @@ Next-step inputs:
 ## DISPATCH 语法（所有 Worker sub-skill 通用）
 
 ```markdown
-> **DISPATCH** → 启动独立 SubAgent 加载并执行 skill `<sub-skill-name>`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:<sub-skill-name>`
 > **input**: <field1>, <field2>, ...
 > **expect**: Structured Return Contract (status/artifacts_written/next_step_input/blockers/evidence)
 ```

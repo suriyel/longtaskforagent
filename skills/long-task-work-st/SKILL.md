@@ -43,7 +43,7 @@ description: "Use when feature-list.json has a feature with sub_status=st_pendin
 
 ### 3. DISPATCH Feature-ST SubAgent
 
-> **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-feature-st`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-feature-st`
 > **input**: `feature_id`, `feature_list_path`, `feature_design_doc_path=docs/features/YYYY-MM-DD-<slug>.md`, `working_dir`
 > **expect**: Structured Return Contract；`artifacts_written` 必须含 `docs/test-cases/feature-<id>-<slug>.md`
 

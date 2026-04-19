@@ -45,7 +45,7 @@ description: "Use when increment-request.json exists - collect incremental requi
 
 ### 3. 影响评估
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-increment-impact`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-increment-impact`
 > **input**: `new_reqs`, `wave`, `brownfield_esi`
 > **expect**: Structured Return Contract；`next_step_input` 含 `impact_matrix` / `api_changes` / `hard_impact_ids` / `soft_impact_ids` / `deprecated_ids` / `new_reqs_needing_features` / `breaking_contracts`
 
@@ -66,7 +66,7 @@ description: "Use when increment-request.json exists - collect incremental requi
 
 ### 4. 设计修订
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-increment-design`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-increment-design`
 > **input**: `new_reqs`, `impact_matrix`, `api_changes`, `breaking_contracts`
 > **expect**: Structured Return Contract；`next_step_input` 含 `design_sections_changed` / `new_contracts` / `modified_contracts` / `env_guide_touched_sections`；若 env-guide.md §3/§4 被改，`blockers` 含 `env-guide-approval-pending`
 
@@ -74,7 +74,7 @@ description: "Use when increment-request.json exists - collect incremental requi
 
 ### 4b. ATS 修订
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-increment-ats`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-increment-ats`
 > **input**: `new_reqs`, `new_contracts`, `modified_contracts`
 > **expect**: Structured Return Contract；`next_step_input` 含 `mapping_rows_added/modified/deprecated` / `new_categories` / `needs_reviewer_rerun`（或 `skipped: true`）
 
@@ -82,7 +82,7 @@ description: "Use when increment-request.json exists - collect incremental requi
 
 ### 5. UCD 修订
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-increment-ucd`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-increment-ucd`
 > **input**: `ui_reqs`（从 `new_reqs` 过滤 ui 相关子集）
 > **expect**: Structured Return Contract；`next_step_input` 含 `components_added/modified/deprecated` / `tokens_changed`（或 `skipped: true`）
 
@@ -90,7 +90,7 @@ description: "Use when increment-request.json exists - collect incremental requi
 
 ### 6. SRS 更新与特性分解
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-increment-srs`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-increment-srs`
 > **input**: `new_reqs`, `impact_matrix`, `api_changes`, `wave`, `brownfield_esi`
 > **expect**: Structured Return Contract；`next_step_input` 含 `new_feature_ids` / `modified_feature_ids` / `soft_touched_feature_ids` / `deprecated_feature_ids` / `wave`；`evidence` 须含 `validate_features.py: OK`
 

@@ -64,7 +64,7 @@ sub-skill 返回 Structured Return Contract 后，按本模板处理。
 ## DISPATCH 语法
 
 ```markdown
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `<name>`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:<name>`
 > **input**: <field1>, <field2>, ...
 > **expect**: Structured Return Contract (status/artifacts_written/next_step_input/blockers/evidence)
 ```

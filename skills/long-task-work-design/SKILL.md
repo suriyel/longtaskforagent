@@ -52,7 +52,7 @@ python scripts/check_configs.py feature-list.json --feature <id>
 
 ### 4. DISPATCH Feature Design SubAgent
 
-> **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-feature-design`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-feature-design`
 > **input**: `feature_id`, `feature_list_path`, `design_section=<行号起止>`, `srs_section=<FR-xxx 行号起止>`, `ucd_section=<仅 ui:true>`, `output_path=docs/features/YYYY-MM-DD-<slug>.md`
 > **expect**: Structured Return Contract；`next_step_input.feature_design_path` 必须存在
 

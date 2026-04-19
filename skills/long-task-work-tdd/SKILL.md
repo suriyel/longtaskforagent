@@ -43,7 +43,7 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 
 **3a. Red — DISPATCH SubAgent**
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-tdd-red`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-tdd-red`
 > **input**: `feature_id`, `feature_list_path`, `feature_design_path`
 > **expect**: Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `test_count`；`evidence` 以 `Rule N <key>=<value>` 形式逐行报告 Rule 1-7 关键指标（categories / negative_ratio / low_value_ratio / real_test_count）
 
@@ -54,7 +54,7 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 
 **3b. Green — DISPATCH SubAgent**
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-tdd-green`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-tdd-green`
 > **input**: `feature_id`, `feature_list_path`, `feature_design_path`, `feature_test_files`（从 3a next_step_input）, `test_count`
 > **expect**: Structured Return Contract；`next_step_input` 含 `impl_files[]` / `all_tests_pass` / `design_alignment: {§4, §6, §8, drift}` / `env_guide_synced`
 
@@ -66,7 +66,7 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 
 **3c. Refactor — DISPATCH SubAgent**
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-tdd-refactor`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-tdd-refactor`
 > **input**: `feature_id`, `feature_list_path`, `feature_design_path`, `feature_test_files`, `impl_files`
 > **expect**: Structured Return Contract；`next_step_input` 含 `static_analysis_ok` / `static_tool` / `static_violations` / `design_alignment_final` / `tests_still_pass`
 
@@ -95,7 +95,7 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 
 ### 4. DISPATCH Quality Gates SubAgent
 
-> **DISPATCH** → 启动独立 SubAgent 加载并执行 `long-task-quality`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-quality`
 > **input**: `feature_id`, `feature_list_path`, `feature_test_files=<from-TDD-return>`, `working_dir`
 > **expect**: Structured Return Contract；`next_step_input` 必须含 `coverage_line` / `coverage_branch` / `srs_trace_coverage.uncovered_fr_ids`
 

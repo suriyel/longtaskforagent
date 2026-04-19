@@ -132,7 +132,7 @@ Next-step inputs (summary):
 ## DISPATCH 语法
 
 ```markdown
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `<sub-skill-name>`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:<sub-skill-name>`
 > **input**: <field1>, <field2>, ...
 > **expect**: Structured Return Contract (status/artifacts_written/next_step_input/blockers/evidence)
 ```
@@ -146,7 +146,7 @@ Next-step inputs (summary):
 ```markdown
 ### 3. 影响评估
 
-> **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-increment-impact`
+> **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-increment-impact`
 > **input**: `new_reqs`, `wave`, `brownfield_esi`
 > **expect**: Structured Return Contract；`next_step_input` 含 `impact_matrix` /
 >   `api_changes` / `hard_impact_ids` / `breaking_contracts`
