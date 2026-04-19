@@ -30,7 +30,6 @@ description: "Use when dispatched by long-task-increment Step 6 — update SRS i
    - `id`：当前最大 + 1（持续递增）
    - `wave`：当前批次号
    - `status`：`"failing"`
-   - **不写 `sub_status`**（已废弃）；router 会在 `current=null` 时挑依赖就绪者作为下一 current，从 design 阶段开始
    - `srs_trace`：新需求 ID 数组
    - `verification_steps`：可选（来自新验收标准）
    - `dependencies`：按需

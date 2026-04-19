@@ -40,7 +40,6 @@ description: "Use when dispatched by long-task-init Step 5 — generate long-tas
    - `priority` ← P0/P1 → `high`，P2 → `medium`，P3 → `low`
    - `dependencies` ← §6.2 依赖链图
    - `status` 始终 `"failing"`（推进到 passing 由 `long-task-work-st` Persist 负责）
-   - **不写 `sub_status`**（已废弃）；调度由根 `current` 锁 + router 挑选驱动
    - UI 特性（srs_trace 任一 FR 的 ATS 类别含 UI）→ `ui: true` + `ui_entry: "/path"`；至少 1 条带 `[devtools]` 前缀的 verification_step 断言**正面视觉存在**
    - 前端特性 `dependencies[]` 必须列出后端 API 依赖特性
    - 排序遵循 §6.1 行顺序（Design 已按优先级 + backend/frontend 配对）

@@ -11,13 +11,6 @@ description: "Use when router emits next_skill=long-task-work-st - run feature-l
 
 **核心原则：** Feature-ST 子步骤在**独立 SubAgent**（`long-task-feature-st`）中运行；Inline Check 与 Persist 直接在主 agent 执行（无 SubAgent）。契约见 `../using-long-task/references/structured-return-contract.md`；返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
-**一致性重读（强制）：**
-1. 调 `python scripts/phase_route.py --json` 读 `next_skill` / `feature_id`（`target_feature`）
-2. 读 `docs/features/YYYY-MM-DD-<slug>.md` **全文**（用于 ST 用例生成 + Inline 契约/测试清单交叉检查）
-3. 读 `docs/plans/*-srs.md` 中 `srs_trace` 指向的 FR/NFR 节（ST 用例验收标准来源）
-4. 读 `docs/plans/*-ats.md`（如存在）—— ATS 类别约束 ST 必须覆盖哪些场景
-5. 读 `env-guide.md §1 服务生命周期` + `§3 测试命令` + `§4 codebase constraints`
-
 **静默执行协议：** 与其他 phase skill 一致。
 
 ## Checklist

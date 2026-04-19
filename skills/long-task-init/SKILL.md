@@ -106,42 +106,6 @@ git commit -m "chore: initialize long-task project scaffold
 
 **移交**：提示用户开新会话；`using-long-task` 调 `phase_route.py`，router 会从 `current=null` 出发挑第一个依赖就绪的特性、emit `starting_new=true`，自动路由至 `long-task-work-design`。主 agent 在此保留 handoff 控制权（不在任何 sub-skill 内自动触发，也不自动开新会话）。
 
-## Feature List Schema
-
-根结构：
-```json
-{
-  "project": "project-name",
-  "created": "2025-01-15",
-  "tech_stack": {
-    "language": "python|java|typescript|c|cpp",
-    "test_framework": "pytest|junit|vitest|gtest|...",
-    "coverage_tool": "pytest-cov|jacoco|c8|gcov|..."
-  },
-  "quality_gates": {"line_coverage_min": 90, "branch_coverage_min": 80},
-  "constraints": ["Hard limit — one string per item"],
-  "assumptions": ["Implicit belief — one string per item"],
-  "required_configs": [
-    {
-      "name": "Display name", "type": "env|file",
-      "key": "ENV_VAR (env type)", "path": "path/to/file (file type)",
-      "description": "...", "required_by": [1, 3], "check_hint": "..."
-    }
-  ],
-  "features": [...]
-}
-```
-
-每个特性：
-```json
-{
-  "id": 1, "category": "core", "title": "...", "description": "...",
-  "priority": "high|medium|low", "status": "failing|passing",
-  "srs_trace": ["FR-001"], "verification_steps": ["..."],
-  "dependencies": [], "ui": false, "ui_entry": "/optional-path"
-}
-```
-
 ## 关键规则
 
 - **主 agent 不读 SRS / Design / ATS 全文** —— sub-skill 在其 SubAgent 上下文自行加载；主 agent 只按 evidence + next_step_input 做决策

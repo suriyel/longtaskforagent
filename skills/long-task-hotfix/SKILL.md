@@ -116,7 +116,6 @@ python scripts/validate_bugfix_request.py bugfix-request.json
 - `dependencies`：非空则置为 `[fixed_feature_id]`（确保 Worker 先处理原特性再做此修复）；为空则置 `[]`
 - `ui`：若 `feature_id` 非空，使用关联特性的 `ui` 字段；否则 `false`
 - `wave`：使用 `feature-list.json` `waves` 数组中当前最大的 wave id
-- **不写 `sub_status`**（已废弃）。新 bugfix 特性 `status=failing` 即可；router 会在 `current` 为 null 时按依赖挑选，bugfix 依赖其被修特性已 passing 时方可就绪，自然走完整 design → tdd → st 流水线
 - **ATS 提示**：若 `fixed_feature_id` 非空且 ATS 文档存在（`docs/plans/*-ats.md`），在 ATS 映射表中查找关联特性的需求。将 `srs_trace` 设为包含关联特性的需求 ID，以便下游 feature-st 能从 SRS 验收标准推导所需测试用例
 
 新增后校验：
