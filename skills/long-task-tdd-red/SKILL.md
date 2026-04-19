@@ -211,7 +211,7 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
 
 ## Structured Return Contract
 
-严格按以下格式返回：
+严格按以下格式返回。`next_step_input` 仅含 Green / Refactor 真正消费的 2 个字段；Rule 1-7 的质量指标在 `evidence` 中以 `Rule N <key>=<value>` 形式逐行报告（便于 orchestrator/审计 grep）。
 
 ```markdown
 ## SubAgent Result: long-task-tdd-red
@@ -220,17 +220,15 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
 **artifacts_written**: [测试文件路径，相对项目根]
 **next_step_input**: {
   "feature_test_files": [测试文件路径],
-  "test_count": <N>,
-  "all_failed": true,
-  "categories_covered": ["FUNC/happy", "FUNC/error", "BNDRY/empty", "SEC/injection", "INTG/db"],
-  "negative_ratio": 0.45,
-  "real_test_count": 2,
-  "low_value_ratio": 0.10
+  "test_count": <N>
 }
 **blockers**: [若 status=blocked 则列出]
 **evidence**: [
-  "N tests written; negative_ratio=<X>; real_tests=<Y>; low_value_ratio=<Z>",
-  "All N FAILED as expected (sample: test_login_valid_creds → ImportError: login)",
+  "All <N> tests FAILED as expected (sample: test_login_valid_creds → ImportError: login)",
+  "Rule 1 categories: FUNC/happy, FUNC/error, BNDRY/empty, SEC/injection, INTG/db",
+  "Rule 2 negative_ratio=<X> (≥ 0.40)",
+  "Rule 3 low_value_ratio=<Z> (≤ 0.20)",
+  "Rule 5 real_test_count=<Y> (≥ 1 or pure-function exempt)",
   "check_real_tests.py: OK"
 ]
 ```

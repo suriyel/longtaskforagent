@@ -68,7 +68,7 @@ digraph tdd {
 
 > **DISPATCH** → 启动独立 SubAgent 执行 skill `long-task-tdd-red`
 > **input**: `feature_id`, `feature_list_path`, `feature_design_path`
-> **expect**: Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `test_count` / `all_failed` / `categories_covered[]` / `negative_ratio` / `real_test_count` / `low_value_ratio`
+> **expect**: Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `test_count`；`evidence` 段以 `Rule N <key>=<value>` 形式复述 Rule 1-7 关键指标（categories / negative_ratio / low_value_ratio / real_test_count）供聚合段引用
 
 按 `../long-task-work/references/approval-revise-loop.md` 处理：
 - `status: fail` → Failure Addendum 重分发（计入 2 轮上限；超限 → 转 blocked 返 work-tdd）
