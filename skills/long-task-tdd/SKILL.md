@@ -9,22 +9,7 @@ description: "Use when implementing a feature through TDD in a long-task project
 
 **违反规则的文字就是违反规则的精神。**
 
-## 调用模式
-
-本 skill 由 `long-task-work-tdd` 通过 Skill 工具**在主 agent 上下文**直接调用（**不**封装为 SubAgent）。本 skill 作为 **orchestrator**，在主 agent 上下文依次 DISPATCH 三个独立 SubAgent 分别执行 Red / Green / Refactor；每个子 SubAgent 返回自己的 Structured Return Contract，主 agent **聚合**成统一契约交由 `long-task-work-tdd` Step 4 消费（供 Quality Gates 取 `feature_test_files` / `test_count`）。
-
-- 主 agent 只消费三个子契约的 `next_step_input` + `evidence` 关键字段，不消费其 thinking 原文。
-- 三个子契约原文由主 agent 组装为一条聚合契约后丢弃，不再回流。
-
-嵌套深度：main（work-tdd + tdd 同在此层）→ {red/green/refactor}(1)，= depth 1。
-
 ## Input Contract & Self-Resolution
-
-主 agent 传入的最小动态字段：
-
-- `feature_id` —— 目标特性 ID
-- `feature_list_path` —— `feature-list.json` 路径
-- `feature_design_path` —— 上游 Feature Design 文档（`docs/features/YYYY-MM-DD-<slug>.md`）
 
 orchestrator 启动后**解析一次**，解析结果用于组装 3 个 DISPATCH 的 input（避免各 sub-skill 重复 glob）：
 
