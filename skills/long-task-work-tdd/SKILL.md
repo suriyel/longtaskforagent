@@ -9,18 +9,7 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 
 **开始时宣告：** "I'm using the long-task-work-tdd skill. Let me orient myself."
 
-**核心原则：** Red / Green / Refactor 三个 SubAgent（`long-task-tdd-{red,green,refactor}`）+ Quality Gates SubAgent（`long-task-quality`）**共四个**独立 SubAgent，均由本 skill 直接用 Agent 工具 DISPATCH。路由决策全部收敛到 `scripts/phase_route.py` 的顶层 skill 路由；会话内只剩 SubAgent 分发，无 Skill-to-Skill 调用。
-
-契约见 `../using-long-task/references/structured-return-contract.md`；SubAgent 返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
-
-**一致性重读（强制，每次本阶段会话启动都要做）：**
-1. 读 `feature-list.json` → 按 `sub_status == tdd_pending` 选 lowest-id 特性
-2. 读 `docs/features/YYYY-MM-DD-<slug>.md` **全文**（design 阶段产出；本阶段主要规约来源）
-3. 读 `docs/plans/*-srs.md` 中 `srs_trace` 指向的 FR/NFR 节
-4. 读 `env-guide.md §3`（测试/覆盖率/静态分析命令）+ `§4`（codebase constraints）
-5. 读 `docs/plans/*-design.md` 中 `§4` Internal API Contracts 本特性相关行
-
-**允许重复读同一份 feature design** —— R/G/R 三个 SubAgent 各自也会再读；一致性优先，不做缓存优化。
+Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用 Agent 工具 DISPATCH。契约见 `../using-long-task/references/structured-return-contract.md`；返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
 **静默执行协议：** 所有测试 / 覆盖率 / 静态命令都重定向到 `/tmp/<slug>-$$.log` + exit 文件。永不倾倒完整输出。
 
@@ -33,10 +22,7 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
 - 读 `feature-list.json` → 筛 `sub_status == "tdd_pending"` 且 `deprecated != true` 的特性；按优先级 + id 升序挑第一个（`target_feature`）
 - **若无匹配** → 终止会话并提示：`No feature has sub_status=tdd_pending. Run: python scripts/count_pending.py feature-list.json; start a new session.`
 - 依赖满足检查：`dependencies[]` 中所有 id 必须 `status=passing`。未满足则跳过挑下一个；全部不满足 → AskUserQuestion 升级
-- **硬前置**：`docs/features/YYYY-MM-DD-<slug>.md` 必须存在（design 阶段已产出）。若缺失 → BLOCKED：`Feature design doc missing for #<id>; sub_status inconsistent with disk state. Run migrate_sub_status.py --force or resume design phase.`
-- 读该特性设计文档**全文**；存为 `{feature_design_path}` 供 SubAgent dispatch 使用
-- 读 `docs/plans/*-srs.md` 中 `srs_trace` FR 节；存为 `{srs_section}`
-- 读 `env-guide.md §3 + §4`
+- **硬前置**：`docs/features/YYYY-MM-DD-<slug>.md` 必须存在（design 阶段已产出）。用 Glob 确认存在——**不读全文**；路径存为 `{feature_design_path}`（仅作为 SubAgent dispatch input）。若缺失 → BLOCKED：`Feature design doc missing for #<id>; sub_status inconsistent with disk state. Run migrate_sub_status.py --force or resume design phase.`
 - `git log --oneline -10`
 - 在 `task-progress.md` 当前特性标题下记录：target_feature.id / title / feature_design_path
 
@@ -54,15 +40,6 @@ description: "Use when feature-list.json has a feature with sub_status=tdd_pendi
   - feature design §6 Implementation Summary 指明外部服务交互
 
 ### 3. TDD R-G-R 三段式（本 skill 直接 DISPATCH 三个独立 SubAgent）
-
-**共享铁律**：`NO IMPLEMENTATION CODE WITHOUT A FAILING TEST FIRST`。先写了实现就删掉、重来，没有例外。
-
-**共享资产**（所有 3 个 SubAgent 可引用）：
-- 结构化返回契约：`../using-long-task/references/structured-return-contract.md`
-- 审批-返工循环：`../using-long-task/references/approval-revise-loop.md`（TDD 内部无用户审批闸门；fail/blocked 按下文各 step 处置）
-- 契约-实现漂移协议：`references/drift-protocol.md`（Green / Refactor 共享）
-- 静默执行协议：`references/silent-execution.md`（三阶段共享）
-- 测试反模式清单：`references/testing-anti-patterns.md`（Red 主用，Green / Refactor 参考）
 
 **3a. Red — DISPATCH SubAgent**
 
@@ -171,8 +148,7 @@ git commit -m "tdd: feature #<id> <slug> — tests green, coverage ≥<N>%/<M>%"
 - **每会话一个特性的一个阶段** —— 本阶段只做 TDD + Quality，不做 Feature-ST 也不做 Persist 到 passing
 - **R/G/R / Quality 四个 SubAgent 不可协商** —— 本 skill 必须用 Agent 工具分别 DISPATCH，不在主 agent 内联执行；会话内**不**调任何其它 Skill
 - **无新鲜证据不得翻转 sub_status** —— 测试必须实跑绿，覆盖率必须达标
-- **feature design 文档必读** —— 缺失即 BLOCKED
-- **一致性优先于去重** —— 允许 R/G/R 三个 SubAgent 各自重读 feature design
+- **feature design 文档必须存在** —— 缺失即 BLOCKED；主 agent 不读全文，仅传路径
 
 ## 红旗信号
 
