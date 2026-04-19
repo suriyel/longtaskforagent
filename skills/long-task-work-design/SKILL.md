@@ -11,6 +11,13 @@ description: "Use when router emits next_skill=long-task-work-design - produce p
 
 **核心原则：** Feature Design 子步骤在**独立 SubAgent**中运行（`long-task-feature-design`）。主 Agent 仅分发并消费 **Structured Return Contract** —— 契约与 DISPATCH 语法参见 `../using-long-task/references/structured-return-contract.md`；SubAgent 返回按 `../using-long-task/references/approval-revise-loop.md` 处理。
 
+**一致性重读（允许重复读，一致性优先）：** 启动 5 件事：
+1. 调 `python scripts/phase_route.py --json` → 读 `feature_id`（`target_feature`）与 `starting_new`
+2. 读 `docs/plans/*-srs.md` 对应 `srs_trace` 的 FR/NFR 节
+3. 读 `docs/plans/*-design.md` 对应 `§2.N` 子节
+4. 读 `env-guide.md §4`（存量代码库约束，如存在）
+5. 读 `docs/plans/*-ucd.md`（仅 ui:true）/ `*-ats.md`（若存在）
+
 **静默执行协议：** 每一次构建、测试、检查命令都重定向到 `/tmp/<slug>-$$.log` + exit 文件。永不向主 agent 倾倒完整输出。
 
 ## Checklist
