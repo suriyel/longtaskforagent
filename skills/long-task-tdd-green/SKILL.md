@@ -19,16 +19,16 @@ description: "Use when dispatched by long-task-tdd Step 2 — minimal implementa
 
 ## 设计对齐前置（强制，写任何实现代码前）
 
-本阶段独立重读 `{feature_design_path}`——与 Red 阶段同一份文档，但**本阶段重新消费，一致性优先于去重**。提取三节内容回显给自己：
+本阶段独立重读 `{feature_design_path}`——**一致性优先于去重**：
 
 - **§4 Interface Contract**：每个 PUBLIC 方法的签名（名 / 参数名与类型 / 返回类型 / 抛出异常）
 - **§6 Implementation Summary**：模块职责表 + 调用链散文
-- **§8 Data Model**（若存在）：数据结构字段与类型
+- **§8 Data Model**：数据结构字段与类型
 
-## 实现端一致性铁律（与测试绿并列的硬性出口条件）
+## 实现端一致性铁律
 
 - 公共方法名 / 参数 / 返回类型 / 异常类型 **必须与 §4 字面一致**
-- 模块划分 / 调用链 **必须与 §6 一致**（不把 Service 职责下沉到 Controller，不把 Controller 职责上浮到路由层）
+- 模块划分 / 调用链 **必须与 §6 一致**
 - 数据结构字段名 / 类型 / 可空性 **必须与 §8 一致**
 - 发现无法字面对齐（设计有歧义 / 实现方式客观更优）→ **不偷偷偏离**，按 `../long-task-tdd/references/drift-protocol.md` 走（更新设计 OR 修实现，同一 commit）；无法本地消解 → `blocker` 前缀 `[CONTRACT-DEVIATION]`
 
