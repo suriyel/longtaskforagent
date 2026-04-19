@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Check real tests | `python scripts/check_real_tests.py feature-list.json [--feature N] [--require-for-deps] [--json]` |
 | Count pending per phase | `python scripts/count_pending.py feature-list.json [--json]` |
 | Migrate to sub_status schema | `python scripts/migrate_sub_status.py feature-list.json [--dry-run] [--force]` |
-| Unified phase router | `python scripts/phase_route.py [--root DIR] [--json]` |
+| Unified phase router | `python scripts/phase_route.py [--root DIR] [--json]` (mirrored read-only as symlinks under `skills/using-long-task/scripts/`; byte-identity gated by `tests/test_scripts_mirror.py`) |
 | Run all tests | `python -m pytest tests/` |
 | Run single test | `python -m pytest tests/test_<script_name>.py` |
 | Auto-loop (Claude Code) | `python scripts/auto_loop.py feature-list.json [--max-iterations 30] [--log-dir logs] [--cooldown 10]` |
@@ -292,6 +292,7 @@ Key field notes:
 long-task-agent/
 ├── skills/
 │   ├── using-long-task/SKILL.md + references/{architecture,roadmap}.md
+│   │     + scripts/{phase_route,count_pending,validate_features}.py  (symlinks → ../../../scripts/)
 │   ├── long-task-requirements/SKILL.md + references/{problem-framing,scenario-walkthrough,hypothesis-correction,approval-revise-loop}.md
 │   ├── long-task-requirements-quality/SKILL.md
 │   ├── long-task-requirements-alignment/SKILL.md + references/alignment-validation.md
