@@ -107,6 +107,12 @@
 ### Issues (only if PARTIAL)
 | # | Dimension | Severity | Description |
 |---|-----------|----------|-------------|
+
+### Open Questions
+| # | Question | Evidence (file:line) | Downstream Phase |
+|---|----------|----------------------|------------------|
+
+> 列 0-5 条分析过程中遇到、但不足以在本次探索解答、且可能影响下游 phase 决策的问题。典型来源：命名含糊的领域实体、同名不同语义的 API、未标注来源的魔数、读不出意图的配置分支。下游 phase = `requirements` | `design` | `increment`（逗号分隔多选）。若无，留空表头。
 ```
 
 ## 规则

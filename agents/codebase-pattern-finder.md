@@ -155,6 +155,12 @@
 ### Issues (only if PARTIAL)
 | # | Dimension | Severity | Description |
 |---|-----------|----------|-------------|
+
+### Open Questions
+| # | Question | Evidence (file:line) | Downstream Phase |
+|---|----------|----------------------|------------------|
+
+> 列 0-5 条度量过程中遇到、但不足以在本次探索解答、且可能影响下游 phase 决策的问题。典型来源：异常高耦合模块的职责不清、测试空洞目录的取舍意图、重复代码是否故意、技术债标记的紧迫度未知。下游 phase = `requirements` | `design` | `increment`（逗号分隔多选）。若无，留空表头。
 ```
 
 ## 规则

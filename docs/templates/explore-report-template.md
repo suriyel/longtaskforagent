@@ -45,5 +45,11 @@
 
 {{references_index}}
 
+## Clarification Questions for Next Phase
+
+> 供下游 phase（requirements / design / increment）按需向用户单问。每条：问题 + 关联 `file:line` + 受影响 phase。探索阶段不自问，仅沉淀。
+
+{{open_questions}}
+
 ---
 *探索器: deep-explore | 深度: {{depth}} | 采样文件数: {{files_sampled}}*

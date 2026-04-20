@@ -41,7 +41,7 @@
 **evidence**: [关键断言的最小证据]
 ```
 
-复用 `skills/using-long-task/references/structured-return-contract.md`。**Reviewer / evaluator / analyzer 类 SubAgent 同样必须返这五字段** —— "独立分发 ≠ 自由格式"。
+共享基础设施文件 `skills/using-long-task/references/structured-return-contract.md` **尚未建立**；当前各 skill 按自造契约（如 `agents/codebase-*.md` 的 `Verdict / Summary / Metrics / 内容章节`）落地。未来统一时，建基础设施 + 批量迁移作为独立课题；在那之前，新 SubAgent 至少声明 `status`（pass/fail/blocked）和 `blockers`（若 blocked）两字段，其他四字段按场景裁剪。**Reviewer / evaluator / analyzer 类 SubAgent 同样受此约束** —— "独立分发 ≠ 自由格式"。
 
 ### 1.4 持久化 vs 过程量
 
@@ -142,7 +142,7 @@ SubAgent 嵌套 **深度 ≤ 2**（主 agent → sub-skill，或主 agent → or
 
 | 类型 | 归属 | 示例 |
 |---|---|---|
-| 真·共享基础设施（不随阶段变化） | 留一处，其他 phase 用相对路径引用 | `structured-return-contract.md`, `systematic-debugging.md`, `subagent-development.md`, `worktree-isolation.md` |
+| 真·共享基础设施（不随阶段变化） | 留一处，其他 phase 用相对路径引用 | `systematic-debugging.md`, `subagent-development.md`, `worktree-isolation.md`；`structured-return-contract.md`（**尚未建立**——见 §1.3，建立后归此类） |
 | 带阶段差异的 loop / 行为协议 | 各 phase / 各 skill 独立维护 | `approval-revise-loop.md`（同名文件可多份；规则同构但语境不同） |
 | 阶段内 TDD / 静态分析等动作协议 | 归该阶段 skill | `drift-protocol.md` 归 TDD，不上移 |
 | 项目级运行时命令契约（quiet-exec / re-check / 故障 fallback） | 下沉到 `env-guide.md` 作为用户可编辑单一事实源 | `silent-execution.md` §1/§3 与 env-guide §3 重复 → 整文件删除，§4 吸收为 env-guide §3 fallback 段落 |

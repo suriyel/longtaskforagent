@@ -9,27 +9,6 @@ description: "用于按需深度探索现有代码库——分析架构、数据
 
 **启动时公告：** "我正在使用 long-task-explore skill 对此代码库进行深度探索。"
 
-## 调用模式
-
-本 skill 可以**独立调用**或**在流水线阶段内调用**（requirements、increment）。
-
-- **独立模式**：独立运行——不需要流水线状态，不进行 skill 链式调用
-- **流水线模式**：调用方 skill 提供关注方向和深度；探索结果反馈给调用方
-
-两种模式下：
-- 不修改任何源代码、测试或配置文件
-- 如果 `docs/rules/` 存在（来自 long-task-codebase-scanner），可参考但不依赖它
-
-## 关键原则：记录现状，而非应有之状
-
-- 不建议改进或变更
-- 不批评实现或指出"问题"
-- 不推荐重构、优化或架构变更
-- 仅描述存在什么、在哪里、如何运作、组件之间如何交互
-- 你的任务是创建现有系统的技术地图
-- 所有断言必须引用 `file:line` 作为证据
-- 只读——绝不修改源代码
-
 ## 步骤 1：解析参数并公告
 
 解析用户输入的可选参数：
@@ -79,6 +58,7 @@ description: "用于按需深度探索现有代码库——分析架构、数据
 > **DISPATCH** independent SubAgent — Locate codebase structure for [project]
 > Definition: `{plugin_root}/agents/codebase-locator.md`
 > Input: Project Profile (from Step 2)
+> Expect: `Verdict` + `Location Inventory`（Modules / Entry Points / API Endpoints / Data Models / Configuration / External Integrations / Test Directories 七张子表）。若 `Verdict=BLOCKED`，按下文"回退到最小清单"分支处理。
 > Execute the full locator process. Return structured location inventory.
 
 **等待定位器返回**后再继续。位置清单是阶段 2 的输入。
@@ -107,15 +87,13 @@ description: "用于按需深度探索现有代码库——分析架构、数据
 > Definition: `{plugin_root}/agents/codebase-analyzer.md`
 > References: `{plugin_root}/skills/long-task-explore/references/exploration-dimensions.md`
 > Input: Project Profile + Location Inventory (from Step 3)
-> Dimensions: {filtered per --focus: architecture, api, dataflow, domain}
-> Execute the full analysis process. Return structured analysis.
+> Expect: `Verdict` + `Architecture Overview` / `Entry Points & API Surface` / `Data Flow & State Management` / `Domain Model & Business Logic`（按 Project Profile.focus 过滤）+ `Open Questions`（供 Step 5 聚合）。
 
 > **DISPATCH** independent SubAgent — Find patterns and health metrics for [project]
 > Definition: `{plugin_root}/agents/codebase-pattern-finder.md`
 > References: `{plugin_root}/skills/long-task-explore/references/exploration-dimensions.md`
 > Input: Project Profile + Location Inventory (from Step 3)
-> Dimensions: {filtered per --focus: deps, health}
-> Execute the full analysis process. Return structured analysis.
+> Expect: `Verdict` + `Dependencies & Integrations` / `Code Health`（按 Project Profile.focus 过滤）+ `Open Questions`（供 Step 5 聚合）。
 
 等待两个 SubAgent 全部完成。
 
@@ -136,6 +114,7 @@ description: "用于按需深度探索现有代码库——分析架构、数据
    - 复杂度热点前 3 名（来自模式发现器）
    - 测试与源码比例（来自模式发现器）
    - 技术债务标记数量（来自模式发现器）
+5. **聚合 Open Questions** —— 从分析器、模式发现器返回的 `Open Questions` 节合并，去重后保留 3-8 条最高价值问题。每条保留：问题 + 关联 `file:line` + 下游影响 phase（requirements / design / increment 任一或多）。若合并后少于 3 条，可留空段但至少保留本节标题；若多于 8 条，按"影响面广度 × 歧义度"裁剪至 8 条以内。
 
 ## 步骤 6：写入输出
 
@@ -215,6 +194,6 @@ Full report: docs/explore/codebase-research.md
 - **基于证据** —— 每个结构性断言需要 `file:line` 示例
 - **不作评判** —— 按原样记录模式，即使不一致或过时
 - **输出预算** —— 遵循各深度的行数限制
-- **流水线隔离** —— 绝不读写流水线工件（feature-list.json、SRS、设计文档）
+- **流水线隔离** —— 绝不读写流水线工件（feature-list.json、SRS、设计文档）；`docs/rules/` 可只读作为补充上下文（来自 scanner）
 - **幂等性** —— 重新运行总是生成干净的全新报告
 - **SubAgent 效率** —— 使用 Glob 进行文件发现，Grep 进行模式匹配，Read 进行文件检查，Bash 仅用于 git/wc/find 命令
