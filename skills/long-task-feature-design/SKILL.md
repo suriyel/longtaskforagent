@@ -19,14 +19,13 @@ description: "Use before TDD in a long-task project — produce feature-level de
 
 ## Step 1: 收集动态字段（最小输入集）
 
-从当前会话状态中收集以下 5 项。固定路径 / feature-list 派生数据由 SubAgent 自行解析：
+从当前会话状态中收集以下几项。固定路径 / feature-list 派生数据（包括 `output_path`）由 SubAgent 自行解析：
 
 - `feature_id` —— 目标特性 ID
 - `feature_list_path` —— `feature-list.json` 的路径
 - `design_section` —— `§2.N` 行号起止（来自 Orient Document Lookup）
 - `srs_section` —— FR-xxx 行号起止（来自 Orient Document Lookup）
 - `ucd_section` —— UCD 行号起止（仅 ui:true；否则 null）
-- `output_path` —— `docs/features/YYYY-MM-DD-<feature-name>.md`
 - `working_dir` —— 项目工作目录
 
 ## Step 2: 构建 SubAgent 提示词
@@ -43,6 +42,9 @@ You are a Feature Design execution SubAgent.
    c. Glob `docs/plans/*-srs.md` (single match expected) → `srs_doc_path`
    d. Glob `docs/plans/*-ucd.md` → `ucd_doc_path` (only if `feature.ui == true`; else skip)
    e. Glob `docs/plans/*-ats.md` → `ats_doc_path` (if no match, proceed without ATS alignment)
+   f. Derive output path via the authoritative script:
+      `python scripts/feature_paths.py design-doc --feature {feature_id}` → capture stdout as `{output_path}`
+      (do NOT hand-roll slug / date-prefix logic — the script is the single source of truth)
 4. Read design section: Read {design_doc_path} lines {design_section.start} to {design_section.end}
 5. Read SRS section: Read {srs_doc_path} lines {srs_section.start} to {srs_section.end}
 6. Read UCD sections: Read {ucd_doc_path} lines {ucd_section.start} to {ucd_section.end} (only if ui:true)
@@ -58,11 +60,12 @@ You are a Feature Design execution SubAgent.
 - design_section: {design_section}   # { start, end }
 - srs_section: {srs_section}         # { start, end }
 - ucd_section: {ucd_section}         # { start, end } or null
-- output_path: {output_path}
 - working_dir: {working_dir}
+- output_path: derived via `scripts/feature_paths.py design-doc --feature {feature_id}` (step 3f)
 
 ## Key Constraints
 - Write the complete design document to {output_path}
+- The output path MUST come from `scripts/feature_paths.py` — do NOT hand-roll a slug or add a date prefix
 - Every section must be COMPLETE or have "N/A — [reason]"
 - **Step 1c Existing Code Reuse Check is mandatory**: grep the codebase for reusable symbols before finalizing Interface Contract. Populate the Existing Code Reuse table (or state "N/A — searched keywords: [...], no reusable match"). Do NOT reimplement what already exists.
 - Test Inventory negative ratio must be >= 40%

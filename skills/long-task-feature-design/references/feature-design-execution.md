@@ -301,7 +301,7 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 ## SubAgent Result: long-task-feature-design
 
 **status**: pass | fail | blocked
-**artifacts_written**: ["docs/features/YYYY-MM-DD-<feature-name>.md"] (omit if status=blocked before any draft was written)
+**artifacts_written**: ["docs/features/<id>-<slug>.md"] (omit if status=blocked before any draft was written)
 **next_step_input**: {
   "feature_design_doc": "<path to the design document>",
   "test_inventory_count": <number of test inventory rows>,

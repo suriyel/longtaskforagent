@@ -59,8 +59,8 @@ python scripts/check_configs.py feature-list.json --feature <id>
 ### 4. DISPATCH Feature Design SubAgent
 
 > **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-feature-design`
-> **input**: `feature_id`, `feature_list_path`, `design_section=<行号起止>`, `srs_section=<FR-xxx 行号起止>`, `ucd_section=<仅 ui:true>`, `output_path=docs/features/YYYY-MM-DD-<slug>.md`
-> **expect**: Structured Return Contract；`next_step_input.feature_design_path` 必须存在
+> **input**: `feature_id`, `feature_list_path`, `design_section=<行号起止>`, `srs_section=<FR-xxx 行号起止>`, `ucd_section=<仅 ui:true>`
+> **expect**: Structured Return Contract；`next_step_input.feature_design_doc` 必须存在（SubAgent 自调 `scripts/feature_paths.py` 派生路径）
 
 > **对 `category: "bugfix"`**：feature-design 精简，聚焦根因记录 + 定向修复 + 回归测试清单。
 
@@ -77,9 +77,9 @@ python scripts/check_configs.py feature-list.json --feature <id>
 **5a. 推进 current.phase**：
 编辑 `feature-list.json`，把根 `current.phase` 从 `"design"` 改为 `"tdd"`。保持 `current.feature_id` 不变、`target_feature.status: failing` 不变。
 
-**5b. 更新 task-progress.md**：在当前特性标题下追加：
+**5b. 更新 task-progress.md**：在当前特性标题下追加（路径以 SubAgent 返回的 `next_step_input.feature_design_doc` 为准）：
 ```
-- Design: DONE (docs/features/YYYY-MM-DD-<slug>.md)
+- Design: DONE (<feature_design_doc>)
 - current.phase: design → tdd
 ```
 
@@ -90,7 +90,8 @@ python scripts/validate_features.py feature-list.json
 
 **5d. git commit**（含特性设计文档 + feature-list.json + 已更新的 task-progress.md）：
 ```bash
-git add docs/features/YYYY-MM-DD-<slug>.md feature-list.json task-progress.md
+FDP=$(python scripts/feature_paths.py design-doc --feature <id>)
+git add "$FDP" feature-list.json task-progress.md
 git commit -m "design: feature #<id> <slug> — current.phase → tdd"
 ```
 

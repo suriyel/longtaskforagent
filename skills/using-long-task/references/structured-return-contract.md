@@ -37,9 +37,9 @@ Worker 一次 feature cycle 涉及 feature-design → tdd → quality → featur
 ## SubAgent Result: long-task-feature-design
 
 **status**: pass
-**artifacts_written**: ["docs/features/2026-04-17-login-api.md"]
+**artifacts_written**: ["docs/features/3-login-api.md"]
 **next_step_input**: {
-  "design_doc": "docs/features/2026-04-17-login-api.md",
+  "design_doc": "docs/features/3-login-api.md",
   "test_inventory_rows": 12,
   "interface_contracts": ["POST /api/login", "GET /api/session"],
   "srs_trace": ["FR-003"]

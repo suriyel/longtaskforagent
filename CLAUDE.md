@@ -25,6 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Validate bugfix | `python scripts/validate_bugfix_request.py bugfix-request.json` |
 | Get tool commands | `python scripts/get_tool_commands.py feature-list.json [--json]` |
 | Check real tests | `python scripts/check_real_tests.py feature-list.json [--feature N] [--require-for-deps] [--json]` |
+| Resolve feature design doc path | `python scripts/feature_paths.py design-doc --feature <id> [--must-exist] [--json]` |
 | Count pending per phase | `python scripts/count_pending.py feature-list.json [--json]` |
 | Migrate legacy sub_status → current | `python scripts/migrate_sub_status.py feature-list.json [--dry-run] [--force]` |
 | Unified phase router | `python scripts/phase_route.py [--root DIR] [--json]` (mirrored read-only as symlinks under `skills/using-long-task/scripts/`; byte-identity gated by `tests/test_scripts_mirror.py`) |
@@ -229,7 +230,7 @@ long-task-explore (standalone — no pipeline dependency)
 | `init.sh` / `init.ps1` | 1 | Environment bootstrap |
 | `.env.example` | 1 | Required env config template |
 | `CLAUDE.md` / `AGENTS.md` | 1 | Injected "## Long-Task Agent" section: pre/post-init routing, `current` lock semantics, `count_pending.py` quick command |
-| `docs/features/YYYY-MM-DD-<name>.md` | 2a | Per-feature detailed design (advances `current.phase: design → tdd`) |
+| `docs/features/<id>-<slug>.md` | 2a | Per-feature detailed design (advances `current.phase: design → tdd`); path derived by `scripts/feature_paths.py` (authoritative slug impl) |
 | `docs/test-cases/feature-*.md` | 2c | Per-feature ST test cases (ISO/IEC/IEEE 29119); produced by work-st |
 | `docs/plans/*-st-plan.md` | 3 | ST plan with RTM |
 | `docs/plans/*-st-report.md` | 3 | ST report with Go/No-Go verdict |

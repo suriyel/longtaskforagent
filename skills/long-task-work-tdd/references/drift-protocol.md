@@ -2,7 +2,7 @@
 
 ## 触发条件
 
-Green 或 Refactor 阶段发现实现的**公共符号**与 `docs/features/YYYY-MM-DD-<slug>.md`（Feature Design）对应章节不一致：
+Green 或 Refactor 阶段发现实现的**公共符号**与 `docs/features/<id>-<slug>.md`（Feature Design；由 `scripts/feature_paths.py` 派生）对应章节不一致：
 
 | 符号类型 | 设计节 | 典型偏离 |
 |---------|-------|---------|

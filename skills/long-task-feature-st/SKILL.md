@@ -11,11 +11,10 @@ description: "Use after quality gates pass in a long-task project — independen
 
 ## Step 1: 收集动态字段（最小输入集）
 
-固定路径 / feature-list 派生数据由 SubAgent 自行解析；主 agent 仅传动态字段：
+固定路径 / feature-list 派生数据（含 `feature_design_doc_path`）由 SubAgent 自行解析；主 agent 仅传动态字段：
 
 - `feature_id` —— 当前特性 ID
 - `feature_list_path` —— `feature-list.json` 路径
-- `feature_design_doc_path` —— `docs/features/YYYY-MM-DD-<slug>.md`（来自 Feature Design 步骤；动态日期）
 - `working_dir` —— 项目工作目录
 
 ## Step 2: 构建 SubAgent 提示词
@@ -27,19 +26,20 @@ You are a Feature-ST execution SubAgent for black-box acceptance testing.
 1. Read the execution rules: Read {skills_root}/long-task-feature-st/references/feature-st-execution.md
 2. Self-resolve fixed inputs:
    a. Read {feature_list_path} → parse JSON; pick features[i] with id == {feature_id} → derive `feature` (含 srs_trace / ui / category) + 根级 `quality_gates` / `tech_stack` / `st_case_template_path` / `st_case_example_path` (optional root fields)
-   b. Glob `docs/plans/*-design.md` → `design_doc_path`
-   c. Glob `docs/plans/*-srs.md` → `srs_doc_path`
-   d. Glob `docs/plans/*-ucd.md` → `ucd_doc_path` (only if feature.ui == true; else skip)
-   e. Glob `docs/plans/*-ats.md` → `ats_doc_path` (if no match, proceed without ATS category enforcement but emit a blocker `[ATS-MISSING]` warning if feature requires it)
-   f. Glob `env-guide.md` → §1 服务生命周期、§2 激活、§3 命令
+   b. Run `python scripts/feature_paths.py design-doc --feature {feature_id}` → capture stdout as `feature_design_doc_path` (authoritative slug impl; never hand-roll)
+   c. Glob `docs/plans/*-design.md` → `design_doc_path`
+   d. Glob `docs/plans/*-srs.md` → `srs_doc_path`
+   e. Glob `docs/plans/*-ucd.md` → `ucd_doc_path` (only if feature.ui == true; else skip)
+   f. Glob `docs/plans/*-ats.md` → `ats_doc_path` (if no match, proceed without ATS category enforcement but emit a blocker `[ATS-MISSING]` warning if feature requires it)
+   g. Glob `env-guide.md` → §1 服务生命周期、§2 激活、§3 命令
 3. Follow the checklist exactly (Steps 1-8): Load Context → Load Template → Derive Test Cases → Write Document → Validate → Execute → Visual Assessment (ui:true) → Cleanup
 4. Return your result using the Structured Return Contract at the end of the execution rules
 
 ## Input Parameters (minimal; derive the rest yourself)
 - feature_id: {feature_id}
 - feature_list_path: {feature_list_path}
-- feature_design_doc_path: {feature_design_doc_path}
 - working_dir: {working_dir}
+- feature_design_doc_path: derived via `scripts/feature_paths.py design-doc --feature {feature_id}` (step 2b)
 
 ## Key Constraints
 - Do NOT mark the feature as "passing" in feature-list.json — only report results

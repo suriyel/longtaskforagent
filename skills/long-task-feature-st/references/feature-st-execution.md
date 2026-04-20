@@ -103,7 +103,7 @@ TDD（long-task-work-tdd）已从内部验证实现：
 - **SRS 章节** — 通过 Document Lookup Protocol 从 `docs/plans/*-srs.md` 读完整 FR-xxx（读整子章节，不要 grep）
 - **Design 章节** — 通过 Document Lookup Protocol 从 `docs/plans/*-design.md` 读完整 §2.N
 - **ATS 约束**（若 `docs/plans/*-ats.md` 存在） — 读映射到本特性需求的 ATS 映射表行；提取必需类别。这些类别约束对 Step 3（派生测试用例）**具有约束力**。
-- **Plan 文档** — 来自 Step 5（`docs/features/YYYY-MM-DD-<feature-name>.md`）
+- **Plan 文档** — 来自 Step 5（`docs/features/<id>-<slug>.md`；由 `scripts/feature_paths.py` 派生）
 - **UCD 章节**（仅当 `"ui": true`） — `docs/plans/*-ucd.md` 中相关 component/page 提示词
 - **Root 上下文** — `feature-list.json` 根的 `constraints[]`、`assumptions[]`
 - **相关 NFR** — 检查 SRS 中与本特性相关的 NFR-xxx
@@ -115,7 +115,7 @@ TDD（long-task-work-tdd）已从内部验证实现：
 加载全部上下文、派生测试用例**之前**，扫描将阻碍为黑盒测试用例撰写正确预期结果的规格缺口。
 
 **Step 1：加载 Clarification Addendum**
-检查 Feature Design 文档（`docs/features/YYYY-MM-DD-<feature-name>.md`）是否含 `## Clarification Addendum` 章节。若存在，将全部已处置歧义加载为权威约束 — 这些是 Feature Design 阶段经用户批准的处置。**不**要再将此 Addendum 中的项标记为歧义。
+检查 Feature Design 文档（`docs/features/<id>-<slug>.md`）是否含 `## Clarification Addendum` 章节。若存在，将全部已处置歧义加载为权威约束 — 这些是 Feature Design 阶段经用户批准的处置。**不**要再将此 Addendum 中的项标记为歧义。
 
 **Step 2：按以下分类扫描缺口：**
 

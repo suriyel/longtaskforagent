@@ -13,7 +13,7 @@ description: "Use when router emits next_skill=long-task-work-st - run feature-l
 
 **一致性重读（强制）：**
 1. 调 `python scripts/phase_route.py --json` 读 `next_skill` / `feature_id`（`target_feature`）
-2. 读 `docs/features/YYYY-MM-DD-<slug>.md` **全文**（用于 ST 用例生成 + Inline 契约/测试清单交叉检查）
+2. 调 `python scripts/feature_paths.py design-doc --feature <id>` 派生 `{feature_design_path}`；读该路径 **全文**（用于 Inline 契约 / 测试清单交叉检查）
 3. 读 `docs/plans/*-srs.md` 中 `srs_trace` 指向的 FR/NFR 节（ST 用例验收标准来源）
 4. 读 `docs/plans/*-ats.md`（如存在）—— ATS 类别约束 ST 必须覆盖哪些场景
 5. 读 `env-guide.md §1 服务生命周期` + `§3 测试命令` + `§4 codebase constraints`
@@ -32,9 +32,11 @@ description: "Use when router emits next_skill=long-task-work-st - run feature-l
   - `starting_new == true` → AskUserQuestion 升级（ST 阶段不应是新 feature 的入口；状态机错位）
 - `target_feature` = `feature-list.json` 中 `id == feature_id` 的条目
 - **硬前置**：
-  - `docs/features/YYYY-MM-DD-<slug>.md` 必须存在
+  - 调 `python scripts/feature_paths.py design-doc --feature <id> --must-exist`
+    - exit 非 0 → BLOCKED：`Feature design doc not on disk for #<id>; current.phase inconsistent with disk state. Resume design phase or reset current.phase to "design".`
+    - exit 0 → 存路径为 `{feature_design_path}`（已在一致性重读 #2 派生过，可直接复用）
   - `target_feature.git_sha`（若已设置，说明前阶段异常打包）或依赖测试文件存在
-- 读该特性 feature design **全文**
+- 读 `{feature_design_path}` **全文**（若一致性重读 #2 未读，此处补读）
 - 读 `srs_section`（FR 节）
 - 读 `docs/plans/*-ats.md` 中 `target_feature.srs_trace` 的 category 映射行
 - 读 `env-guide.md §1 + §3 + §4`
@@ -47,8 +49,8 @@ description: "Use when router emits next_skill=long-task-work-st - run feature-l
 ### 3. DISPATCH Feature-ST SubAgent
 
 > **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-feature-st`
-> **input**: `feature_id`, `feature_list_path`, `feature_design_doc_path=docs/features/YYYY-MM-DD-<slug>.md`, `working_dir`
-> **expect**: Structured Return Contract；`artifacts_written` 必须含 `docs/test-cases/feature-<id>-<slug>.md`
+> **input**: `feature_id`, `feature_list_path`, `working_dir`
+> **expect**: Structured Return Contract；`artifacts_written` 必须含 `docs/test-cases/feature-<id>-<slug>.md`（sub-skill 自调 `scripts/feature_paths.py` 派生 design doc 路径）
 
 **硬关卡**：
 - **不可绕过** —— 任何原因都不能跳过 ST

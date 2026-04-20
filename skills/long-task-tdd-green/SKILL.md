@@ -9,11 +9,12 @@ description: "Use when dispatched by long-task-work-tdd Step 3b — minimal impl
 
 ## 输入解析（SubAgent 启动时）
 
-从 prompt 取 `feature_id` / `feature_design_path` / `feature_test_files` / `test_count`，随后自行完成：
+从 prompt 取 `feature_id` / `feature_list_path` / `feature_test_files` / `test_count`，随后自行完成：
 
-1. 读 `{feature_design_path}` 全文；**§4 Interface Contract、§6 Implementation Summary、§8 Data Model 必读**
-2. Glob `feature-list.json` → 取根级 `tech_stack` / `quality_gates` / `required_configs`
-3. Glob `env-guide.md` → §2（激活）+ §3（测试命令）+ §4（codebase constraints）
+1. 调 `python scripts/feature_paths.py design-doc --feature {feature_id}` → 捕获 stdout 作为 `{feature_design_path}`（slug 规则权威实现，不自行拼路径）
+2. 读 `{feature_design_path}` 全文；**§4 Interface Contract、§6 Implementation Summary、§8 Data Model 必读**
+3. Glob `feature-list.json` → 取根级 `tech_stack` / `quality_gates` / `required_configs`
+4. Glob `env-guide.md` → §2（激活）+ §3（测试命令）+ §4（codebase constraints）
 
 `{feature_test_files}` 是 Red 阶段写好的测试文件列表；不要重新生成或修改测试（除非走 drift-protocol 更新设计同步测试断言）。
 

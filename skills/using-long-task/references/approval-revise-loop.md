@@ -132,7 +132,7 @@
 **Step 4 result from long-task-feature-design — Feature #{id} ({title})**
 
 Artifacts written:
-- docs/features/YYYY-MM-DD-<slug>.md
+- docs/features/<id>-<slug>.md
 
 Evidence (from SubAgent):
 - <evidence line 1>

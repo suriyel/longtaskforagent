@@ -9,13 +9,14 @@ description: "Use when dispatched by long-task-work-tdd Step 3a — write failin
 
 ## 输入解析（SubAgent 启动时）
 
-从 prompt 取 `feature_id` / `feature_design_path` / `feature_list_path`，随后自行完成：
+从 prompt 取 `feature_id` / `feature_list_path`，随后自行完成：
 
 1. 读 `{feature_list_path}`，取 `features[].id == feature_id` 的 feature 对象；保留 `srs_trace`、`ui`、`category`、根级 `tech_stack` / `quality_gates` / `real_test` / `required_configs`
-2. Glob `docs/plans/*-srs.md` → 用 `feature.srs_trace` 定位 FR/NFR/IFR 节，作为 `{srs_section}`
-3. Glob `docs/plans/*-design.md` → 按特性名 / `srs_trace` 定位 §2.N（Feature Integration Spec）与 §4.N（Internal API Contracts），作为 `{design_section}`
-4. Glob `env-guide.md` → §3（测试命令）+ §4（codebase constraints）
-5. 读 `{feature_design_path}` 全文（主要测试来源）
+2. 调 `python scripts/feature_paths.py design-doc --feature {feature_id}` → 捕获 stdout 作为 `{feature_design_path}`（slug 规则权威实现，不自行拼路径）
+3. Glob `docs/plans/*-srs.md` → 用 `feature.srs_trace` 定位 FR/NFR/IFR 节，作为 `{srs_section}`
+4. Glob `docs/plans/*-design.md` → 按特性名 / `srs_trace` 定位 §2.N（Feature Integration Spec）与 §4.N（Internal API Contracts），作为 `{design_section}`
+5. Glob `env-guide.md` → §3（测试命令）+ §4（codebase constraints）
+6. 读 `{feature_design_path}` 全文（主要测试来源）
 
 下文占位符均指向以上解析结果。
 

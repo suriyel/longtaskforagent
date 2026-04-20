@@ -24,9 +24,11 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
   - `ok == false` → 呈现 `errors` 并终止会话
   - `starting_new == true` → AskUserQuestion 升级（TDD 阶段不应是新 feature 的入口；状态机错位）
 - `target_feature` = `feature-list.json` 中 `id == feature_id` 的条目
-- **硬前置**：`docs/features/YYYY-MM-DD-<slug>.md` 必须存在（design 阶段已产出）。用 Glob 确认存在——**不读全文**；路径存为 `{feature_design_path}`（仅作为 SubAgent dispatch input）。若缺失 → BLOCKED：`Feature design doc missing for #<id>; current.phase inconsistent with disk state. Resume design phase or reset current.phase to "design".`
+- **硬前置**：调 `python scripts/feature_paths.py design-doc --feature <id> --must-exist`
+  - exit 非 0 → BLOCKED：`Feature design doc not on disk for #<id>; current.phase inconsistent with disk state. Resume design phase or reset current.phase to "design".`
+  - exit 0 → 进入 Bootstrap（**不读全文**，**不向主 agent 传路径**；sub-skill 自调脚本派生）
 - `git log --oneline -10`
-- 在 `task-progress.md` 当前特性标题下记录：target_feature.id / title / feature_design_path
+- 在 `task-progress.md` 当前特性标题下记录：target_feature.id / title
 
 ### 2. Bootstrap
 - 按 `env-guide.md §2` 激活环境
@@ -46,7 +48,7 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 **3a. Red — DISPATCH SubAgent**
 
 > **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-tdd-red`
-> **input**: `feature_id`, `feature_list_path`, `feature_design_path`
+> **input**: `feature_id`, `feature_list_path`
 > **expect**: Structured Return Contract；`next_step_input` 含 `feature_test_files[]` / `test_count`；`evidence` 以 `Rule N <key>=<value>` 形式逐行报告 Rule 1-7 关键指标（categories / negative_ratio / low_value_ratio / real_test_count）
 
 **返回处理**：
@@ -57,7 +59,7 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 **3b. Green — DISPATCH SubAgent**
 
 > **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-tdd-green`
-> **input**: `feature_id`, `feature_list_path`, `feature_design_path`, `feature_test_files`（从 3a next_step_input）, `test_count`
+> **input**: `feature_id`, `feature_list_path`, `feature_test_files`（从 3a next_step_input）, `test_count`
 > **expect**: Structured Return Contract；`next_step_input` 含 `impl_files[]` / `all_tests_pass` / `design_alignment: {§4, §6, §8, drift}` / `env_guide_synced`
 
 **返回处理**：
@@ -69,7 +71,7 @@ Red / Green / Refactor + Quality 共四个独立 SubAgent 由本 skill 直接用
 **3c. Refactor — DISPATCH SubAgent**
 
 > **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-tdd-refactor`
-> **input**: `feature_id`, `feature_list_path`, `feature_design_path`, `feature_test_files`, `impl_files`
+> **input**: `feature_id`, `feature_list_path`, `feature_test_files`, `impl_files`
 > **expect**: Structured Return Contract；`next_step_input` 含 `static_analysis_ok` / `static_tool` / `static_violations` / `design_alignment_final` / `tests_still_pass`
 
 **返回处理**：
@@ -150,7 +152,7 @@ git commit -m "tdd: feature #<id> <slug> — tests green, coverage ≥<N>%/<M>%"
 - **每会话一个特性的一个阶段** —— 本阶段只做 TDD + Quality，不做 Feature-ST 也不做 Persist 到 passing
 - **R/G/R / Quality 四个 SubAgent 不可协商** —— 本 skill 必须用 Agent 工具分别 DISPATCH，不在主 agent 内联执行；会话内**不**调任何其它 Skill
 - **无新鲜证据不得推进 current.phase** —— 测试必须实跑绿，覆盖率必须达标
-- **feature design 文档必须存在** —— 缺失即 BLOCKED；主 agent 不读全文，仅传路径
+- **feature design 文档必须存在** —— 缺失即 BLOCKED；主 agent 不读全文、不传路径；sub-skill 自调 `scripts/feature_paths.py` 派生路径
 
 ## 红旗信号
 
