@@ -8,7 +8,10 @@
 $ErrorActionPreference = "Stop"
 
 $installDir = "$env:USERPROFILE\.config\opencode\long-task-agent"
-$pluginsDir = "$env:USERPROFILE\.config\opencode\plugins"
+# NOTE: opencode v1.14.19 auto-scans `plugin\` (singular); `plugins\` (plural)
+# triggers a startup hang that surfaces as `errno:5 setRawMode failed`.
+# Keep repo source path `.opencode\plugins\` (plural) unchanged.
+$pluginDir  = "$env:USERPROFILE\.config\opencode\plugin"
 $skillsDir  = "$env:USERPROFILE\.config\opencode\skills"
 $repoUrl    = "https://github.com/suriyel/longtaskforagent.git"
 
@@ -24,14 +27,16 @@ if (Test-Path (Join-Path $installDir ".git")) {
 }
 
 # Create directories
-New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
-New-Item -ItemType Directory -Force -Path $skillsDir  | Out-Null
+New-Item -ItemType Directory -Force -Path $pluginDir | Out-Null
+New-Item -ItemType Directory -Force -Path $skillsDir | Out-Null
 
-# Remove stale links / old copies
-$pluginLink = Join-Path $pluginsDir "long-task.js"
-$skillLink  = Join-Path $skillsDir  "long-task"
-if (Test-Path $pluginLink) { Remove-Item $pluginLink -Force }
-if (Test-Path $skillLink)  { Remove-Item $skillLink  -Force -Recurse }
+# Remove stale links / old copies (including legacy plural `plugins\` target)
+$pluginLink       = Join-Path $pluginDir "long-task.js"
+$legacyPluginLink = Join-Path "$env:USERPROFILE\.config\opencode\plugins" "long-task.js"
+$skillLink        = Join-Path $skillsDir  "long-task"
+if (Test-Path $pluginLink)       { Remove-Item $pluginLink       -Force }
+if (Test-Path $legacyPluginLink) { Remove-Item $legacyPluginLink -Force }
+if (Test-Path $skillLink)        { Remove-Item $skillLink        -Force -Recurse }
 
 # Plugin: SymbolicLink (requires Developer Mode or Admin)
 New-Item -ItemType SymbolicLink `
