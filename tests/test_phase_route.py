@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 
-SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "phase_route.py")
+SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "skills", "using-long-task", "scripts", "phase_route.py")
 
 
 def run(root, *extra):

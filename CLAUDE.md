@@ -227,7 +227,7 @@ Key field notes:
 ```
 long-task-agent/
 ├── skills/
-│   ├── using-long-task/SKILL.md + references/architecture.md
+│   ├── using-long-task/SKILL.md + references/architecture.md + scripts/{phase_route,count_pending,validate_features,validate_guide,validate_increment_request,validate_bugfix_request,get_tool_commands,feature_paths,auto_loop,auto_loop_opencode}.py
 │   ├── long-task-requirements/SKILL.md + references/{problem-framing,scenario-walkthrough,hypothesis-correction,alignment-validation}.md
 │   ├── long-task-multi-repo/SKILL.md + references/ (symlinks to requirements refs) + prompts/ (symlinks)
 │   ├── long-task-hotfix/SKILL.md
@@ -252,10 +252,6 @@ long-task-agent/
 ├── docs/templates/{srs,design,deferred-backlog,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
 │   └── using-long-task/references/{architecture,systematic-debugging,subagent-development,worktree-isolation}.md
-├── scripts/{get_tool_commands,validate_features,validate_guide,
-│           validate_bugfix_request,validate_increment_request,
-│           phase_route,count_pending,feature_paths,
-│           auto_loop,auto_loop_opencode}.py
 └── tests/test_<script_name>.py  (one file per script)
 ```
 
@@ -269,7 +265,7 @@ long-task-agent/
 - [skills/using-long-task/references/worktree-isolation.md](skills/using-long-task/references/worktree-isolation.md) — Worktree isolation (multi-version TDD)
 - [skills/long-task-work-design/SKILL.md](skills/long-task-work-design/SKILL.md) — Worker phase A (feature design + handoff)
 - [skills/long-task-work-tdd/SKILL.md](skills/long-task-work-tdd/SKILL.md) — Worker phase B (TDD R-G-R + persist)
-- [scripts/phase_route.py](scripts/phase_route.py) — single-source-of-truth phase router
+- [skills/using-long-task/scripts/phase_route.py](skills/using-long-task/scripts/phase_route.py) — single-source-of-truth phase router
 - [skills/long-task-multi-repo/SKILL.md](skills/long-task-multi-repo/SKILL.md) — Multi-repo requirements, SRS split, dependency distribution
 - [skills/long-task-explore/SKILL.md](skills/long-task-explore/SKILL.md) — Standalone deep codebase exploration
 - [skills/long-task-static-review/SKILL.md](skills/long-task-static-review/SKILL.md) — Standalone pre-push static analysis (Checkstyle)

@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tempfile
 
-SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "validate_features.py")
+SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "skills", "using-long-task", "scripts", "validate_features.py")
 
 
 def run_validator(feature_data):

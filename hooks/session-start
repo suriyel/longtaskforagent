@@ -41,7 +41,7 @@ fi
 # (before long-task-init populates scripts/) so `using-long-task` can run
 # `python scripts/phase_route.py --json` on the very first session.
 for _ROUTER_SCRIPT in phase_route.py count_pending.py validate_features.py; do
-    _SRC="${PLUGIN_ROOT}/scripts/${_ROUTER_SCRIPT}"
+    _SRC="${PLUGIN_ROOT}/skills/using-long-task/scripts/${_ROUTER_SCRIPT}"
     if [ -f "$_SRC" ]; then
         mkdir -p "scripts"
         cp "$_SRC" "scripts/${_ROUTER_SCRIPT}"

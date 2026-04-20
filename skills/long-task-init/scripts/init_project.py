@@ -291,7 +291,7 @@ def main():
             os.path.dirname(os.path.dirname(os.path.dirname(_THIS_DIR)))
     else:
         _PLUGIN_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(_THIS_DIR)))
-    plugin_scripts_dir = os.path.join(_PLUGIN_ROOT, "scripts")
+    plugin_scripts_dir = os.path.join(_PLUGIN_ROOT, "skills", "using-long-task", "scripts")
 
     helper_scripts = [
         "validate_features.py",

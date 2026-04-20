@@ -45,7 +45,7 @@ function copyInitScript(directory) {
 function copyRouterScripts(directory) {
   const scriptsDir = path.join(directory, 'scripts');
   for (const name of ROUTER_SCRIPTS) {
-    const src = path.join(pluginRoot, 'scripts', name);
+    const src = path.join(pluginRoot, 'skills', 'using-long-task', 'scripts', name);
     if (!fs.existsSync(src)) continue;
     fs.mkdirSync(scriptsDir, { recursive: true });
     fs.copyFileSync(src, path.join(scriptsDir, name));

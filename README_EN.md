@@ -369,7 +369,8 @@ long-task-agent/
 │   ├── long-task-tdd/               # TDD discipline
 │   ├── long-task-quality/           # Coverage + mutation gates (reference files, not standalone skill)
 │   └── long-task-increment/         # Incremental development
-├── scripts/                         # Validation & utility scripts
+├── skills/using-long-task/scripts/  # Shared scripts (router + validators + auto_loop)
+├── skills/long-task-init/scripts/   # init_project.py (hook-copied to consumer project)
 ├── tests/                           # Test suite for all scripts
 ├── hooks/                           # SessionStart hook config
 ├── commands/                        # User shortcut commands

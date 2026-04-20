@@ -11,10 +11,10 @@ import subprocess
 import sys
 import tempfile
 
-SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "get_tool_commands.py")
+SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "skills", "using-long-task", "scripts", "get_tool_commands.py")
 
 # Also import get_commands directly for unit tests
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "skills", "using-long-task", "scripts"))
 from get_tool_commands import (get_commands, format_text, MUTATION_COMMANDS,
                                TEST_COMMANDS_QUIET, TEST_COMMANDS_DETAIL,
                                COVERAGE_COMMANDS_QUIET, COVERAGE_COMMANDS_DETAIL,
@@ -233,7 +233,7 @@ def test_quiet_commands_are_tuples():
         assert isinstance(entry, tuple), f"COVERAGE_COMMANDS_QUIET['{tool}'] should be a tuple"
         assert len(entry) == 2
 
-    from scripts.get_tool_commands import COVERAGE_FEATURE_COMMANDS_QUIET
+    from get_tool_commands import COVERAGE_FEATURE_COMMANDS_QUIET
     for tool, entry in COVERAGE_FEATURE_COMMANDS_QUIET.items():
         assert isinstance(entry, tuple), f"COVERAGE_FEATURE_COMMANDS_QUIET['{tool}'] should be a tuple"
         assert len(entry) == 2
@@ -257,7 +257,7 @@ def test_detail_commands_are_strings():
     for tool, entry in COVERAGE_COMMANDS_DETAIL.items():
         assert isinstance(entry, str), f"COVERAGE_COMMANDS_DETAIL['{tool}'] should be a string"
 
-    from scripts.get_tool_commands import COVERAGE_FEATURE_COMMANDS_DETAIL
+    from get_tool_commands import COVERAGE_FEATURE_COMMANDS_DETAIL
     for tool, entry in COVERAGE_FEATURE_COMMANDS_DETAIL.items():
         assert isinstance(entry, str), f"COVERAGE_FEATURE_COMMANDS_DETAIL['{tool}'] should be a string"
 

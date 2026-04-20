@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tempfile
 
-SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "validate_bugfix_request.py")
+SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "..", "skills", "using-long-task", "scripts", "validate_bugfix_request.py")
 
 VALID_MINIMAL = {
     "title": "Login returns 500 on empty username",

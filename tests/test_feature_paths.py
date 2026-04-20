@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for scripts/feature_paths.py"""
+"""Unit tests for skills/using-long-task/scripts/feature_paths.py"""
 
 import json
 import os
@@ -9,7 +9,7 @@ import tempfile
 
 # Import module under test
 HERE = os.path.dirname(os.path.abspath(__file__))
-SCRIPTS = os.path.join(HERE, "..", "scripts")
+SCRIPTS = os.path.join(HERE, "..", "skills", "using-long-task", "scripts")
 sys.path.insert(0, SCRIPTS)
 import feature_paths  # noqa: E402
 

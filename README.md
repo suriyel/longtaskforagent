@@ -383,7 +383,8 @@ long-task-agent/
 │   ├── long-task-tdd/               # TDD 纪律
 │   ├── long-task-quality/           # 覆盖率 + 变异门禁（引用文件，非独立技能）
 │   └── long-task-increment/         # 增量开发
-├── scripts/                         # 验证和实用脚本
+├── skills/using-long-task/scripts/  # 共享脚本（router + validators + auto_loop）
+├── skills/long-task-init/scripts/   # init_project.py（由 hook 拷到消费者项目）
 ├── tests/                           # 所有脚本的测试套件
 ├── hooks/                           # SessionStart 钩子配置
 ├── commands/                        # 用户快捷命令

@@ -19,7 +19,7 @@ import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-SCRIPTS = os.path.join(ROOT, "scripts")
+SCRIPTS = os.path.join(ROOT, "skills", "using-long-task", "scripts")
 
 CJK_TITLE = "模式匹配"
 CJK_REASON = "支持中文正则匹配模式"
