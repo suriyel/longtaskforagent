@@ -16,7 +16,7 @@ description: "在 long-task 项目中 TDD 之前使用 -- 生成功能级详细�
 
 ## 关键约束
 
-- 将完整设计文档写入 `docs/features/YYYY-MM-DD-<feature-name>.md`
+- 派生输出路径：`python scripts/feature_paths.py design-doc --feature <id>` → `docs/features/<id>-<slug>.md`；完整设计文档写入该路径
 - 无内容的章节直接省略，不写 N/A
 - 测试清单负向测试比例 >= 40%
 - 测试清单类别应根据 SRS 验收标准覆盖 FUNC、BNDRY、SEC
@@ -32,7 +32,7 @@ description: "在 long-task 项目中 TDD 之前使用 -- 生成功能级详细�
 
 ## 集成
 
-**调用方：** long-task-work（步骤 2）-- Worker 分派 SubAgent，SubAgent 加载此 Skill 并内联执行
+**调用方：** long-task-work-design（Step 2 DISPATCH SubAgent）
 **依赖：** 系统设计文档、SRS、feature-list.json
-**产出：** `docs/features/YYYY-MM-DD-<feature-name>.md`
-**后续：** long-task-tdd-red（步骤 3）
+**产出：** `docs/features/<id>-<slug>.md`（路径由 `scripts/feature_paths.py` 派生）
+**后续：** 下一会话由 `phase_route.py` 路由到 long-task-work-tdd

@@ -5,7 +5,9 @@
 ## 步骤 1：加载上下文
 
 1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`
-2. Glob `docs/features/*` → 找到匹配本功能的功能设计文档
+2. 派生功能设计文档路径：`python scripts/feature_paths.py design-doc --feature <id> --must-exist`
+   - exit 0 → 读该路径
+   - exit 1 → BLOCKED：设计文档缺失，终止（主 orchestrator 已做硬前置，理论上不该在此触发）
 
 ### 步骤 1b：探索相关现有测试
 

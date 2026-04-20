@@ -250,7 +250,7 @@
 ### Summary
 [1-3 sentences — what was designed, key architectural decisions, document completeness]
 ### Artifacts
-- [docs/features/YYYY-MM-DD-<feature-name>.md]: Feature detailed design document
+- [docs/features/<id>-<slug>.md]: Feature detailed design document (path derived by `scripts/feature_paths.py design-doc --feature <id>`)
 ### Metrics
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|

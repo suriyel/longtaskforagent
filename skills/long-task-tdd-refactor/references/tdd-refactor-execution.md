@@ -6,7 +6,7 @@
 
 1. 读取 `feature-list.json` -> 按 ID 提取功能对象及 `tech_stack`
 2. Glob `docs/plans/*-design.md` -> 读取 S11（代码库约定与约束）
-3. Glob `docs/features/*` -> 找到功能设计文档，读取"现有代码复用"和"实现摘要"章节
+3. 派生功能设计文档路径：`python scripts/feature_paths.py design-doc --feature <id> --must-exist` -> 读"现有代码复用"和"实现摘要"章节
 4. 读取 `long-task-guide.md` -> 提取测试命令
 
 ## 步骤 2：重构
