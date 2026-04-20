@@ -95,6 +95,20 @@ def test_scripts_dir_created():
         shutil.rmtree(tmp)
 
 
+def test_routing_helper_scripts_copied():
+    """phase_route.py / count_pending.py / feature_paths.py should be copied into scripts/."""
+    tmp = tempfile.mkdtemp()
+    try:
+        run_init("test-project", tmp)
+        scripts_dir = os.path.join(tmp, "scripts")
+        for name in ("phase_route.py", "count_pending.py", "feature_paths.py"):
+            assert os.path.isfile(os.path.join(scripts_dir, name)), (
+                f"scripts/{name} should be copied by init_project.py"
+            )
+    finally:
+        shutil.rmtree(tmp)
+
+
 def test_docs_plans_dir_created():
     """docs/plans/ directory should be created."""
     tmp = tempfile.mkdtemp()
@@ -297,7 +311,7 @@ def test_idempotent_claude_md():
 
 
 def test_claude_md_contains_key_file_references():
-    """CLAUDE.md should reference key project files: feature-list.json, task-progress.md, docs/plans."""
+    """CLAUDE.md inject body should reference router + phase skills + signal files."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp)
@@ -305,9 +319,11 @@ def test_claude_md_contains_key_file_references():
         with open(cm_path, "r", encoding="utf-8") as f:
             content = f.read()
         assert "feature-list.json" in content, "Should reference feature list"
-        assert "task-progress.md" in content, "Should reference progress log"
-        assert "docs/plans" in content, "Should reference docs/plans for SRS/design"
-        assert "increment-request.json" in content, "Should reference increment signal file"
+        assert "phase_route.py" in content, "Should reference router script (single source of truth)"
+        assert "long-task-work-design" in content, "Should reference design phase skill"
+        assert "long-task-work-tdd" in content, "Should reference TDD phase skill"
+        assert "bugfix-request.json" in content, "Should reference hotfix signal"
+        assert "increment-request.json" in content, "Should reference increment signal"
     finally:
         shutil.rmtree(tmp)
 
@@ -360,7 +376,7 @@ def test_idempotent_agents_md():
 
 
 def test_agents_md_contains_key_file_references():
-    """AGENTS.md should reference key project files: feature-list.json, task-progress.md, docs/plans."""
+    """AGENTS.md inject body should reference router + phase skills + signal files."""
     tmp = tempfile.mkdtemp()
     try:
         run_init("test-project", tmp)
@@ -368,9 +384,11 @@ def test_agents_md_contains_key_file_references():
         with open(am_path, "r", encoding="utf-8") as f:
             content = f.read()
         assert "feature-list.json" in content, "Should reference feature list"
-        assert "task-progress.md" in content, "Should reference progress log"
-        assert "docs/plans" in content, "Should reference docs/plans"
-        assert "increment-request.json" in content, "Should reference increment signal file"
+        assert "phase_route.py" in content, "Should reference router script"
+        assert "long-task-work-design" in content, "Should reference design phase skill"
+        assert "long-task-work-tdd" in content, "Should reference TDD phase skill"
+        assert "bugfix-request.json" in content, "Should reference hotfix signal"
+        assert "increment-request.json" in content, "Should reference increment signal"
     finally:
         shutil.rmtree(tmp)
 
@@ -403,6 +421,7 @@ if __name__ == "__main__":
         test_does_not_create_guide_or_init_scripts,
         test_feature_list_is_valid_json,
         test_scripts_dir_created,
+        test_routing_helper_scripts_copied,
         test_docs_plans_dir_created,
         test_examples_dir_created,
         test_feature_list_has_tech_stack,

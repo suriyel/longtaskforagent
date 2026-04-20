@@ -194,7 +194,11 @@ Created: [date]
 
 ## Worker 会话工作流
 
-> 权威工作流定义：`skills/long-task-work/SKILL.md`。周期：Orient → Feature Design → TDD Red → TDD Green → TDD Refactor → Persist → End Session。每周期一个功能；外部 `scripts/auto_loop.py` 处理多功能自动化。
+> 拆分为两个阶段 skill，每个一会话，各自 end-session：
+> - **`skills/long-task-work-design/SKILL.md`**：Orient → Feature Design SubAgent → 翻 `current.phase: design→tdd` → commit → 终止
+> - **`skills/long-task-work-tdd/SKILL.md`**：Orient → TDD Red/Green/Refactor SubAgents → `current=null` + `status=passing` → commit → 终止
+>
+> 跨会话衔接由 `feature-list.json.current` 锁 + `scripts/phase_route.py` 完成。每特性 2 次会话（design + tdd）；外部 `scripts/auto_loop.py` 处理自动多迭代。多版 TDD：在 worktree 里手工 reset `current.phase=tdd` 重跑（见 `worktree-isolation.md`）。
 
 ## 应避免的反模式
 

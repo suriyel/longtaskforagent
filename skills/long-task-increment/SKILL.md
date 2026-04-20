@@ -301,4 +301,4 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
 **调用方：** using-long-task（当 increment-request.json 存在时）
 **读取：** SRS、设计、feature-list.json、increment-request.json
 **写入：** SRS（原地）、设计（原地）、feature-list.json（追加/修改）
-**链接到：** long-task-work（增量完成后，通过路由器检测到失败功能）
+**链接到：** long-task-work-design（增量完成后，新 failing 特性由 `phase_route.py` 自动挑出并路由）

@@ -111,7 +111,7 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
     ```
 8. **搭建项目骨架**（目录、配置、依赖清单）— 基于**设计文档**架构
 9. **更新 `task-progress.md`** — 更新 `## Current State` 为初始进度（0/N features passing），然后追加 Session 0 条目（包含 SRS + 设计文档引用）
-10. **开始首个 Worker 周期** — **必需子 SKILL：** 调用 `long-task:long-task-work`
+10. **开始首个 Worker 周期** — 终止本会话，让用户开新会话。新会话的 `phase_route.py` 会自动把第一个失败特性路由到 `long-task:long-task-work-design`
 
 ## Feature List Schema
 
@@ -162,5 +162,5 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
 
 **调用者：** long-task-design（Step 6）或 using-long-task（当设计文档存在、无 feature-list.json 时）
 **读取：** `docs/plans/*-srs.md`（需求）+ `docs/plans/*-design.md`（架构）
-**链接到：** long-task-work（初始化完成后）
+**链接到：** long-task-work-design（初始化完成后，新会话由 `phase_route.py` 自动路由）
 **产出：** feature-list.json + 上述所有搭建产物

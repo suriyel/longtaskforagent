@@ -14,6 +14,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---------|---------|
 | Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|typescript]` |
 | Validate feature-list | `python scripts/validate_features.py feature-list.json` |
+| Route to next phase | `python scripts/phase_route.py --json` |
+| Count phase state | `python scripts/count_pending.py feature-list.json [--json]` |
+| Resolve feature design doc path | `python scripts/feature_paths.py design-doc --feature <id> [--must-exist]` |
 | Validate guide | `python scripts/validate_guide.py long-task-guide.md` |
 | Validate increment | `python scripts/validate_increment_request.py increment-request.json` |
 | Validate bugfix | `python scripts/validate_bugfix_request.py bugfix-request.json` |
@@ -43,7 +46,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json (single-repo only) |
 | `long-task-design` | Phase 0b | SRS exists, no design doc, no feature-list.json |
 | `long-task-init` | Phase 1 | Design doc exists, no feature-list.json |
-| `long-task-work` | Phase 2 | feature-list.json exists |
+| `long-task-work-design` | Phase 2a | `current.phase=design` (or router newly picks a feature); produces `docs/features/<id>-<slug>.md`, advances `current.phase → tdd`, ends session |
+| `long-task-work-tdd` | Phase 2b | `current.phase=tdd`; runs R-G-R SubAgents, clears `current`, marks feature `passing`, ends session |
 
 #### Standalone Skills (no pipeline dependency)
 
@@ -54,7 +58,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-coverage-retrofit` | Retrofit UT coverage for existing/legacy codebases — iterative measure→fix→verify until line + branch coverage thresholds met | On-demand via `/coverage-retrofit [--path dir] [--branch <branch>] [--dry-run]` |
 | `long-task-mutation-retrofit` | Retrofit mutation testing for existing/legacy codebases — iterative measure→fix→verify until mutation score threshold met | On-demand via `/mutation-retrofit [--path dir] [--branch <branch>] [--dry-run]` |
 
-#### Discipline Skills (sub-skills of long-task-work)
+#### Discipline Skills (sub-skills dispatched by `long-task-work-design` / `long-task-work-tdd`)
 
 | Skill | Purpose |
 |-------|---------|
@@ -69,19 +73,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 long-task-multi-repo (repos-manifest.json exists — exploration, global SRS, split, dep distribution, handoff)
    └─→ triggered directly when repos-manifest.json exists (router precondition, not a detection step)
 
-using-long-task (router — single-repo only)
-   ├─→ long-task-codebase-scanner (brownfield, no docs/rules/) → re-evaluate detection rules → long-task-requirements OR long-task-design
-   ├─→ long-task-requirements ──→ long-task-design ──→ long-task-init ──→ long-task-work
+using-long-task (router — delegates to scripts/phase_route.py --json; single-repo only)
+   ├─→ long-task-codebase-scanner (brownfield, no docs/rules/) → re-evaluate → long-task-requirements OR long-task-design
+   ├─→ long-task-requirements ──→ long-task-design ──→ long-task-init
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
-   │      └─→ validate → reproduce → root cause → enqueue as category=bugfix → long-task-work
+   │      └─→ validate → reproduce → root cause → enqueue as category=bugfix feature
    ├─→ long-task-increment (increment-request.json)
-   │      └─→ update SRS/Design → append features → long-task-work
-   └─→ long-task-work (feature-list.json exists)
-          ├─→ long-task-feature-design (Step 2)
-          ├─→ long-task-tdd-red (Step 3)
-          ├─→ long-task-tdd-green (Step 4)
-          ├─→ long-task-tdd-refactor (Step 5)
-          └─→ Persist + End Session (Step 6-7)
+   │      └─→ update SRS/Design → append features
+   └─→ (feature-list.json exists) — phase_route.py routes per root `current`
+          ├─→ long-task-work-design (current.phase=design; or new pick → atomic current write)
+          │      └─→ long-task-feature-design SubAgent → advance current.phase → tdd → commit → end session
+          └─→ long-task-work-tdd (current.phase=tdd)
+                 ├─→ long-task-tdd-red SubAgent
+                 ├─→ long-task-tdd-green SubAgent
+                 ├─→ long-task-tdd-refactor SubAgent
+                 └─→ Persist (current=null, feature.status=passing) → commit → end session
 
 long-task-explore (standalone — no pipeline dependency)
    ├─→ codebase-locator SubAgent (breadth-first scan)
@@ -111,7 +117,8 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design updated in place; new features appended with `wave` metadata |
 | 1: Init | `long-task-init` | `feature-list.json`, `long-task-guide.md`, project skeleton |
-| 2: Worker | `long-task-work` | Feature Design → TDD Red → TDD Green → TDD Refactor → Persist → End Session per feature |
+| 2a: Worker Design | `long-task-work-design` | Per-feature design doc (`docs/features/<id>-<slug>.md`); advances `current.phase: design → tdd`; ends session |
+| 2b: Worker TDD | `long-task-work-tdd` | R-G-R SubAgents; clears `current`; marks feature `passing`; ends session |
 
 ### Critical Rules
 
@@ -120,7 +127,8 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 - **Verification enforcement**: Never mark "passing" without fresh evidence.
 - **§11 compliance in TDD Refactor**: §11.1 grep + code reuse + implementation-summary verification — merged into TDD Refactor SubAgent.
 - **Systematic debugging**: Never guess-and-fix; trace root cause first.
-- **One feature per session**: Multi-feature automation via `scripts/auto_loop.py`.
+- **One feature × one phase per session**: Each Worker-phase skill ends with a session-termination banner; no auto-advance. Multi-feature/multi-phase automation via `scripts/auto_loop.py`.
+- **Root `current` lock is the single source of truth**: `feature-list.json.current = {feature_id, phase: "design"|"tdd"} | null`. `phase_route.py` and `validate_features.py` enforce this shape.
 - **Hotfix before increment**: When both signal files exist, hotfix runs first; `increment-request.json` preserved.
 - **Bug fixes via hotfix skill only**: Never manually add bugfix features; root cause must be confirmed and traceable.
 - **Incremental changes via increment skill only**: Never manually edit feature-list.json features; use increment skill.
@@ -220,8 +228,8 @@ long-task-agent/
 │   ├── long-task-design/SKILL.md
 │   ├── long-task-init/SKILL.md + scripts/init_project.py
 │   ├── long-task-feature-design/SKILL.md + references/feature-design-template.md
-│   ├── long-task-work/SKILL.md + references/{systematic-debugging,subagent-development,worktree-isolation}.md
-│   ├── long-task-tdd/SKILL.md (redirect → 3 phase skills below)
+│   ├── long-task-work-design/SKILL.md       (Worker phase A: per-feature design)
+│   ├── long-task-work-tdd/SKILL.md          (Worker phase B: R-G-R)
 │   ├── long-task-tdd-shared/references/{iron-law,testing-anti-patterns}.md
 │   ├── long-task-tdd-red/SKILL.md + references/tdd-red-execution.md
 │   ├── long-task-tdd-green/SKILL.md + references/tdd-green-execution.md
@@ -236,8 +244,10 @@ long-task-agent/
 ├── agents/{codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
 ├── docs/templates/{srs,design,deferred-backlog,rules-index,explore-report}-template.md
 ├── hooks/{hooks.json,session-start,run-hook.cmd}
+│   └── using-long-task/references/{architecture,systematic-debugging,subagent-development,worktree-isolation}.md
 ├── scripts/{get_tool_commands,validate_features,validate_guide,
 │           validate_bugfix_request,validate_increment_request,
+│           phase_route,count_pending,feature_paths,
 │           auto_loop,auto_loop_opencode}.py
 └── tests/test_<script_name>.py  (one file per script)
 ```
@@ -247,9 +257,12 @@ long-task-agent/
 - [ReadMe.md](ReadMe.md) — Overview and design rationale
 - [skills/using-long-task/references/architecture.md](skills/using-long-task/references/architecture.md) — Persistent artifacts, phase overview
 - [skills/long-task-codebase-scanner/SKILL.md](skills/long-task-codebase-scanner/SKILL.md) — Brownfield codebase scanner
-- [skills/long-task-work/references/systematic-debugging.md](skills/long-task-work/references/systematic-debugging.md) — Systematic debugging
-- [skills/long-task-work/references/subagent-development.md](skills/long-task-work/references/subagent-development.md) — Subagent-driven development
-- [skills/long-task-work/references/worktree-isolation.md](skills/long-task-work/references/worktree-isolation.md) — Worktree isolation
+- [skills/using-long-task/references/systematic-debugging.md](skills/using-long-task/references/systematic-debugging.md) — Systematic debugging (shared by work-design / work-tdd)
+- [skills/using-long-task/references/subagent-development.md](skills/using-long-task/references/subagent-development.md) — Subagent-driven development (shared)
+- [skills/using-long-task/references/worktree-isolation.md](skills/using-long-task/references/worktree-isolation.md) — Worktree isolation (multi-version TDD)
+- [skills/long-task-work-design/SKILL.md](skills/long-task-work-design/SKILL.md) — Worker phase A (feature design + handoff)
+- [skills/long-task-work-tdd/SKILL.md](skills/long-task-work-tdd/SKILL.md) — Worker phase B (TDD R-G-R + persist)
+- [scripts/phase_route.py](scripts/phase_route.py) — single-source-of-truth phase router
 - [skills/long-task-multi-repo/SKILL.md](skills/long-task-multi-repo/SKILL.md) — Multi-repo requirements, SRS split, dependency distribution
 - [skills/long-task-explore/SKILL.md](skills/long-task-explore/SKILL.md) — Standalone deep codebase exploration
 - [skills/long-task-static-review/SKILL.md](skills/long-task-static-review/SKILL.md) — Standalone pre-push static analysis (Checkstyle)
@@ -264,10 +277,10 @@ long-task-agent/
 ## Long-Task Agent
 
 This project uses a multi-session agent workflow with skills loaded on-demand.
-The `using-long-task` skill is injected at session start and routes to the correct phase based on project state.
-Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §11) → Init → Worker cycles → Finalize.
+`using-long-task` delegates to `scripts/phase_route.py --json`; follow the emitted `next_skill`. Every Worker-session does **one feature × one phase** and ends with a session-termination banner — no auto-advance.
+Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §11) → Init → Worker-Design → Worker-TDD (× each feature).
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles.
 
-Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §11 codebase constraints), `feature-list.json` (task inventory), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/*.md` (per-feature detailed design), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
+Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §11 codebase constraints), `feature-list.json` (task inventory + root `current` lock), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/<id>-<slug>.md` (per-feature detailed design; path via `scripts/feature_paths.py`), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
 Multi-repo support: session-start hook detects sub-directory git repos → `repos-manifest.json`. Independent `long-task-multi-repo` skill handles exploration, global SRS, per-repo split, and dependency distribution. User then independently cd's into each repo to run the single-repo pipeline.
 <!-- /long-task-agent -->

@@ -34,19 +34,20 @@ CLAUDE_MD_MARKER = "<!-- long-task-agent -->"
 _LONG_TASK_REFERENCE_BODY = (
     "\n\n<!-- long-task-agent -->\n"
     "## Long-Task Agent\n\n"
-    "**语言规则（Language Rule）**：所有对用户的回复和生成的文档必须使用中文（简体）。技能名称、代码标识符、JSON 字段名保持英文不变。\n\n"
-    "This project uses a multi-session agent workflow with 11 skills loaded on-demand.\n"
-    "The `using-long-task` skill routes to the correct phase based on project state.\n"
-    "Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §11) → Init → Worker cycles → Finalize.\n"
-    "Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles.\n\n"
-    "Key files: `docs/rules/*.md` (codebase conventions — brownfield only), "
-    "`docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), "
-    "`docs/plans/*-design.md` (design, includes §11 codebase constraints), "
-    "`feature-list.json` (task inventory), "
-    "`task-progress.md` (session log), "
-    "`RELEASE_NOTES.md` (changelog), "
-    "`docs/features/*.md` (per-feature detailed design), "
-    "`increment-request.json` (increment signal).\n"
+    "**Language Rule**：所有对用户的回复和生成的文档使用中文（简体）；技能名、代码标识符、JSON 字段保持英文。\n\n"
+    "Multi-session agent workflow. `using-long-task` delegates to `scripts/phase_route.py --json`; "
+    "follow the emitted `next_skill`. Every Worker-session does **one feature × one phase**, "
+    "ends with a session-terminator banner, never auto-advances.\n\n"
+    "**Routing table (read by `phase_route.py`)**:\n"
+    "- `bugfix-request.json` → `long-task-hotfix`\n"
+    "- `increment-request.json` → `long-task-increment`\n"
+    "- `feature-list.json` + root `current.phase=design` → `long-task-work-design`\n"
+    "- `feature-list.json` + root `current.phase=tdd`    → `long-task-work-tdd`\n"
+    "- `feature-list.json` + `current=null` + failing features → router picks next dep-ready feature (work-design atomically writes `current`)\n"
+    "- `feature-list.json` + `current=null` + all passing → project complete\n"
+    "- Pre-init ladder (no feature-list): `*-design.md` → `long-task-init`; `*-srs.md` → `long-task-design`; `docs/rules/*.md` → `long-task-requirements`; brownfield heuristic → `long-task-codebase-scanner`; else → `long-task-requirements`.\n\n"
+    "**Quick status**: `python scripts/count_pending.py feature-list.json`\n"
+    "**Status source**: `feature-list.json` root `current` + each feature's `status` are authoritative; `task-progress.md` is human log only.\n"
     "<!-- /long-task-agent -->\n"
 )
 
@@ -289,6 +290,9 @@ def main():
         "get_tool_commands.py",
         "validate_increment_request.py",
         "validate_bugfix_request.py",
+        "phase_route.py",
+        "count_pending.py",
+        "feature_paths.py",
         "auto_loop.py",
         "auto_loop_opencode.py",
     ]

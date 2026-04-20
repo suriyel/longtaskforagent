@@ -66,7 +66,7 @@ python scripts/validate_bugfix_request.py bugfix-request.json
 
 ## 步骤 5：根因分析
 
-执行 `skills/long-task-work/references/systematic-debugging.md` 中的 **4 阶段系统化调试流程**：
+执行 `skills/using-long-task/references/systematic-debugging.md` 中的 **4 阶段系统化调试流程**：
 
 **阶段 1 — 根因调查**：收集完整错误证据，找到最小复现，检查近期 git 变更，从入口点到故障点追踪数据流。
 
@@ -150,7 +150,7 @@ python scripts/validate_features.py feature-list.json
    Root cause: <one sentence>
    Worker will handle: TDD
    ```
-4. 链接到：`long-task:long-task-work`
+4. 链接到：下一会话由 `phase_route.py` 路由到 `long-task:long-task-work-design`（新 bugfix 特性 → router 自动挑）
 
 ---
 
@@ -183,5 +183,5 @@ python scripts/validate_features.py feature-list.json
 此 skill 由 `using-long-task` 路由器在项目根目录存在 `bugfix-request.json` 时调用（最高优先级 — 高于增量）。此 skill 完成后：
 - `bugfix-request.json` 已删除
 - `feature-list.json` 中新增了一个 `category: "bugfix"` 功能，`status: "failing"`
-- 路由器的下一次检测：`feature-list.json` 存在且有失败功能 → `long-task-work`
-- Worker 拾取 bugfix 功能并运行完整 TDD 流水线
+- 路由器下一次运行（`phase_route.py`）：`feature-list.json` + `current=null` + 有新 bugfix failing 特性 → `long-task-work-design`（starting_new=true，原子写 `current`）
+- 两次 Worker 会话（design + tdd）完成此 bugfix 特性
