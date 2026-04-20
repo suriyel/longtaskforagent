@@ -1,52 +1,114 @@
-# Long-Task Agent installer for OpenCode (Windows PowerShell)
-# Usage:  irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 | iex
+# =============================================================================
+# Long-Task Agent Installer for OpenCode (Windows PowerShell)
+# =============================================================================
+#
+# Usage:
+#   irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps1 | iex
+#
+# To install a specific branch:
+#   $env:BRANCH="main"; irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps1 | iex
 #
 # Requirements: Developer Mode enabled -OR- run as Administrator (for symlinks)
-#   Windows 10: Settings → Update & Security → For developers
-#   Windows 11: Settings → System → For developers
+#   Windows 10: Settings -> Update & Security -> For developers
+#   Windows 11: Settings -> System -> For developers
+#
 
 $ErrorActionPreference = "Stop"
 
-$installDir = "$env:USERPROFILE\.config\opencode\long-task-agent"
-$pluginsDir = "$env:USERPROFILE\.config\opencode\plugins"
-$skillsDir  = "$env:USERPROFILE\.config\opencode\skills"
-$repoUrl    = "https://github.com/suriyel/longtaskforagent.git"
+# =============================================================================
+# Configuration
+# =============================================================================
 
-Write-Host "Installing long-task-agent for OpenCode..."
+$RepoUrl = "https://github.com/suriyel/longtaskforagent.git"
+$Branch  = if ($env:BRANCH) { $env:BRANCH } else { "simple" }
 
-# Clone or update
-if (Test-Path (Join-Path $installDir ".git")) {
-    Write-Host "  -> Updating existing installation..."
-    git -C $installDir pull --ff-only
-} else {
-    Write-Host "  -> Cloning repository..."
-    git clone $repoUrl $installDir
+# =============================================================================
+# Paths
+# =============================================================================
+
+$InstallDir = Join-Path $env:USERPROFILE ".config\opencode\long-task-agent"
+$PluginsDir = Join-Path $env:USERPROFILE ".config\opencode\plugins"
+$SkillsDir  = Join-Path $env:USERPROFILE ".config\opencode\skills"
+$PluginLink = Join-Path $PluginsDir "long-task.js"
+$SkillLink  = Join-Path $SkillsDir  "long-task"
+$PluginSrc  = Join-Path $InstallDir ".opencode\plugins\long-task.js"
+$SkillsSrc  = Join-Path $InstallDir "skills"
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+function Write-Info    { param($Message) Write-Host "ℹ " -ForegroundColor Blue  -NoNewline; Write-Host $Message }
+function Write-Success { param($Message) Write-Host "✓ " -ForegroundColor Green -NoNewline; Write-Host $Message }
+
+# =============================================================================
+# Pre-flight Check
+# =============================================================================
+
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Host "Error: git is not installed" -ForegroundColor Red
+    exit 1
 }
 
-# Create directories
-New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
-New-Item -ItemType Directory -Force -Path $skillsDir  | Out-Null
+# =============================================================================
+# Install
+# =============================================================================
+
+Write-Info "Installing long-task-agent for OpenCode (branch: $Branch)"
+
+# Remove existing if present
+if (Test-Path $InstallDir) {
+    Write-Info "Removing existing installation..."
+    Remove-Item $InstallDir -Recurse -Force
+}
+
+# Clone repository (shallow, specific branch)
+Write-Info "Cloning from: $RepoUrl"
+$InstallParent = Split-Path -Parent $InstallDir
+if (-not (Test-Path $InstallParent)) {
+    New-Item -ItemType Directory -Force -Path $InstallParent | Out-Null
+}
+
+git clone --depth 1 --branch $Branch $RepoUrl $InstallDir
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Failed to clone repository" -ForegroundColor Red
+    exit 1
+}
+
+# Verify plugin source exists on selected branch
+if (-not (Test-Path $PluginSrc)) {
+    Write-Host "Error: Plugin source not found at $PluginSrc" -ForegroundColor Red
+    Write-Host "       (branch '$Branch' may not contain .opencode/plugins/long-task.js)" -ForegroundColor Red
+    exit 1
+}
+
+# Create link directories
+New-Item -ItemType Directory -Force -Path $PluginsDir | Out-Null
+New-Item -ItemType Directory -Force -Path $SkillsDir  | Out-Null
 
 # Remove stale links / old copies
-$pluginLink = Join-Path $pluginsDir "long-task.js"
-$skillLink  = Join-Path $skillsDir  "long-task"
-if (Test-Path $pluginLink) { Remove-Item $pluginLink -Force }
-if (Test-Path $skillLink)  { Remove-Item $skillLink  -Force -Recurse }
+if (Test-Path $PluginLink) { Remove-Item $PluginLink -Force }
+if (Test-Path $SkillLink)  { Remove-Item $SkillLink  -Force -Recurse }
 
 # Plugin: SymbolicLink (requires Developer Mode or Admin)
-New-Item -ItemType SymbolicLink `
-    -Path   $pluginLink `
-    -Target (Join-Path $installDir ".opencode\plugins\long-task.js") | Out-Null
+Write-Info "Linking plugin..."
+New-Item -ItemType SymbolicLink -Path $PluginLink -Target $PluginSrc | Out-Null
 
 # Skills: Junction (works without special privileges)
-New-Item -ItemType Junction `
-    -Path   $skillLink `
-    -Target (Join-Path $installDir "skills") | Out-Null
+Write-Info "Linking skills..."
+New-Item -ItemType Junction    -Path $SkillLink  -Target $SkillsSrc | Out-Null
+
+# =============================================================================
+# Success
+# =============================================================================
 
 Write-Host ""
-Write-Host "Done! long-task-agent installed."
+Write-Success "long-task-agent installed successfully!"
 Write-Host ""
-Write-Host "  Plugin : $pluginLink"
-Write-Host "  Skills : $skillLink"
+Write-Host "  Branch : $Branch"
+Write-Host "  Source : $InstallDir"
+Write-Host "  Plugin : $PluginLink"
+Write-Host "  Skills : $SkillLink"
 Write-Host ""
 Write-Host "Restart OpenCode to activate."
+Write-Host ""

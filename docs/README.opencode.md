@@ -4,10 +4,12 @@ Complete guide for using Long-Task Agent with [OpenCode.ai](https://opencode.ai)
 
 ## Quick Install
 
+Both installers default to the `simple` branch (current primary development branch). To install a different branch, set the `BRANCH` environment variable — see [Install from a Specific Branch](#install-from-a-specific-branch).
+
 ### macOS / Linux — one command
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.sh | bash
 ```
 
 ### Windows (PowerShell) — one command
@@ -17,10 +19,26 @@ curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/insta
 > Windows 11: Settings → System → For developers
 
 ```powershell
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps1 | iex
 ```
 
 Restart OpenCode after installation.
+
+### Install from a Specific Branch
+
+Override the default (`simple`) with the `BRANCH` env var:
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.sh | BRANCH=main bash
+```
+
+```powershell
+# Windows (PowerShell)
+$env:BRANCH="main"; irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps1 | iex
+```
+
+The installer performs a shallow clone of the selected branch into `~/.config/opencode/long-task-agent`, replacing any previous installation.
 
 ---
 
@@ -324,19 +342,19 @@ Skills written for Claude Code are automatically adapted via the bootstrap injec
 
 ## Updating
 
-Re-run the installer — it detects an existing clone and does `git pull` automatically:
+Re-run the installer — it removes the existing clone and re-installs the selected branch (defaulting to `simple`):
 
 ```bash
 # macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.sh | bash
 ```
 
 ```powershell
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/suriyel/longtaskforagent/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/suriyel/longtaskforagent/simple/install.ps1 | iex
 ```
 
-Or update manually:
+To update manually without re-cloning (preserves any local edits you made):
 
 ```bash
 cd ~/.config/opencode/long-task-agent && git pull
