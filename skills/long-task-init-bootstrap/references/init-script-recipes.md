@@ -558,6 +558,88 @@ echo "Environment ready."
 
 ---
 
+## Go 配方
+
+### 系统 go / asdf
+
+**init.sh:**
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+
+GO_VERSION="1.22"  # from design doc
+MODULE_PATH="example.com/project"  # from design doc
+
+echo "=== Environment Bootstrap (Go) ==="
+
+# Detect go
+if ! command -v go &>/dev/null; then
+    if command -v asdf &>/dev/null; then
+        echo "go not found; installing via asdf..."
+        asdf plugin-add golang || true
+        asdf install golang "$GO_VERSION"
+        asdf local golang "$GO_VERSION"
+    else
+        echo "ERROR: Go not found. Install from https://go.dev/dl/ or 'asdf plugin-add golang && asdf install golang $GO_VERSION'"
+        exit 1
+    fi
+fi
+
+# Module init (idempotent)
+if [ ! -f "go.mod" ]; then
+    go mod init "$MODULE_PATH"
+fi
+
+go mod tidy
+
+# Dev tools
+if ! command -v golangci-lint &>/dev/null; then
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+fi
+
+echo ""
+echo "=== Environment Check ==="
+echo "go:             $(go version)"
+echo "golangci-lint:  $(golangci-lint --version 2>&1 | head -1)"
+echo ""
+echo "Environment ready."
+```
+
+**init.ps1:**
+```powershell
+$ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
+
+$GoVersion = "1.22"
+$ModulePath = "example.com/project"
+
+Write-Host "=== Environment Bootstrap (Go) ==="
+
+if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
+    Write-Error "Go not found. Install from https://go.dev/dl/"
+    exit 1
+}
+
+if (-not (Test-Path "go.mod")) {
+    go mod init $ModulePath
+}
+
+go mod tidy
+
+if (-not (Get-Command golangci-lint -ErrorAction SilentlyContinue)) {
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+}
+
+Write-Host ""
+Write-Host "=== Environment Check ==="
+Write-Host "go:             $(go version)"
+Write-Host ""
+Write-Host "Environment ready."
+```
+
+---
+
 ## Docker / Devcontainer 配方
 
 **init.sh:**
@@ -604,7 +686,8 @@ echo "Environment ready."
 | `Dockerfile` 或 `docker-compose.yml` | Docker |
 | 存在 `.devcontainer/` 目录 | Devcontainer |
 | C/C++ 使用 CMake | 系统包 |
-| 未指定环境管理器 | 使用语言默认（Python 用 venv，Node 用 nvm） |
+| Go + `go.mod` | 系统 go / asdf |
+| 未指定环境管理器 | 使用语言默认（Python 用 venv，Node 用 nvm，Go 用系统 go） |
 
 ## 组合工具
 

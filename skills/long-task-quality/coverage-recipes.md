@@ -12,6 +12,7 @@ Multi-language setup instructions for coverage tracking tools. Read this file wh
 | TypeScript | c8 / nyc (Istanbul) | Yes |
 | C | gcov + lcov | Yes (`--branch-probabilities`) |
 | C++ | gcov + lcov / llvm-cov | Yes |
+| Go | go test -cover (`go tool cover`) | No — statement coverage only (gocov for branch) |
 
 ---
 
@@ -296,6 +297,30 @@ llvm-cov show ./test-binary -instr-profile=coverage.profdata --format=html > cov
 
 ---
 
+## Go
+
+**Coverage** — `go test -cover` (stdlib) + `go tool cover`:
+
+```bash
+# Coverage
+go test -coverprofile=coverage.out -covermode=atomic ./...
+go tool cover -func=coverage.out       # per-function + total
+go tool cover -html=coverage.out -o coverage.html
+```
+
+No `go.mod` config required — flags only.
+
+**Branch coverage caveat** — Go's built-in tooling reports **statement coverage only**. Set `quality_gates.branch_coverage_min` equal to `line_coverage_min` (statement % doubles as both metrics) or lower it. For true branch coverage, use [`gocov`](https://github.com/axw/gocov) or [`gocov-html`](https://github.com/matm/gocov-html) externally.
+
+**Threshold check** — parse total from `go tool cover -func`:
+
+```bash
+COV=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$3); print $3}')
+awk -v cov="$COV" -v min=90 'BEGIN { exit (cov+0 >= min+0) ? 0 : 1 }'
+```
+
+---
+
 ## Language Presets
 
 When using `init_project.py --lang <language>`:
@@ -308,6 +333,7 @@ When using `init_project.py --lang <language>`:
 | `typescript` | vitest | c8 |
 | `c` | ctest | gcov |
 | `cpp` / `c++` | gtest | gcov |
+| `go` | go-test | go-cover |
 
 ## Default Thresholds
 

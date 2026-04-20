@@ -26,6 +26,7 @@ TEST_COMMANDS = {
     "vitest":  "npx vitest run",
     "ctest":   "ctest --test-dir build",
     "gtest":   "ctest --test-dir build",
+    "go-test": "go test ./...",
 }
 
 COVERAGE_COMMANDS = {
@@ -34,6 +35,7 @@ COVERAGE_COMMANDS = {
     "c8":         "npx vitest run --coverage",
     "c8-jest":    "npx c8 --branches 80 --lines 90 --reporter=text npx jest",
     "gcov":       "make CFLAGS=\"--coverage\" test && gcov -b src/*.c && lcov --capture -d . -o coverage.info && lcov --summary coverage.info",
+    "go-cover":   "go test -coverprofile=coverage.out -covermode=atomic ./... && go tool cover -func=coverage.out",
 }
 
 

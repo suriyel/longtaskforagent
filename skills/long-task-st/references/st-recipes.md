@@ -99,6 +99,24 @@ ctest --test-dir build -R integration -V
 - 测试模块间 IPC、共享内存、文件 I/O [Real]
 - 外部边界用 mock 库（`gmock`、`fff`）[Contract] — 凭据不可用时须记录原因
 
+### Go
+```bash
+# Directory convention (_test.go next to source, or tests/integration/)
+internal/feature/feature_integration_test.go
+
+# Run integration tests (build tag or separate dir)
+go test -tags=integration ./... -v
+# or run a specific integration directory
+go test ./tests/integration/... -v
+```
+
+**模式：**
+- 使用 `testing.T.TempDir()` / `t.Cleanup()` 做共享状态 setup/teardown
+- 数据库 / 服务集成用 `testcontainers-go` [Real]
+- 内部 HTTP API 用 `net/http/httptest.NewServer` [Real]
+- 外部第三方边界用 `httptest` + interface seam 替换 client [Contract] — 凭据不可用时须记录原因
+- 使用 `//go:build integration` build tag 隔离集成测试
+
 ---
 
 ## 2. E2E 测试工具
@@ -112,6 +130,7 @@ ctest --test-dir build -R integration -V
 | JS/TS | `supertest` | `npm install supertest` |
 | JS/TS | `axios` + `vitest` | `npm install axios` |
 | Java | `RestAssured` | Maven: `io.rest-assured:rest-assured` |
+| Go | `net/http` + `testing` | stdlib (no install) |
 
 ### UI E2E（Chrome DevTools MCP）
 
@@ -125,6 +144,7 @@ ctest --test-dir build -R integration -V
 | Node.js | `execa` or `child_process` in vitest |
 | Java | `ProcessBuilder` in JUnit |
 | C/C++ | `system()` or `popen()` in gtest |
+| Go | `os/exec` + `testing` |
 
 ---
 
@@ -182,6 +202,16 @@ auto start = std::chrono::high_resolution_clock::now();
 auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start).count();
 ```
 
+### Go
+```bash
+# stdlib testing.B (micro-benchmarks)
+go test -bench=. -benchmem -run=^$ ./...
+go test -bench=BenchmarkX -benchtime=5s -count=3 ./pkg/... > bench.txt
+
+# Load testing: vegeta
+echo "GET http://localhost:8080/api/endpoint" | vegeta attack -duration=30s -rate=100 | vegeta report
+```
+
 ---
 
 ## 4. 安全扫描
@@ -196,6 +226,7 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 | JS/TS | `snyk` | `npx snyk test` |
 | Java | `OWASP Dependency-Check` | `mvn org.owasp:dependency-check-maven:check` |
 | C/C++ | `cve-bin-tool` | `cve-bin-tool ./build/` |
+| Go | `govulncheck` | `govulncheck ./...` |
 | General | `trivy` | `trivy fs --severity HIGH,CRITICAL .` |
 
 ### 静态分析（侧重安全）
@@ -206,6 +237,7 @@ auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock:
 | JS/TS | `eslint-plugin-security` | `npx eslint --rule 'security/*' src/` |
 | Java | `SpotBugs + FindSecBugs` | `mvn spotbugs:check` |
 | C/C++ | `cppcheck` | `cppcheck --enable=all --force src/` |
+| Go | `golangci-lint` (含 gosec) | `golangci-lint run --enable=gosec ./...` |
 
 ### OWASP Top 10 检查清单（人工评审）
 
@@ -254,6 +286,7 @@ python -c "import platform; print(platform.system())"
 | JS/TS | `npx vitest run --coverage` |
 | Java | `mvn jacoco:report` (then read `target/site/jacoco/index.html`) |
 | C/C++ | `gcovr --print-summary` |
+| Go | `go tool cover -func=coverage.out \| tail -1` |
 
 ### 采集测试数量
 
@@ -263,3 +296,4 @@ python -c "import platform; print(platform.system())"
 | JS/TS | `npx vitest run --reporter=verbose` |
 | Java | `mvn test` (Surefire report) |
 | C/C++ | `ctest --test-dir build -V` |
+| Go | `go test -v ./... \| tail -5` (PASS/FAIL + ok summary) or `gotestsum --format=short` |

@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Purpose | Command |
 |---------|---------|
-| Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|typescript] [--line-cov N] [--branch-cov N]` |
+| Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|javascript\|typescript\|c\|cpp\|c++\|go] [--line-cov N] [--branch-cov N]` |
 | Validate feature-list | `python scripts/validate_features.py feature-list.json` |
 | Validate guide | `python scripts/validate_guide.py long-task-guide.md [--feature-list feature-list.json]` |
 | Check configs | `python scripts/check_configs.py feature-list.json [--feature N]` |

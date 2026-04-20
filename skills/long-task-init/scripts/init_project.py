@@ -154,6 +154,10 @@ LANG_PRESETS = {
         "test_framework": "gtest",
         "coverage_tool": "gcov",
     },
+    "go": {
+        "test_framework": "go-test",
+        "coverage_tool": "go-cover",
+    },
 }
 
 
