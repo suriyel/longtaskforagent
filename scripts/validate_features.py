@@ -24,6 +24,7 @@ import sys
 REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status"}
 SRS_TRACE_PATTERN = re.compile(r"^(?:FR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
+VALID_PHASES = {"design", "tdd"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
 def validate(path: str) -> tuple[list[str], list[str]]:
@@ -108,6 +109,25 @@ def validate(path: str) -> tuple[list[str], list[str]]:
     features = data["features"]
     if not isinstance(features, list):
         return ['"features" must be an array'], []
+
+    # Validate root `current` shape (reference check deferred until ids_seen is built)
+    cur = data.get("current")
+    current_feature_id = None
+    if cur is not None:
+        if not isinstance(cur, dict):
+            errors.append('"current" must be null or an object with feature_id+phase')
+        else:
+            cfid = cur.get("feature_id")
+            cphase = cur.get("phase")
+            if cfid is None or not isinstance(cfid, int):
+                errors.append('current.feature_id must be an integer')
+            else:
+                current_feature_id = cfid
+            if cphase not in VALID_PHASES:
+                errors.append(
+                    f"current.phase must be one of {sorted(VALID_PHASES)}, "
+                    f"got {cphase!r}"
+                )
 
     ids_seen = set()
 
@@ -199,6 +219,25 @@ def validate(path: str) -> tuple[list[str], list[str]]:
     # Second pass: validate all dependencies and supersedes reference existing IDs
     all_ids = {f.get("id") for f in features if isinstance(f, dict)}
     id_to_feature = {f.get("id"): f for f in features if isinstance(f, dict)}
+
+    # Validate current.feature_id reference + state consistency
+    if current_feature_id is not None:
+        cfeat = id_to_feature.get(current_feature_id)
+        if cfeat is None:
+            errors.append(
+                f"current.feature_id={current_feature_id} does not exist"
+            )
+        else:
+            if cfeat.get("deprecated"):
+                errors.append(
+                    f"current.feature_id={current_feature_id} is deprecated"
+                )
+            if cfeat.get("status") == "passing":
+                errors.append(
+                    f"current.feature_id={current_feature_id} has "
+                    f"status='passing'; a locked feature must be 'failing'"
+                )
+
     for feat in features:
         if not isinstance(feat, dict):
             continue
@@ -256,6 +295,14 @@ def main():
         if deprecated_count > 0:
             summary += f", {deprecated_count} deprecated"
         summary += ")"
+
+        # Current lock
+        cur = data.get("current")
+        if cur and isinstance(cur, dict):
+            summary += (f" | current=#{cur.get('feature_id')}"
+                        f"({cur.get('phase')})")
+        else:
+            summary += " | current=none"
 
         # Show constraints/assumptions counts
         ct = data.get("constraints", [])

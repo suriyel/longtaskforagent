@@ -881,6 +881,125 @@ def test_no_single_round_backward_compat():
     assert code == 0
 
 
+# ---- current-lock validation ----
+
+def _basic_failing(id_=1):
+    return {"id": id_, "category": "core", "title": f"T{id_}",
+            "description": "D", "priority": "high", "status": "failing",
+            "dependencies": []}
+
+
+def test_current_null_is_valid():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": None,
+            "features": [_basic_failing()]}
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+    assert "current=none" in stdout
+
+
+def test_current_design_phase_valid():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 1, "phase": "design"},
+            "features": [_basic_failing()]}
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+    assert "current=#1(design)" in stdout
+
+
+def test_current_tdd_phase_valid():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 1, "phase": "tdd"},
+            "features": [_basic_failing()]}
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+    assert "current=#1(tdd)" in stdout
+
+
+def test_current_phase_st_rejected():
+    """Simple branch has no ST phase."""
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 1, "phase": "st"},
+            "features": [_basic_failing()]}
+    code, stdout, _ = run_validator(data)
+    assert code != 0
+    assert "phase" in stdout.lower()
+
+
+def test_current_phase_invalid_rejected():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 1, "phase": "bogus"},
+            "features": [_basic_failing()]}
+    code, _, _ = run_validator(data)
+    assert code != 0
+
+
+def test_current_not_object_rejected():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": "invalid",
+            "features": [_basic_failing()]}
+    code, _, _ = run_validator(data)
+    assert code != 0
+
+
+def test_current_missing_feature_id_rejected():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"phase": "design"},
+            "features": [_basic_failing()]}
+    code, _, _ = run_validator(data)
+    assert code != 0
+
+
+def test_current_references_nonexistent_feature_rejected():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 999, "phase": "design"},
+            "features": [_basic_failing()]}
+    code, stdout, _ = run_validator(data)
+    assert code != 0
+    assert "999" in stdout
+
+
+def test_current_references_passing_feature_rejected():
+    f = _basic_failing()
+    f["status"] = "passing"
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 1, "phase": "tdd"},
+            "features": [f]}
+    code, stdout, _ = run_validator(data)
+    assert code != 0
+    assert "passing" in stdout.lower()
+
+
+def test_current_references_deprecated_feature_rejected():
+    f = _basic_failing()
+    f["deprecated"] = True
+    f["deprecated_reason"] = "obsolete"
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 1, "phase": "design"},
+            "features": [f]}
+    code, stdout, _ = run_validator(data)
+    assert code != 0
+    assert "deprecated" in stdout.lower()
+
+
+def test_no_current_key_backward_compat():
+    """Omitting current should still pass (backward compat for pre-refactor files)."""
+    data = {"project": "p", "created": "2025-01-01",
+            "features": [_basic_failing()]}
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+    assert "current=none" in stdout
+
+
+def test_current_summary_displayed():
+    data = {"project": "p", "created": "2025-01-01",
+            "current": {"feature_id": 1, "phase": "tdd"},
+            "features": [_basic_failing()]}
+    code, stdout, _ = run_validator(data)
+    assert code == 0
+    assert "current=#1(tdd)" in stdout
+
+
 if __name__ == "__main__":
     tests = [
         test_valid_feature_list,
@@ -927,6 +1046,18 @@ if __name__ == "__main__":
         test_single_round_false_valid,
         test_single_round_invalid_type,
         test_no_single_round_backward_compat,
+        test_current_null_is_valid,
+        test_current_design_phase_valid,
+        test_current_tdd_phase_valid,
+        test_current_phase_st_rejected,
+        test_current_phase_invalid_rejected,
+        test_current_not_object_rejected,
+        test_current_missing_feature_id_rejected,
+        test_current_references_nonexistent_feature_rejected,
+        test_current_references_passing_feature_rejected,
+        test_current_references_deprecated_feature_rejected,
+        test_no_current_key_backward_compat,
+        test_current_summary_displayed,
     ]
     passed = 0
     failed = 0
