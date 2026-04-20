@@ -35,6 +35,19 @@ if [ -f "$INIT_SCRIPT_SRC" ]; then
     printf '%s' "${PLUGIN_ROOT_HINT}" > "scripts/.long-task-plugin-root"
 fi
 
+# ── Copy phase_route.py + import deps (count_pending, validate_features) ─────
+# phase_route.py imports its siblings via sys.path insert, so all three must
+# land together in the project's scripts/ dir. Required in pre-init sessions
+# (before long-task-init populates scripts/) so `using-long-task` can run
+# `python scripts/phase_route.py --json` on the very first session.
+for _ROUTER_SCRIPT in phase_route.py count_pending.py validate_features.py; do
+    _SRC="${PLUGIN_ROOT}/scripts/${_ROUTER_SCRIPT}"
+    if [ -f "$_SRC" ]; then
+        mkdir -p "scripts"
+        cp "$_SRC" "scripts/${_ROUTER_SCRIPT}"
+    fi
+done
+
 # ── Multi-repo detection ────────────────────────────────────────────────────
 # If project root is NOT a git repo but has sub-dirs with .git, generate
 # repos-manifest.json so the router skill can detect the multi-repo topology.
