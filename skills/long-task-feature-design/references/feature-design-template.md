@@ -25,9 +25,47 @@ tests/
 
 ## 设计对齐
 
-- **关键类**：[来自 §4.N 类图 -- 要创建/修改的类及关键方法]
-- **交互流程**：[来自 §4.N 序列图 -- 关键调用链]
-- **偏差**：[无，或解释偏差并附用户批准说明]
+> **UML 嵌入粒度**：本章节聚焦**方法内**协作/调用序列（系统设计 §4.N 已覆盖类/模块层，粒度不重叠）。若内容与 §4.N 等价，仅写一行引用（如"见系统设计 §4.3 类图"），不重复画图。
+
+**类图**（触发：本功能涉及 ≥2 个类/模块协作）。节点/方法/字段必须使用真实标识符；仅类图允许用 classDef 色标区分 NEW/MODIFIED/EXISTING：
+
+```mermaid
+classDiagram
+    class OrderService {
+        +placeOrder(req: OrderRequest) OrderId
+        +cancelOrder(id: OrderId) void
+    }
+    class PaymentGateway {
+        +charge(amount: Money) PaymentResult
+    }
+    class OrderRepository {
+        +save(order: Order) void
+        +findById(id: OrderId) Order
+    }
+    OrderService --> PaymentGateway : uses
+    OrderService --> OrderRepository : uses
+    classDef newClass fill:#d4edda,stroke:#28a745
+    classDef modifiedClass fill:#fff3cd,stroke:#ffc107
+    class OrderService:::newClass
+    class OrderRepository:::modifiedClass
+```
+
+**时序图**（触发：≥2 个对象/服务的调用顺序）。参与者/消息必须使用真实名称；**禁止**色彩、图标、rect 框、`note over` 装饰：
+
+```mermaid
+sequenceDiagram
+    participant OrderService
+    participant PaymentGateway
+    participant OrderRepository
+    OrderService->>PaymentGateway: charge(amount)
+    PaymentGateway-->>OrderService: PaymentResult
+    OrderService->>OrderRepository: save(order)
+    OrderRepository-->>OrderService: void
+```
+
+**辅助说明**：图为主，文字只注解图中非显然的决策（如"选择 charge 早于 save 以避免订单持久化后支付失败产生脏数据"）。不重复图中已明示的调用顺序。
+
+**偏差**：[无，或解释偏差并附用户批准说明]
 
 ## 现有代码复用
 
@@ -69,6 +107,23 @@ tests/
 - [例如，为什么阈值默认为 0.6，为什么参数 X 是可选的]
 - **跨功能契约对齐**：如果本功能在设计 §6.2 中作为 Provider 或 Consumer，对应方法的签名必须匹配 §6.2 schema。记录契约 ID（例如 IAPI-001）以便追踪。
 
+**状态机**（触发：方法含状态依赖，状态数 ≥2 且有 transition）。嵌入在对应方法说明之后。状态名、事件名必须使用真实标识符；**禁止**色彩、图标、rect 框、皮肤主题：
+
+```mermaid
+stateDiagram-v2
+    [*] --> Created
+    Created --> Paid : paymentConfirmed
+    Created --> Cancelled : cancelOrder
+    Paid --> Shipped : shipmentDispatched
+    Paid --> Refunded : refundRequested [withinGracePeriod]
+    Shipped --> Delivered : deliveryConfirmed
+    Cancelled --> [*]
+    Refunded --> [*]
+    Delivered --> [*]
+```
+
+**辅助说明**（可选）：文字仅注解守卫条件含义（如 `withinGracePeriod` 定义为"支付后 24 小时内"）。状态转移本身由图表达，不重复列出。
+
 **边界决策**
 
 | 参数 | 最小值 | 最大值 | 空/Null | 边界行为 |
@@ -88,6 +143,31 @@ tests/
 | 文件 | 类/模块 | 动作 | 变更描述 | 关键设计决策 |
 |------|---------|------|----------|--------------|
 | [path] | [ClassName] | [NEW/MODIFY] | [方法级：添加/修改什么方法、关键逻辑要点] | [非显而易见的决策理由] |
+
+**流程图**（触发：任一行的"关键设计决策"涉及 ≥3 个决策分支或异常路径）。嵌入在上表对应行之后。节点文本必须使用真实方法名 / 真实判定条件；**禁止**色彩、图标、rect 框、classDef：
+
+```mermaid
+flowchart TD
+    start([placeOrder called])
+    validateInput{input valid?}
+    checkStock{stock sufficient?}
+    chargePayment{charge succeeded?}
+    saveOrder[OrderRepository.save]
+    raiseInvalidInput[raise InvalidOrderError]
+    raiseOutOfStock[raise OutOfStockError]
+    raisePaymentFailed[raise PaymentDeclinedError]
+    done([return OrderId])
+    start --> validateInput
+    validateInput -->|no| raiseInvalidInput
+    validateInput -->|yes| checkStock
+    checkStock -->|no| raiseOutOfStock
+    checkStock -->|yes| chargePayment
+    chargePayment -->|no| raisePaymentFailed
+    chargePayment -->|yes| saveOrder
+    saveOrder --> done
+```
+
+**辅助说明**（可选）：文字仅补充图外上下文（如"InvalidOrderError 汇总 §11.6 错误处理模式"）。分支条件与错误终点由图承载，不再散文重述。
 
 ## 测试清单
 
@@ -116,6 +196,9 @@ tests/
 - [ ] §11.1 强制库覆盖的所有操作使用这些库（接口契约中无被替代的方案）
 - [ ] 现有代码复用章节记录了来自代码库探索和已通过依赖的所有可发现的可复用代码
 - [ ] 需求相关行为扫描完成 -- 重叠的现有行为已记录或明确标注为不存在
+- [ ] UML 图（若存在）节点/参与者/状态/消息均使用真实标识符，无 A/B/C 等代称
+- [ ] 非类图的 UML（sequence / state / flowchart）不含色彩、图标、rect 框、classDef 等装饰元素
+- [ ] 每个 UML 图元素（类节点 / sequence 消息 / state transition / flow 决策分支）在测试清单"追踪到"列被至少一行引用
 
 ## 澄清附录
 

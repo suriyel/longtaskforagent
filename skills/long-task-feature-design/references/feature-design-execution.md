@@ -134,6 +134,37 @@
 
 记录在 "现有代码复用" 章节的 "§11 库 & 复用映射" 子表中。
 
+### 2a. 设计对齐 -- UML 嵌入触发
+
+> 粒度约定：本技能产出的 UML 图聚焦**方法内**细粒度（调用序列 / 状态转换 / 方法内分支）。系统设计 §4.N 已覆盖类/模块层；若内容等价，只写一行文字引用（如"见系统设计 §4.3 类图"），不重复画图。
+
+在 `## 设计对齐` 章节按以下触发规则嵌入 mermaid 代码块（图占主，文字仅注解非显然决策）：
+
+| 触发信号 | 图类型 | 装饰允许 |
+|---|---|---|
+| 本功能涉及 ≥2 个类/模块协作（含 NEW/MODIFIED） | `classDiagram` | 允许用 classDef 色标区分 NEW/MODIFIED/EXISTING（唯一允许的装饰，对齐 design-template 惯例） |
+| ≥2 个对象/服务参与调用顺序 | `sequenceDiagram` | **禁止**任何装饰 |
+
+不满足触发信号 → **不画**。
+
+### 2b. UML 风格硬约束
+
+对本技能产出的所有 mermaid 图（classDiagram / sequenceDiagram / stateDiagram-v2 / flowchart），执行以下规则：
+
+**DO（必须）**：
+- `class OrderService { +placeOrder(req: OrderRequest) OrderId }` -- 真实类名 + 真实方法签名
+- `participant OrderService` / `OrderService->>PaymentGateway: charge(amount)` -- 真实参与者 + 真实方法调用
+- `Created --> Paid : paymentConfirmed` -- 真实状态名 + 真实事件名
+- `validateInput{input valid?}` -- 真实方法名 + 真实判定条件
+
+**DON'T（违规，验证检查清单会拦截）**：
+- `class A { +foo() B }` -- 代称 A/B/C
+- `participant A as A` / `A->>B: call()` -- 代称 + 占位符
+- 在 sequence / state / flowchart 中使用 `style X fill:#...` / `classDef` / `rect rgb(...)` / 图标 / 皮肤主题
+- `note over` / `loop` / `alt` 等非必要包裹（仅在表达真实并发或异常路径时允许）
+
+**每个图元素必须被测试清单"追踪到"列引用**（见本文件 §4 规则）。未被任何测试引用的图元素视为死代码，Verdict = FAIL。
+
 ### 2. 接口契约
 
 对本功能暴露或修改的每个公共方法：
@@ -157,6 +188,12 @@
 1. 在设计理由章节记录偏差（契约 ID、原始 vs 建议、原因、影响）
 2. Verdict = `BLOCKED`，Issue："契约偏差需要设计更新"
 3. 协调器上报用户
+
+**状态机嵌入规则**（触发：方法含状态依赖，状态数 ≥2 且有 transition）：
+- 在对应方法说明之后嵌入 `stateDiagram-v2` mermaid 代码块
+- 状态名、事件名使用真实标识符（如 `Created --> Paid : paymentConfirmed`）
+- 遵循 §2b 风格硬约束 -- **禁用装饰**
+- 每个 transition 必须在测试清单被引用（格式示例：`§接口契约 state Created→Paid`）
 
 **边界决策表**（接口契约每个带范围约束的参数）：
 
@@ -187,6 +224,8 @@
 - 与项目结构章节交叉验证：每个 [new]/[modified] 文件在此表中有对应行
 - 足够具体使 Green 能据此实现，足够精炼避免冗余
 - 在生成此表前，内部分析每个非平凡方法的分支条件、边界值和错误路径，分析结果体现在变更描述和上方的边界/错误表中
+- **流程图嵌入规则**（触发：任一行的"关键设计决策"涉及 ≥3 个决策分支或异常路径）：在该行之后嵌入 `flowchart TD` mermaid 代码块，节点文本使用真实方法名/真实判定条件；遵循 §2b 风格硬约束 -- **禁用装饰**；此时"关键设计决策"散文只作图外注解（补充守卫含义、依据的 §11.6 模式等），不重述图中已明示的分支
+- 每个决策节点必须在测试清单被引用（格式示例：`§实现摘要 flow branch#N`）
 
 ### 4. 测试清单
 
@@ -210,6 +249,11 @@
 - 负向测试（FUNC/error + BNDRY/*）>= 总行数的 40%
 - "追踪到" 引用测试来源的设计章节
 - "杀死哪个缺陷？" 指出此测试捕获的具体错误实现
+- **UML 元素引用（强制）**：若 §设计对齐 / §接口契约 / §实现摘要 嵌入了 mermaid 图，每个图元素必须在"追踪到"列被至少一行引用：
+  - sequenceDiagram 每条消息 → 格式 `§设计对齐 seq msg#N`
+  - stateDiagram-v2 每条 transition → 格式 `§接口契约 state <From>→<To>`
+  - flowchart TD 每个决策节点 → 格式 `§实现摘要 flow branch#N`
+  - classDiagram 的 NEW/MODIFIED 节点 → 由 Green 消费（不需要独立测试引用，但 Refactor 会 grep 验证）
 
 **集成测试行（INTG 类别）：**
 - 有外部依赖的功能：每种依赖类型至少 1 个 `INTG/*` 行
@@ -237,6 +281,9 @@
 - [ ] §11.1 强制库覆盖的所有操作使用这些库（接口契约中无被替代的方案）
 - [ ] 现有代码复用章节记录了来自代码库探索和已通过依赖的所有可发现的可复用代码
 - [ ] 需求相关行为扫描完成 -- 重叠的现有行为已记录或明确标注为不存在
+- [ ] UML 图（若嵌入）节点/参与者/状态/消息均使用真实标识符，无 A/B/C 等代称
+- [ ] 非类图的 UML（sequence / state / flowchart）不含色彩、图标、rect 框、classDef 等装饰
+- [ ] 每个 UML 图元素（sequence 消息 / state transition / flow 决策分支）在测试清单"追踪到"列被至少一行引用
 
 ---
 
@@ -256,10 +303,11 @@
 |--------|-------|-----------|--------|
 | Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
-| Verification Checklist | N/11 | 11/11 | PASS/FAIL |
+| Verification Checklist | N/14 | 14/14 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
 | §11 Compliance | N checked / M total | All checked | PASS/FAIL |
 | Existing Code Reuse Items | N | ≥ 0 | INFO |
+| UML Element Trace Coverage | N/M | M/M (M=0 时 N/A) | PASS/FAIL |
 ### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |
 |---|----------|-------------|
