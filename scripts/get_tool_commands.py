@@ -19,6 +19,15 @@ import argparse
 import json
 import sys
 
+
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 # ---------------------------------------------------------------------------
 # Command templates per tool
 # Keys = lowercase tool names as they appear in tech_stack
@@ -628,6 +637,7 @@ def format_text(cmds: dict) -> str:
 
 
 def main():
+    _force_utf8_io()
     parser = argparse.ArgumentParser(
         description="Output exact tool commands for a long-task project"
     )
@@ -646,7 +656,7 @@ def main():
     cmds = get_commands(data)
 
     if args.json:
-        print(json.dumps(cmds, indent=2))
+        print(json.dumps(cmds, indent=2, ensure_ascii=False))
     else:
         print(format_text(cmds))
 

@@ -21,6 +21,14 @@ import re
 import sys
 
 
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 # Required section concepts — each is (label, list of alternative patterns).
 # The guide passes if at least ONE pattern from each group is found (case-insensitive).
 REQUIRED_SECTIONS = [
@@ -88,6 +96,7 @@ def _append_footer(path: str) -> None:
 
 
 def main():
+    _force_utf8_io()
     parser = argparse.ArgumentParser(description="Validate LLM-generated long-task-guide.md")
     parser.add_argument("guide_path", help="Path to long-task-guide.md")
     args = parser.parse_args()

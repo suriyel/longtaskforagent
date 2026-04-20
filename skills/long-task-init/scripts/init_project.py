@@ -29,6 +29,14 @@ import sys
 from datetime import datetime
 
 
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 CLAUDE_MD_MARKER = "<!-- long-task-agent -->"
 
 _LONG_TASK_REFERENCE_BODY = (
@@ -199,6 +207,7 @@ Optional usage examples for external developers and AI Code Agents.
 
 
 def main():
+    _force_utf8_io()
     parser = argparse.ArgumentParser(description="Initialize a long-task-agent project")
     parser.add_argument("project_name", help="Name of the project")
     parser.add_argument("--path", default=".", help="Output directory (default: current dir)")

@@ -21,6 +21,14 @@ import re
 import sys
 
 
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status"}
 SRS_TRACE_PATTERN = re.compile(r"^(?:FR|IFR)-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
@@ -266,6 +274,7 @@ def validate(path: str) -> tuple[list[str], list[str]]:
 
 
 def main():
+    _force_utf8_io()
     if len(sys.argv) != 2:
         print("Usage: validate_features.py <path/to/feature-list.json>")
         sys.exit(1)

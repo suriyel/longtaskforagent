@@ -21,6 +21,14 @@ import json
 import sys
 
 
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 REQUIRED_STRING_FIELDS = {"title", "description", "expected_behavior", "actual_behavior"}
 VALID_SEVERITIES = {"Critical", "Major", "Minor", "Cosmetic"}
 TITLE_MAX_LEN = 200
@@ -123,6 +131,7 @@ def validate(path: str) -> list[str]:
 
 
 def main():
+    _force_utf8_io()
     if len(sys.argv) != 2:
         print("Usage: validate_bugfix_request.py <path/to/bugfix-request.json>")
         sys.exit(1)

@@ -26,6 +26,14 @@ import json
 import sys
 
 
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def count(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -77,6 +85,7 @@ def format_line(counts: dict) -> str:
 
 
 def main():
+    _force_utf8_io()
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("path", help="Path to feature-list.json")
     ap.add_argument("--json", action="store_true", help="Emit JSON")
@@ -89,7 +98,7 @@ def main():
         sys.exit(2)
 
     if args.json:
-        print(json.dumps(counts))
+        print(json.dumps(counts, ensure_ascii=False))
     else:
         print(format_line(counts))
     sys.exit(0)

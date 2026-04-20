@@ -33,6 +33,15 @@ import subprocess
 import sys
 import time
 
+
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 # Error patterns that indicate unrecoverable failures
 ERROR_PATTERNS = [
     re.compile(r"context.window", re.IGNORECASE),
@@ -235,6 +244,7 @@ def interruptible_sleep(seconds: int) -> bool:
 
 
 def main() -> int:
+    _force_utf8_io()
     # Install signal handler before anything else
     signal.signal(signal.SIGINT, _signal_handler)
 

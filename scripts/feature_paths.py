@@ -27,6 +27,14 @@ SLUG_MAX_LEN = 40
 CJK_RANGE = (0x4E00, 0x9FFF)
 
 
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 class FeatureNotFound(Exception):
     def __init__(self, feature_id):
         self.feature_id = feature_id
@@ -97,6 +105,7 @@ def _cmd_design_doc(args) -> int:
 
 
 def main() -> int:
+    _force_utf8_io()
     parser = argparse.ArgumentParser(prog="feature_paths.py")
     sub = parser.add_subparsers(dest="cmd", required=True)
 

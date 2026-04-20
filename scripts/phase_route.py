@@ -44,6 +44,14 @@ from count_pending import count as _count
 from validate_features import validate as _validate
 
 
+def _force_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so CJK text survives non-UTF-8 locales
+    (Windows cp936, LANG=C). Python 3.7+."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 _SRC_EXTS = (".py", ".js", ".ts", ".java", ".c", ".cpp", ".go", ".rs")
 _EXCLUDE_DIRS = {".git", "node_modules", "venv", ".venv",
                  "dist", "build", "__pycache__", "target"}
@@ -188,6 +196,7 @@ def route(root: str = ".") -> dict:
 
 
 def main():
+    _force_utf8_io()
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("--root", default=".", help="Project root (default: cwd)")
     ap.add_argument("--json", action="store_true", help="Emit JSON")
@@ -195,7 +204,7 @@ def main():
 
     r = route(args.root)
     if args.json:
-        json.dump(r, sys.stdout)
+        json.dump(r, sys.stdout, ensure_ascii=False)
         print()
     else:
         extra = ""
