@@ -27,9 +27,9 @@ $Branch  = if ($env:BRANCH) { $env:BRANCH } else { "simple" }
 # =============================================================================
 
 $InstallDir = Join-Path $env:USERPROFILE ".config\opencode\long-task-agent"
-$PluginsDir = Join-Path $env:USERPROFILE ".config\opencode\plugins"
+$PluginDir  = Join-Path $env:USERPROFILE ".config\opencode\plugin"
 $SkillsDir  = Join-Path $env:USERPROFILE ".config\opencode\skills"
-$PluginLink = Join-Path $PluginsDir "long-task.js"
+$PluginLink = Join-Path $PluginDir "long-task.js"
 $SkillLink  = Join-Path $SkillsDir  "long-task"
 $PluginSrc  = Join-Path $InstallDir ".opencode\plugins\long-task.js"
 $SkillsSrc  = Join-Path $InstallDir "skills"
@@ -83,8 +83,8 @@ if (-not (Test-Path $PluginSrc)) {
 }
 
 # Create link directories
-New-Item -ItemType Directory -Force -Path $PluginsDir | Out-Null
-New-Item -ItemType Directory -Force -Path $SkillsDir  | Out-Null
+New-Item -ItemType Directory -Force -Path $PluginDir | Out-Null
+New-Item -ItemType Directory -Force -Path $SkillsDir | Out-Null
 
 # Remove stale links / old copies
 if (Test-Path $PluginLink) { Remove-Item $PluginLink -Force }

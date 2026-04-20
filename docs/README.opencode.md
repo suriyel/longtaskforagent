@@ -60,14 +60,14 @@ else
 fi
 
 # 2. Create directories
-mkdir -p ~/.config/opencode/plugins ~/.config/opencode/skills
+mkdir -p ~/.config/opencode/plugin ~/.config/opencode/skills
 
 # 3. Remove old symlinks if they exist
-rm -f ~/.config/opencode/plugins/long-task.js
+rm -f ~/.config/opencode/plugin/long-task.js
 rm -rf ~/.config/opencode/skills/long-task
 
 # 4. Create plugin symlink
-ln -s ~/.config/opencode/long-task-agent/.opencode/plugins/long-task.js ~/.config/opencode/plugins/long-task.js
+ln -s ~/.config/opencode/long-task-agent/.opencode/plugins/long-task.js ~/.config/opencode/plugin/long-task.js
 
 # 5. Create skills symlink
 ln -s ~/.config/opencode/long-task-agent/skills ~/.config/opencode/skills/long-task
@@ -78,7 +78,7 @@ ln -s ~/.config/opencode/long-task-agent/skills ~/.config/opencode/skills/long-t
 #### Verify Installation
 
 ```bash
-ls -l ~/.config/opencode/plugins/long-task.js
+ls -l ~/.config/opencode/plugin/long-task.js
 ls -l ~/.config/opencode/skills/long-task
 ```
 
@@ -103,15 +103,15 @@ Run as Administrator, or with Developer Mode enabled:
 git clone https://github.com/suriyel/longtaskforagent.git "%USERPROFILE%\.config\opencode\long-task-agent"
 
 :: 2. Create directories
-mkdir "%USERPROFILE%\.config\opencode\plugins" 2>nul
+mkdir "%USERPROFILE%\.config\opencode\plugin" 2>nul
 mkdir "%USERPROFILE%\.config\opencode\skills" 2>nul
 
 :: 3. Remove existing links (safe for reinstalls)
-del "%USERPROFILE%\.config\opencode\plugins\long-task.js" 2>nul
+del "%USERPROFILE%\.config\opencode\plugin\long-task.js" 2>nul
 rmdir "%USERPROFILE%\.config\opencode\skills\long-task" 2>nul
 
 :: 4. Create plugin symlink (requires Developer Mode or Admin)
-mklink "%USERPROFILE%\.config\opencode\plugins\long-task.js" "%USERPROFILE%\.config\opencode\long-task-agent\.opencode\plugins\long-task.js"
+mklink "%USERPROFILE%\.config\opencode\plugin\long-task.js" "%USERPROFILE%\.config\opencode\long-task-agent\.opencode\plugins\long-task.js"
 
 :: 5. Create skills junction (works without special privileges)
 mklink /J "%USERPROFILE%\.config\opencode\skills\long-task" "%USERPROFILE%\.config\opencode\long-task-agent\skills"
@@ -128,15 +128,15 @@ Run as Administrator, or with Developer Mode enabled:
 git clone https://github.com/suriyel/longtaskforagent.git "$env:USERPROFILE\.config\opencode\long-task-agent"
 
 # 2. Create directories
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.config\opencode\plugins"
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.config\opencode\plugin"
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.config\opencode\skills"
 
 # 3. Remove existing links (safe for reinstalls)
-Remove-Item "$env:USERPROFILE\.config\opencode\plugins\long-task.js" -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:USERPROFILE\.config\opencode\plugin\long-task.js" -Force -ErrorAction SilentlyContinue
 Remove-Item "$env:USERPROFILE\.config\opencode\skills\long-task" -Force -ErrorAction SilentlyContinue
 
 # 4. Create plugin symlink (requires Developer Mode or Admin)
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\opencode\plugins\long-task.js" -Target "$env:USERPROFILE\.config\opencode\long-task-agent\.opencode\plugins\long-task.js"
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.config\opencode\plugin\long-task.js" -Target "$env:USERPROFILE\.config\opencode\long-task-agent\.opencode\plugins\long-task.js"
 
 # 5. Create skills junction (works without special privileges)
 New-Item -ItemType Junction -Path "$env:USERPROFILE\.config\opencode\skills\long-task" -Target "$env:USERPROFILE\.config\opencode\long-task-agent\skills"
@@ -153,14 +153,14 @@ Note: Git Bash's native `ln` command copies files instead of creating symlinks. 
 git clone https://github.com/suriyel/longtaskforagent.git ~/.config/opencode/long-task-agent
 
 # 2. Create directories
-mkdir -p ~/.config/opencode/plugins ~/.config/opencode/skills
+mkdir -p ~/.config/opencode/plugin ~/.config/opencode/skills
 
 # 3. Remove existing links (safe for reinstalls)
-rm -f ~/.config/opencode/plugins/long-task.js 2>/dev/null
+rm -f ~/.config/opencode/plugin/long-task.js 2>/dev/null
 rm -rf ~/.config/opencode/skills/long-task 2>/dev/null
 
 # 4. Create plugin symlink (requires Developer Mode or Admin)
-cmd //c "mklink \"$(cygpath -w ~/.config/opencode/plugins/long-task.js)\" \"$(cygpath -w ~/.config/opencode/long-task-agent/.opencode/plugins/long-task.js)\""
+cmd //c "mklink \"$(cygpath -w ~/.config/opencode/plugin/long-task.js)\" \"$(cygpath -w ~/.config/opencode/long-task-agent/.opencode/plugins/long-task.js)\""
 
 # 5. Create skills junction (works without special privileges)
 cmd //c "mklink /J \"$(cygpath -w ~/.config/opencode/skills/long-task)\" \"$(cygpath -w ~/.config/opencode/long-task-agent/skills)\""
@@ -176,13 +176,13 @@ If running OpenCode inside WSL, use the [macOS / Linux](#macos--linux) instructi
 
 **Command Prompt:**
 ```cmd
-dir /AL "%USERPROFILE%\.config\opencode\plugins"
+dir /AL "%USERPROFILE%\.config\opencode\plugin"
 dir /AL "%USERPROFILE%\.config\opencode\skills"
 ```
 
 **PowerShell:**
 ```powershell
-Get-ChildItem "$env:USERPROFILE\.config\opencode\plugins" | Where-Object { $_.LinkType }
+Get-ChildItem "$env:USERPROFILE\.config\opencode\plugin" | Where-Object { $_.LinkType }
 Get-ChildItem "$env:USERPROFILE\.config\opencode\skills" | Where-Object { $_.LinkType }
 ```
 
@@ -367,7 +367,7 @@ Restart OpenCode to load the updates.
 ### Plugin not loading
 
 1. Check plugin exists: `ls ~/.config/opencode/long-task-agent/.opencode/plugins/long-task.js`
-2. Check symlink: `ls -l ~/.config/opencode/plugins/long-task.js`
+2. Check symlink: `ls -l ~/.config/opencode/plugin/long-task.js`
 3. Check OpenCode logs for errors
 4. Verify the `using-long-task` skill exists: `ls ~/.config/opencode/long-task-agent/skills/using-long-task/SKILL.md`
 

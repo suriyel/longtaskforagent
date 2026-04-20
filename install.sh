@@ -23,9 +23,9 @@ BRANCH="${BRANCH:-simple}"
 # =============================================================================
 
 INSTALL_DIR="${HOME}/.config/opencode/long-task-agent"
-PLUGINS_DIR="${HOME}/.config/opencode/plugins"
+PLUGIN_DIR="${HOME}/.config/opencode/plugin"
 SKILLS_DIR="${HOME}/.config/opencode/skills"
-PLUGIN_LINK="${PLUGINS_DIR}/long-task.js"
+PLUGIN_LINK="${PLUGIN_DIR}/long-task.js"
 SKILL_LINK="${SKILLS_DIR}/long-task"
 PLUGIN_SRC="${INSTALL_DIR}/.opencode/plugins/long-task.js"
 SKILLS_SRC="${INSTALL_DIR}/skills"
@@ -83,7 +83,7 @@ if [[ ! -f "$PLUGIN_SRC" ]]; then
 fi
 
 # Create link directories
-mkdir -p "$PLUGINS_DIR" "$SKILLS_DIR"
+mkdir -p "$PLUGIN_DIR" "$SKILLS_DIR"
 
 # Remove stale symlinks / old copies
 rm -f  "$PLUGIN_LINK"
