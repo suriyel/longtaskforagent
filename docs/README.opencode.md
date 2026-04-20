@@ -388,6 +388,25 @@ Restart OpenCode to load the updates.
 - **Cause:** Git Bash `ln -sf` copies files instead of creating symlinks
 - **Fix:** Use `mklink /J` directory junctions instead (see Windows installation steps)
 
+### First launch hangs for minutes (especially on slow / proxied networks)
+
+**Cause:** OpenCode's first launch does two blocking network operations before the plugin runs:
+1. Fetches the `models.dev` catalog (logs show `service=models.dev error=The operation timed out`)
+2. Runs `npm reify` to populate `~/.config/opencode/node_modules/` (logs show `service=npm dir=... checking dependencies` and `npm node_modules missing, reifying`)
+
+Once `node_modules/` is populated, subsequent launches are fast.
+
+**How to tell whether the hang is the host or this plugin:**
+
+- **No `[long-task-plugin] init start` line yet** → the host is still in models.dev fetch or npm reify. Wait, or verify network; this plugin hasn't started.
+- **`[long-task-plugin] init start` appeared but `init done in …ms` never follows** → the hang is in this plugin. Capture details by setting `LONG_TASK_DEBUG=1` before launch and report the last `[long-task-plugin] [debug] …` line.
+
+**Mitigations:**
+
+- Ensure `https://models.dev` is reachable (proxy, firewall, DNS).
+- If on a well-connected machine, do one successful launch there, then copy `~/.config/opencode/node_modules/` to the slow machine to pre-seed reify.
+- Kill and restart OpenCode only after `node_modules/` has been populated — killing mid-reify usually just requires another run.
+
 ## Testing
 
 Verify your installation:

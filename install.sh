@@ -37,11 +37,13 @@ SKILLS_SRC="${INSTALL_DIR}/skills"
 if [[ -t 1 ]]; then
   GREEN='\033[0;32m'
   BLUE='\033[0;34m'
+  YELLOW='\033[0;33m'
   BOLD='\033[1m'
   RESET='\033[0m'
 else
   GREEN=''
   BLUE=''
+  YELLOW=''
   BOLD=''
   RESET=''
 fi
@@ -108,4 +110,15 @@ echo "  Plugin : $PLUGIN_LINK"
 echo "  Skills : $SKILL_LINK"
 echo ""
 echo "Restart OpenCode to activate."
+echo ""
+echo -e "${YELLOW}First-start note:${RESET}"
+echo "  OpenCode's first launch fetches the models.dev catalog and runs"
+echo "  npm reify into ~/.config/opencode/node_modules/."
+echo "  On slow or proxied networks this may take several minutes. If it"
+echo "  appears stuck for >5 min:"
+echo "    1. Verify https://models.dev is reachable."
+echo "    2. Check OpenCode's log (TUI's /log command or ~/.local/share/opencode/log/)."
+echo "    3. Seeing '[long-task-plugin] init start' means the host finished"
+echo "       its own init — any further hang is inside this plugin."
+echo "    4. Set LONG_TASK_DEBUG=1 before launch for per-step timings."
 echo ""

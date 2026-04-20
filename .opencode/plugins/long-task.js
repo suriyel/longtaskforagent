@@ -30,13 +30,25 @@ const pluginRootHint = pluginRoot.replace(/\\/g, '/');
 
 const ROUTER_SCRIPTS = ['phase_route.py', 'count_pending.py', 'validate_features.py'];
 
+// stderr logging — mirrors hooks/session-start bash log() style so users can
+// distinguish "OpenCode host still initializing (models.dev / npm reify)" from
+// "this plugin is doing work" during first-run hangs.
+const LOG_PREFIX = '[long-task-plugin]';
+const DEBUG = process.env.LONG_TASK_DEBUG === '1';
+function log(msg)   { console.error(`${LOG_PREFIX} ${msg}`); }
+function debug(msg) { if (DEBUG) console.error(`${LOG_PREFIX} [debug] ${msg}`); }
+
 function copyInitScript(directory) {
   const src = path.join(pluginRoot, 'skills', 'long-task-init', 'scripts', 'init_project.py');
-  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(src)) {
+    debug(`init_project.py source missing at ${src}, skipping copy`);
+    return;
+  }
   const scriptsDir = path.join(directory, 'scripts');
   fs.mkdirSync(scriptsDir, { recursive: true });
   fs.copyFileSync(src, path.join(scriptsDir, 'init_project.py'));
   fs.writeFileSync(path.join(scriptsDir, '.long-task-plugin-root'), pluginRootHint, 'utf8');
+  debug(`copied init_project.py → ${scriptsDir}`);
 }
 
 // phase_route.py imports count_pending + validate_features via sys.path insert,
@@ -44,24 +56,32 @@ function copyInitScript(directory) {
 // long-task-init populates scripts/.
 function copyRouterScripts(directory) {
   const scriptsDir = path.join(directory, 'scripts');
+  let copied = 0;
   for (const name of ROUTER_SCRIPTS) {
     const src = path.join(pluginRoot, 'skills', 'using-long-task', 'scripts', name);
-    if (!fs.existsSync(src)) continue;
+    if (!fs.existsSync(src)) {
+      debug(`router script missing: ${src}`);
+      continue;
+    }
     fs.mkdirSync(scriptsDir, { recursive: true });
     fs.copyFileSync(src, path.join(scriptsDir, name));
+    copied++;
   }
+  debug(`copied ${copied}/${ROUTER_SCRIPTS.length} router scripts → ${scriptsDir}`);
 }
 
 // Depth-limited walk mirroring `find . -maxdepth 4 -name ".git" -type d`.
 // Returns absolute paths of matched .git directories.
 function findGitDirs(root, maxDepth) {
+  const t0 = Date.now();
   const results = [];
   const walk = (dir, depth) => {
     if (depth > maxDepth) return;
     let entries;
     try {
       entries = fs.readdirSync(dir, { withFileTypes: true });
-    } catch {
+    } catch (err) {
+      debug(`readdir failed for ${dir}: ${err.message}`);
       return;
     }
     for (const entry of entries) {
@@ -75,16 +95,21 @@ function findGitDirs(root, maxDepth) {
     }
   };
   walk(root, 1); // depth 1 = direct children of root, matching find's behavior
+  debug(`findGitDirs(maxDepth=${maxDepth}) found ${results.length} in ${Date.now() - t0}ms`);
   return results.sort();
 }
 
 function gitRevParse(cwd, arg) {
+  const t0 = Date.now();
   try {
-    return execFileSync('git', ['-C', cwd, 'rev-parse', arg], {
+    const out = execFileSync('git', ['-C', cwd, 'rev-parse', arg], {
       stdio: ['ignore', 'pipe', 'ignore'],
       encoding: 'utf8',
     }).trim();
-  } catch {
+    debug(`git -C ${cwd} rev-parse ${arg} → ${out} (${Date.now() - t0}ms)`);
+    return out;
+  } catch (err) {
+    debug(`git -C ${cwd} rev-parse ${arg} failed: ${err.message}`);
     return null;
   }
 }
@@ -102,11 +127,14 @@ function detectMultiRepo(directory) {
     // Single-repo mode: clean up any stale manifest
     const stale = path.join(directory, 'repos-manifest.json');
     if (fs.existsSync(stale)) {
-      try { fs.unlinkSync(stale); } catch { /* swallow */ }
+      try { fs.unlinkSync(stale); log(`removed stale repos-manifest.json (single-repo mode)`); }
+      catch (err) { debug(`failed to remove stale manifest: ${err.message}`); }
     }
+    debug(`single-repo mode (directory is a git repo)`);
     return;
   }
 
+  log(`scanning for sub-repos under ${directory} (maxDepth=4)...`);
   const gitDirs = findGitDirs(directory, 4);
   const projectRoot = fs.realpathSync(directory);
   const validated = [];
@@ -115,7 +143,8 @@ function detectMultiRepo(directory) {
     let candidate;
     try {
       candidate = fs.realpathSync(path.dirname(gitDir));
-    } catch {
+    } catch (err) {
+      debug(`realpath failed for ${gitDir}: ${err.message}`);
       continue;
     }
     // Check 1: real git working tree?
@@ -127,10 +156,16 @@ function detectMultiRepo(directory) {
     validated.push(candidate);
   }
 
-  if (validated.length === 0) return;
+  if (validated.length === 0) {
+    log(`no valid sub-repos found`);
+    return;
+  }
+  log(`validated ${validated.length} sub-repo(s)`);
 
   const manifestPath = path.join(directory, 'repos-manifest.json');
-  if (!fs.existsSync(manifestPath)) {
+  if (fs.existsSync(manifestPath)) {
+    debug(`repos-manifest.json exists, preserving (downstream enrichment)`);
+  } else {
     const repos = validated.map(abs => {
       const rel = path.relative(projectRoot, abs).replace(/\\/g, '/');
       return { name: path.basename(rel), path: rel };
@@ -141,19 +176,24 @@ function detectMultiRepo(directory) {
       repos,
     };
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    log(`wrote repos-manifest.json (${repos.length} repos)`);
   }
 
   // Copy init_project.py + hint into each validated sub-repo
   const initSrc = path.join(pluginRoot, 'skills', 'long-task-init', 'scripts', 'init_project.py');
-  if (!fs.existsSync(initSrc)) return;
+  if (!fs.existsSync(initSrc)) {
+    debug(`init_project.py source missing, skipping per-repo mirror`);
+    return;
+  }
   for (const abs of validated) {
     const repoScriptsDir = path.join(abs, 'scripts');
     try {
       fs.mkdirSync(repoScriptsDir, { recursive: true });
       fs.copyFileSync(initSrc, path.join(repoScriptsDir, 'init_project.py'));
       fs.writeFileSync(path.join(repoScriptsDir, '.long-task-plugin-root'), pluginRootHint, 'utf8');
-    } catch {
-      // swallow — best-effort per repo
+      debug(`mirrored helpers → ${repoScriptsDir}`);
+    } catch (err) {
+      debug(`per-repo mirror failed for ${abs}: ${err.message}`);
     }
   }
 }
@@ -164,9 +204,12 @@ function detectMultiRepo(directory) {
  * `async: false` hook), then registers the tool.execute.before lifecycle hook.
  */
 export const LongTaskPlugin = async ({ client, directory }) => {
-  try { copyInitScript(directory); }    catch { /* non-fatal */ }
-  try { copyRouterScripts(directory); } catch { /* non-fatal */ }
-  try { detectMultiRepo(directory); }   catch { /* non-fatal */ }
+  const t0 = Date.now();
+  log(`init start, directory=${directory}${DEBUG ? ' (LONG_TASK_DEBUG=1)' : ''}`);
+  try { copyInitScript(directory); }    catch (err) { debug(`copyInitScript failed: ${err.message}`); }
+  try { copyRouterScripts(directory); } catch (err) { debug(`copyRouterScripts failed: ${err.message}`); }
+  try { detectMultiRepo(directory); }   catch (err) { debug(`detectMultiRepo failed: ${err.message}`); }
+  log(`init done in ${Date.now() - t0}ms`);
 
   return {
     // When an interactive tool is called, write a signal file so
@@ -191,6 +234,7 @@ export const LongTaskPlugin = async ({ client, directory }) => {
           }, null, 2),
           'utf8'
         );
+        debug(`ask-user-signal written (tool=${input.tool})`);
       }
     },
   };
