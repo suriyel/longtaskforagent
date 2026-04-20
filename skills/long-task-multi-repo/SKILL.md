@@ -38,7 +38,7 @@ description: "当 repos-manifest.json 存在时使用 - 处理多仓库探索、
 12b. **FR 粒度确认** — 呈现最终 FR 列表；用户专项批准拆分/合并的合理性
 12c. **单轮模式确认** — 提供单轮模式选项（所有 FR 归入 wave 0）；该决策全局适用于所有各仓库流水线
 13. **范围适配与延期** — 评估当前轮次 vs 下一轮次，延期需求积压
-14. **[仅专家模式] 对齐验证** — 通过 `references/alignment-validation.md`
+14. **[仅专家模式] 对齐验证** — 通过 `skills/long-task-requirements/references/alignment-validation.md`
 15. **SRS 合规审查** — 分派 srs-reviewer SubAgent；门禁：所有检查 PASS
 16. **展示与批准全局 SRS** — 精简：整体展示；专家：逐节展示
 17. **保存全局 SRS 与积压** — 在项目根目录保存 `docs/plans/YYYY-MM-DD-<topic>-srs.md` + 延期积压
@@ -227,7 +227,7 @@ Q1 回答 YES → 生成 EARS 格式的约束或功能需求候选。如果 Q1 �
 
 ### E1：问题框架 [仅专家模式]
 
-阅读 `references/problem-framing.md` 并严格遵循。
+阅读 `skills/long-task-requirements/references/problem-framing.md` 并严格遵循。
 
 **摘要**：单次 AskUserQuestion（≤4 个问题）— 5-Whys 种子、JTBD 探针、痛点排序、方案挑战。产出：5-Whys 链、JTBD 陈述、痛点地图 → 嵌入 SRS 第 1.3 节。
 
@@ -249,7 +249,7 @@ Q1 回答 YES → 生成 EARS 格式的约束或功能需求候选。如果 Q1 �
 
 ### E3：场景走查 [仅专家模式]
 
-阅读 `references/scenario-walkthrough.md` 并严格遵循。
+阅读 `skills/long-task-requirements/references/scenario-walkthrough.md` 并严格遵循。
 
 **摘要**：每个主要工作流一次走查（1-3 个工作流）。用户端到端叙述。LLM 提取显式步骤、隐式步骤、流程缺口、集成点、错误提及。针对流程缺口进行追问（上限由提取数量决定）。
 
@@ -257,7 +257,7 @@ Q1 回答 YES → 生成 EARS 格式的约束或功能需求候选。如果 Q1 �
 
 ### E4：假设-修正 [仅专家模式]
 
-阅读 `references/hypothesis-correction.md` 并严格遵循。
+阅读 `skills/long-task-requirements/references/hypothesis-correction.md` 并严格遵循。
 
 **摘要**：针对每个 FR（或 2-3 个相关 FR 分组），展示行为假设表，包含适用维度（根据 FR 类型选择）。用户标记 check/cross/plus。当不再产生新修正时自然收敛。
 
@@ -294,7 +294,7 @@ Q1 回答 YES → 生成 EARS 格式的约束或功能需求候选。如果 Q1 �
 
 ### E10：对齐验证 [仅专家模式]
 
-阅读 `references/alignment-validation.md` 并严格遵循。
+阅读 `skills/long-task-requirements/references/alignment-validation.md` 并严格遵循。
 
 **摘要**：根因可追溯性（痛点地图 → FR 覆盖率）、JTBD 结果验证（**门禁 — 失败时阻塞 E11**）、预检剖析、孤立 FR 检测。输出 → SRS 第 1.3 节对齐验证字段。
 
@@ -507,7 +507,7 @@ FR 粒度确认后，通过 `AskUserQuestion` 呈现：
 分派 SubAgent 独立验证 SRS：
 
 > **DISPATCH** independent SubAgent — SRS compliance reviewer (ISO/IEC/IEEE 29148)
-> Prompt: Read reviewer instructions at `skills/long-task-multi-repo/prompts/srs-reviewer-prompt.md`
+> Prompt: Read reviewer instructions at `skills/long-task-requirements/prompts/srs-reviewer-prompt.md`
 > Input: Project context, full SRS draft, requirement ID list
 > Execute the review following the prompt exactly.
 
@@ -758,5 +758,5 @@ SRS 拆分确认后，将所有参考和依赖文件分发到各子仓库，使�
 
 **调用方：** using-long-task（当 `repos-manifest.json` 存在时）
 **链接到：** 无 — 会话以交接结束（用户独立导航到各仓库）
-**引用：** `references/problem-framing.md`、`references/scenario-walkthrough.md`、`references/hypothesis-correction.md`、`references/alignment-validation.md`、`prompts/srs-reviewer-prompt.md`
+**引用（canonical 在 long-task-requirements 下）：** `skills/long-task-requirements/references/problem-framing.md`、`skills/long-task-requirements/references/scenario-walkthrough.md`、`skills/long-task-requirements/references/hypothesis-correction.md`、`skills/long-task-requirements/references/alignment-validation.md`、`skills/long-task-requirements/prompts/srs-reviewer-prompt.md`
 **产出：** 全局 SRS（`docs/plans/YYYY-MM-DD-<topic>-srs.md`）、各仓库 SRS、各仓库依赖文件、更新后的 `repos-manifest.json`

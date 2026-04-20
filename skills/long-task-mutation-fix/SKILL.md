@@ -10,8 +10,8 @@ description: "修复存活变异体——通过增强测试或移除死代码来
 ## 你的任务
 
 1. 阅读执行规则：`skills/long-task-mutation-fix/references/mutation-fix-execution.md`
-2. 阅读共享规则：`skills/long-task-mutation-fix/references/iron-law.md`、`docs/rules`
-3. 阅读反模式：`skills/long-task-mutation-fix/references/testing-anti-patterns.md`
+2. 阅读共享规则：`skills/long-task-tdd-shared/references/iron-law.md`、`docs/rules`
+3. 阅读反模式：`skills/long-task-tdd-shared/references/testing-anti-patterns.md`
 
 ## 关键约束
 

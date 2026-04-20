@@ -82,7 +82,7 @@ IF docs/rules/ exists:
 
 **命令推导**：将检测到的工具名映射到命令模板（完整的按语言参考见 `coverage-recipes.md`）。
 
-**缺失变异测试工具**：如果变异测试工具不存在，读取 `{skill_dir}/references/coverage-recipes.md` 获取安装方法。如果无法安装：**停止** — "No mutation tool detected. Install one first." 并附带工具专属说明。
+**缺失变异测试工具**：如果变异测试工具不存在，读取 `skills/long-task-tdd-shared/references/coverage-recipes.md` 获取安装方法。如果无法安装：**停止** — "No mutation tool detected. Install one first." 并附带工具专属说明。
 
 ### 3c：测试惯例检测
 
@@ -229,8 +229,8 @@ You are retrofitting tests for an existing codebase (not a TDD feature cycle).
 - Follow these conventions when writing/modifying tests
 
 ## Rules
-- Read execution rules: skills/long-task-mutation-retrofit/references/iron-law.md
-- Read anti-patterns: skills/long-task-mutation-retrofit/references/testing-anti-patterns.md
+- Read execution rules: skills/long-task-tdd-shared/references/iron-law.md
+- Read anti-patterns: skills/long-task-tdd-shared/references/testing-anti-patterns.md
 - Classify: equivalent -> document, real gap -> strengthen test, dead code -> remove
 - Run the test command to verify — all tests must pass
 - Do NOT run mutation or coverage tools
@@ -340,7 +340,7 @@ Iteration {N}: Mutation {before}->{after}% (+{delta})
 **不链接至：** 任何流水线 skill — 完全独立
 **复用（通过 SubAgent 分派）：**
 - `long-task:long-task-mutation-fix` — 附带内联上下文覆盖
-**引用（通过符号链接）：**
+**引用（canonical 共享规则，位于 long-task-tdd-shared/references/）：**
 - `coverage-recipes.md` — 按语言的工具配置
 - `iron-law.md` — 测试质量规则
 - `testing-anti-patterns.md` — 反模式目录

@@ -80,7 +80,7 @@ IF docs/rules/ exists:
 
 **命令推导**：将检测到的工具名映射到命令模板（完整的按语言参考见 `coverage-recipes.md`）。
 
-**缺失工具**：如果覆盖率工具不存在，读取 `{skill_dir}/references/coverage-recipes.md` 并安装。这是**唯一**允许的配置修改。
+**缺失工具**：如果覆盖率工具不存在，读取 `skills/long-task-tdd-shared/references/coverage-recipes.md` 并安装。这是**唯一**允许的配置修改。
 
 ### 3c：测试惯例检测
 
@@ -221,8 +221,8 @@ You are retrofitting tests for an existing codebase (not a TDD feature cycle).
 - Follow these conventions when writing tests
 
 ## Rules
-- Read execution rules: skills/long-task-coverage-retrofit/references/iron-law.md
-- Read anti-patterns: skills/long-task-coverage-retrofit/references/testing-anti-patterns.md
+- Read execution rules: skills/long-task-tdd-shared/references/iron-law.md
+- Read anti-patterns: skills/long-task-tdd-shared/references/testing-anti-patterns.md
 - Write tests to cover the identified gaps
 - Follow existing test conventions
 - Run the test command to verify — all tests must pass
@@ -330,7 +330,7 @@ Iteration {N}: Line {before}->{after}% (+{delta}), Branch {before}->{after}%
 **不链接至：** 任何流水线 skill — 完全独立
 **复用（通过 SubAgent 分派）：**
 - `long-task:long-task-coverage-fix` — 附带内联上下文覆盖
-**引用（通过符号链接）：**
+**引用（canonical 共享规则，位于 long-task-tdd-shared/references/）：**
 - `coverage-recipes.md` — 按语言的工具配置
 - `iron-law.md` — 测试质量规则
 - `testing-anti-patterns.md` — 反模式目录

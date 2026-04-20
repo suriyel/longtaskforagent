@@ -229,7 +229,7 @@ long-task-agent/
 ├── skills/
 │   ├── using-long-task/SKILL.md + references/architecture.md + scripts/{phase_route,count_pending,validate_features,validate_guide,validate_increment_request,validate_bugfix_request,get_tool_commands,feature_paths,auto_loop,auto_loop_opencode}.py
 │   ├── long-task-requirements/SKILL.md + references/{problem-framing,scenario-walkthrough,hypothesis-correction,alignment-validation}.md
-│   ├── long-task-multi-repo/SKILL.md + references/ (symlinks to requirements refs) + prompts/ (symlinks)
+│   ├── long-task-multi-repo/SKILL.md  (references canonical in long-task-requirements/)
 │   ├── long-task-hotfix/SKILL.md
 │   ├── long-task-increment/SKILL.md
 │   ├── long-task-design/SKILL.md
@@ -237,7 +237,7 @@ long-task-agent/
 │   ├── long-task-feature-design/SKILL.md + references/feature-design-template.md
 │   ├── long-task-work-design/SKILL.md       (Worker phase A: per-feature design)
 │   ├── long-task-work-tdd/SKILL.md          (Worker phase B: R-G-R)
-│   ├── long-task-tdd-shared/references/{iron-law,testing-anti-patterns}.md
+│   ├── long-task-tdd-shared/references/{iron-law,testing-anti-patterns,coverage-recipes}.md  (canonical shared rules)
 │   ├── long-task-tdd-red/SKILL.md + references/tdd-red-execution.md
 │   ├── long-task-tdd-green/SKILL.md + references/tdd-green-execution.md
 │   ├── long-task-tdd-refactor/SKILL.md + references/tdd-refactor-execution.md
@@ -245,8 +245,8 @@ long-task-agent/
 │   ├── long-task-mutation-fix/SKILL.md + references/mutation-fix-execution.md (standalone, used by mutation-retrofit)
 │   ├── long-task-explore/SKILL.md + references/exploration-dimensions.md (standalone)
 │   ├── long-task-static-review/SKILL.md + references/tool-profiles.md (standalone)
-│   ├── long-task-coverage-retrofit/SKILL.md + references/{coverage-recipes,iron-law,testing-anti-patterns}.md (standalone, symlinks)
-│   ├── long-task-mutation-retrofit/SKILL.md + references/{coverage-recipes,iron-law,testing-anti-patterns}.md (standalone, symlinks)
+│   ├── long-task-coverage-retrofit/SKILL.md  (standalone; shared rules in long-task-tdd-shared/)
+│   ├── long-task-mutation-retrofit/SKILL.md  (standalone; shared rules in long-task-tdd-shared/)
 │   ├── long-task-codebase-scanner/SKILL.md (standalone + pipeline Phase 0-pre)
 ├── agents/{codebase-locator,codebase-analyzer,codebase-pattern-finder}.md
 ├── docs/templates/{srs,design,deferred-backlog,rules-index,explore-report}-template.md

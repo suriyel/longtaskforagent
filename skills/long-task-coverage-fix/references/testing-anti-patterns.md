@@ -1,1 +1,0 @@
-../../long-task-tdd-shared/references/testing-anti-patterns.md
