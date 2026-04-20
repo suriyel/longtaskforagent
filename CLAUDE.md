@@ -61,7 +61,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-feature-design` | Feature Detailed Design — interface contracts, pseudocode, test inventory |
 | `long-task-tdd-red` | TDD Red — write failing tests for Test Inventory |
 | `long-task-tdd-green` | TDD Green — minimal implementation to pass all tests |
-| `long-task-tdd-refactor` | TDD Refactor — clean up + static analysis + §11 compliance |
+| `long-task-tdd-refactor` | TDD Refactor — clean up + static analysis + §11.1 compliance |
 
 #### Skill Call Graph
 
@@ -104,7 +104,7 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 
 | Phase | Skill | Key Output |
 |-------|-------|------------|
-| 0-pre: Codebase Scan (brownfield) | `long-task-codebase-scanner` | `docs/rules/*.md` — coding style, 2/3方件 constraints, build patterns |
+| 0-pre: Codebase Scan (brownfield) | `long-task-codebase-scanner` | `docs/rules/*.md` — coding style, 二方件 constraints, build patterns |
 | 0-multi: Multi-Repo | `long-task-multi-repo` | Global SRS + per-repo SRS split + dependency distribution; session ends with handoff |
 | 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds; Step 10c: single-round mode confirmation) |
 | 0b: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §11 if brownfield) |
@@ -118,7 +118,7 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 - **Gate order**: Requirements (SRS) → Design → Init → Feature Design → TDD Red → TDD Green → TDD Refactor → Persist. No skipping.
 - **Strict TDD**: Always Red→Green→Refactor (3 separate SubAgents).
 - **Verification enforcement**: Never mark "passing" without fresh evidence.
-- **§11 compliance in TDD Refactor**: §11.1/§11.2 grep, dependency versions, code reuse verification — merged into TDD Refactor SubAgent.
+- **§11 compliance in TDD Refactor**: §11.1 grep + code reuse + implementation-summary verification — merged into TDD Refactor SubAgent.
 - **Systematic debugging**: Never guess-and-fix; trace root cause first.
 - **One feature per session**: Multi-feature automation via `scripts/auto_loop.py`.
 - **Hotfix before increment**: When both signal files exist, hotfix runs first; `increment-request.json` preserved.
@@ -126,7 +126,7 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 - **Incremental changes via increment skill only**: Never manually edit feature-list.json features; use increment skill.
 - **srs_trace required per feature**: Every feature must include `srs_trace` (array of SRS requirement IDs).
 - **Deprecated features excluded**: Worker skips; routing counts only active features.
-- **2/3方件 constraints binding**: Design §11.1 mandatory internal libraries and §11.2 prohibited APIs are binding for all new code.
+- **二方件 constraints binding**: Design §11.1 mandatory internal libraries are binding for all new code.
 - **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → invoke `long-task-codebase-scanner` skill (rule 7b: before requirements; rule 5b: before design in brownfield repos).
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.

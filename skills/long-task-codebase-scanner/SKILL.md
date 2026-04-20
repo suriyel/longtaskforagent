@@ -9,7 +9,7 @@ description: "在存量项目（无 docs/rules/）中于需求或设计阶段之
 
 扫描已有项目的源代码，提取并记录已建立的编码约定、库约束、构建模式和提交标准。输出使下游 skill 能够生成符合项目既有模式的代码。
 
-**你的倾向应偏向于发现约束条件。** 尤其是替代标准库或第三方 API 的二方（内部）库强制要求 -- 遗漏这些会导致下游代码不合规。
+**你的倾向应偏向于发现二方（内部）库强制要求。** 遗漏这些会导致下游代码不合规。
 
 ## 调用方式
 
@@ -90,16 +90,6 @@ mkdir -p docs/rules/
 - 包装或替代标准库 API 的内部库（例如 `@company/http` 替代 `fetch`；`internal.logger` 替代 `console.log`；自定义 ORM 替代直接数据库查询）
 - 检测启发式：来自非公共注册表包的导入（作用域包如 `@company/*`、相对工作区导入、无法映射到已知 npm/PyPI 包的内部模块路径）
 - 对每个发现：记录领域、内部库名称、它替代了什么、导入模式、使用频率
-
-**第三方库约束** -- 分析依赖清单：
-- 版本锁定策略：精确（`==2.31.0`）vs 范围（`^7.4`）vs 未锁定
-- 识别常见领域（HTTP、日志、测试、序列化、日期/时间、校验）所选择的库
-- 标记仍在使用的已废弃库
-
-**禁止的 API / 库** -- 检测暗示某些 API 被禁用的模式：
-- 从未使用但本应是自然选择的标准库 API（例如任何地方都没有 `console.log`，只有 `logger.info`）
-- 存在于锁文件但未被导入的第三方库（被内部替代方案取代）
-- 禁止特定 API 的 lint 规则（通过配置文件存在来检测 -- 见下方静态分析工具）
 
 **静态分析工具** -- 检测 linter 和静态分析器的配置文件。对每个发现：
 - 记录：工具名称、配置文件路径、运行命令（从构建脚本或标准调用推断）
@@ -224,14 +214,13 @@ mkdir -p docs/rules/
 | Document | Description |
 |----------|-------------|
 | [coding-style.md](coding-style.md) | Naming, formatting, file organization |
-| [coding-constraints.md](coding-constraints.md) | 2/3方件 constraints, static analysis tools, error handling, imports |
+| [coding-constraints.md](coding-constraints.md) | 2nd-party library constraints, static analysis tools, error handling, imports |
 | [build-and-compilation.md](build-and-compilation.md) | Build system, packaging, environment |
 
 ## Key Findings Summary
 
 - **Languages**: [list]
 - **Internal Libraries (2nd-party)**: [count] found — [brief list]
-- **Prohibited APIs**: [count] detected
 - **Static Analysis Tools**: [list]
 - **Test Framework**: [detected name or "none detected"]
 - **Coverage Tool**: [detected name or "none detected"]
@@ -246,7 +235,7 @@ mkdir -p docs/rules/
 ### 步骤 10：用户评审
 
 通过 `AskUserQuestion` 展示发现：
-- 关键发现的简明摘要（尤其是二方/三方约束和禁止的 API）
+- 关键发现的简明摘要（尤其是二方库约束）
 - 请用户确认或编辑 `docs/rules/` 文件后再继续
 
 ---

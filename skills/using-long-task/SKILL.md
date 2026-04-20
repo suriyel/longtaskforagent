@@ -126,7 +126,7 @@ digraph phase_detection {
 | `RELEASE_NOTES.md` | 持续更新的变更日志 |
 | `bugfix-request.json` | 信号文件 — 触发热修复会话（处理后删除） |
 | `increment-request.json` | 信号文件 — 触发增量需求（处理后删除） |
-| `docs/rules/*.md` | 代码库约定 — 编码风格、2/3方件约束、构建模式（仅存量项目） |
+| `docs/rules/*.md` | 代码库约定 — 编码风格、二方件约束、构建模式（仅存量项目） |
 
 ## 危险信号
 
@@ -146,7 +146,7 @@ digraph phase_detection {
 | "我直接在 JSON 里加功能就行" | 调用 `long-task-increment` skill 进行有跟踪、可审计的变更。 |
 | "需求变更很小，不需要影响分析" | Increment skill 能捕获隐藏的依赖。 |
 | "我直接快速修这个 bug" | 调用 `long-task-hotfix` — bug 在 feature-list.json 中被记录为 category=bugfix 并通过完整 Worker 流水线修复。 |
-| "我已经了解项目的约定" | 调用 `long-task-codebase-scanner`。隐式知识不会跨会话持久化。2/3方件约束容易遗漏。 |
+| "我已经了解项目的约定" | 调用 `long-task-codebase-scanner`。隐式知识不会跨会话持久化。二方件约束容易遗漏。 |
 | "这个存量项目很小，不需要扫描" | 自动跳过机制处理新建项目（≤3 文件）。让 codebase-scanner skill 决定。 |
 
 ## Skill 优先级

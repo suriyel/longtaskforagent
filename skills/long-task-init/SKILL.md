@@ -1,13 +1,13 @@
 ---
 name: long-task-init
-description: "当设计文档存在但 feature-list.json 未创建时使用 — 搭建项目产物并从设计 §9.2 填充功能"
+description: "当设计文档存在但 feature-list.json 未创建时使用 — 搭建项目产物并从 SRS FR 列表交互式生成 feature-list.json"
 ---
 
 **语言规则**：你必须用中文（简体）回复用户。所有生成的文档、报告和面向用户的输出必须用中文编写。Skill 名称、代码标识符和 JSON 字段名保持英文。
 
 # 初始化 Long-Task 项目
 
-在 SRS 和设计均批准后运行一次。搭建所有持久化产物，从设计 §9.2 填充功能（FR 已在需求阶段调整大小），为迭代 Worker 周期做准备。
+在 SRS 和设计均批准后运行一次。搭建所有持久化产物，从 SRS FR 列表交互式生成 features[]（FR 已在需求阶段调整大小），为迭代 Worker 周期做准备。
 
 **启动时宣告：** "我正在使用 long-task-init skill 搭建项目。"
 
@@ -77,25 +77,34 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
 5. **填充 `feature-list.json` 中的 SRS 字段** — 从 **SRS 文档**：
    - `constraints[]` — 复制 SRS "约束"章节中的 CON-xxx 项；每项为简洁字符串
    - `assumptions[]` — 复制 SRS "假设与依赖"章节中的 ASM-xxx 项；每项为简洁字符串
-6. **从设计 §9.2 填充功能** — FR 已在需求阶段调整大小（G1-G6 过大 + S1-S4 过小启发式）。设计文档的任务分解表（§9.2）将已调整大小的 FR 映射为优先级排序的功能含依赖排序。填充 `feature-list.json` `features[]`：
-   - 每个 §9.2 行 → 一个功能。不要进一步拆分或合并 — 粒度已在 SRS 阶段最终确定。
-   - `srs_trace`：复制"Mapped FRs"列 — 此功能实现的 FR ID 数组（如 `["FR-003", "FR-004", "FR-005"]`）
-   - `title` + `description`：从 §9.2 功能名 + 映射 FR 的描述导出
-   - `priority`：P0/P1 → `"high"`，P2 → `"medium"`，P3 → `"low"`
-   - `dependencies`：来自 §9.3 依赖链图
-   - `status`：始终 `"failing"`
-   - `verification_steps` 可选 — 若提供，将所有映射 FR 的验收标准整合为行为场景（Given/When/Then）：
-     - 每步必须是含 Given/When/Then 结构的行为场景，非简单断言
-     - 错误：`"Login page displays correctly"` → 无动作、无断言
-     - 正确：`"Given a registered user, when POST /api/orders with valid payload, then response 201 with order ID; and GET /api/orders/{id} returns the created order with correct fields"`
-     - 对有后端依赖的功能：至少一步必须验证跨依赖边界的真实数据流
-     - **最低复杂度**：每个功能应有 ≥ 1 个含 3+ 链式操作的 verification_step
-   - **排序**：遵循 §9.2 行顺序（已由设计按优先级排序和后端/前端配对）
-   - 每个功能必须可独立验证且在一个会话内完成
-   - **验证门禁**：填充所有功能后验证：
-     - SRS 中每个 FR-xxx 至少出现在一个功能的 `srs_trace` 中（无孤立需求）
-     - 每个功能的 `srs_trace` 至少包含一个 FR（无空追溯）
-   - **单轮标志传播**：若 SRS 文档元数据包含 `Single-Round: Yes`，在 `feature-list.json` 根层级设置 `"single_round": true`。这是信息性标志 — 无论此标志如何，所有 Worker 步骤执行其完整标准流程。
+6. **从 SRS FR 列表交互式生成功能** — FR 已在需求阶段调整大小（G1-G6 过大 + S1-S4 过小启发式）。粒度已在 SRS 阶段最终确定；此步仅将 FR 映射为功能（1 个 FR 或多个相关 FR → 1 个功能）。
+
+   a. **提取 FR**：Glob `docs/plans/*-srs.md`，提取所有 FR-xxx 条目（FR ID、title、description、acceptance criteria、SRS 优先级若有）
+   b. **呈现分组建议**：按 SRS 章节/领域给出建议分组（相关 FR 聚合为垂直切片，每个功能目标 ≈ 1000 行实现代码）。展示给用户：
+      ```
+      建议分组：
+      Feature 1：[title] — FR-001, FR-002（理由：共同领域/前后端配对）
+      Feature 2：[title] — FR-003（理由：独立功能）
+      ...
+      ```
+   c. **用户批准分组**（AskUserQuestion 或自由响应）。用户可调整 FR 组合、重命名、重排序、增改依赖。
+   d. **按批准结果填充 `features[]`**：
+      - `srs_trace`：该功能覆盖的 FR ID 数组
+      - `title` + `description`：用户给出，或从首个 FR 派生
+      - `priority`：取该组 FR 最高优先级（若 SRS 有 MoSCoW/P0-P3 字段）；默认 `"medium"`
+      - `dependencies`：从 SRS 显式 FR 依赖或用户指定推断；无则空数组
+      - `status`：始终 `"failing"`
+      - `verification_steps` 可选 — 若提供，将所有映射 FR 的验收标准整合为行为场景（Given/When/Then）：
+        - 每步必须是含 Given/When/Then 结构的行为场景，非简单断言
+        - 错误：`"Login page displays correctly"` → 无动作、无断言
+        - 正确：`"Given a registered user, when POST /api/orders with valid payload, then response 201 with order ID; and GET /api/orders/{id} returns the created order with correct fields"`
+        - 对有后端依赖的功能：至少一步必须验证跨依赖边界的真实数据流
+        - **最低复杂度**：每个功能应有 ≥ 1 个含 3+ 链式操作的 verification_step
+      - **排序**：按用户批准的顺序；每个功能必须可独立验证且在一个会话内完成
+   e. **验证门禁**：填充所有功能后验证：
+      - SRS 中每个 FR-xxx 至少出现在一个功能的 `srs_trace` 中（无孤立需求）
+      - 每个功能的 `srs_trace` 至少包含一个 FR（无空追溯）
+   f. **单轮标志传播**：若 SRS 文档元数据包含 `Single-Round: Yes`，在 `feature-list.json` 根层级设置 `"single_round": true`。这是信息性标志 — 无论此标志如何，所有 Worker 步骤执行其完整标准流程。
 7. **验证**：
     ```bash
     python scripts/validate_features.py feature-list.json

@@ -9,14 +9,13 @@
 | 文档 | 说明 |
 |----------|-------------|
 | [coding-style.md](coding-style.md) | 命名约定、格式化规则、文件与目录组织 |
-| [coding-constraints.md](coding-constraints.md) | 二方/三方库约束、静态分析工具、错误处理、导入组织 |
+| [coding-constraints.md](coding-constraints.md) | 二方库约束、静态分析工具、错误处理、导入组织 |
 | [build-and-compilation.md](build-and-compilation.md) | 构建系统、打包、环境管理 |
 
 ## 关键发现摘要
 
 - **语言**: {{languages}}
 - **内部库（二方）**: 发现 {{internal_lib_count}} 个 -- {{internal_lib_list}}
-- **禁用 API**: 检测到 {{prohibited_count}} 个
 - **静态分析工具**: {{static_tools}}
 - **测试框架**: {{test_framework}}
 - **覆盖率工具**: {{coverage_tool}}

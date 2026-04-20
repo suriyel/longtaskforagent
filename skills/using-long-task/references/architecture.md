@@ -115,7 +115,7 @@ Created: [date]
 **规则**：
 - 使用 [Keep a Changelog](https://keepachangelog.com/) 格式：Added、Changed、Deprecated、Removed、Fixed、Security
 - 每条记录引用 `feature-list.json` 中的功能 ID
-- 达到里程碑时将条目从 `[Unreleased]` 移至版本化章节
+- 发布切点时将条目从 `[Unreleased]` 移至版本化章节
 - 每个功能完成后立即更新 — 绝不延迟到会话结束
 
 ### 4. `examples/` 目录

@@ -19,7 +19,7 @@ description: "当无 SRS、无设计文档、无 feature-list.json 时使用 —
 
 1. 完整阅读用户提供的需求文档/想法描述。逐段标注：哪些是目标声明、哪些是行为规约、哪些是约束、哪些是实现偏好。
 2. 检查 `docs/rules/`（若存在且已填充）— Phase 0-pre 扫描器提取的代码库约定：
-   - `coding-constraints.md` — 2/3方件库约束、禁止的 API、内部库强制要求
+   - `coding-constraints.md` — 二方件（内部强制库）约束
    - `build-and-compilation.md` — 构建系统约束
    - `coding-style.md` — 风格约束
 3. 加载 SRS 模板：用户指定路径优先，否则 `docs/templates/srs-template.md`。验证 `.md` 且含至少一个 `## ` 标题。

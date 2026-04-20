@@ -74,8 +74,7 @@ description: "当 repos-manifest.json 存在时使用 - 处理多仓库探索、
    - 根级参考文件（*.md, *.pdf, *.json, *.yaml）— 用户提供的规格、API 文档等
 3. 如果 `docs/rules/` 中有已填充的 `.md` 文件（非新建项目的空白桩）→ 标记为存量项目。记录：
    - `coding-style.md` — 语言规约
-   - `mandatory-libraries.md` — 必需的内部库（2/3方件约束）
-   - `prohibited-apis.md` — 禁用的 API
+   - `coding-constraints.md` — 二方件（内部强制库）约束
    - `build-and-compilation.md` — 构建系统约束
    - 这些约束可能影响需求可行性，应在获取过程中予以考虑
 4. 检查 SRS 模板：
