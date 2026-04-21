@@ -509,62 +509,6 @@ def test_feature_without_srs_trace_ok():
     assert code == 0, f"Expected exit 0 for feature without srs_trace: {stdout}"
 
 
-# --- lcd_trace validation tests ---
-
-def test_valid_lcd_trace():
-    data = {
-        "project": "test-project", "created": "2025-01-01",
-        "features": [{
-            "id": 1, "category": "core", "title": "F", "description": "d",
-            "priority": "high", "status": "failing", "dependencies": [],
-            "lcd_trace": ["LCD-001", "LCD-042"]
-        }]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 for valid lcd_trace: {stdout}"
-
-
-def test_lcd_trace_invalid_format():
-    data = {
-        "project": "test-project", "created": "2025-01-01",
-        "features": [{
-            "id": 1, "category": "core", "title": "F", "description": "d",
-            "priority": "high", "status": "failing", "dependencies": [],
-            "lcd_trace": ["LCD-001", "LCD-01", "FR-001"]
-        }]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero for invalid lcd_trace format: {stdout}"
-    assert "lcd_trace" in stdout
-
-
-def test_lcd_trace_not_array():
-    data = {
-        "project": "test-project", "created": "2025-01-01",
-        "features": [{
-            "id": 1, "category": "core", "title": "F", "description": "d",
-            "priority": "high", "status": "failing", "dependencies": [],
-            "lcd_trace": "LCD-001"
-        }]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code != 0, f"Expected non-zero for non-array lcd_trace: {stdout}"
-
-
-def test_feature_without_lcd_trace_ok():
-    """Feature without lcd_trace should pass (field is optional; greenfield case)."""
-    data = {
-        "project": "test-project", "created": "2025-01-01",
-        "features": [{
-            "id": 1, "category": "core", "title": "F", "description": "d",
-            "priority": "high", "status": "failing", "dependencies": [],
-            "srs_trace": ["FR-001"]
-        }]
-    }
-    code, stdout, _ = run_validator(data)
-    assert code == 0, f"Expected exit 0 for feature without lcd_trace: {stdout}"
-
-
 def test_feature_without_verification_steps_ok():
     """Feature without verification_steps should pass (field is now optional)."""
     data = {
@@ -1083,10 +1027,6 @@ if __name__ == "__main__":
         test_srs_trace_invalid_format,
         test_srs_trace_not_array,
         test_feature_without_srs_trace_ok,
-        test_valid_lcd_trace,
-        test_lcd_trace_invalid_format,
-        test_lcd_trace_not_array,
-        test_feature_without_lcd_trace_ok,
         test_feature_without_verification_steps_ok,
         test_valid_wave_fields,
         test_wave_not_in_waves_array_fails,

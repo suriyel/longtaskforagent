@@ -48,13 +48,7 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
    - **修改**：对现有 FR 的变更（注明被修改的原始 ID）
    - **废弃**：不再需要的现有需求（注明被移除的 ID）
 
-7. **LCD 候选抽取**（若增量来源含原始文档或长文本描述）：
-   - 按 `skills/long-task-requirements/references/legacy-context-extraction.md` 扫描增量输入中的存量语义约束（BEHAVIOR/COMPAT/DATA/PERF/RATIONALE 5 类）
-   - 若输入来源为外部原始文档 → 复制归档到 `docs/references/<slug>.<ext>` + SHA256 登记（与 requirements Step 1.7 协议等价）
-   - LCD 候选 ID 从现有 SRS §1.4.2 最大 LCD 编号 + 1 起递增；DEPRECATED LCD 不复用 ID
-   - 出现 `CONFLICTED` 条目 → 并入 AskUserQuestion 在本轮清零
-
-**输出**：带 ID、EARS 陈述和验收标准的新增/修改/废弃需求结构化列表；LCD 候选表（若有）。
+**输出**：带 ID、EARS 陈述和验收标准的新增/修改/废弃需求结构化列表。
 
 ### 3. 影响分析
 
@@ -192,19 +186,13 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
    - 添加 `[DEPRECATED - Wave N: <reason>]` 前缀标记
    - 不要删除（保留可追溯性）
 5. 如果存在则更新可追溯矩阵
-6. **§1.4.2 LCD 生命周期**（若本轮产出 LCD 候选）：
-   - 新增 LCD 追加到 §1.4.2 末尾（status=ACTIVE），ID 连续递增
-   - 修改既有 LCD：原地更新"澄清决议"列；保留原 ID；权威列按需从 QUOTED → RESOLVED 提升
-   - 废弃既有 LCD：status 改为 DEPRECATED；"澄清决议"列追加 `[DEPRECATED - Wave N: <reason>]`；保留行不删除
-   - 若本轮归档了新原始文档 → §1.4.3 追加行（文件路径、SHA256、导入日期）
-   - 运行 `python scripts/check_lcd_wiring.py feature-list.json docs/plans/*-srs.md` 确认 DEPRECATED LCD 无活跃引用（若有 → 对应 feature 需修 `lcd_trace` 或转 feat 废弃流程）
-7. Git 提交：
+6. Git 提交：
    ```
    docs: update SRS for wave N — <brief scope>
 
-   Added: FR-021, FR-022, LCD-004
-   Modified: FR-005, LCD-001
-   Deprecated: FR-012, LCD-002
+   Added: FR-021, FR-022
+   Modified: FR-005
+   Deprecated: FR-012
    ```
 
 **5b. 分解为功能：**
@@ -214,14 +202,12 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
    - `wave`：当前批次编号 N
    - `status`：`"failing"`
    - `srs_trace`：新 SRS 需求 ID 数组（如 `["FR-021"]`）
-   - `lcd_trace`：可选 — 该功能涉及的 ACTIVE LCD ID 数组（基于 §1.4.2 与 Design §4.N.5 反推；RATIONALE 类不得进入）
    - `verification_steps`：可选 — 来自新的验收标准（Given/When/Then）
    - `dependencies`：根据需要引用现有功能 ID
 
 2. **修改功能**：对每个受影响的现有功能：
    - 将 `status` 重置为 `"failing"`（需要重新实现/重新验证）
    - 更新 `srs_trace` 以反映修订后的需求 ID
-   - 更新 `lcd_trace`：移除本轮 DEPRECATED 的 LCD；追加本轮新增 ACTIVE LCD（若功能涉及其语义）
    - 可选更新 `verification_steps`（如存在）
    - 可选将 `wave` 设为 N（标明修改发生的批次）
 
@@ -247,7 +233,6 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
 7. 验证：
    ```bash
    python scripts/validate_features.py feature-list.json
-   python scripts/check_lcd_wiring.py feature-list.json docs/plans/*-srs.md
    ```
 
 ### 6. 更新辅助文件

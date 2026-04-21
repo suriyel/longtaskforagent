@@ -57,9 +57,6 @@
 | 无 | 输入缺失 / 工具异常 → 传统 blocked | 按 loop 模板 Failure Addendum 重分发 |
 | `[CROSS-REF CONFLICT]` | 需用户裁决的跨文档冲突；`status: pass` + 非空 blockers 合法 | 逐条 AskUserQuestion A/B/C |
 | `[CONTRACT-DEVIATION]` | 跨 Step 设计契约偏离；orchestrator 无裁决权 | 直通 blocked 返上层 |
-| `[LEGACY-CONFLICT]` | SRS §1.4.2 LCD 决议与当前设计 / 测试清单 / 实现无法同时满足 | AskUserQuestion 回填 §1.4.2 决议，再重分发 |
-| `[LEGACY-MISSING]` | feature-list.json `lcd_trace` 引用的 LCD 在 §1.4.2 不存在或 DEPRECATED | 补 §1.4.2 或修 `lcd_trace` 后重分发 |
-| `[LEGACY-DRIFT]` | 实现 / 测试出现原文式 legacy 语义但无对应 LCD（scope creep 反向信号） | 回 long-task-increment 补 LCD，或回 feature-design 重审 lcd_trace |
 
 ### 1.6 sub-skill SKILL.md 特别规则
 

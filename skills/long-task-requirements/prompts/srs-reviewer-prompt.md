@@ -161,27 +161,6 @@
 - Z2 单 AC FR：LLM-FIXABLE（添加错误/边界 AC）或 USER-INPUT（询问合并到哪个相关 FR）
 - Z3 数据回显 FR：LLM-FIXABLE（作为垂直切片合并到产出 FR；消除被吸收条目）
 
-### Group L: Legacy Context Decisions Checks (L1-L4)
-
-**跳过规则**：若 SRS §1.4.2 不存在、标记"[Not applicable]"、或表为空（greenfield / 无显著存量约束），将整组标记为 **PASS-SKIPPED**。
-
-验证存量语义约束一等公民化的完整性。
-
-| # | Check | YES/NO | Evidence |
-|---|-------|--------|----------|
-| L1 | §1.4.2 每条 LCD 在"原文依据"列给出可追溯出处（"<原文片段>" (§ N ¶ M) 或归档路径 + 行号），非空占位 | | |
-| L2 | §1.4.2 每条 LCD 的"类别"列 ∈ `{BEHAVIOR, COMPAT, DATA, PERF, RATIONALE}`；"权威"列 ∈ `{RESOLVED, QUOTED, CONFLICTED}` | | |
-| L3 | §1.4.2 中 `CONFLICTED` 条目数 = 0 — 未决冲突必须已在 Step 3 澄清后改为 RESOLVED，方可通过审查 | | |
-| L4 | §1.4.2 每条非 RATIONALE 类 LCD 在"影响 FR/CON"列引用 SRS 内实际存在的 FR-xxx / CON-xxx / NFR-xxx / IFR-xxx ID（反向可追溯） | | |
-
-**判决规则**：L1-L4 全部 YES 方可 PASS 此组。
-
-**解决类型指引**：
-- L1 缺原文依据：LLM-FIXABLE（回查原始文档补充）或 USER-INPUT（原文已不可考时询问用户）
-- L2 类别 / 权威字段越界：LLM-FIXABLE（机械修正到枚举内或细分）
-- L3 CONFLICTED > 0：USER-INPUT（必须用户定夺决议，审查员不自行裁决）
-- L4 缺反向映射：LLM-FIXABLE（扫描 FR 内容匹配）或 USER-INPUT（确实无映射 → 降级为 RATIONALE 类）
-
 ### Group Verdicts
 
 | Group | Checks | PASS/FAIL | Failing Checks |
@@ -194,7 +173,6 @@
 | D: Diagram Presence & Validity | D1-D4 | | |
 | G: Granularity | G1-G3 | | |
 | Z: Sizing | Z1-Z3 | | |
-| L: Legacy Context Decisions | L1-L4 | | |
 
 ### Clarification Questions (仅 USER-INPUT 项)
 
@@ -250,8 +228,6 @@
 - **G3 的"有意粗粒度"论证可接受** — 若 FR 明确说明其多个标准是单一行为的变体，标记 G3 YES
 - **Z 检查仅适用于第 4 节 FR** — 延迟项豁免定量检查
 - **Z1 的"独立论证"可接受** — 若 FR 明确论证独立状态（复杂验证、安全敏感、法规），标记 Z1 YES
-- **L 检查仅在 §1.4.2 非空时应用** — §1.4.2 为空表（greenfield / 无存量约束）→ Group L 标记 PASS-SKIPPED
-- **L3 不得自裁 CONFLICTED** — 审查员不能把 CONFLICTED 条目改成 RESOLVED；冲突必须 Clarification Questions 上报用户
 
 ## 问题分类启发式
 

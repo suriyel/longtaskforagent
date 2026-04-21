@@ -10,8 +10,6 @@ Checks:
 - Dependencies reference existing feature IDs
 - Verification steps are non-empty (if present — field is optional)
 - srs_trace is a valid array of requirement IDs (if present)
-- lcd_trace is a valid array of Legacy Context Decision IDs (if present)
-  (deep cross-doc checks: see check_lcd_wiring.py)
 - tech_stack.language is a supported value (if present)
 Usage:
     python validate_features.py <path/to/feature-list.json>
@@ -33,7 +31,6 @@ def _force_utf8_io() -> None:
 
 REQUIRED_FIELDS = {"id", "category", "title", "description", "priority", "status"}
 SRS_TRACE_PATTERN = re.compile(r"^(?:FR|IFR)-\d{3}$")
-LCD_TRACE_PATTERN = re.compile(r"^LCD-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
 VALID_PHASES = {"design", "tdd"}
 VALID_PRIORITIES = {"high", "medium", "low"}
@@ -217,21 +214,6 @@ def validate(path: str) -> tuple[list[str], list[str]]:
                         errors.append(
                             f"{prefix} (id={fid}): srs_trace[{ti}] must match "
                             f"FR-xxx/IFR-xxx format, got {trace_id!r}"
-                        )
-
-        # Check lcd_trace field (optional, array of LCD-xxx IDs)
-        # Deep cross-doc validation (LCD exists in SRS §1.4.2 / status=ACTIVE /
-        # category != RATIONALE) belongs to check_lcd_wiring.py.
-        lcd_trace = feat.get("lcd_trace")
-        if lcd_trace is not None:
-            if not isinstance(lcd_trace, list):
-                errors.append(f"{prefix} (id={fid}): 'lcd_trace' must be an array")
-            else:
-                for ti, trace_id in enumerate(lcd_trace):
-                    if not isinstance(trace_id, str) or not LCD_TRACE_PATTERN.match(trace_id):
-                        errors.append(
-                            f"{prefix} (id={fid}): lcd_trace[{ti}] must match "
-                            f"LCD-xxx format (3-digit zero-padded), got {trace_id!r}"
                         )
 
         # Check dependencies

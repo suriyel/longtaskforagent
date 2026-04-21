@@ -26,10 +26,6 @@
    - §11.5：命名约定表（规则、约定）
    - §11.6：错误处理模式描述
    §11 在设计文档中始终存在。空表意味着该类别无约束。
-8. **Legacy Context Decisions** -- 读取 SRS 文档 §1.4.2 全表，提取功能 `lcd_trace[]` 所指的每条 LCD（ID、类别、澄清决议、影响 FR）。规则：
-   - §1.4.2 "澄清决议"列 = 执行权威；下游不读 §1.4.3 归档原文
-   - `lcd_trace` 空数组且本功能涉及存量模块 → 反向检查是否漏标（由扫描表 `LCD-MISSING` 触发）
-   - 只读 §1.4.2；不读 `docs/references/<原文>`（证据层，默认不访问）
 
 ## 模板
 
@@ -63,8 +59,6 @@
 | `SRS-MISSING` | 验收标准没有 Given/When/Then 或未指定预期结果 |
 | `DEP-AMBIGUOUS` | 跨功能接口不清晰 -- 依赖的 §6.2 条目缺失或不完整 |
 | `CONSTRAINT-CONFLICT` | §11 代码库约定与功能需求冲突 |
-| `LCD-MISSING` | feature.lcd_trace 引用的 LCD 在 SRS §1.4.2 不存在或 status=DEPRECATED → 返回 `[LEGACY-MISSING]` blocker |
-| `LCD-DRIFT` | 接口契约 / 边界决策 / 错误表 / 现有代码复用 出现与某条 §1.4.2 LCD 决议列矛盾的设计 → 返回 `[LEGACY-CONFLICT]` blocker |
 
 **扫描流程：**
 
@@ -73,7 +67,6 @@
 3. 对每个 SRS 验收标准：验证 Given/When/Then 存在且有明确预期结果 → `SRS-MISSING`
 4. 对 §6.2 契约：检查 schema 是否完整 → `DEP-AMBIGUOUS`
 5. 对 §11.1：检查功能需求是否与约束冲突 → `CONSTRAINT-CONFLICT`
-6. 对每条 `lcd_trace[]`：在 §1.4.2 定位该 LCD，若不存在 / DEPRECATED → `LCD-MISSING`；若设计中的接口 / 行为 / 错误路径与 LCD 决议矛盾 → `LCD-DRIFT`
 
 **对于 `category: "bugfix"` 功能**：仅对缺陷的验收标准扫描 `SRS-VAGUE` 和 `SRS-DESIGN-CONFLICT`。
 
@@ -291,7 +284,6 @@
 - [ ] UML 图（若嵌入）节点/参与者/状态/消息均使用真实标识符，无 A/B/C 等代称
 - [ ] 非类图的 UML（sequence / state / flowchart）不含色彩、图标、rect 框、classDef 等装饰
 - [ ] 每个 UML 图元素（sequence 消息 / state transition / flow 决策分支）在测试清单"追踪到"列被至少一行引用
-- [ ] 每条 `lcd_trace[]` LCD 在接口契约 / 边界决策表 / 错误处理表 / 现有代码复用 至少一处有显式落点（格式示例："满足 LCD-001（BEHAVIOR: ...）"）
 
 ---
 
@@ -316,7 +308,6 @@
 | §11 Compliance | N checked / M total | All checked | PASS/FAIL |
 | Existing Code Reuse Items | N | ≥ 0 | INFO |
 | UML Element Trace Coverage | N/M | M/M (M=0 时 N/A) | PASS/FAIL |
-| LCD Trace Coverage | N/M | M/M (M = len(lcd_trace)，M=0 时 N/A) | PASS/FAIL |
 ### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |
 |---|----------|-------------|
