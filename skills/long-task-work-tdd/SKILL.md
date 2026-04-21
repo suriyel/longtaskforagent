@@ -35,6 +35,7 @@ Red / Green / Refactor 三个独立 SubAgent 由本 skill 直接用 Agent 工具
 > **expect**：结构化返回契约；所有测试失败（RED PASS）
 
 **返回处理**：
+- 校验 `External Sources Read:` 白名单；若含 `docs/plans/*.md` → Failure Addendum 重分派（提示：仅读 feature.md 沉淀章节）
 - 所有测试失败且退出码非零 → 进入 2b
 - 任一测试通过或框架错误 → Failure Addendum 重分派一次；仍 FAIL → 呈用户升级
 
@@ -45,6 +46,7 @@ Red / Green / Refactor 三个独立 SubAgent 由本 skill 直接用 Agent 工具
 > **expect**：结构化返回契约；所有测试通过 + 零回归
 
 **返回处理**：
+- 校验 `External Sources Read:` 白名单；若含 `docs/plans/*.md` → Failure Addendum 重分派
 - PASS → 进入 2c
 - FAIL（个别测试仍失败） → Failure Addendum 重分派，累计 2 轮仍未过 → 呈用户
 - BLOCKED（契约不可实现等设计侧偏差） → 呈用户裁决：是否回退到 design 阶段
@@ -56,6 +58,7 @@ Red / Green / Refactor 三个独立 SubAgent 由本 skill 直接用 Agent 工具
 > **expect**：结构化返回契约；静态分析 0 违规 + §11 合规 + 测试仍通过
 
 **返回处理**：
+- 校验 `External Sources Read:` 白名单；若含 `docs/plans/*.md` → Failure Addendum 重分派
 - PASS → 进入 Step 3
 - FAIL（静态违规未清） → Failure Addendum 重分派，累计 2 轮仍未过 → 呈用户
 - BLOCKED → 呈用户
@@ -113,6 +116,8 @@ git commit -m "feat: feature #<id> <slug> — tests green, refactored"
 - **R / G / R 三个 SubAgent 不可协商** —— 本 skill 必须用 Agent 工具分别 DISPATCH，不在主 agent 内联执行
 - **无新鲜证据不得标记 passing** —— 测试必须实跑绿，静态分析必须 0 违规
 - **feature design 文档必须存在** —— 缺失即 BLOCKED 终止；主 agent 不读全文、不传路径；sub-skill 自调 `scripts/feature_paths.py` 派生
+- **TDD 三段唯一外部规格源 = feature.md** —— R/G/R 不得访问 `docs/plans/*-srs.md` / `*-design.md`。所有上游约束（SRS FR、Design §11.x）已由 feature-design SubAgent 沉淀到 feature.md 的 §全局约束摘录 + §静态分析与质量工具命令。如需变更约束，回退到 `long-task-increment` 修订上游后重跑 design 阶段。
+- **External Sources Read 白名单校验** —— 每个 R/G/R SubAgent 返回的结构化契约必含 `External Sources Read:` 字段；若其中出现 `docs/plans/*.md` → 本层拒收并返回 BLOCKED。
 - **遇错系统化调试** —— 读 `../using-long-task/references/systematic-debugging.md`
 - **worktree 多版** —— 读 `../using-long-task/references/worktree-isolation.md`
 

@@ -15,10 +15,12 @@ description: "TDD 重构阶段 -- 清理代码、运行静态分析、验证 S11
 
 ## 关键约束
 
+**唯一权威源 = feature 设计文档**。单次 Read 整份 feature.md（路径由 `python scripts/feature_paths.py design-doc --feature <id> --must-exist` 派生）。禁止 Glob / Read / Grep `docs/plans/*-srs.md` 或 `docs/plans/*-design.md`。
+
 - **阶段 1：重构** -- 提取重复代码、改善命名、简化逻辑。每次修改后都运行测试。不得添加新功能。
-- **阶段 2：静态分析质量门禁** -- 如果设计文档 S11.4 列出了静态分析工具，运行每个工具的命令。修复所有违规项 -- 违规项为阻塞性问题。
-- **阶段 3：S11 合规检查：**
-  - a) S11.1 合规：对功能变更执行 `git diff --name-only`。对新增/修改的文件 grep 检查被替换的导入 (S11.1)。匹配即违规，必须修复。
+- **阶段 2：静态分析质量门禁** -- 运行 feature.md §静态分析与质量工具命令 / §11.4 静态分析命令 中列出的每个工具命令。修复所有违规项 -- 违规项为阻塞性问题。
+- **阶段 3：S11 合规检查**（唯一依据 = feature.md §全局约束摘录）：
+  - a) S11.1 合规：对功能变更执行 `git diff --name-only`。对新增/修改的文件 grep 检查 §全局约束摘录 §11.1 表中"被替代方案"列。匹配即违规，必须修复。
   - b) 现有代码复用：对每个 REUSE 项，grep 实现文件查找预期的导入。未导入但重新实现 -> 违规 -> 替换为 REUSE 导入。
   - c) 实现摘要合规：验证实现文件/类/方法与实现摘要一致，未遗漏变更项，未引入摘要外的类。
 - 发现违规时：修复、重新运行测试、重新检查。
@@ -39,6 +41,8 @@ description: "TDD 重构阶段 -- 清理代码、运行静态分析、验证 S11
 [1-2 sentences — refactoring complete, static analysis and §11 compliance results]
 ### Metrics
 static_analysis=CLEAN|N_violations, section11_compliance=CLEAN|N_violations, tests_pass=true/false
+### External Sources Read
+[whitelist only: feature.md (docs/features/<id>-<slug>.md), feature-list.json, long-task-guide.md, docs/rules/*.md (if any). MUST NOT contain docs/plans/*.md.]
 ### Artifacts
 [files modified, one per line]
 ### Issues

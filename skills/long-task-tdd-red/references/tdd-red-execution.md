@@ -6,8 +6,10 @@
 
 1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`
 2. 派生功能设计文档路径：`python scripts/feature_paths.py design-doc --feature <id> --must-exist`
-   - exit 0 → 读该路径
+   - exit 0 → **单次 Read 整份文档**（不带 offset/limit）
    - exit 1 → BLOCKED：设计文档缺失，终止（主 orchestrator 已做硬前置，理论上不该在此触发）
+
+**禁令**：本 SubAgent 不得 Glob / Read / Grep `docs/plans/*-srs.md` 或 `docs/plans/*-design.md`。所有上游约束（SRS FR / Design §11）必须从 feature.md §全局约束摘录 + §接口契约 + §实现摘要 读取。若缺失 → 返 BLOCKED，不自行回访上游。
 
 ### 步骤 1b：探索相关现有测试
 
@@ -35,8 +37,9 @@
 2. **§接口契约** -- 方法签名、前/后置条件、边界决策表、错误处理表。当注释为 "Uses: [§11.1 library]" 时，测试设置应 mock/stub §11.1 库，而非被替代的方案。
 3. **现有代码复用** -- 工具函数、API 客户端、§11 库&复用映射。测试使用相同的导入/模式。
 4. **§实现摘要** -- 变更文件/类/方法清单。确保每个变更方法至少有一个测试行覆盖。
-5. **澄清附录**（如存在）-- 用户批准的决议覆盖默认值。
-6. **功能设计中的 mermaid 图**（若存在）-- 与散文并列消费，每个图元素硬触发测试：
+5. **§全局约束摘录** -- §11.1 强制库（本特性交集）+ §11.5 命名 + §11.6 错误处理模式。测试断言风格与异常类型以本节为准。
+6. **澄清附录**（如存在）-- 用户批准的决议覆盖默认值。
+7. **功能设计中的 mermaid 图**（若存在）-- 与散文并列消费，每个图元素硬触发测试：
    - `sequenceDiagram` 每条消息 → 一个协作/集成测试，断言调用发生、参数匹配；测试清单"追踪到"列应引用 `§设计对齐 seq msg#N`
    - `stateDiagram-v2` 每条 transition → 一个测试：给定 state=From + 触发 event，断言 state=To + 后置条件；每个守卫条件（`[guard]`）→ 正反两个测试；测试清单"追踪到"列应引用 `§接口契约 state <From>→<To>`
    - `flowchart TD` 每个决策节点（`{...}`）→ 正反两个测试；每个错误路径终点（`raise*` / `throw*`）→ 一个错误测试；测试清单"追踪到"列应引用 `§实现摘要 flow branch#N`
