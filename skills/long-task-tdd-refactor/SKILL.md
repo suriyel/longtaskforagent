@@ -31,11 +31,17 @@ description: "Use when dispatched by long-task-work-tdd Step 3c — clean up whi
    - 跨模块移动的函数
    - 新增或调整的数据字段
 3. 对每个改动符号，核对是否仍与 §4 / §6 / §8 对应行字面一致
-4. 不一致 → 按 `../long-task-work-tdd/references/drift-protocol.md` 处理：
-   - 偏离合理 → 更新对应设计节 + 复查 §7 Test Inventory + 设计与代码**同一 commit**
+4. **UML 图合规**（若 `{feature_design_path}` 含 mermaid 图）：
+   - `classDiagram`：grep 每个节点名 → 确认类存在；`MODIFIED` 节点 → `git diff` 确认有变更；**未在类图中声明但被修改的类** → 范围蔓延告警
+   - `sequenceDiagram`：grep 每条消息的方法名 → 确认在对应类中实现且被调用
+   - `stateDiagram-v2`：grep 每个状态名 + 事件名 → 确认出现在代码中
+   - `flowchart TD`：AST / grep 每个决策条件 → 确认实现含对应分支；**未在图中声明但存在的额外分支** → 告警
+   - 任一告警 → drift-protocol（更新图 OR 回滚改动，同一 commit）
+5. 不一致 → 按 `../long-task-work-tdd/references/drift-protocol.md` 处理：
+   - 偏离合理 → 更新对应设计节（含 mermaid 图）+ 复查 §7 Test Inventory + 设计与代码**同一 commit**
    - 偏离不合理 → **回滚重构**
    - 无法本地消解 → blocker `[CONTRACT-DEVIATION]`
-5. **设计对齐未通过不得进入静态分析**（偏离符号被静态工具忽略将导致后续 Inline Check P2/D3 拦截）
+6. **设计对齐未通过不得进入静态分析**（偏离符号被静态工具忽略将导致后续 Inline Check P2/D3 拦截）
 
 ## 静态分析关卡
 

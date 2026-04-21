@@ -20,12 +20,16 @@ description: "Use when dispatched by long-task-work-tdd Step 3a — write failin
 
 下文占位符均指向以上解析结果。
 
-## 规约输入三源
+## 规约输入四源
 
-测试由三大来源驱动：
+测试由四大来源驱动：
 - **特性详细设计测试清单**（`{feature_design_path}` §7）—— 主要来源；每行映射到一个或多个测试用例
 - **SRS 需求章节**（`{srs_section}`）—— 完整 FR-xxx，含 Given/When/Then 验收标准、边界条件、错误路径
 - **特性详细设计**（`{feature_design_path}`）—— 接口契约、实现摘要、边界条件、Test Inventory
+- **特性详细设计中的 mermaid 图**（若按 feature-design-execution §2a 触发嵌入）—— 与散文并列的**硬消费源**：
+  - `sequenceDiagram` 每条 `A->>B: method()` 消息 → 至少一个协作 / 集成测试，断言调用发生且参数匹配；测试 `Traces To` 引用 `§Design Alignment seq msg#N`
+  - `stateDiagram-v2` 每个 `stateA --> stateB : event` transition → 一个测试（state=A + 触发 event，断言 state=B + 后置条件）；每个守卫条件 → 正反两例；`Traces To` 引用 `§Interface Contract state <src>→<dst>`
+  - `flowchart TD` 每个决策菱形（`{...}`） → 正反两个测试；每个错误路径终点 → 一个错误测试；`Traces To` 引用 `§Implementation Summary flow branch#N`
 
 若 `env-guide.md §4.3` 存在，遵循其中的测试文件命名规范。
 
@@ -187,6 +191,16 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
 
 可复用校验脚本见 `references/ui-error-detection.md` § Layer 1b。
 
+## Rule 8 — UML 元素追溯覆盖（当 `{feature_design_path}` 含 mermaid 图）
+
+| 图类型 | 硬最低 |
+|-------|------|
+| `sequenceDiagram` | 每条消息 ≥1 个测试的 `Traces To` 引用 `§Design Alignment seq msg#N` |
+| `stateDiagram-v2` | 每个 transition ≥1 个测试引用 `§Interface Contract state <src>→<dst>`；每个守卫 → 正反两例 |
+| `flowchart TD` | 每个决策菱形 + 每个错误终点 ≥1 个测试引用 `§Implementation Summary flow branch#N` |
+
+未达最低 → `fail`，补齐 `Traces To` 引用再推进。无 mermaid 图 → 本关卡 N/A。
+
 ## 测试反模式（Top 5 警示）
 
 1. **测试 mock 的行为** —— 验证真实代码，而非 mock 配置
@@ -230,6 +244,7 @@ Rule 6 检测 UI **错误**；Rule 7 验证 UI **存在性**。
   "Rule 2 negative_ratio=<X> (≥ 0.40)",
   "Rule 3 low_value_ratio=<Z> (≤ 0.20)",
   "Rule 5 real_test_count=<Y> (≥ 1 or pure-function exempt)",
+  "Rule 8 UML element coverage=<U>/<M> (or N/A if design contains no mermaid)",
   "check_real_tests.py: OK"
 ]
 ```

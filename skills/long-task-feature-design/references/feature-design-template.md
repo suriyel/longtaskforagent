@@ -19,6 +19,41 @@
 - **Provides / Requires**: [自 §2.N.3 Integration Surface — Contract IDs + Provider/Consumer]
 - **Deviations**: [无 / 说明偏离及经用户审批记录]
 
+**UML 嵌入**（按 feature-design-execution §2a 触发判据；不满足则跳过本块）：
+- ≥2 类/模块协作（含新增/修改） → 嵌入 `classDiagram`（允许 `classDef NEW|MODIFIED|EXISTING` 色标，系统设计惯例对齐）
+- ≥2 对象/服务的调用顺序 → 嵌入 `sequenceDiagram`（无装饰）
+- 节点/参与者/消息均用**真实标识符**（ClassName、methodName），禁 A/B/C 代称
+- 若图内容已在系统设计 §4.N 等价表达 → 写一行 `"见系统设计 §4.N 类图"`，不重复画
+
+```mermaid
+classDiagram
+    class OrderService {
+        +placeOrder(req: OrderRequest): OrderId
+    }
+    class PaymentGateway {
+        +charge(amount: Money): PaymentId
+    }
+    class OrderRepository {
+        +save(order: Order): void
+    }
+    OrderService ..> PaymentGateway : uses
+    OrderService ..> OrderRepository : writes
+    classDef NEW fill:#cfc,stroke:#080
+    classDef MODIFIED fill:#ffc,stroke:#880
+    class OrderService:::NEW
+    class PaymentGateway:::MODIFIED
+```
+
+```mermaid
+sequenceDiagram
+    participant OrderService
+    participant PaymentGateway
+    participant OrderRepository
+    OrderService->>PaymentGateway: charge(amount)
+    PaymentGateway-->>OrderService: paymentId
+    OrderService->>OrderRepository: save(order)
+```
+
 ## SRS Requirement
 
 [将 SRS 中的**完整** FR-xxx 章节复制 — 含 EARS 陈述、验收准则、Given/When/Then 场景]
@@ -28,6 +63,17 @@
 | Method | Signature | Preconditions | Postconditions | Raises |
 |--------|-----------|---------------|----------------|--------|
 | `method_name` | `method_name(param: Type, ...) -> ReturnType` | [调用前必须成立的条件] | [调用后被保证的条件] | [异常 + 条件] |
+
+**方法状态依赖**（某方法行为依赖显式状态、状态数 ≥2 有 transition）：在对应方法行下方嵌入 `stateDiagram-v2`。真实状态名 / 真实事件名；**禁**任何色彩、图标、`rect`、皮肤主题、`<<stereotype>>` 装饰。无状态依赖 → 跳过本块。
+
+```mermaid
+stateDiagram-v2
+    [*] --> Created
+    Created --> Paid : paymentConfirmed
+    Paid --> Shipped : shipmentDispatched
+    Shipped --> [*]
+    Paid --> Cancelled : cancelRequested
+```
 
 **Design rationale**（每条非显见决策一行）：
 - [如：为何阈值默认为 0.6、为何参数 X 可选]
@@ -57,6 +103,19 @@
 ## Implementation Summary
 
 [3-5 段散文。每段分别涉及：主要类 / 函数；它们之间的调用链；关键设计决策或非显见约束；遗留 / 存量代码交互点；与 §4 契约的集成。]
+
+**方法内决策分支**（任一方法的关键设计决策涉及 ≥3 决策分支或异常路径）：在本段下方嵌入 `flowchart TD` 替代散文说明。真实方法名、真实条件文本；**禁**任何装饰（色彩 / 图标 / `rect` / 皮肤）。散文仅保留图外注解。无复杂分支 → 跳过本块。
+
+```mermaid
+flowchart TD
+    Start([validateOrder called]) --> CheckStock{stock >= qty?}
+    CheckStock -->|no| OutOfStock([raise OutOfStockError])
+    CheckStock -->|yes| CheckCredit{credit >= total?}
+    CheckCredit -->|no| LowCredit([raise InsufficientCreditError])
+    CheckCredit -->|yes| CheckRegion{region allowed?}
+    CheckRegion -->|no| Blocked([raise RegionBlockedError])
+    CheckRegion -->|yes| Accept([return OrderId])
+```
 
 ### Boundary Conditions
 
@@ -99,6 +158,9 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 - [ ] ui:true 特性的 Visual Rendering Contract 完整（列出全部视觉元素、定义正向渲染断言）
 - [ ] 每个 Visual Rendering Contract 元素至少对应 1 行 UI/render Test Inventory
 - [ ] Existing Code Reuse 章节已填充（或声明 "N/A — greenfield feature"）
+- [ ] UML 图（若存在）节点 / 参与者 / 状态 / 消息均使用真实标识符，无 A/B/C 代称
+- [ ] 非类图（`sequenceDiagram` / `stateDiagram-v2` / `flowchart TD`）不含色彩 / 图标 / `rect` / 皮肤等装饰元素
+- [ ] 每个图元素（类节点、sequence 消息、state transition、flow 决策分支 / 错误终点）在 Test Inventory "Traces To" 列被至少一行引用
 - [ ] 每个被跳过的章节都写明 "N/A — [reason]"
 
 ## Clarification Addendum

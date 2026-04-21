@@ -11,7 +11,7 @@
 系统设计回答 "WHAT classes exist and HOW they interact."
 本 skill 回答 "WHAT each method does（签名 + 前置 / 后置条件层面）、WHAT can go wrong、要复用的既有代码，以及 HOW to test it."
 
-**设计哲学 — 务实精简**：本文档内部不再产出 flowchart、pseudocode、内部 sequence diagram、state diagram 或任务分解。TDD 直接读取 Interface Contract + Boundary Conditions + Test Inventory。实现细节用散文（"Implementation Summary"）而非 pseudocode — 代码本身是权威的实现来源。
+**设计哲学 — 务实精简**：本文档不产出 pseudocode 或任务分解；实现细节用散文（"Implementation Summary"）— 代码本身是权威实现来源。TDD 直接读取 Interface Contract + Boundary Conditions + Test Inventory。Mermaid UML（`classDiagram` / `sequenceDiagram` / `stateDiagram-v2` / `flowchart TD`）按 §2a 触发判据**条件嵌入**，每类图与下游 TDD Red/Green/Refactor 消费契约硬绑定；不满足判据则不画（画则是无消费者的 token 税）。图聚焦**方法内细粒度**（调用序 / 状态转换 / 分支流程），与系统设计 §4.N 的类/模块层零重叠。
 
 ## 输入
 
@@ -155,6 +155,7 @@
 - 每条 SRS 验收准则（来自 srs_trace 需求）必须追溯到至少一个方法的 postcondition
 - `Raises` 列是错误条件的权威来源 — TDD Rule 4 直接读取该列以推导负向测试
 - 仅当内部方法含非平凡逻辑时才包含它
+- **状态机方法**：若某公开方法行为依赖显式状态（状态数 ≥2 且存在 transition），在方法行下方嵌入 `stateDiagram-v2`；节点用真实状态名 + 真实事件名；遵守 §2b 风格硬约束；每个 transition 与守卫在 Test Inventory 被引用（见 §2a 追溯契约）
 - **§4 对齐规则**：对产生或消费跨特性数据的方法，方法签名（参数、返回类型）**必须**与 Design Section 4 中定义的 schema 兼容。若本特性为 **Provider**，postconditions **必须**保证 Response Schema。若为 **Consumer**，preconditions **必须**假定 Request Schema 格式。任何偏离都需要在 Design Rationale 中显式说明并触发下文的 Contract Deviation Protocol。
 
 ### Contract Deviation Protocol（契约偏离协议）
@@ -172,7 +173,39 @@
 5. 若批准：用户（或 orchestrator 在授权下）更新设计文档的 §4；orchestrator 以 Clarification Addendum 重分发 SubAgent
 6. 若拒绝：Clarification Addendum 指令 "comply with original §4"，SubAgent 必须遵循原契约
 
-### 2b. Visual Rendering Contract（`"ui": true` 强制）
+### 2a. Design Alignment — UML 嵌入触发
+
+方法内粒度（调用序 / 状态转换 / 分支流程）与系统设计 §4.N（类 / 模块层）零重叠。若图内容已在系统 §4.N 等价表达 → 在 §Design Alignment 写一行 `"见系统设计 §4.N"`，不重复画。
+
+| 触发信号 | 图类型 | 嵌入位置 |
+|---|---|---|
+| ≥2 类 / 模块协作（含新增 / 修改） | `classDiagram` | §Design Alignment |
+| ≥2 对象 / 服务的调用顺序 | `sequenceDiagram` | §Design Alignment |
+| 方法依赖显式状态（状态数 ≥2 有 transition） | `stateDiagram-v2` | §Interface Contract 对应方法行下方 |
+| 某方法含 ≥3 决策分支或异常路径 | `flowchart TD` | §Implementation Summary 对应段下方 |
+
+**命名**：节点 / 参与者 / 状态 / 消息必须用真实标识符（`ClassName`、`methodName`、`StateName`、`EventName`）。**禁 A/B/C 代称**。
+
+**Test Inventory 追溯契约**（图不画则无此要求；画了则强制）：
+- 每条 `sequenceDiagram` 消息 → 至少一行 Test Inventory 的 `Traces To` 引用 `§Design Alignment seq msg#N`（N 为消息序号）
+- 每个 `stateDiagram-v2` transition → 至少一行 `Traces To` 引用 `§Interface Contract state <src>→<dst>`；每个守卫 → 正反两例
+- 每个 `flowchart TD` 决策菱形 / 错误终点 → 至少一行 `Traces To` 引用 `§Implementation Summary flow branch#N`
+
+不满足触发判据的 → **不画**。装饰或代称违规 → §Verification Checklist 拦截。
+
+### 2b. UML 风格硬约束 — DO / DON'T
+
+| 主题 | DO | DON'T |
+|---|---|---|
+| `classDiagram` 节点 | `class OrderService { +placeOrder(req: OrderRequest): OrderId }` | `class A { +foo(): B }` |
+| `classDiagram` 装饰 | `classDef NEW fill:#cfc,stroke:#080` + `class OrderService:::NEW`（唯一允许） | 其他 fill / stroke 超出 NEW / MODIFIED / EXISTING |
+| `sequenceDiagram` 参与者 | `participant OrderService` | `participant A as A` |
+| `sequenceDiagram` 消息 | `OrderService->>PaymentGateway: charge(amount)` | `A->>B: call()` |
+| `stateDiagram-v2` 转换 | `Created --> Paid : paymentConfirmed` | `S1 --> S2 : e` |
+| 非类图装饰 | 无任何色彩 / 图标 / rect / 皮肤 | `style X fill:#abc` / `classDef` 用在非 classDiagram / `rect rgb(...)` / 图标 / `<<stereotype>>` |
+| 跨层重复 | 图内容系统 §4.N 已有 → 写 `"见系统设计 §4.N"` | 重画一份 |
+
+### 2c. Visual Rendering Contract（`"ui": true` 强制）
 
 对 `"ui": true` 的特性，指定用户必须看到的所有视觉元素。本契约是 TDD Rule 7（正向渲染测试）与 Feature-ST（渲染验证）的事实源。
 
@@ -202,7 +235,7 @@
 4. **遗留 / 存量代码交互点** — 本特性触及哪些既有模块、如何与 `env-guide.md §4` 存量代码库约束对齐（强制内部库、禁用 API、命名约定）
 5. **§4 Internal API Contract 集成** — 若本特性是 Provider/Consumer，如何满足共享 schema
 
-**散文指南**：目标读者是后续实现代码的人。使用具体文件路径、类名、方法名。**不**包含 pseudocode、flowchart、Mermaid 图 — 结构契约由 Interface Contract + Boundary Conditions + Test Inventory 承载。
+**散文指南**：目标读者是后续实现代码的人。使用具体文件路径、类名、方法名。**不**包含 pseudocode — 代码本身是权威实现来源。若任一方法含 ≥3 决策分支或异常路径，在段下方嵌入 `flowchart TD`（按 §2a 触发表 + §2b 风格约束）：真实方法名 / 真实条件文本，散文仅保留图外决策理由注解。其余结构契约仍由 Interface Contract + Boundary Conditions + Test Inventory 承载。
 
 ### 3a. Boundary Conditions（除非显式 N/A 否则必填）
 
@@ -275,11 +308,14 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 - [ ] 全部 SRS 验收准则（来自 srs_trace）已追溯到 Test Inventory 行
 - [ ] Interface Contract Raises 列覆盖所有预期错误条件
 - [ ] Boundary Conditions 表覆盖所有非平凡参数（或写明 "N/A" 并给出原因）
-- [ ] Implementation Summary 为 3-5 段具体散文（含文件路径 + 类名），**非** pseudocode / flowchart
+- [ ] Implementation Summary 为 3-5 段具体散文（含文件路径 + 类名），**非** pseudocode；若含 ≥3 决策分支方法，按 §2a 嵌入 `flowchart TD`
 - [ ] Existing Code Reuse 表已填充（或写明 "N/A — greenfield" 并附搜索关键字）
 - [ ] Test Inventory 负向占比 >= 40%
 - [ ] ui:true 特性的 Visual Rendering Contract 完整（列出全部视觉元素、正向渲染断言已定义、交互深度断言已定义）
 - [ ] 每个 Visual Rendering Contract 元素至少 1 行 UI/render Test Inventory
+- [ ] UML 图（若存在）节点 / 参与者 / 状态 / 消息均使用真实标识符，无 A/B/C 代称
+- [ ] 非类图（`sequenceDiagram` / `stateDiagram-v2` / `flowchart TD`）不含色彩 / 图标 / `rect` / 皮肤等装饰元素
+- [ ] 每个图元素（类节点、sequence 消息、state transition、flow 决策分支 / 错误终点）在 Test Inventory "Traces To" 列被至少一行引用
 - [ ] 每个跳过章节都写明 "N/A — [reason]"
 - [ ] §2.N 中所有函数 / 方法都至少有一行 Test Inventory
 
@@ -326,10 +362,11 @@ Category 格式：`MAIN/subtag`，MAIN 为 `FUNC, BNDRY, SEC, UI, PERF, INTG` �
 | Sections Complete | N/6 | 6/6 (or N/A justified) | PASS/FAIL |
 | Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
-| Verification Checklist | N/11 | 11/11 | PASS/FAIL |
+| Verification Checklist | N/14 | 14/14 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
 | Existing Code Reuse | K reused / J searched | ≥0 | INFO |
 | Visual Rendering Assertions | N | ≥ Visual Rendering Contract element count (ui:true) | PASS/FAIL/N/A |
+| UML Element Trace Coverage | N/M | M/M (M = sequence msg + state transition + flow branch 总数；N = Test Inventory "Traces To" 引用数) | PASS/FAIL/N/A |
 
 ### Issues (extension — only if fail or blocked)
 | # | Severity | Description |

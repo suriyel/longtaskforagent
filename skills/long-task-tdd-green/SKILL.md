@@ -25,12 +25,18 @@ description: "Use when dispatched by long-task-work-tdd Step 3b — minimal impl
 - **§4 Interface Contract**：每个 PUBLIC 方法的签名（名 / 参数名与类型 / 返回类型 / 抛出异常）
 - **§6 Implementation Summary**：模块职责表 + 调用链散文
 - **§8 Data Model**：数据结构字段与类型
+- **mermaid 图**（若设计按 feature-design-execution §2a 触发嵌入）—— **严格遵从**：
+  - `classDiagram`：每个 `classDef NEW` 节点 → 创建类；`classDef MODIFIED` 节点 → 修改现有类；关联 / 依赖边 → 字段引用或方法参数
+  - `sequenceDiagram`：消息顺序 = 实现中方法调用的先后顺序，**不得**乱序
+  - `stateDiagram-v2`：状态转移表 = 实现骨架（如 `switch` / `match` on `(state, event)`）；每个 transition 与守卫在代码中可定位
+  - `flowchart TD`：决策菱形 = `if` / `elif` 结构骨架；错误终点 = `raise` 语句；分支条件文本 = 条件表达式语义
 
 ## 实现端一致性铁律
 
 - 公共方法名 / 参数 / 返回类型 / 异常类型 **必须与 §4 字面一致**
 - 模块划分 / 调用链 **必须与 §6 一致**
 - 数据结构字段名 / 类型 / 可空性 **必须与 §8 一致**
+- 若设计含 mermaid 图：类节点命名 / 消息顺序 / 状态转换事件名 / 分支条件文本 **必须与图字面一致**（未在图中声明但实现的额外类 / 消息 / 状态 / 分支 = 范围蔓延，需走 drift-protocol 同步回图）
 - 发现无法字面对齐（设计有歧义 / 实现方式客观更优）→ **不偷偷偏离**，按 `../long-task-work-tdd/references/drift-protocol.md` 走（更新设计 OR 修实现，同一 commit）；无法本地消解 → `blocker` 前缀 `[CONTRACT-DEVIATION]`
 
 ## 最小实现规则
