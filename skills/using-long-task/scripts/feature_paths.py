@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
-"""Derive feature-design doc paths from feature-list.json (single authoritative slug implementation).
+"""Derive feature-design / srs / system-design doc paths — single authoritative source.
 
 Consumers (orchestrators and sub-skills) call this instead of globbing `docs/features/*`
-or reimplementing kebab-case logic. Keeps slug rules in one place; prevents drift across
-the two phase orchestrators (work-design / work-tdd) and their sub-skills.
+or `docs/plans/*-{srs,design}.md`. Keeps slug / path rules in one place; prevents drift
+across the two phase orchestrators (work-design / work-tdd) and their sub-skills.
 
 Usage:
-    python scripts/feature_paths.py design-doc --feature <id>
-    python scripts/feature_paths.py design-doc --feature <id> --must-exist
-    python scripts/feature_paths.py design-doc --feature <id> --json
-    python scripts/feature_paths.py design-doc --feature <id> --feature-list path/to/feature-list.json
+    python scripts/feature_paths.py design-doc --feature <id> [--must-exist] [--json] [--feature-list PATH]
+    python scripts/feature_paths.py srs-doc [--must-exist] [--json]
+    python scripts/feature_paths.py system-design-doc [--must-exist] [--json]
 
 Exit codes:
     0  success
-    1  --must-exist and file missing
-    2  feature-list.json not found
-    3  feature id not found in feature-list.json
+    1  --must-exist and file missing (design-doc only)
+    2  feature-list.json not found (design-doc)
+    3  feature id not found in feature-list.json (design-doc)
+    4  SRS doc not found under docs/plans/*-srs.md (srs-doc)
+    5  System design doc not found under docs/plans/*-design.md (system-design-doc)
 """
 
 import argparse
+import glob
 import json
 import os
 import sys
@@ -75,6 +77,40 @@ def design_doc_path(feature_list_path: str, feature_id: int) -> str:
     raise FeatureNotFound(feature_id)
 
 
+def _resolve_latest(pattern: str) -> str | None:
+    """Glob `docs/plans/<pattern>`; return latest by filename sort order (None if empty).
+
+    Filename-sort is used because SRS / design docs in this project carry a
+    `YYYY-MM-DD-<topic>-{srs,design}.md` prefix — lexicographic order == time order.
+    """
+    matches = sorted(glob.glob(os.path.join("docs", "plans", pattern)))
+    return matches[-1] if matches else None
+
+
+def _cmd_srs_doc(args) -> int:
+    path = _resolve_latest("*-srs.md")
+    if path is None:
+        print("SRS doc not found under docs/plans/*-srs.md", file=sys.stderr)
+        return 4
+    if args.as_json:
+        print(json.dumps({"path": path, "exists": True}, ensure_ascii=False))
+    else:
+        print(path)
+    return 0
+
+
+def _cmd_system_design_doc(args) -> int:
+    path = _resolve_latest("*-design.md")
+    if path is None:
+        print("System design doc not found under docs/plans/*-design.md", file=sys.stderr)
+        return 5
+    if args.as_json:
+        print(json.dumps({"path": path, "exists": True}, ensure_ascii=False))
+    else:
+        print(path)
+    return 0
+
+
 def _cmd_design_doc(args) -> int:
     fl = args.feature_list or "feature-list.json"
     if not os.path.isfile(fl):
@@ -115,9 +151,21 @@ def main() -> int:
     p.add_argument("--json", dest="as_json", action="store_true", help="Emit JSON to stdout")
     p.add_argument("--feature-list", default=None, help="Path to feature-list.json (default: cwd/feature-list.json)")
 
+    s = sub.add_parser("srs-doc", help="Resolve path to latest SRS doc under docs/plans/*-srs.md")
+    s.add_argument("--must-exist", action="store_true", help="No-op; glob match already implies existence")
+    s.add_argument("--json", dest="as_json", action="store_true", help="Emit JSON to stdout")
+
+    d = sub.add_parser("system-design-doc", help="Resolve path to latest system design doc under docs/plans/*-design.md")
+    d.add_argument("--must-exist", action="store_true", help="No-op; glob match already implies existence")
+    d.add_argument("--json", dest="as_json", action="store_true", help="Emit JSON to stdout")
+
     args = parser.parse_args()
     if args.cmd == "design-doc":
         return _cmd_design_doc(args)
+    if args.cmd == "srs-doc":
+        return _cmd_srs_doc(args)
+    if args.cmd == "system-design-doc":
+        return _cmd_system_design_doc(args)
     return 2
 
 

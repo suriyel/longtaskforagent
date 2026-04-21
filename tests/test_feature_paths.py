@@ -180,6 +180,95 @@ def test_cli_explicit_feature_list_path():
             assert r.stdout.strip() == "docs/features/2-b.md"
 
 
+# ---- srs-doc CLI tests ----
+
+def test_cli_srs_doc_single_match():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        target = os.path.join(d, "docs", "plans", "2026-04-21-auth-srs.md")
+        with open(target, "w") as f:
+            f.write("# SRS\n")
+        r = _run_cli(["srs-doc"], cwd=d)
+        assert r.returncode == 0, r.stderr
+        assert r.stdout.strip() == os.path.join("docs", "plans", "2026-04-21-auth-srs.md")
+
+
+def test_cli_srs_doc_multiple_picks_latest_by_name():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        for name in ("2026-01-10-alpha-srs.md", "2026-04-21-beta-srs.md", "2026-03-02-gamma-srs.md"):
+            with open(os.path.join(d, "docs", "plans", name), "w") as f:
+                f.write("# SRS\n")
+        r = _run_cli(["srs-doc"], cwd=d)
+        assert r.returncode == 0, r.stderr
+        # Lexicographic max = 2026-04-21-beta-srs.md (date prefix sorts)
+        assert r.stdout.strip() == os.path.join("docs", "plans", "2026-04-21-beta-srs.md")
+
+
+def test_cli_srs_doc_zero_returns_4():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        r = _run_cli(["srs-doc"], cwd=d)
+        assert r.returncode == 4
+        assert "SRS doc not found" in r.stderr
+
+
+def test_cli_srs_doc_json_output():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        target_name = "2026-04-21-auth-srs.md"
+        with open(os.path.join(d, "docs", "plans", target_name), "w") as f:
+            f.write("# SRS\n")
+        r = _run_cli(["srs-doc", "--json"], cwd=d)
+        assert r.returncode == 0, r.stderr
+        out = json.loads(r.stdout)
+        assert out == {"path": os.path.join("docs", "plans", target_name), "exists": True}
+
+
+# ---- system-design-doc CLI tests ----
+
+def test_cli_system_design_doc_single_match():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        target = os.path.join(d, "docs", "plans", "2026-04-21-auth-design.md")
+        with open(target, "w") as f:
+            f.write("# Design\n")
+        r = _run_cli(["system-design-doc"], cwd=d)
+        assert r.returncode == 0, r.stderr
+        assert r.stdout.strip() == os.path.join("docs", "plans", "2026-04-21-auth-design.md")
+
+
+def test_cli_system_design_doc_multiple_picks_latest_by_name():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        for name in ("2026-02-14-v1-design.md", "2026-04-21-v2-design.md", "2026-03-15-v1-5-design.md"):
+            with open(os.path.join(d, "docs", "plans", name), "w") as f:
+                f.write("# Design\n")
+        r = _run_cli(["system-design-doc"], cwd=d)
+        assert r.returncode == 0, r.stderr
+        assert r.stdout.strip() == os.path.join("docs", "plans", "2026-04-21-v2-design.md")
+
+
+def test_cli_system_design_doc_zero_returns_5():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        r = _run_cli(["system-design-doc"], cwd=d)
+        assert r.returncode == 5
+        assert "System design doc not found" in r.stderr
+
+
+def test_cli_system_design_doc_json_output():
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs", "plans"))
+        target_name = "2026-04-21-auth-design.md"
+        with open(os.path.join(d, "docs", "plans", target_name), "w") as f:
+            f.write("# Design\n")
+        r = _run_cli(["system-design-doc", "--json"], cwd=d)
+        assert r.returncode == 0, r.stderr
+        out = json.loads(r.stdout)
+        assert out == {"path": os.path.join("docs", "plans", target_name), "exists": True}
+
+
 if __name__ == "__main__":
     import traceback
     tests = [fn for name, fn in globals().items() if name.startswith("test_") and callable(fn)]
