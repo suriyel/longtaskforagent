@@ -105,6 +105,14 @@ def test_cpp_commands():
     assert "mull" in cmds["mutation_full"]
 
 
+def test_scala_commands():
+    """Scala tech stack should resolve to mvn/scoverage-maven-plugin commands."""
+    cmds = get_commands(make_feature_list("scala", "scalatest", "scoverage", "TODO"))
+    assert cmds["test"] == "mvn test"
+    assert "scoverage-maven-plugin" in cmds["coverage"]
+    assert "mvn" in cmds["coverage"]
+
+
 def test_unknown_tool_returns_unknown_prefix():
     """Unknown tool names should return 'UNKNOWN: <name>' instead of crashing."""
     cmds = get_commands(make_feature_list("rust", "cargo-test", "tarpaulin", "cargo-mutants"))

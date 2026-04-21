@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Purpose | Command |
 |---------|---------|
-| Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|typescript]` |
+| Init project | `python scripts/init_project.py <name> --path <dir> [--lang python\|java\|javascript\|typescript\|c\|cpp\|scala]` |
 | Validate feature-list | `python scripts/validate_features.py feature-list.json` |
 | Route to next phase | `python scripts/phase_route.py --json` |
 | Count phase state | `python scripts/count_pending.py feature-list.json [--json]` |

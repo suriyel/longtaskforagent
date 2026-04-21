@@ -37,12 +37,13 @@ def _force_utf8_io() -> None:
 # ---------------------------------------------------------------------------
 
 TEST_COMMANDS = {
-    "pytest":  "pytest",
-    "junit":   "mvn test",
-    "jest":    "npx jest",
-    "vitest":  "npx vitest run",
-    "ctest":   "ctest --test-dir build",
-    "gtest":   "ctest --test-dir build",
+    "pytest":    "pytest",
+    "junit":     "mvn test",
+    "jest":      "npx jest",
+    "vitest":    "npx vitest run",
+    "ctest":     "ctest --test-dir build",
+    "gtest":     "ctest --test-dir build",
+    "scalatest": "mvn test",
 }
 
 # ---------------------------------------------------------------------------
@@ -94,6 +95,11 @@ TEST_COMMANDS_QUIET = {
         "ctest --test-dir build --output-on-failure",
         "capture output to temp file; print exit code; show last 5 lines of temp file",
     ),
+    "scalatest": (
+        f"mvn test -B -q {_SUREFIRE_QUIET}",
+        "capture output to temp file; print exit code; "
+        "extract lines containing 'Tests run:' or 'BUILD '",
+    ),
 }
 
 # --- Per-tool detail commands (extract errors from temp file, on failure) ---
@@ -105,6 +111,7 @@ TEST_COMMANDS_DETAIL = {
     "vitest":  "search temp file for 'FAIL', 'Error', or '\u2715' (case-insensitive); show first 30 matches",
     "ctest":   "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
     "gtest":   "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
+    "scalatest": "search temp file for '[ERROR]', '[WARNING]', or '<<<'; show first 30 matches",
 }
 
 COVERAGE_COMMANDS = {
@@ -113,6 +120,7 @@ COVERAGE_COMMANDS = {
     "c8":         "npx vitest run --coverage",
     "c8-jest":    "npx c8 --branches 80 --lines 90 --reporter=text npx jest",
     "gcov":       "make CFLAGS=\"--coverage\" test && gcov -b src/*.c && lcov --capture -d . -o coverage.info && lcov --summary coverage.info",
+    "scoverage":  "mvn clean org.scoverage:scoverage-maven-plugin:report",
 }
 
 COVERAGE_FEATURE_COMMANDS = {
@@ -121,6 +129,7 @@ COVERAGE_FEATURE_COMMANDS = {
     "c8":         "npx vitest run --coverage --coverage.include={changed_modules}",
     "c8-jest":    "npx c8 --include={changed_modules} --branches 80 --lines 90 --reporter=text npx jest {test_files}",
     "gcov":       "make CFLAGS=\"--coverage\" test && gcov -b {changed_files} && lcov --capture -d . -o coverage.info --include '{changed_modules}' && lcov --summary coverage.info",
+    "scoverage":  "mvn clean org.scoverage:scoverage-maven-plugin:report -Dtest={test_classes}",
 }
 
 COVERAGE_COMMANDS_QUIET = {
@@ -147,6 +156,11 @@ COVERAGE_COMMANDS_QUIET = {
     "gcov": (
         "make CFLAGS=\"--coverage\" test && lcov --capture -d . -o coverage.info && lcov --summary coverage.info",
         "capture output to temp file; print exit code; show last 10 lines of temp file",
+    ),
+    "scoverage": (
+        "mvn clean org.scoverage:scoverage-maven-plugin:report -B -q",
+        "capture output to temp file; print exit code; "
+        "extract lines containing 'Statement coverage' or 'Branch coverage' or 'BUILD '",
     ),
 }
 
@@ -175,6 +189,11 @@ COVERAGE_FEATURE_COMMANDS_QUIET = {
         "make CFLAGS=\"--coverage\" test && lcov --capture -d . -o coverage.info --include '{changed_modules}' && lcov --summary coverage.info",
         "capture output to temp file; print exit code; show last 10 lines of temp file",
     ),
+    "scoverage": (
+        "mvn clean org.scoverage:scoverage-maven-plugin:report -Dtest={test_classes} -B -q",
+        "capture output to temp file; print exit code; "
+        "extract lines containing 'Statement coverage' or 'Branch coverage' or 'BUILD '",
+    ),
 }
 
 COVERAGE_FEATURE_COMMANDS_DETAIL = {
@@ -185,6 +204,7 @@ COVERAGE_FEATURE_COMMANDS_DETAIL = {
     "c8":         "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
     "c8-jest":    "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
     "gcov":       "search temp file for 'error' or 'fail' (case-insensitive); show first 30 matches",
+    "scoverage":  "search temp file for '[ERROR]', 'FAILED', or '<<<'; show first 30 matches",
 }
 
 COVERAGE_COMMANDS_DETAIL = {
@@ -195,6 +215,7 @@ COVERAGE_COMMANDS_DETAIL = {
     "c8":         "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
     "c8-jest":    "search temp file for 'FAIL' or 'Error' (case-insensitive); show first 30 matches",
     "gcov":       "search temp file for 'error' or 'fail' (case-insensitive); show first 30 matches",
+    "scoverage":  "search temp file for '[ERROR]', 'FAILED', or '<<<'; show first 30 matches",
 }
 
 MUTATION_COMMANDS = {
@@ -293,21 +314,23 @@ MUTATION_COMMANDS_DETAIL = {
 # ---------------------------------------------------------------------------
 
 UT_STYLE_FRAMEWORK = {
-    "pytest":  "pytest + unittest.mock",
-    "junit":   "JUnit + Mockito",
-    "jest":    "Jest + jest.fn/jest.mock",
-    "vitest":  "vitest + vi.fn/vi.mock",
-    "gtest":   "gtest + gmock",
-    "ctest":   "ctest + manual stubs",
+    "pytest":    "pytest + unittest.mock",
+    "junit":     "JUnit + Mockito",
+    "jest":      "Jest + jest.fn/jest.mock",
+    "vitest":    "vitest + vi.fn/vi.mock",
+    "gtest":     "gtest + gmock",
+    "ctest":     "ctest + manual stubs",
+    "scalatest": "ScalaTest + ScalaMock/Mockito",
 }
 
 UT_STYLE_MOCK = {
-    "pytest":  "patch/Mock (boundary-only); prefer fakes for internal deps",
-    "junit":   "Mockito.mock/when/verify (boundary-only); prefer fakes for internal deps",
-    "jest":    "jest.fn()/jest.mock() (boundary-only); prefer manual stubs for internal deps",
-    "vitest":  "vi.fn()/vi.mock() (boundary-only); prefer manual stubs for internal deps",
-    "gtest":   "EXPECT_CALL (boundary-only); prefer fakes for internal deps",
-    "ctest":   "function pointer stubs (boundary-only)",
+    "pytest":    "patch/Mock (boundary-only); prefer fakes for internal deps",
+    "junit":     "Mockito.mock/when/verify (boundary-only); prefer fakes for internal deps",
+    "jest":      "jest.fn()/jest.mock() (boundary-only); prefer manual stubs for internal deps",
+    "vitest":    "vi.fn()/vi.mock() (boundary-only); prefer manual stubs for internal deps",
+    "gtest":     "EXPECT_CALL (boundary-only); prefer fakes for internal deps",
+    "ctest":     "function pointer stubs (boundary-only)",
+    "scalatest": "ScalaMock.mock/expects (boundary-only); Mockito.mock/when for Java interop seams",
 }
 
 UT_STYLE_CONVENTIONS = (

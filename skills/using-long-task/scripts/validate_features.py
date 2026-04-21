@@ -37,7 +37,7 @@ LCD_TRACE_PATTERN = re.compile(r"^LCD-\d{3}$")
 VALID_STATUSES = {"failing", "passing"}
 VALID_PHASES = {"design", "tdd"}
 VALID_PRIORITIES = {"high", "medium", "low"}
-VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++"}
+VALID_LANGUAGES = {"python", "java", "javascript", "typescript", "c", "cpp", "c++", "scala"}
 def validate(path: str) -> tuple[list[str], list[str]]:
     """Validate feature-list.json. Returns (errors, warnings)."""
     errors = []

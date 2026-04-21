@@ -205,7 +205,7 @@ def test_todo_language_is_valid():
 
 
 def test_all_supported_languages():
-    for lang in ["python", "java", "typescript", "c", "cpp", "c++"]:
+    for lang in ["python", "java", "javascript", "typescript", "c", "cpp", "c++", "scala"]:
         data = {
             "project": "test-project",
             "created": "2025-01-01",

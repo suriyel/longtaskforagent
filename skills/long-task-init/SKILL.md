@@ -32,7 +32,7 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
    python scripts/init_project.py <project-name> --path . --lang <language>
    ```
    - `<project-name>` — 来自 SRS 标题
-   - `<language>` — 设计文档技术栈中的 `python|java|typescript|c|cpp` 之一
+   - `<language>` — 设计文档技术栈中的 `python|java|javascript|typescript|c|cpp|scala` 之一
    - 创建：`feature-list.json`、`CLAUDE.md`（追加）、`task-progress.md`、`RELEASE_NOTES.md`、`examples/`、`docs/plans/`
    - 自动复制辅助脚本（`validate_features.py`、`validate_guide.py`、`get_tool_commands.py`、`validate_increment_request.py`、`validate_bugfix_request.py`）到项目 `scripts/`
 

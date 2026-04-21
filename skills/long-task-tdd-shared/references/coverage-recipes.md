@@ -12,6 +12,7 @@
 | TypeScript | c8 / nyc (Istanbul) | 是 | Stryker | 是（`--mutate` glob） |
 | C | gcov + lcov | 是（`--branch-probabilities`） | Mull | 部分（按文件过滤） |
 | C++ | gcov + lcov / llvm-cov | 是 | Mull | 部分（按文件过滤） |
+| Scala | scoverage-maven-plugin | 是（statement + branch） | — | — |
 
 ---
 
@@ -348,6 +349,61 @@ endif()
 > 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
+
+## Scala
+
+**覆盖率** — scoverage-maven-plugin（对齐 Java preset 走 mvn，不引入 sbt）：
+
+```xml
+<!-- pom.xml -->
+<properties>
+  <scala.version>2.13.14</scala.version>
+  <scala.compat.version>2.13</scala.compat.version>
+</properties>
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>net.alchim31.maven</groupId>
+      <artifactId>scala-maven-plugin</artifactId>
+      <version>4.9.2</version>
+      <executions>
+        <execution>
+          <goals><goal>compile</goal><goal>testCompile</goal></goals>
+        </execution>
+      </executions>
+    </plugin>
+    <plugin>
+      <groupId>org.scoverage</groupId>
+      <artifactId>scoverage-maven-plugin</artifactId>
+      <version>2.0.4</version>
+      <configuration>
+        <scalaVersion>${scala.version}</scalaVersion>
+        <minimumCoverage>90</minimumCoverage>
+        <minimumCoverageBranchTotal>80</minimumCoverageBranchTotal>
+        <failOnMinimumCoverage>true</failOnMinimumCoverage>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+
+<dependencies>
+  <dependency>
+    <groupId>org.scalatest</groupId>
+    <artifactId>scalatest_${scala.compat.version}</artifactId>
+    <version>3.2.19</version>
+    <scope>test</scope>
+  </dependency>
+</dependencies>
+```
+
+`maven-surefire-plugin` 自动发现 ScalaTest `Suite` 子类（需在 pom 加 `WildcardSuite` 或 ScalaTest 自带的 runner 配置）。
+
+运行：`mvn clean org.scoverage:scoverage-maven-plugin:report`
+
+报告：`target/site/scoverage/{index.html, scoverage.xml}`；XML 根元素属性 `statement-rate` / `branch-rate` 可供脚本解析。
+
+> 运行时命令：`python scripts/get_tool_commands.py feature-list.json`
 
 ---
 

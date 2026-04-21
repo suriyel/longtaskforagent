@@ -152,6 +152,10 @@ LANG_PRESETS = {
         "coverage_tool": "gcov",
         "mutation_tool": "mull",
     },
+    "scala": {
+        "test_framework": "scalatest",
+        "coverage_tool": "scoverage",
+    },
 }
 
 
