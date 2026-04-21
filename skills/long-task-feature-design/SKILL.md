@@ -13,11 +13,19 @@ description: "在 long-task 项目中 TDD 之前使用 -- 生成功能级详细�
 
 1. 读取执行规则：`skills/long-task-feature-design/references/feature-design-execution.md`
 2. 读取模板：`skills/long-task-feature-design/references/feature-design-template.md`
+3. 派生上下游三条路径并各自**单次全量 Read**：
+   - `python scripts/feature_paths.py srs-doc` → SRS 全文路径
+   - `python scripts/feature_paths.py system-design-doc` → 整体 Design 全文路径
+   - `python scripts/feature_paths.py design-doc --feature <id>` → 输出路径
 
 ## 关键约束
 
+- **SRS / Design 各单次全量 Read**：禁止 offset/limit 片段读、禁止 Grep 子串切片
 - 派生输出路径：`python scripts/feature_paths.py design-doc --feature <id>` → `docs/features/<id>-<slug>.md`；完整设计文档写入该路径
-- 无内容的章节直接省略，不写 N/A
+- **feature.md 必含两沉淀章节**（作为 TDD R/G/R 唯一执行权威源）：
+  - `## 全局约束摘录` — §11.1 子集（仅本特性涉及领域）+ §11.5 全表 + §11.6 全段
+  - `## 静态分析与质量工具命令` — §11.4 静态分析命令 + §11.7 覆盖率/变异阈值
+  - 两章节末尾各带溯源行 `> 摘自 Design §... — commit <sha>，date YYYY-MM-DD`
 - 测试清单负向测试比例 >= 40%
 - 测试清单类别应根据 SRS 验收标准覆盖 FUNC、BNDRY、SEC
 - §11 合规：命名遵循 §11.5，操作使用 §11.1 库，错误处理遵循 §11.6

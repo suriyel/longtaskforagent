@@ -13,19 +13,32 @@
 
 ## 输入
 
-在编写任何设计内容之前，请读取以下全部内容：
+在编写任何设计内容之前，请通过以下方式读取上游文档（**一次到位、禁止片段读**）：
 
-1. **功能对象** -- 来自 feature-list.json 的 ID、标题、描述、srs_trace、依赖、优先级（如有 verification_steps）
-2. **系统设计章节** -- 设计文档中完整的 §4.N（读取整个子章节，不要用 grep）
-3. **SRS 需求** -- SRS 文档中完整的 FR-xxx
-4. **约束与假设** -- feature-list.json 根级别
+1. **派生路径**（单一权威路径工具）：
+   - `srs_path  = $(python scripts/feature_paths.py srs-doc)`
+   - `dsgn_path = $(python scripts/feature_paths.py system-design-doc)`
+   - `out_path  = $(python scripts/feature_paths.py design-doc --feature <id>)`
+2. **单次 Read `srs_path` 整份**（不带 offset/limit）— 含 §1 全景 / 全部 FR-xxx / §约束假设
+3. **单次 Read `dsgn_path` 整份**（不带 offset/limit）— 含 §3 / §4.N（全部）/ §6.2 / §11.1 / §11.4 / §11.5 / §11.6 / §11.7
+4. **功能对象** -- 来自 `feature-list.json` 的 ID、标题、描述、srs_trace、依赖、优先级（如有 verification_steps）；根级 `constraints[]` / `assumptions[]`
 5. **现有代码** -- 如果依赖功能已通过，读取其公开接口（导入、类/函数签名）
-6. **内部 API 契约**（如 §6.2 存在）-- 来自设计文档第 6.2 节，读取当前功能作为 Provider 或 Consumer 的行。这些定义了跨功能 schema，本功能的接口契约（§3）必须与之对齐。
-7. **代码库约定与约束** -- 完整读取设计文档 §11。提取并保持在工作记忆中：
-   - §11.1：强制内部库表（领域、库、替代、导入模式）
-   - §11.5：命名约定表（规则、约定）
-   - §11.6：错误处理模式描述
-   §11 在设计文档中始终存在。空表意味着该类别无约束。
+6. **代码库约定** -- 读取 `docs/rules/*.md`（若存在）
+
+**禁令**：
+- 禁止 `Read` 带 `offset/limit` 对 SRS / Design 做片段读
+- 禁止 `Grep` SRS / Design 做子串切片
+- 上述 2/3 步必须一次完整 Read；工作记忆必须同时持有 SRS 全文与 Design 全文
+- §11 在设计文档中始终存在。空表意味着该类别无约束 — 仍需将其沉淀到 feature.md（见 §2c）
+
+SRS / Design 已读入后，从设计文档提取下列章节并保持在工作记忆中（供后续步骤使用）：
+- §4.N（本功能对应的系统设计章节）
+- §6.2（本功能作为 Provider / Consumer 的行，若该节存在）
+- §11.1：强制内部库表（领域、库、替代、导入模式）
+- §11.4：静态分析命令（工具、命令、适用范围）
+- §11.5：命名约定表
+- §11.6：错误处理模式
+- §11.7：覆盖率与变异阈值
 
 ## 模板
 
@@ -210,6 +223,48 @@
 - 错误处理表覆盖每个 Raises 条目
 - §11.6 合规：错误处理遵循 §11.6 模式
 
+### 2c. 沉淀章节填充（TDD 硬消费契约）
+
+下游 TDD Red / Green / Refactor SubAgent **仅读 feature.md**，不再回访 SRS / Design。因此必须在此一次性沉淀上游约束。
+
+**(A) §全局约束摘录**（必有；内容按以下规则填充）：
+
+1. **§11.1 强制内部库（仅本特性涉及的领域）**：
+   - 对设计文档 §11.1 全表每行，判断该行"领域"是否与本特性 §接口契约 或 §实现摘要 涉及操作有交集
+   - 命中行 → 复制到 feature.md `## 全局约束摘录` / `### §11.1 强制内部库（仅本特性涉及的领域）` 表（列：领域 / 强制库 / 被替代方案 / 导入模式）
+   - 若本特性不涉及 §11.1 任一领域 → 写 "本特性未触及 §11.1 任一领域。"
+   - 若设计文档 §11.1 表为空 → 写 "N/A — design §11.1 empty"
+
+2. **§11.5 命名约定（全表）**：
+   - 一字不差摘录设计文档 §11.5 全表（命名规则贯穿所有特性，不做子集裁剪）
+   - 若 §11.5 为空 → 写 "N/A — design §11.5 empty"
+
+3. **§11.6 错误处理模式**：
+   - 一字不差摘录设计文档 §11.6 全段
+   - 若 §11.6 为空 → 写 "N/A — design §11.6 empty"
+
+4. **溯源行**（章节末尾必写）：`> 摘自 Design §11.1 / §11.5 / §11.6 — commit <short-sha>，date YYYY-MM-DD`
+   - `<short-sha>` = `git rev-parse --short HEAD`
+   - `YYYY-MM-DD` = 今日日期
+
+**(B) §静态分析与质量工具命令**（必有）：
+
+1. **§11.4 静态分析命令**：
+   - 复制设计文档 §11.4 每行（工具 / 命令字符串 / 适用范围）
+   - 命令字符串必须是可执行完整命令（TDD Refactor 直接运行）
+   - 若 §11.4 为空 → 写 "N/A — Design §11.4 为空，无静态分析门禁。"
+
+2. **§11.7 覆盖率与变异阈值**：
+   - 复制设计文档 §11.7 每行（指标 / 阈值 / 来源）
+   - 若 §11.7 为空 → 写 "N/A — Design §11.7 未指定阈值。"
+
+3. **溯源行**（章节末尾必写）：`> 摘自 Design §11.4 / §11.7 — commit <short-sha>，date YYYY-MM-DD`
+
+**完整性自检**（Verdict 前）：
+- §全局约束摘录 三子节（§11.1 / §11.5 / §11.6）均存在（显式 N/A 标注也算存在）→ 否则 Verdict=FAIL
+- §静态分析与质量工具命令 两子节（§11.4 / §11.7）均存在 → 否则 Verdict=FAIL
+- 两章节末尾各有溯源行 → 否则 Verdict=FAIL
+
 ### 3. 实现摘要
 
 从系统设计 §4.N 派生本功能的文件/类变更增量。**本章节是 TDD Red/Green/Refactor 的必读约束**。
@@ -284,6 +339,8 @@
 - [ ] UML 图（若嵌入）节点/参与者/状态/消息均使用真实标识符，无 A/B/C 等代称
 - [ ] 非类图的 UML（sequence / state / flowchart）不含色彩、图标、rect 框、classDef 等装饰
 - [ ] 每个 UML 图元素（sequence 消息 / state transition / flow 决策分支）在测试清单"追踪到"列被至少一行引用
+- [ ] §全局约束摘录 存在且三子节（§11.1 子集 / §11.5 全表 / §11.6 全段）齐全（空时有显式 N/A 标注）；末尾有溯源行
+- [ ] §静态分析与质量工具命令 存在且两子节（§11.4 / §11.7）齐全（空时有显式 N/A 标注）；末尾有溯源行
 
 ---
 
@@ -303,11 +360,13 @@
 |--------|-------|-----------|--------|
 | Test Inventory Rows | N | ≥ SRS acceptance criteria count (from srs_trace) | PASS/FAIL |
 | Negative Test Ratio | N% | ≥ 40% | PASS/FAIL |
-| Verification Checklist | N/14 | 14/14 | PASS/FAIL |
+| Verification Checklist | N/16 | 16/16 | PASS/FAIL |
 | Design Interface Coverage | N/M | M/M | PASS/FAIL |
 | §11 Compliance | N checked / M total | All checked | PASS/FAIL |
 | Existing Code Reuse Items | N | ≥ 0 | INFO |
 | UML Element Trace Coverage | N/M | M/M (M=0 时 N/A) | PASS/FAIL |
+| Global Constraints Excerpt | 3/3 | §11.1 子集 + §11.5 全表 + §11.6 全段（N/A 算存在） | PASS/FAIL |
+| QA Tooling Commands Excerpt | 2/2 | §11.4 命令 + §11.7 阈值（N/A 算存在） | PASS/FAIL |
 ### Issues (only if FAIL or BLOCKED)
 | # | Severity | Description |
 |---|----------|-------------|

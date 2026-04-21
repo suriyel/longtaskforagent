@@ -169,6 +169,52 @@ flowchart TD
 
 **辅助说明**（可选）：文字仅补充图外上下文（如"InvalidOrderError 汇总 §11.6 错误处理模式"）。分支条件与错误终点由图承载，不再散文重述。
 
+## 全局约束摘录
+
+> 必有章节。TDD Red / Green / Refactor **仅读 feature.md**、不回访 Design §11 — 本章节是 §11.1 / §11.5 / §11.6 合规检查的唯一权威源。
+
+### §11.1 强制内部库（仅本特性涉及的领域）
+
+| 领域 | 强制库 | 被替代方案 | 导入模式 |
+|------|--------|------------|----------|
+| [domain hit by this feature] | [lib] | [forbidden alt] | [import statement] |
+
+[若本特性不触及 §11.1 任一领域 → 写 "本特性未触及 §11.1 任一领域。"；若 Design §11.1 为空 → 写 "N/A — design §11.1 empty"]
+
+### §11.5 命名约定（全表）
+
+[一字不差摘自 Design §11.5 全表；若为空 → "N/A — design §11.5 empty"]
+
+### §11.6 错误处理模式
+
+[一字不差摘自 Design §11.6 全段；若为空 → "N/A — design §11.6 empty"]
+
+> 摘自 Design §11.1 / §11.5 / §11.6 — commit <short-sha>，date YYYY-MM-DD
+
+## 静态分析与质量工具命令
+
+> 必有章节。TDD Refactor 静态分析门禁直接运行本表命令；不回访 Design §11.4。
+
+### §11.4 静态分析命令
+
+| 工具 | 命令 | 适用范围 |
+|------|------|----------|
+| [tool] | `[exact command string]` | [scope, e.g. src/**] |
+
+[若 Design §11.4 为空 → 写 "N/A — Design §11.4 为空，无静态分析门禁。"]
+
+### §11.7 覆盖率与变异阈值
+
+| 指标 | 阈值 | 来源 |
+|------|------|------|
+| Line coverage | ≥ N% | Design §11.7 |
+| Branch coverage | ≥ N% | Design §11.7 |
+| Mutation kill rate | ≥ N% | Design §11.7（如有） |
+
+[若 Design §11.7 为空 → 写 "N/A — Design §11.7 未指定阈值。"]
+
+> 摘自 Design §11.4 / §11.7 — commit <short-sha>，date YYYY-MM-DD
+
 ## 测试清单
 
 | ID | 类别 | 追踪到 | 输入/设置 | 预期 | 杀死哪个缺陷？ |
@@ -199,6 +245,8 @@ flowchart TD
 - [ ] UML 图（若存在）节点/参与者/状态/消息均使用真实标识符，无 A/B/C 等代称
 - [ ] 非类图的 UML（sequence / state / flowchart）不含色彩、图标、rect 框、classDef 等装饰元素
 - [ ] 每个 UML 图元素（类节点 / sequence 消息 / state transition / flow 决策分支）在测试清单"追踪到"列被至少一行引用
+- [ ] §全局约束摘录 存在且三子节（§11.1 子集 / §11.5 全表 / §11.6 全段）齐全（空时有显式 N/A 标注）；末尾有溯源行
+- [ ] §静态分析与质量工具命令 存在且两子节（§11.4 / §11.7）齐全（空时有显式 N/A 标注）；末尾有溯源行
 
 ## 澄清附录
 
