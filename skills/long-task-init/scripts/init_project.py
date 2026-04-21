@@ -314,6 +314,7 @@ def main():
         "check_st_readiness.py",
         "check_real_tests.py",
         "check_ats_coverage.py",
+        "feature_paths.py",
         "count_pending.py",
         "migrate_sub_status.py",
         "auto_loop.py",
