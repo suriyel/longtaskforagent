@@ -42,7 +42,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `long-task-multi-repo` | Multi-repo | `repos-manifest.json` exists — exploration, global SRS, split, dependency distribution |
 | `long-task-hotfix` | Hotfix | `bugfix-request.json` exists (HIGHEST priority) |
 | `long-task-increment` | Phase 1.5 | `increment-request.json` exists |
-| `long-task-codebase-scanner` | Phase 0-pre | No SRS/rules docs, >3 source files — brownfield scan |
+| `long-task-codebase-scanner` | Phase 0-pre | No `docs/rules/` — scanner runs; self-adapts via fast-path when source files < 3 |
 | `long-task-requirements` | Phase 0a | No SRS, no design doc, no feature-list.json (single-repo only) |
 | `long-task-design` | Phase 0b | SRS exists, no design doc, no feature-list.json |
 | `long-task-init` | Phase 1 | Design doc exists, no feature-list.json |
@@ -74,7 +74,7 @@ long-task-multi-repo (repos-manifest.json exists — exploration, global SRS, sp
    └─→ triggered directly when repos-manifest.json exists (router precondition, not a detection step)
 
 using-long-task (router — delegates to scripts/phase_route.py --json; single-repo only)
-   ├─→ long-task-codebase-scanner (brownfield, no docs/rules/) → re-evaluate → long-task-requirements OR long-task-design
+   ├─→ long-task-codebase-scanner (no docs/rules/; self-adapts fast-path for < 3 source files) → re-evaluate → long-task-requirements OR long-task-design
    ├─→ long-task-requirements ──→ long-task-design ──→ long-task-init
    ├─→ long-task-hotfix (bugfix-request.json — HIGHEST priority)
    │      └─→ validate → reproduce → root cause → enqueue as category=bugfix feature
@@ -110,10 +110,10 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 
 | Phase | Skill | Key Output |
 |-------|-------|------------|
-| 0-pre: Codebase Scan (brownfield) | `long-task-codebase-scanner` | `docs/rules/*.md` — coding style, 二方件 constraints, build patterns |
+| 0-pre: Codebase Scan | `long-task-codebase-scanner` | `docs/rules/*.md` — coding style, 二方件 constraints, build patterns (greenfield: `project-state.md` placeholder only) |
 | 0-multi: Multi-Repo | `long-task-multi-repo` | Global SRS + per-repo SRS split + dependency distribution; session ends with handoff |
 | 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds; Step 10c: single-round mode confirmation) |
-| 0b: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §11 if brownfield) |
+| 0b: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §11; empty §11 when only `project-state.md`) |
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design updated in place; new features appended with `wave` metadata |
 | 1: Init | `long-task-init` | `feature-list.json`, `long-task-guide.md`, project skeleton |
@@ -135,14 +135,14 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 - **srs_trace required per feature**: Every feature must include `srs_trace` (array of SRS requirement IDs).
 - **Deprecated features excluded**: Worker skips; routing counts only active features.
 - **二方件 constraints binding**: Design §11.1 mandatory internal libraries are binding for all new code.
-- **Codebase scan before requirements or design (brownfield)**: >3 source files + ≥5 commits + no `docs/rules/` → invoke `long-task-codebase-scanner` skill (rule 7b: before requirements; rule 5b: before design in brownfield repos).
+- **Codebase scan before requirements or design**: no `docs/rules/` → invoke `long-task-codebase-scanner`. Scanner self-adapts: source files ≥ 3 → full scan produces `coding-*.md` / `build-*.md`; < 3 → fast-path writes `docs/rules/project-state.md` placeholder and exits.
 - **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
 - **Scanner vs Explore — 两条探索线职责不重叠**：
 
   | 维度 | `long-task-codebase-scanner` | `long-task-explore` |
   |---|---|---|
   | 产物 | `docs/rules/*.md`（编码约定 / 二方件 / 构建——**约束库**） | `docs/explore/codebase-research.md`（架构 / 数据流 / 域 / API / deps / health——**地图**） |
-  | 触发 | 路由器硬约束（brownfield + 无 rules → Phase 0-pre） | 手动 `/deep-explore`；Req 1.6 / Inc 3.5 条件触发（**非阻塞**） |
+  | 触发 | 路由器硬约束（无 rules → Phase 0-pre；scanner 内部按源文件数自适应） | 手动 `/deep-explore`；Req 1.6 / Inc 3.5 条件触发（**非阻塞**） |
   | 下游 | Design §11 强制绑定新代码 | Requirements / Increment / Design 辅助上下文；Clarification Questions 可供下游单问 |
 - **Static analysis tools: detect, don't parse**: Scanner records tool name + config path + run command. Downstream runs the tool directly.
 - **Multi-repo: fully handled by independent `long-task-multi-repo` skill**: Hook detects topology → generates `repos-manifest.json` → `long-task-multi-repo` skill triggered directly (router precondition). User then independently cd's into each repo for single-repo pipeline.
@@ -168,7 +168,7 @@ Key files:
 | File | Phase | Purpose |
 |------|-------|---------|
 | `repos-manifest.json` | Hook + multi-repo | Multi-repo topology + cross-repo deps (generated by hook, enriched by multi-repo skill; absent in single-repo) |
-| `docs/rules/*.md` | 0-pre | Codebase conventions (brownfield; merged into Design §11) |
+| `docs/rules/*.md` | 0-pre | Codebase conventions (merged into Design §11; greenfield: `project-state.md` placeholder) |
 | `docs/plans/*-srs.md` | 0a / multi-repo | Approved SRS (single-repo: per-repo; multi-repo: global at root + per-repo in each sub-repo) |
 | `<repo>/docs/plans/global-srs.md` | multi-repo | Copy of global SRS distributed to each sub-repo |
 | `<repo>/docs/plans/cross-repo-deps.md` | multi-repo | Per-repo cross-repo interface dependency summary |
@@ -259,7 +259,7 @@ long-task-agent/
 
 - [ReadMe.md](ReadMe.md) — Overview and design rationale
 - [skills/using-long-task/references/architecture.md](skills/using-long-task/references/architecture.md) — Persistent artifacts, phase overview
-- [skills/long-task-codebase-scanner/SKILL.md](skills/long-task-codebase-scanner/SKILL.md) — Brownfield codebase scanner
+- [skills/long-task-codebase-scanner/SKILL.md](skills/long-task-codebase-scanner/SKILL.md) — Codebase scanner (self-adapts greenfield / brownfield)
 - [skills/using-long-task/references/systematic-debugging.md](skills/using-long-task/references/systematic-debugging.md) — Systematic debugging (shared by work-design / work-tdd)
 - [skills/using-long-task/references/subagent-development.md](skills/using-long-task/references/subagent-development.md) — Subagent-driven development (shared)
 - [skills/using-long-task/references/worktree-isolation.md](skills/using-long-task/references/worktree-isolation.md) — Worktree isolation (multi-version TDD)
@@ -281,9 +281,9 @@ long-task-agent/
 
 This project uses a multi-session agent workflow with skills loaded on-demand.
 `using-long-task` delegates to `scripts/phase_route.py --json`; follow the emitted `next_skill`. Every Worker-session does **one feature × one phase** and ends with a session-termination banner — no auto-advance.
-Flow: Codebase Scan (brownfield) → Requirements (SRS) → Design (merges rules into §11) → Init → Worker-Design → Worker-TDD (× each feature).
+Flow: Codebase Scan → Requirements (SRS) → Design (merges rules into §11) → Init → Worker-Design → Worker-TDD (× each feature).
 Incremental development: place `increment-request.json` → Increment skill updates SRS/Design in place → new features appended → Worker cycles.
 
-Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions — brownfield only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §11 codebase constraints), `feature-list.json` (task inventory + root `current` lock), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/<id>-<slug>.md` (per-feature detailed design; path via `scripts/feature_paths.py`), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
+Key files: `repos-manifest.json` (multi-repo topology — generated by hook, absent in single-repo), `docs/rules/*.md` (codebase conventions; greenfield: `project-state.md` placeholder only), `docs/plans/*-srs.md` (SRS), `docs/plans/*-deferred.md` (deferred backlog), `docs/plans/*-design.md` (design, includes §11 codebase constraints), `feature-list.json` (task inventory + root `current` lock), `task-progress.md` (session log), `RELEASE_NOTES.md` (changelog), `docs/features/<id>-<slug>.md` (per-feature detailed design; path via `scripts/feature_paths.py`), `increment-request.json` (increment signal), `docs/explore/codebase-research.md` (standalone exploration report).
 Multi-repo support: session-start hook detects sub-directory git repos → `repos-manifest.json`. Independent `long-task-multi-repo` skill handles exploration, global SRS, per-repo split, and dependency distribution. User then independently cd's into each repo to run the single-repo pipeline.
 <!-- /long-task-agent -->

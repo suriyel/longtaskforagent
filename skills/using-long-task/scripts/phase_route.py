@@ -12,11 +12,10 @@ Routing precedence:
     3. feature-list.json              -> validate + route by root `current`
                                          (or pick next dep-ready feature)
     4. docs/plans/*-design.md         -> long-task-init
-    5. docs/plans/*-srs.md            -> long-task-design
-                                         (brownfield detour: long-task-codebase-scanner)
+    5. docs/plans/*-srs.md            -> long-task-design if rules present,
+                                         else long-task-codebase-scanner
     6. docs/rules/*.md (>=1)          -> long-task-requirements
-    7. brownfield heuristic           -> long-task-codebase-scanner
-    8. otherwise                      -> long-task-requirements
+    7. otherwise (no rules)           -> long-task-codebase-scanner
 
 Post-init emit fields:
     next_skill    — skill to invoke next (None if all features passing)
@@ -36,7 +35,6 @@ import argparse
 import glob
 import json
 import os
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -51,10 +49,6 @@ def _force_utf8_io() -> None:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
 
-
-_SRC_EXTS = (".py", ".js", ".ts", ".java", ".c", ".cpp", ".go", ".rs")
-_EXCLUDE_DIRS = {".git", "node_modules", "venv", ".venv",
-                 "dist", "build", "__pycache__", "target"}
 
 _PHASE_TO_SKILL = {
     "design": "long-task-work-design",
@@ -76,25 +70,6 @@ def _select_next(features: list) -> tuple:
     eligible.sort(key=lambda f: (_PRIORITY_RANK.get(f.get("priority"), 3),
                                  f["id"]))
     return eligible[0], []
-
-
-def _is_brownfield(root: str) -> bool:
-    """Heuristic: >3 source files AND >=5 git commits."""
-    src = 0
-    for _, dirs, files in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in _EXCLUDE_DIRS]
-        src += sum(1 for f in files if f.endswith(_SRC_EXTS))
-        if src > 3:
-            break
-    if src <= 3:
-        return False
-    try:
-        n = int(subprocess.check_output(
-            ["git", "rev-list", "--count", "HEAD"],
-            cwd=root, stderr=subprocess.DEVNULL).strip())
-        return n >= 5
-    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
-        return False
 
 
 def route(root: str = ".") -> dict:
@@ -173,14 +148,11 @@ def route(root: str = ".") -> dict:
         out["next_skill"] = "long-task-init"
         return out
 
-    # 5. SRS exists but no design
+    # 5. SRS exists but no design — scanner unless rules already populated
     if has_glob("docs/plans/*-srs.md"):
-        if has_glob("docs/rules/*.md"):
-            out["next_skill"] = "long-task-design"
-        elif _is_brownfield(root):
-            out["next_skill"] = "long-task-codebase-scanner"
-        else:
-            out["next_skill"] = "long-task-design"
+        out["next_skill"] = ("long-task-design"
+                             if has_glob("docs/rules/*.md")
+                             else "long-task-codebase-scanner")
         return out
 
     # 6. Rules populated — requirements
@@ -188,10 +160,8 @@ def route(root: str = ".") -> dict:
         out["next_skill"] = "long-task-requirements"
         return out
 
-    # 7-8. Brownfield vs greenfield
-    out["next_skill"] = ("long-task-codebase-scanner"
-                        if _is_brownfield(root)
-                        else "long-task-requirements")
+    # 7. No rules — scanner (self-adapts via fast-path for greenfield)
+    out["next_skill"] = "long-task-codebase-scanner"
     return out
 
 

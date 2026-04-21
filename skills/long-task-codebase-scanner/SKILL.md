@@ -32,6 +32,13 @@ description: "在存量项目（无 docs/rules/）中于需求或设计阶段之
 mkdir -p docs/rules/
 ```
 
+### 步骤 1.5：空项目快速路径（greenfield 短路）
+
+统计源文件数（扩展名集合同步骤 2：`.py .js .ts .java .c .cpp .go .rs`；排除目录：`.git/ node_modules/ venv/ .venv/ dist/ build/ __pycache__/ target/`）。
+
+- **< 3**：创建 `docs/rules/project-state.md`，首行 `# 项目状态：初始空项目`（**文件名是下游 Design §4b 分支判定的唯一信号**；其余内容自由）。立即结束，不执行步骤 2–8。
+- **≥ 3**：继续步骤 2。
+
 ### 步骤 2：检测语言、框架与扫描深度
 
 分析文件扩展名和依赖清单（`package.json`、`requirements.txt`、`pom.xml`、`Cargo.toml`、`go.mod`、`*.csproj`）。确定扫描深度：

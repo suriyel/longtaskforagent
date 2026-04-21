@@ -45,16 +45,18 @@ def _fl(root, features, current=None, **extra):
 
 # --- Pre-init ladder (simple branch: no UCD/ATS) ---
 
-def test_greenfield_empty_routes_to_requirements():
+def test_greenfield_empty_routes_to_scanner():
+    """No rules, no SRS → scanner (scanner self-adapts via fast-path)."""
     with tempfile.TemporaryDirectory() as d:
         code, out, _ = run(d)
         assert code == 0
-        assert out["next_skill"] == "long-task-requirements"
+        assert out["next_skill"] == "long-task-codebase-scanner"
         assert out["ok"] is True
         assert out["counts"] is None
 
 
-def test_brownfield_heuristic_routes_to_scan():
+def test_brownfield_without_rules_routes_to_scanner():
+    """Source files + commits, no rules → scanner (same gate as greenfield)."""
     with tempfile.TemporaryDirectory() as d:
         for i in range(5):
             _write(d, f"src/a{i}.py", "# start\n")
@@ -70,17 +72,27 @@ def test_brownfield_heuristic_routes_to_scan():
         assert out["next_skill"] == "long-task-codebase-scanner", out
 
 
-def test_srs_only_routes_to_design():
+def test_srs_only_routes_to_scanner():
+    """SRS without rules → scanner (brownfield detour, scanner self-adapts)."""
     with tempfile.TemporaryDirectory() as d:
         _write(d, "docs/plans/x-srs.md", "# SRS")
         code, out, _ = run(d)
-        assert out["next_skill"] == "long-task-design"
+        assert out["next_skill"] == "long-task-codebase-scanner"
 
 
 def test_srs_with_rules_routes_to_design():
     with tempfile.TemporaryDirectory() as d:
         _write(d, "docs/plans/x-srs.md", "# SRS")
         _write(d, "docs/rules/conventions.md", "# rules")
+        code, out, _ = run(d)
+        assert out["next_skill"] == "long-task-design"
+
+
+def test_srs_with_project_state_routes_to_design():
+    """scanner greenfield fast-path marker counts as rules-populated."""
+    with tempfile.TemporaryDirectory() as d:
+        _write(d, "docs/plans/x-srs.md", "# SRS")
+        _write(d, "docs/rules/project-state.md", "# 项目状态：初始空项目")
         code, out, _ = run(d)
         assert out["next_skill"] == "long-task-design"
 
@@ -95,6 +107,14 @@ def test_design_routes_to_init():
 def test_rules_only_routes_to_requirements():
     with tempfile.TemporaryDirectory() as d:
         _write(d, "docs/rules/README.md", "# rules")
+        code, out, _ = run(d)
+        assert out["next_skill"] == "long-task-requirements"
+
+
+def test_project_state_marker_routes_to_requirements():
+    """scanner greenfield fast-path marker unblocks requirements."""
+    with tempfile.TemporaryDirectory() as d:
+        _write(d, "docs/rules/project-state.md", "# 项目状态：初始空项目")
         code, out, _ = run(d)
         assert out["next_skill"] == "long-task-requirements"
 
@@ -263,6 +283,7 @@ def test_current_references_passing_feature_fails():
 def test_text_output_when_no_json_flag():
     with tempfile.TemporaryDirectory() as d:
         _write(d, "docs/plans/x-srs.md", "# SRS")
+        _write(d, "docs/rules/conventions.md", "# rules")
         r = subprocess.run(
             [sys.executable, SCRIPT_PATH, "--root", d],
             capture_output=True, text=True

@@ -111,7 +111,7 @@ schema、关系、存储策略。有持久存储必须 Mermaid `erDiagram`。
 
 **始终执行**，存量与新建均适用。§11 必须存在于每份设计文档，供下游 skill（feature-design、TDD、Worker）无条件读取。
 
-### 4b.1 存量项目（`docs/rules/` 已填充）
+### 4b.1 存量项目（scanner 已产出 `coding-*.md` / `build-*.md`）
 
 1. 读 `docs/rules/{coding-style,coding-constraints,build-and-compilation}.md`
 2. 按模板 §11 结构填入：
@@ -125,7 +125,7 @@ schema、关系、存储策略。有持久存储必须 Mermaid `erDiagram`。
    - 冲突 → 标"⚠ 设计覆盖：[原因]"呈给用户确认
 4. 呈现 §11 给用户审查（与其他章节相同流程）
 
-### 4b.2 新建项目（`docs/rules/` 空或不存在）
+### 4b.2 新建项目（`docs/rules/` 空、不存在，或仅 `project-state.md`）
 
 1. 用空表填充 §11.1、§11.4-§11.7（列头 + 0 行）
 2. 告知用户："§11 已建空约定表。已知约束现在添加，或留空 — 下游 skill 无条件读取 §11。"
