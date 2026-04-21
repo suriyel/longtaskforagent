@@ -54,6 +54,21 @@ description: "当无 SRS、无设计文档、无 feature-list.json 时使用 —
 5. 若返回有用结果 → 按 `references/brownfield-adaptation.md` §A 构建 ESI 表（内部态）。
 6. BLOCKED / 无有用结果 → 静默跳过，仍照常进入 Step 2。此步非阻塞。
 
+## Step 1.7 — Brownfield 原始文档归档（仅 brownfield；无用户交互）
+
+**触发**：`is_brownfield = true` 且用户明确提供了原始需求文档（附件、粘贴的长文本、外部文件路径）。
+**跳过**：greenfield；或输入是一句话/短描述非文档形式。
+
+执行：
+1. `mkdir -p docs/references/`（若不存在）
+2. 将原始文档按原格式保存到 `docs/references/<meaningful-slug>.<ext>`
+   - 从用户输入派生 slug（如 `legacy-billing-spec.md`、`vendor-api-v2.pdf`）
+   - 已存在同名文件 → 追加 `-<yyyymmdd-hhmm>` 后缀，不覆盖
+3. 计算 SHA256：`shasum -a 256 docs/references/<file>`，记录到内部态 `{path, sha256, imported_date}`
+4. 内部态用于 Step 8.2 落盘 §1.4.3 表
+
+**非阻塞** — 文件 I/O 失败 → 记录警告，仍进入 Step 2。
+
 ## Step 2 — 打磨用户输入（内部，不与用户交互）
 
 从用户输入文档直接提取候选 FR。**不问用户需求是什么 — 用户已经写了。**
@@ -70,6 +85,25 @@ description: "当无 SRS、无设计文档、无 feature-list.json 时使用 —
    - **范围边界模糊**：用户描述边界与 `docs/rules/` 或 ESI 发生拉扯的区域
 
 产出（内部态）：候选 FR 草表 + gap 清单。
+
+## Step 2.5 — LCD 抽取（Legacy Context Decisions；仅 brownfield；内部态）
+
+**触发**：`is_brownfield = true`。greenfield 跳过（§1.4.2 将留空表）。
+
+执行：按 `references/legacy-context-extraction.md` 的 5 类枚举（`BEHAVIOR` / `COMPAT` / `DATA` / `PERF` / `RATIONALE`）扫描用户原始输入：
+
+1. 逐段扫描，每条命中 → 1 条候选 LCD，记录：
+   - 最小必要原文片段（≤2 句）+ 段落引用
+   - 候选决议（若 Step 2 已有用户澄清覆盖 → 填用户结论；否则照搬原文）
+   - 权威字段：`RESOLVED` / `QUOTED` / `CONFLICTED`
+2. 反向映射：为每条 LCD 标注影响的 FR-xxx / CON-xxx；找不到映射且类别非 RATIONALE → 回 Step 2 gap 检查
+3. 分配 `LCD-001` 起递增 ID，三位零填充
+4. 若存在 `CONFLICTED` 条目 → 合并到 Step 3 AskUserQuestion 定向澄清；澄清后 `RESOLVED`，原始 CONFLICTED 条目不保留
+5. Gap fill 过程中新增 / 修改用户回答 → 回写对应 LCD 决议列
+
+产出（内部态）：LCD 候选表。将在 Step 8.2 落盘到 SRS §1.4.2。
+
+**RATIONALE 类 LCD 不入 `lcd_trace`**（下游 feature-list.json 校验强制）。
 
 ## Step 3 — Gap Fill（单轮 AskUserQuestion，≤4 问）
 
@@ -211,7 +245,7 @@ DISPATCH：
 > Input：项目上下文、完整 SRS 草稿、需求 ID 列表
 > 严格按 prompt 执行审查，返回 PASS/FAIL 判决表
 
-全部检查 PASS 方可继续：R / A / C / S / B（brownfield 时） / D / G / Z。
+全部检查 PASS 方可继续：R / A / C / S / B（brownfield 时） / D / G / Z / L（§1.4.2 非空时）。
 
 FAIL 双轨：
 - **USER-INPUT 项** → AskUserQuestion 附定向问卷，不倒完整审查报告
@@ -235,7 +269,13 @@ FAIL 双轨：
 4. 模板未覆盖的章节：标记"[不适用]"
 5. 批准内容若无匹配章节：追加为"附加说明"
 
-保存到 `docs/plans/YYYY-MM-DD-<topic>-srs.md`，延迟积压一并保存。Git commit。
+**§1.4.2 LCD 表**（若 Step 2.5 产出非空）：将内部态 LCD 候选表以 `docs/templates/srs-template.md` §1.4.2 格式渲染落盘；`CONFLICTED` 必须已清零。
+
+**§1.4.3 原始文档归档引用**（若 Step 1.7 归档过）：填表，每行一文件：
+| 文件（`docs/references/<name>`） | SHA256 | 导入日期（YYYY-MM-DD） | 备注 |
+
+保存到 `docs/plans/YYYY-MM-DD-<topic>-srs.md`，延迟积压一并保存。
+`git add docs/plans/ docs/references/`（若 Step 1.7 已归档）后 commit。
 
 ### 8.3 过渡
 

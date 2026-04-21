@@ -36,7 +36,12 @@
 3. **现有代码复用** -- 工具函数、API 客户端、§11 库&复用映射。测试使用相同的导入/模式。
 4. **§实现摘要** -- 变更文件/类/方法清单。确保每个变更方法至少有一个测试行覆盖。
 5. **澄清附录**（如存在）-- 用户批准的决议覆盖默认值。
-6. **功能设计中的 mermaid 图**（若存在）-- 与散文并列消费，每个图元素硬触发测试：
+
+从 SRS 文档中按 `feature.lcd_trace[]` 定位读取：
+
+6. **SRS §1.4.2 LCD 行** -- 每条 BEHAVIOR/COMPAT/DATA/PERF 类 LCD 的"澄清决议"列作为测试断言的 legacy 语义锚点。RATIONALE 不入 `lcd_trace`，本步骤不处理。
+
+7. **功能设计中的 mermaid 图**（若存在）-- 与散文并列消费，每个图元素硬触发测试：
    - `sequenceDiagram` 每条消息 → 一个协作/集成测试，断言调用发生、参数匹配；测试清单"追踪到"列应引用 `§设计对齐 seq msg#N`
    - `stateDiagram-v2` 每条 transition → 一个测试：给定 state=From + 触发 event，断言 state=To + 后置条件；每个守卫条件（`[guard]`）→ 正反两个测试；测试清单"追踪到"列应引用 `§接口契约 state <From>→<To>`
    - `flowchart TD` 每个决策节点（`{...}`）→ 正反两个测试；每个错误路径终点（`raise*` / `throw*`）→ 一个错误测试；测试清单"追踪到"列应引用 `§实现摘要 flow branch#N`
@@ -60,6 +65,7 @@
 | 双层 | 单元 + 集成强制（例外：纯计算，需显式声明） |
 | 标注测试 | 每个测试添加 `# [unit]` 或 `# [integration]` 注释 |
 | UML 图覆盖 | 若功能设计含 mermaid 图：每条 sequence 消息 / 每条 state transition / 每个 flow 决策节点 至少有一行测试在"追踪到"列引用该图元素 |
+| LCD 语义覆盖 | 若 `lcd_trace[]` 非空：每条 BEHAVIOR/COMPAT/DATA/PERF 类 LCD 至少 1 行断言测试，类别格式 `FUNC/legacy` 或 `INTG/compat`，"追踪到"列引用 `SRS §1.4.2 LCD-XXX`。缺失 → FAIL |
 
 ## 步骤 4：验证全部失败
 

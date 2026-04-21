@@ -4,10 +4,11 @@
 
 ## 步骤 1：加载上下文
 
-1. 读取 `feature-list.json` -> 按 ID 提取功能对象及 `tech_stack`
+1. 读取 `feature-list.json` -> 按 ID 提取功能对象及 `tech_stack`、`lcd_trace[]`
 2. Glob `docs/plans/*-design.md` -> 读取 S11（代码库约定与约束）
-3. 派生功能设计文档路径：`python scripts/feature_paths.py design-doc --feature <id> --must-exist` -> 读"现有代码复用"和"实现摘要"章节
-4. 读取 `long-task-guide.md` -> 提取测试命令
+3. 若 `lcd_trace[]` 非空 -> Glob `docs/plans/*-srs.md` -> 读取 SRS §1.4.2 中 `lcd_trace[]` 所指行（执行权威）
+4. 派生功能设计文档路径：`python scripts/feature_paths.py design-doc --feature <id> --must-exist` -> 读"现有代码复用"和"实现摘要"章节
+5. 读取 `long-task-guide.md` -> 提取测试命令
 
 ## 步骤 2：重构
 
@@ -47,7 +48,13 @@
 3. `stateDiagram-v2`：grep 每个状态名与事件名 → 确认出现在代码中（如枚举值、常量或状态机框架调用）；缺失即违规
 4. `flowchart TD`：对每个决策节点的判定条件 → grep 确认实现中含对应分支；图中未声明但代码含的额外分支 → 告警（可能超出设计范围）
 
-发现任何违规时：修复，重新运行测试以确认无回归，重新检查。
+**e) LCD 语义合规**（若 `lcd_trace[]` 非空）：
+1. 对每条 `lcd_trace[]` LCD：定位 Red 阶段为此 LCD 建立的测试（类别 `FUNC/legacy` 或 `INTG/compat`，"追踪到"列引用 `SRS §1.4.2 LCD-XXX`）
+2. 运行这些测试 → 必须通过；若失败说明 Green 阶段实现违反了 LCD 决议 → 违规
+3. 对 `BEHAVIOR/COMPAT/DATA` 类 LCD 的决议列关键字，grep 实现文件：若实现出现原文式反向语义（与决议矛盾的字符串 / 常量 / 分支）→ 返回 `[LEGACY-DRIFT]` blocker
+4. 对 `PERF` 类 LCD：检查实现路径是否引入同步阻塞 / N+1 / 未索引扫描等与决议基线冲突的模式
+
+发现任何违规时：修复，重新运行测试以确认无回归，重新检查。违规为 LCD 冲突（无法本地修复）时 → `[LEGACY-CONFLICT]` blocker 回上层。
 
 ## 步骤 5：最终验证
 
@@ -55,4 +62,4 @@
 
 ## 总结
 
-报告：成功/失败、重构数量、修复的静态分析违规数量、S11 合规结果（S11.1、复用、摘要、UML 图）。
+报告：成功/失败、重构数量、修复的静态分析违规数量、S11 合规结果（S11.1、复用、摘要、UML 图）、LCD 合规结果（若 `lcd_trace[]` 非空）。

@@ -90,6 +90,7 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
    c. **用户批准分组**（AskUserQuestion 或自由响应）。用户可调整 FR 组合、重命名、重排序、增改依赖。
    d. **按批准结果填充 `features[]`**：
       - `srs_trace`：该功能覆盖的 FR ID 数组
+      - `lcd_trace`：该功能涉及的 LCD ID 数组（若 SRS §1.4.2 非空）：遍历 §1.4.2 各条 ACTIVE 非 RATIONALE LCD，"影响 FR/CON"列中若包含本功能 `srs_trace` 内任一 FR/CON → 把该 LCD ID 加入 `lcd_trace`；greenfield 或空 §1.4.2 → 省略字段
       - `title` + `description`：用户给出，或从首个 FR 派生
       - `priority`：取该组 FR 最高优先级（若 SRS 有 MoSCoW/P0-P3 字段）；默认 `"medium"`
       - `dependencies`：从 SRS 显式 FR 依赖或用户指定推断；无则空数组
@@ -104,10 +105,12 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
    e. **验证门禁**：填充所有功能后验证：
       - SRS 中每个 FR-xxx 至少出现在一个功能的 `srs_trace` 中（无孤立需求）
       - 每个功能的 `srs_trace` 至少包含一个 FR（无空追溯）
+      - 若 SRS §1.4.2 非空：每条 ACTIVE 非 RATIONALE LCD 至少被一个功能的 `lcd_trace` 引用（孤儿 LCD 警告由 `check_lcd_wiring.py` 输出）
    f. **单轮标志传播**：若 SRS 文档元数据包含 `Single-Round: Yes`，在 `feature-list.json` 根层级设置 `"single_round": true`。这是信息性标志 — 无论此标志如何，所有 Worker 步骤执行其完整标准流程。
 7. **验证**：
     ```bash
     python scripts/validate_features.py feature-list.json
+    python scripts/check_lcd_wiring.py feature-list.json docs/plans/*-srs.md
     ```
 8. **搭建项目骨架**（目录、配置、依赖清单）— 基于**设计文档**架构
 9. **更新 `task-progress.md`** — 更新 `## Current State` 为初始进度（0/N features passing），然后追加 Session 0 条目（包含 SRS + 设计文档引用）
@@ -142,10 +145,13 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
   "priority": "high|medium|low",
   "status": "failing|passing",
   "srs_trace": ["FR-001", "FR-002"],
+  "lcd_trace": ["LCD-001"],
   "verification_steps": ["step 1", "step 2"],
   "dependencies": []
 }
 ```
+
+`lcd_trace` 可选：仅当 SRS §1.4.2 有 ACTIVE 非 RATIONALE LCD 影响本功能时填充；greenfield 省略。
 
 ## 生成的持久化产物
 

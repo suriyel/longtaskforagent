@@ -586,6 +586,12 @@ FR 粒度确认后，通过 `AskUserQuestion` 呈现：
       - 添加 `## Interface Requirements` 节：列出所有跨仓库 IFR 及依赖仓库名称
       - 添加元数据头：`Global SRS Reference: docs/plans/global-srs.md`
       - 如果全局 SRS 元数据包含 `Single-Round: Yes`，传播到各仓库 SRS 元数据头：`Single-Round: Yes`
+      - **§1.4.2 LCD 分发**：若全局 SRS §1.4.2 非空，按下列规则为每个仓库过滤：
+        * 遍历全局 §1.4.2 每条 LCD，读"影响 FR/CON"列
+        * 若影响列中任一 FR/CON 落入本仓库的 FR 集 → 该 LCD 进入本仓库 §1.4.2（ID 保持全局一致，不重编）
+        * 同一 LCD 影响多个仓库 → 多仓库各自保留一份副本；跨仓口径一致由全局 SRS 保障
+        * 若本仓库过滤后 §1.4.2 为空，保留列头 0 行
+      - **§1.4.3 原始文档归档引用**：全局 §1.4.3 整表复制（不按仓过滤，归档文件由 19a 实际分发到各仓 `docs/references/`）
    c. 如果存在延期积压，将适用条目复制到 `<repo_path>/docs/plans/YYYY-MM-DD-<topic>-deferred.md`
 
 3. **各仓库代码库规则**：此处不要调用 `long-task-codebase-scanner`。

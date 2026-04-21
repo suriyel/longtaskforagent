@@ -4,9 +4,11 @@
 
 ## 步骤 1：加载上下文
 
-1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`
+1. 读取 `feature-list.json` → 按 ID 提取功能对象、`tech_stack`、`lcd_trace[]`
 2. 派生功能设计文档路径：`python scripts/feature_paths.py design-doc --feature <id> --must-exist` → 读该路径
-3. 找到 TDD Red 创建的测试文件（匹配该功能的最近测试文件）
+3. Glob `docs/plans/*-design.md` → 完整读取系统设计 §11（代码库约定与约束），作为实现硬约束载入工作记忆
+4. 若 `lcd_trace[]` 非空 → Glob `docs/plans/*-srs.md` → 读取 SRS §1.4.2 中 `lcd_trace[]` 所指行的"澄清决议"列（执行权威）。不读 §1.4.3 归档原文。
+5. 找到 TDD Red 创建的测试文件（匹配该功能的最近测试文件）
 
 ## 步骤 2：读取实现约束
 
@@ -29,6 +31,13 @@
 - REUSE 项：直接导入并调用 -- 不要重新实现
 - EXTEND 项：继承或扩展 -- 不要复制粘贴
 - PATTERN 项：遵循相同的结构模式
+
+**LCD 语义规则**（若 `lcd_trace[]` 非空）：
+- `BEHAVIOR` 类 LCD：实现的业务行为必须与决议列一致；与 SRS FR 对齐时若有歧义，以 LCD 决议为准
+- `COMPAT` 类 LCD：对外接口 / 状态码 / 消息格式 / 协议版本严格遵守决议，不得自行优化
+- `DATA` 类 LCD：字段编码 / 取值空间 / 长度精度 / 枚举值按决议实现
+- `PERF` 类 LCD：实现路径不得引入违反决议列性能基线的同步阻塞 / N+1 / 未索引扫描
+- 实现与任何 LCD 决议列矛盾 → 返回 `[LEGACY-CONFLICT]` blocker，不自行裁决
 
 ## 步骤 3：实现
 

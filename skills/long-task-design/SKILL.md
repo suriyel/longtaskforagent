@@ -17,7 +17,11 @@ description: "当 SRS 存在但无设计文档和 feature-list.json 时使用 �
 
 1. 读 `docs/plans/*-srs.md`
 2. 提取设计驱动：FR 数量与优先级、硬性约束、外部接口需求、用户画像
-3. 列出 SRS **待解决问题**（§10）。若未解决项影响架构 → Step 2 前 `AskUserQuestion` 解决
+3. 读取 §1.4.2 Legacy Context Decisions 全表（若存在且非空）— LCD 是 §4.N 设计决策与 §6.2 接口契约的外部约束输入：
+   - BEHAVIOR / COMPAT / DATA / PERF 类需在 §4.N 或 §6.2 或 §11 有落点
+   - RATIONALE 类仅作 §1 设计驱动背景参考，不产生执行约束
+   - 若原文与决议列语义不一致 → 以决议列为准；不读 §1.4.3 归档原文
+4. 列出 SRS **待解决问题**（§10）。若未解决项影响架构 → Step 2 前 `AskUserQuestion` 解决
 
 ## Step 2 — 探索技术上下文
 
@@ -148,6 +152,7 @@ Init 前机械验证：
 
 1. **契约完整性**：§1 组件图每条边在 §6.2 有对应行。缺 → 标记
 2. **Schema 一致性**：§6.2 每行的 Provider 功能 §4.N 类图含 Response Schema；Consumer §4.N 引用 Request Schema。不匹配 → 标记
+3. **LCD 落点完整性**（若 SRS §1.4.2 非空）：对每条 status=ACTIVE、类别 ≠ RATIONALE 的 LCD → 在 §4.N 某子节（优先 §4.N.5 设计决策 / §4.N.6 集成面 / §6.2 契约 / §11）能找到显式落点或引用 `LCD-XXX`。无落点 → 标记。RATIONALE 类不参与此检查。
 
 标记项呈给用户。进 Init 前解决。
 
