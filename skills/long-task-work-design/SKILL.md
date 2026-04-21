@@ -25,16 +25,17 @@ description: "Use when router emits next_skill=long-task-work-design — produce
   ```
   再进入后续读取。Router 已保证依赖满足，此处不再重复挑选。
 - 读取：
-  - `docs/plans/*-design.md` § 架构与 target_feature 对应的 §4.N（用 Read offset/limit 定位，避免全文）
-  - `docs/plans/*-srs.md` 中 `target_feature.srs_trace` 指向的 FR-xxx 节
   - `docs/rules/*.md`（如存在）—— 代码库约定约束
-- 在 `task-progress.md` 当前特性标题下记录：`target_feature.id` / `title` / `design_section` 行号 / `srs_section` 行号
+  - 注：SRS / Design 的**全量读取**由下游 `long-task-feature-design` SubAgent 自调
+    `scripts/feature_paths.py srs-doc` / `system-design-doc` / `design-doc` 三子命令
+    派生路径后单次全量 Read；主 agent **不读全文、不传片段、不传路径**
+- 在 `task-progress.md` 当前特性标题下记录：`target_feature.id` / `title`
 
 ## Step 2：DISPATCH Feature Design SubAgent
 
 > **DISPATCH** → 创建独立 SubAgent（使用 General 或 Agent），在 subagent 中加载并执行 skill `long-task:long-task-feature-design`
 > **input**：`feature_id`
-> **expect**：SubAgent 自调 `scripts/feature_paths.py design-doc --feature <id>` 派生输出路径，写入 `docs/features/<id>-<slug>.md`；返回结构化契约
+> **expect**：SubAgent 自调 `scripts/feature_paths.py srs-doc / system-design-doc / design-doc --feature <id>` 派生三条路径，分别**单次全量 Read** SRS 与 Design，写入 `docs/features/<id>-<slug>.md`（含 §全局约束摘录 + §静态分析与质量工具命令 两沉淀章节）；返回结构化契约
 
 > **对 `category: "bugfix"` 特性**：feature-design SubAgent 精简模式，聚焦根因记录 + 定向修复 + 回归测试清单。
 

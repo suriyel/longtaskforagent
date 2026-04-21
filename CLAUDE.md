@@ -126,6 +126,7 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 - **Strict TDD**: Always Red→Green→Refactor (3 separate SubAgents).
 - **Verification enforcement**: Never mark "passing" without fresh evidence.
 - **§11 compliance in TDD Refactor**: §11.1 grep + code reuse + implementation-summary verification — merged into TDD Refactor SubAgent.
+- **feature.md 是 TDD 唯一执行权威**：`long-task-feature-design` SubAgent 在产出 `docs/features/<id>-<slug>.md` 时沉淀 Design §11.1（本特性交集）/ §11.5 / §11.6 到 `## 全局约束摘录`，沉淀 §11.4 / §11.7 到 `## 静态分析与质量工具命令`。TDD Red/Green/Refactor **禁止** Glob/Read/Grep `docs/plans/*-srs.md` 或 `docs/plans/*-design.md`；三 SubAgent 结构化返回含 `External Sources Read:` 白名单，主 agent 拒收任何含 `docs/plans/*.md` 的返回。
 - **Systematic debugging**: Never guess-and-fix; trace root cause first.
 - **One feature × one phase per session**: Each Worker-phase skill ends with a session-termination banner; no auto-advance. Multi-feature/multi-phase automation via `scripts/auto_loop.py`.
 - **Root `current` lock is the single source of truth**: `feature-list.json.current = {feature_id, phase: "design"|"tdd"} | null`. `phase_route.py` and `validate_features.py` enforce this shape.
