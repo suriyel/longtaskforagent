@@ -52,17 +52,9 @@
 2. 先写集成测试（验证外部依赖连通性）
 3. 再写单元测试（happy/error/boundary/security）
 
-**规则（全部强制）：**
+**规则**：按 `iron-law.md` §R1-R9 执行（本文件不重复）。
 
-| 规则 | 要求 |
-|------|------|
-| 类别覆盖率 | FUNC/happy、FUNC/error、BNDRY/*、SEC/* -- 不适用时显式标注 N/A |
-| 负向比例 >= 40% | negative_test_count / total_test_count >= 0.40 |
-| 低价值 <= 20% | low_value_count / total_assertion_count <= 0.20 |
-| 错误实现 | 每个测试必须对 2-3 种合理的错误实现失败 |
-| 双层 | 单元 + 集成强制（例外：纯计算，需显式声明） |
-| 标注测试 | 每个测试添加 `# [unit]` 或 `# [integration]` 注释 |
-| UML 图覆盖 | 若功能设计含 mermaid 图：每条 sequence 消息 / 每条 state transition / 每个 flow 决策节点 至少有一行测试在"追踪到"列引用该图元素 |
+**UML 图覆盖补充**（iron-law.md 不涵盖；为本 SubAgent 专属约束）：若功能设计含 mermaid 图 — 每条 sequence 消息 / 每条 state transition / 每个 flow 决策节点 至少有一行测试在"追踪到"列引用该图元素。
 
 ## 步骤 4：验证全部失败
 
@@ -74,6 +66,17 @@
 4. 如果工具/环境错误 → 诊断、修复、重新运行。绝不跳过。
 5. 修复受阻时，先 grep 项目中类似测试的写法作为参考。
 
+## 步骤 5：质量审计（iron-law 指标注入）
+
+运行 `scripts/test_quality_audit.py` 自动统计 iron-law R2/R3/R4/R6/R8/R9 指标。禁止 SubAgent 手填。
+
+1. 运行：`python scripts/test_quality_audit.py --target tests/ --feature <feature_id>`
+2. 产物 `docs/reports/test_quality_<feature_id>.json` 必读；字段直接注入返回契约：
+   - `next_step_input.audit_report_path = docs/reports/test_quality_<feature_id>.json`
+   - `evidence.negative_ratio`、`evidence.low_value_ratio`、`evidence.r4_missing`、`evidence.r6_missing`、`evidence.r8_violations`、`evidence.r9_violations` — 全部从 JSON 复制，不得手写
+3. 若报告 `verdict=fail` → 返 `status: blocked`，`blockers: ["[AUDIT-FAIL] <rule>: <detail>"]`；修正测试后重跑，不得跳过
+4. 若脚本退出码 2（脚本错）→ 返 `status: blocked`，`blockers: ["[AUDIT-SCRIPT-ERROR] ..."]`
+
 ## 总结
 
-报告：成功/失败、创建的测试文件路径、总测试数、负向比例、低价值比例。
+返回五字段契约；`evidence.*` 由步骤 5 的 JSON 报告填充。

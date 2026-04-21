@@ -217,18 +217,24 @@ flowchart TD
 
 ## 测试清单
 
-| ID | 类别 | 追踪到 | 输入/设置 | 预期 | 杀死哪个缺陷？ |
-|----|------|--------|-----------|------|----------------|
-| 1  | FUNC/happy | FR-xxx AC-1 | [具体值] | [精确结果] | [此测试捕获的错误实现] |
-| 2  | FUNC/error | §接口契约 Raises | [触发条件] | [异常类型 + 消息] | [缺失分支] |
-| 3  | BNDRY/edge | §接口契约 边界决策 | [边界值] | [精确行为] | [偏移错误或缺失守卫] |
-| 4  | FUNC/logic | §实现摘要 | [前置条件 + 输入] | [预期结果] | [缺失逻辑] |
-| 5  | INTG/db    | §接口契约 + 外部依赖 | [真实 DB 设置] | [数据持久化 + 可查询] | [连接未建立/错误表] |
-| 6  | INTG/api   | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点/超时未处理] |
+| ID | 类别 | 追踪到 | 输入/设置 | 预期 | WRONG_IMPL（杀死哪个错误实现？）|
+|----|------|--------|-----------|------|-------------------------------|
+| 1  | FUNC/happy       | FR-xxx AC-1 | [具体值] | [精确结果] | [返回硬编码值；交换两字段；跳过计算] |
+| 2  | FUNC/error       | §接口契约 Raises | [触发条件] | [异常类型 + 消息] | [静默吞掉异常；抛错误类型] |
+| 3  | BNDRY/range      | §接口契约 边界决策 | [边界值] | [精确行为] | [差一错误；含/不含边界混淆] |
+| 4  | BNDRY/existence  | §接口契约 边界决策 | [空/缺失/null] | [精确行为] | [NPE；把空当正常值处理] |
+| 5  | BNDRY/time       | §接口契约 时序约束 | [并发/超时/顺序] | [精确行为] | [竞态未处理；超时未触发] |
+| 6  | FUNC/logic       | §实现摘要 | [前置条件 + 输入] | [预期结果] | [缺失分支] |
+| 7  | INTG/db          | §接口契约 + 外部依赖 | [真实 DB 设置] | [数据持久化 + 可查询] | [连接未建立/错误表] |
+| 8  | INTG/api         | §4.N 跨服务调用 | [真实 HTTP 端点] | [正确响应 schema] | [错误端点/超时未处理] |
 
-类别格式：`MAIN/subtag`，其中 MAIN 为 `FUNC, BNDRY, SEC, PERF, INTG` 之一，subtag 为自由标签。
+类别格式：`MAIN/subtag`。MAIN ∈ `{FUNC, BNDRY, SEC, PERF, INTG}`。
+- `MAIN=BNDRY` 时 subtag 必取 `{range, existence, time}`（对齐 iron-law R1 CORRECT 最小子集）；`conformance, ordering, reference, cardinality` 为推荐子集
+- 其余 MAIN 的 subtag 为自由标签
 
 > ID 为排序序号，不作为测试函数名前缀。测试函数名从类别+输入列派生描述性名称（如 FUNC/error + "空字符串" → `test_validate_rejects_empty_string`）。
+>
+> **WRONG_IMPL 列**直接供 TDD Red SubAgent 作为测试函数 `# WRONG_IMPL:` 注释内容（iron-law R4）。设计阶段已预分析 → TDD 阶段直接引用，不再二次推导。
 
 ## 验证检查清单
 - [ ] 所有 SRS 验收标准（来自 srs_trace）追踪到接口契约后置条件

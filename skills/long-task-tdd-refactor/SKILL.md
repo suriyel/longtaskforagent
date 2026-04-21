@@ -40,20 +40,17 @@ description: "TDD 重构阶段 -- 清理代码、运行静态分析、验证 S11
 ### Summary
 [1-2 sentences — refactoring complete, static analysis and §11 compliance results]
 ### Metrics
-static_analysis=CLEAN|N_violations, section11_compliance=CLEAN|N_violations, tests_pass=true/false
+static_analysis=CLEAN|N_violations, section11_compliance=CLEAN|N_violations, tests_pass=true/false, audit_verdict=pass|fail, audit_report_path=docs/reports/test_quality_<id>.json
+### Evidence
+negative_ratio=<from audit JSON>, low_value_ratio=<from audit JSON>, r4_missing=<n>, r6_missing=<n>, r8_violations=<n>, r9_violations=<n>
 ### External Sources Read
 [whitelist only: feature.md (docs/features/<id>-<slug>.md), feature-list.json, long-task-guide.md, docs/rules/*.md (if any). MUST NOT contain docs/plans/*.md.]
 ### Artifacts
 [files modified, one per line]
+### Blockers
+[if BLOCKED: "[AUDIT-REGRESSION] <rule>: <before>→<after>" or "[AUDIT-SCRIPT-ERROR] ..." or §11/static issue]
 ### Issues
 [Omit if PASS. One line per issue: severity (Critical/Major/Minor) | description]
 ```
 
----
-
-## 集成
-
-**调用方：** long-task-work（步骤 5）-- Worker 分派 SubAgent，SubAgent 加载此 Skill 并内联执行
-**前置条件：** TDD Green 已完成（测试通过）
-**产出物：** 重构后的代码 + 静态分析通过 + S11 合规
-**后续步骤：** 持久化（步骤 6）
+`audit_verdict` / `Evidence.*` 由 `scripts/test_quality_audit.py` 产物 JSON 复制，禁止手填。

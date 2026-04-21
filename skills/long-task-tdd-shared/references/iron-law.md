@@ -1,99 +1,149 @@
 # TDD 铁律与测试规则
 
-所有 TDD 阶段 SubAgent（Red、Green、Refactor）的共享参考。
-
 ## 铁律
 
 ```
 NO IMPLEMENTATION CODE WITHOUT A FAILING TEST FIRST
 ```
 
-先写代码再补测试？删掉代码，重新开始。无例外。
-- 不要保留作为"参考"
-- 不要在写测试时"调整"它
-- 不要看它
-- 删除就是删除
+先写代码再补测试 → 删掉代码，重新开始。无例外。
 
-## 测试场景规则（硬性要求）
+## 规则 R1：类别覆盖
 
-**规则 1：分类覆盖** — 测试必须覆盖所有适用分类（使用与 Test Inventory 相同的 `MAIN/subtag` 格式）：
+每个测试标注 `MAIN/subtag` 分类：
 
-| 分类 | 测试内容 | 示例 |
-|------|---------|------|
-| **FUNC/happy** | 正常操作、有效输入 | 有效登录返回 token |
-| **FUNC/error** | 已知失败、无效输入 | 无效密码返回 401 |
-| **BNDRY/\*** | 边界、空值、最大值、零值 | 空字符串；最大长度密码 |
-| **SEC/\*** | 注入、授权（如适用） | 用户名中的 SQL 注入 |
+- `MAIN ∈ {FUNC, BNDRY, SEC, INTG}`
+- `MAIN=BNDRY` 时 subtag 必取最小子集 `{range, existence, time}`（对应 CORRECT 的 Range/Existence/Time 维度）
+- 其余 CORRECT 维度 `{conformance, ordering, reference, cardinality}` 为推荐 subtag，不强制
 
-当某分类不适用时，在注释中明确说明：
-```python
-# SEC: N/A — internal utility with no user-facing input
-```
+| MAIN | 测试内容 | 示例 subtag |
+|------|---------|------------|
+| FUNC | 正常操作 / 已知失败 | `happy`、`error` |
+| BNDRY | 边界、空值、极值、时序 | `range`、`existence`、`time` |
+| SEC | 注入、授权、越权 | `injection`、`authz` |
+| INTG | 真实外部依赖（见 R5） | `db`、`http`、`fs` |
 
-**规则 2：负面测试比例 >= 40%**
+某分类不适用时在测试文件头明确声明：`# SEC: N/A — internal utility, no user-facing input`。
+
+## 规则 R2：负面测试比例 ≥ 40%
 
 ```
 negative_test_count / total_test_count >= 0.40
 ```
 
-"负面"测试指期望异常、错误、失败状态、边界/极端输入、未授权访问或畸形数据的测试。
+"负面" 操作定义（任一命中）：
+- 测试体含 `pytest.raises` / `assertRaises` / 断言异常类型
+- 断言 HTTP 4xx / 5xx 状态码
+- 断言返回空集 / None / 拒绝 / 失败状态
+- 测试名含 `_error_` / `_rejects_` / `_invalid_` / `_fails_`
 
-**规则 3：断言质量 — 低价值断言 <= 20%**
+由 `scripts/test_quality_audit.py` 自动统计；禁止 SubAgent 手填此比例。
+
+## 规则 R3：低价值断言 ≤ 20%
 
 ```
 low_value_count / total_assertion_count <= 0.20
 ```
 
-低价值断言模式（应避免）：
-- **严禁**完全没有断言
-- `assert x is not None` 但不检查内容
-- `assert isinstance(x, SomeType)` 但不检查行为
-- `assert len(x) > 0` 但不验证元素
-- `assert "key" in dict` 但不检查值
-- `assert bool(x)` / 仅检查真值性
-- 仅导入测试（`from module import X; assert X is not None`）
+低价值模式（严禁独立出现，可作辅助断言之一）：
+- 完全没有断言
+- `assert x is not None` / `assertNotNull(x)` 且不检查内容
+- `assert isinstance(x, T)` 且不检查行为
+- `assert len(x) > 0` 且不验证元素
+- `assert "k" in d` 且不检查 `d["k"]` 的值
+- `assert bool(x)` / 仅真值性
+- 纯导入断言：`from m import X; assert X`
 
-**规则 4："错误实现"挑战**
+由 `scripts/test_quality_audit.py` 自动统计。
 
-对每个测试问："哪种错误实现会被此测试捕获？"
+## 规则 R4：错误实现挑战（WRONG_IMPL 留痕）
 
-如果"几乎任何错误实现都能通过" → 用更具体的断言重写。
+每个测试函数**紧邻**（签名下方第一行注释）至少 1 行：
 
-功能详细设计文档中的边界决策表和错误处理表（§接口契约子表）提供了预分析的边界值和错误条件。将其作为输入 — 它们系统性地识别了"可能的错误实现"。
-
-设想 2-3 种可能的错误实现：
-- 返回硬编码值而非计算
-- 交换两个字段
-- 差一错误
-- 跳过某个验证步骤
-- 返回过期/缓存数据
-
-测试是否会对每种**失败**？如果大多数不会 → 重写。
-
-**规则 5：测试层级规则 — 必须有真实测试用例**
-
-每个功能的自动化测试必须覆盖两个层级，两者均为必需：
-
-| 层级 | 目的 | Mock 策略 | 最低要求 |
-|------|------|----------|---------|
-| **单元测试 (UT)** | 单个函数/类 | 仅在系统边界 Mock（外部 HTTP、第三方 API、文件系统、时钟）；内部逻辑使用真实或内存实现 | ≥ 1 个使用真实内部依赖执行核心逻辑的测试 |
-| **集成测试** | 组件配合真实基础设施 | 主依赖不可 Mock — 使用真实测试数据库、真实运行服务或真实文件系统 | 每个涉及外部系统的功能 ≥ 1 个测试 |
-
-**集成测试豁免** — 如果功能完全无外部依赖（纯计算，无 IO、无数据库、无网络）：
-- 在测试文件中明确声明：
-  ```python
-  # [no integration test] — pure function, no external I/O
-  ```
-
-**按层级标注测试：**
 ```python
-# [unit] — uses in-memory store
-def test_user_validation_logic():
-    ...
+# WRONG_IMPL: <一句话描述哪种错误实现会被此测试捕获>
+```
 
-# [integration] — uses real test database
-def test_user_persisted_to_db():
+示例：
+```python
+def test_discount_applies_member_rate():
+    # WRONG_IMPL: 返回硬编码 0 元折扣；把 member_rate 和 guest_rate 搞反
     ...
 ```
 
-完整反模式目录（14 种模式含示例）：同目录下的 `testing-anti-patterns.md`。
+设想来源：feature.md 的边界决策表 / 错误处理表（§接口契约子表）已预分析可能的错误实现；直接引用。脚本按 regex `#\s*WRONG_IMPL:` 统计缺失。
+
+## 规则 R5：测试层级 — UT + 集成双层
+
+| 层级 | 目的 | Mock 策略 | 最低要求 |
+|------|------|----------|---------|
+| 单元 `# [unit]` | 单个函数/类 | 仅系统边界（HTTP/时钟/FS/第三方 API）；内部逻辑用真实或内存实现 | ≥1 个使用真实内部依赖 |
+| 集成 `# [integration]` | 真实基础设施协作 | 主依赖不可 Mock — 真实测试库 / 真实服务 / 真实 FS | 每个涉及外部系统的功能 ≥1 个 |
+
+集成测试豁免：功能完全无外部依赖（纯计算）时，在测试文件头声明 `# [no integration test] — pure function, no external I/O`。
+
+每个测试用 `# [unit]` 或 `# [integration]` 标注。
+
+## 规则 R6：AAA 结构注释必填
+
+每个测试函数体内必须含三段注释：
+
+```python
+def test_add_item_updates_cart():
+    # WRONG_IMPL: add 不更新内部计数；add 把 quantity 写成 0
+    # arrange
+    cart = Cart()
+    # act
+    cart.add("apple", 2)
+    # assert
+    assert cart.contains("apple")
+    assert cart.quantity_of("apple") == 2
+```
+
+缺任一段 → 脚本记为 R6 违规，并计入 R3 低价值分母。
+
+## 规则 R7：LLM 退化陷阱自检
+
+| 陷阱 | 判决 |
+|------|------|
+| 同义反复 `assert result == compute(x)` | 断言具体期望值，禁用产品代码重算 |
+| 快乐路径偏向 | 错误/边界先行，happy 最后（由 R2 40% 守底） |
+| 过度 mock | 见 `testing-anti-patterns.md` Anti-Pattern 3 |
+| 测试镜像实现（复制 if-else） | 按接口契约黑盒写；不读实现代码 |
+| 断言漂移（红→改断言） | 只能改实现或删除重写，不改断言迁就实现 |
+| Mock 行为即断言（`mock.called`）| 断言 mock 被调用的**参数和次数**，或外部副作用；详见 `testing-anti-patterns.md` Anti-Pattern 1 |
+
+## 规则 R8：测试代码禁用反射
+
+作用域仅测试代码。产品代码（Spring/Jackson/ORM 等框架内部）反射使用不在此限。
+
+| 语言 | 测试代码禁用 |
+|------|-------------|
+| Java | `java.lang.reflect.*`、`setAccessible(true)`、PowerMock 全家桶（`@PrepareForTest`、`Whitebox.setInternalState`、`MemberModifier`、反射路径的 `mockStatic`）|
+| Python | `getattr(obj, '_private')`、`obj.__dict__['_x']`、对下划线属性 `setattr` |
+| TS | `(obj as any)._foo`、`@ts-ignore` 绕过可见性 |
+
+替代：构造器/setter 注入、通过公共 API 测试、把需测逻辑提炼为协作者类的公共方法。
+
+## 规则 R9：不针对私有成员写 UT（Chicago school）
+
+禁测：
+- Java `private` 方法 / 字段
+- Python `_foo` / `__foo` 约定私有成员
+- TS `private` / 绕过可见性断言
+
+容忍（**同作用域测试**是关键）：
+- Java `package-private` 方法在同包测试
+- Python 模块级 `_helper` 在同模块测试
+- TS 未 export 辅助在同模块测试
+
+判据：某段私有逻辑复杂到觉得"值得独立测" ⇒ 设计气味 ⇒ 提炼为协作者类（或独立模块）的公共方法，在该协作者的 UT 里测。
+
+## 度量与门禁
+
+- 由 `scripts/test_quality_audit.py` 自动统计 R2/R3/R4/R6/R8/R9，产物 `docs/reports/test_quality_<feature_id>.json`
+- TDD Red / Refactor SubAgent 返回契约的 `next_step_input.audit_report_path` 和 `evidence.*` 由脚本注入，禁止 LLM 手填
+- `long-task-work-tdd` Persist 前读最新报告，未 pass 禁止标记 `status=passing`
+- 命令详情：`scripts/test_quality_audit.py --help`
+
+完整反模式目录见 `testing-anti-patterns.md`。

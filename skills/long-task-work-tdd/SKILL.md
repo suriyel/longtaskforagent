@@ -65,6 +65,15 @@ Red / Green / Refactor 三个独立 SubAgent 由本 skill 直接用 Agent 工具
 
 ## Step 3：Persist & End Session
 
+**3-pre. 测试质量审计门禁（iron-law R2/R3/R4/R6/R8/R9）**：
+```bash
+python scripts/test_quality_audit.py --target tests/ --feature <id>
+```
+读取 `docs/reports/test_quality_<id>.json`：
+- `verdict=pass` → 进入 3a
+- `verdict=fail` → 本会话不得 Persist。BLOCKED 呈用户；建议回退到 TDD Red/Refactor 修正测试质量后重跑
+- 脚本退出码 2（脚本错）→ BLOCKED，诊断脚本环境（不得跳过门禁）
+
 **3a. 翻转 `current` + 标记特性 passing**：
 编辑 `feature-list.json`：
 - 根 `current` 设为 `null`
@@ -114,7 +123,7 @@ git commit -m "feat: feature #<id> <slug> — tests green, refactored"
 
 - **每会话一个特性的一个阶段** —— 本阶段只做 R-G-R；完成即终止
 - **R / G / R 三个 SubAgent 不可协商** —— 本 skill 必须用 Agent 工具分别 DISPATCH，不在主 agent 内联执行
-- **无新鲜证据不得标记 passing** —— 测试必须实跑绿，静态分析必须 0 违规
+- **无新鲜证据不得标记 passing** —— 测试必须实跑绿，静态分析必须 0 违规，测试质量 audit `verdict=pass`
 - **feature design 文档必须存在** —— 缺失即 BLOCKED 终止；主 agent 不读全文、不传路径；sub-skill 自调 `scripts/feature_paths.py` 派生
 - **TDD 三段唯一外部规格源 = feature.md** —— R/G/R 不得访问 `docs/plans/*-srs.md` / `*-design.md`。所有上游约束（SRS FR、Design §11.x）已由 feature-design SubAgent 沉淀到 feature.md 的 §全局约束摘录 + §静态分析与质量工具命令。如需变更约束，回退到 `long-task-increment` 修订上游后重跑 design 阶段。
 - **External Sources Read 白名单校验** —— 每个 R/G/R SubAgent 返回的结构化契约必含 `External Sources Read:` 字段；若其中出现 `docs/plans/*.md` → 本层拒收并返回 BLOCKED。

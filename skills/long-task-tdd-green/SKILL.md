@@ -62,11 +62,3 @@ test_count=N, tests_pass=N, regressions=0
 [Omit if PASS. One line per issue: severity (Critical/Major/Minor) | description]
 ```
 
----
-
-## 集成
-
-**调用方：** long-task-work（步骤 4）-- Worker 分派 SubAgent，SubAgent 加载此 Skill 并内联执行
-**依赖：** TDD Red 已完成（失败测试已存在）
-**产出：** 实现代码 + 通过的测试
-**后续：** long-task-tdd-refactor（步骤 5）

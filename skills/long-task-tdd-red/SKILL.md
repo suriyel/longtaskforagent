@@ -33,24 +33,14 @@ description: "TDD Red 阶段 -- 为功能测试清单编写失败测试。输入
 
 ## 关键约束
 
-- 先写集成测试，再写单元测试（happy/error/boundary/security）
-- 规则 1：类别覆盖率（FUNC/happy、FUNC/error、BNDRY/*、SEC/*）
-- 规则 2：负向测试比例 >= 40%
-- 规则 3：低价值断言比例 <= 20%
-- 规则 4：对每个测试进行"错误实现"挑战
-- 规则 5：UT + 集成两层均为强制（除非纯计算）
-- 按层标注测试：# [unit] 或 # [integration]
-- 所有测试必须失败（退出码 != 0 为成功）。退出码 0 表示测试有误 -- 重写
-- 遵循相关现有测试约定（步骤 1b）以保持一致性。§11.5 和测试清单优先。
-- 测试输出协议：先 `[test-quiet]` → 如果 PASS（错误！）重写；如果全部 FAIL（正确！）完成。不确定时 → `[test-detail]`
-
-使用下方的结构化返回契约返回结果。
-
----
+- 先写集成测试，再写单元测试
+- 按 `iron-law.md` §R1-R9 执行（本文件不重复）
+- 所有测试必须失败（退出码 != 0 为成功）。退出码 0 表示测试有误 — 重写
+- 遵循相关现有测试约定（步骤 1b）以保持一致性。§11.5 和测试清单优先
+- 测试输出协议：先 `[test-quiet]` → 若 PASS（错误！）重写；若全部 FAIL（正确！）完成。不确定 → `[test-detail]`
+- 完成后执行 `tdd-red-execution.md` 步骤 5 跑 `scripts/test_quality_audit.py`，把指标注入返回契约
 
 ## 结构化返回契约
-
-当所有测试编写完毕并验证为失败状态时，请严格按照以下格式返回结果：
 
 ```markdown
 ## SubAgent Result: TDD Red
@@ -58,19 +48,17 @@ description: "TDD Red 阶段 -- 为功能测试清单编写失败测试。输入
 ### Summary
 [1-2 sentences — tests written, all confirmed failing (RED)]
 ### Metrics
-test_count=N, negative_ratio=N% (≥40%, PASS/FAIL), all_tests_fail=true/false
+test_count=N, all_tests_fail=true/false, audit_verdict=pass|fail, audit_report_path=docs/reports/test_quality_<id>.json
+### Evidence
+negative_ratio=<from audit JSON>, low_value_ratio=<from audit JSON>, r4_missing=<n>, r6_missing=<n>, r8_violations=<n>, r9_violations=<n>
 ### External Sources Read
 [whitelist only: feature.md (docs/features/<id>-<slug>.md), feature-list.json, long-task-guide.md, docs/rules/*.md (if any). MUST NOT contain docs/plans/*.md.]
 ### Artifacts
 [test files created, one per line]
+### Blockers
+[if BLOCKED: "[AUDIT-FAIL] <rule>: <detail>" or "[AUDIT-SCRIPT-ERROR] ..." or design-gap reason]
 ### Issues
 [Omit if PASS. One line per issue: severity (Critical/Major/Minor) | description]
 ```
 
----
-
-## 集成
-
-**调用方：** long-task-work（步骤 3）-- Worker 分派 SubAgent，SubAgent 加载此 Skill 并内联执行
-**产出：** 失败的测试文件
-**后续：** long-task-tdd-green（步骤 4）
+`Metrics.audit_verdict` / `Evidence.*` 由 `scripts/test_quality_audit.py` 产物 JSON 复制，禁止手填。
