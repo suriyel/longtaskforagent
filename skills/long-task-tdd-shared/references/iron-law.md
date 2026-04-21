@@ -45,6 +45,7 @@ low_value_count / total_assertion_count <= 0.20
 ```
 
 低价值断言模式（应避免）：
+- **严禁**完全没有断言
 - `assert x is not None` 但不检查内容
 - `assert isinstance(x, SomeType)` 但不检查行为
 - `assert len(x) > 0` 但不验证元素
