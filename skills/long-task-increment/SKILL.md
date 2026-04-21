@@ -235,6 +235,52 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
    python scripts/validate_features.py feature-list.json
    ```
 
+**5c. 沉淀章节漂移检测与重置：**
+
+`docs/features/<id>-<slug>.md` 包含两个从 Design §11 摘录的沉淀章节（`## 全局约束摘录` 含 §11.1 / §11.5 / §11.6；`## 静态分析与质量工具命令` 含 §11.4 / §11.7）。下游 TDD R/G/R 仅读 feature.md；本批次设计修订可能导致历史 feature.md 的摘录**过期**，必须兜底检测：
+
+1. **本批次 §11 修改检测** — 执行 `git show HEAD -- docs/plans/*-design.md`（或对比 Step 4 提交前后的 §11 子节），判断本批次是否修改了以下任一子节：
+   - §11.1 强制内部库
+   - §11.4 静态分析命令
+   - §11.5 命名约定
+   - §11.6 错误处理模式
+   - §11.7 覆盖率/变异阈值
+
+2. **若未修改任一 §11 子节** → 跳过 Step 5c，直接进入 Step 6。
+
+3. **若修改了任一 §11 子节** — 列出所有 ACTIVE passing 特性（`status == "passing"` 且 `deprecated != true` 且 `id` 不在本批次新增/修改/废弃清单内），展示给用户：
+
+   ```
+   本批次设计修订触及 Design §11（变更子节：<list>），以下已通过特性的 feature.md 沉淀章节可能过期：
+
+   | Feature ID | Title | feature.md 摘录 commit-sha | 过期子节 |
+   |---|---|---|---|
+   | <id> | <title> | <short-sha from 溯源行> | §11.1 / §11.5 / ... |
+   ```
+
+   对每个特性，从其 `docs/features/<id>-<slug>.md` 读取两个沉淀章节末尾的 `> 摘自 Design §... — commit <short-sha>` 溯源行并展示。
+
+4. **AskUserQuestion** — 三选一：
+   - **A 全部重置**：所有列出特性的 `status` 重置为 `"failing"`；记录 reason（存入本批次 Step 7.3 commit message 附注）
+   - **B 选择性重置**：用户指定需重置的特性 ID 子集；其余接受潜在漂移
+   - **C 全部保持**：接受潜在漂移（增量范围明确不触碰这些特性的业务行为）
+
+5. **执行重置**（如批准 A 或 B）：
+   - 对每个选中特性，在 `feature-list.json.features[]` 中将 `status` 从 `"passing"` 改回 `"failing"`
+   - 将 `wave` 更新为当前批次号 N（标记该特性在本批次被刷新）
+   - 验证：`python scripts/validate_features.py feature-list.json`
+
+6. **输出报告**（无论 A/B/C）：
+   ```
+   Drift Detection Summary (Wave N):
+   - §11 subsections modified: <list or "none">
+   - Candidate features: <count>
+   - Reset to failing: <count> (IDs: <list>)
+   - Kept as-is: <count> (IDs: <list>)
+   ```
+
+7. 被重置的特性将由 router 重新路由至 `long-task-work-design`，触发 feature-design SubAgent 重新生成 feature.md（含最新 Design §11 摘录），再进入 TDD。
+
 ### 6. 更新辅助文件
 
 根据需要更新支持文件：
@@ -285,6 +331,7 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
 - **批次追踪** — 每个新增/修改的功能都标记当前批次编号
 - **废弃功能不可变** — 一旦废弃，永不取消废弃；创建新功能代替
 - **每个信号一次增量** — 完整处理一个 increment-request.json 后才接受下一个
+- **§11 修改必须漂移检测** — Step 5c 强制执行；Design §11 任一子节改动都可能让历史 feature.md 摘录过期，不做检测会导致 TDD 按过期约束实现
 
 ## 危险信号
 
