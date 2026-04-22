@@ -31,8 +31,8 @@ description: "当 SRS 存在但无设计文档和 feature-list.json 时使用 �
 
 1. 读 `docs/plans/*-srs.md`
 2. 提取设计驱动：FR 数量与优先级、硬性约束、外部接口需求、用户画像
-3. **读 SRS 元数据**：提取 `输入档位`（L1 / L2 / L3）。下游 Step 1.6 / Step 2 / Step 5b 按档位分支强度
-4. 列出 SRS **§10 待解决问题**。若未解决项影响架构 → Step 2 前 `AskUserQuestion` 解决
+3. **读 SRS 元数据**：提取 `输入档位`（L1 / L2 / L3）。下游 Step 1.6 / Step 2a-2c / Step 5b 按档位分支强度
+4. 列出 SRS **§10 待解决问题**。若未解决项影响架构 → Step 2a 前 `AskUserQuestion` 解决
 
 ## Step 1.6 — 用户期望二次吸收（内部，不落盘，不与用户交互）
 
@@ -64,13 +64,52 @@ Design 阶段易陷入"只看 SRS 转写、不看原文"的细节断片。本 st
 - L1 输入忽略 H1-H4 — Design §1 设计驱动会与用户原意失联
 - 任何档位忽视 H5（若有硬精确条目）— Design 用"领域化别名"替换原始参数名 → 实现阶段无法对齐
 
-## Step 2 — 探索技术上下文
+## Step 2a — 加载设计模板
 
-1. 探索现有代码/仓库。读用户输入中夹带的实现方案偏好（技术栈、库选择、目录组织）
-2. 识别 SRS 未涉及的技术约束（monorepo 结构、现有库、CI 工具）
-3. 加载设计模板：用户指定路径优先，否则加载 `docs/templates/design-template.md`。验证 `.md` 且含 `## ` 标题
-   - 模板含 §0 项目结构 / §1 设计驱动 / §2 方案选择 / §3 架构（3.1-3.5 含影响面）/ §4 关键功能设计 / §5 数据模型 / §6 API（6.1 外部 / 6.2 内部 API 契约含 6.2.1/6.2.2/6.2.3）/ §7 第三方依赖 / §8 测试策略 / §10 待解决问题 / §11 代码库约定
-   - **按需省略规则**：L2/L3 纯规约式增量场景，§1 设计驱动 / §3.1-§3.4 架构概览 / §5 数据模型 / §7 第三方依赖 等可整节标 `[不适用]` + 附一句理由；§6.2 以 6.2.1 配置 schema / 6.2.2 消息 schema 子表表达即可
+用户指定路径优先，否则加载 `docs/templates/design-template.md`。验证 `.md` 且含 `## ` 标题。
+
+- 模板含 §0 项目结构 / §1 设计驱动 / §2 方案选择 / §3 架构（3.1-3.5 含影响面）/ §4 关键功能设计 / §5 数据模型 / §6 API（6.1 外部 / 6.2 内部 API 契约含 6.2.1/6.2.2/6.2.3）/ §7 第三方依赖 / §8 测试策略 / §10 待解决问题 / §11 代码库约定
+- **按需省略规则**：L2/L3 纯规约式增量场景，§1 设计驱动 / §3.1-§3.4 架构概览 / §5 数据模型 / §7 第三方依赖 等可整节标 `[不适用]` + 附一句理由；§6.2 以 6.2.1 配置 schema / 6.2.2 消息 schema 子表表达即可
+
+## Step 2b — 复用导向存量探索
+
+**触发条件**（全部满足，任一不满足则整步 PASS-SKIPPED，直跳 Step 3）：
+1. `docs/rules/` 存在且非仅 `project-state.md` 占位符
+2. SRS §1.4 ESI 背景非 `[不适用]` 或 `docs/rules/coding-constraints.md` 非空
+
+**跳过条件**：greenfield 项目；或 SRS 纯参数配置增量（L2/L3 无复用面）。
+
+从 SRS §4 FR 标题 / §6 外部接口 / §1.4 ESI 提取关键模块名与领域词 → 推导 `--focus`（默认 `architecture,domain,deps` — 复用视角）；能从 SRS 推出单一模块子树时推导 `--path`。
+
+> **DISPATCH** 创建独立 SubAgent（使用 Agent 或 General）— 在 subagent 中加载并执行 skill `long-task:long-task-explore`
+> Depth: {省略，让 LOC 自检}
+> Focus: {推导的维度，默认 architecture,domain,deps}
+> Path: {推导路径 or "."}
+> User question: "为实现 SRS FR-xxx / FR-yyy / ...，识别存量可直接复用的模块/类/接口/配置；同时标出 SRS 中假定的复用点若与代码实际不符。"
+
+固定路径 **不入 input**（sub-skill 自行 glob）：`docs/plans/*-srs.md`、`docs/rules/`、`docs/explore/codebase-research.md`。
+
+**期望返回**（复用 `long-task-explore` 产物契约 + 本场景补充字段）：
+- `status`: `pass` | `blocked`
+- `artifacts_written`: `docs/explore/codebase-research.md`
+- `next_step_input.reuse_map`: 表格 `{SRS FR ID → 存量符号 file:line → 复用方式 DIRECT|EXTEND|REFACTOR|REPLACE}`
+- `blockers`: 可含 `[SRS-CONFLICT] <FR-ID> 假定 <X>，代码实际 <Y>，file:line`
+
+**非阻塞**：explore 返回 `BLOCKED` 或 `reuse_map` 空 → 静默进 Step 2c / Step 3，照常生成新建方案。
+
+## Step 2c — 探索冲突同步到 SRS（仅 Step 2b blockers 含 `[SRS-CONFLICT]` 时执行）
+
+对 Step 2b `blockers` 中每条 `[SRS-CONFLICT]` 前缀项，`AskUserQuestion`（`multiSelect: false`）：
+
+| 选项 | 后续动作 |
+|---|---|
+| **A 刷 SRS 贴合现状** | 编辑 `docs/plans/*-srs.md` 对应 FR / §1.4 ESI；首行 `**状态**: 已批准` 保留；单独 commit `docs(srs): sync with existing code per design探索 — <FR-ID>` |
+| **B 保留 SRS，Design §10 登记** | 笔记到内存，Step 4 §10 章节写入「代码需改造以贴合 <FR-ID>」 |
+| **C 重新探索** | 回 Step 2b 重 DISPATCH |
+
+全部项处理完进 Step 3。
+
+**反模式**：不经 AskUserQuestion 单方面改 SRS — SRS 是已批准产物，跨文档改动必须用户裁决。
 
 ## Step 3 — 方案决策
 
@@ -83,18 +122,19 @@ Design 阶段易陷入"只看 SRS 转写、不看原文"的细节断片。本 st
 ```markdown
 ## 用户方案校核
 
-| 维度 | 用户输入 | SRS 约束 | ESI 现状 | 判定 | 备注 |
-|------|---------|---------|---------|------|------|
-| 语言/运行时 | Python 3.11 | CON-001 | 已有 3.11 | ✓ 对齐 | |
-| 主框架 | FastAPI | IFR-002 REST | ESI 未有 | ✓ 兼容 | 新增 |
-| 持久化 | Postgres 15 | — | 已有 Postgres 14 | ⚠ 偏差 | 升级路径？ |
-| ... | ... | ... | ... | ... | ... |
+| 维度 | 用户输入 | SRS 约束 | ESI 现状 | 复用映射 | 判定 | 备注 |
+|------|---------|---------|---------|---------|------|------|
+| 语言/运行时 | Python 3.11 | CON-001 | 已有 3.11 | DIRECT | ✓ 对齐 | |
+| 主框架 | FastAPI | IFR-002 REST | ESI 未有 | NEW | ✓ 兼容 | 新增 |
+| 持久化 | Postgres 15 | — | 已有 Postgres 14 | REFACTOR | ⚠ 偏差 | 升级路径？ |
+| ... | ... | ... | ... | ... | ... | ... |
 ```
 
 标注：
 - `✓ 对齐` — 用户方案 ∩ SRS ∩ ESI 三方一致
 - `⚠ 偏差` — 与 SRS/ESI 任一冲突或差异
 - `? 模糊` — 用户未说清，需追加确认
+- 复用映射取 Step 2b `next_step_input.reuse_map` 对应行（`DIRECT | EXTEND | REFACTOR | REPLACE | NEW`）；Step 2b PASS-SKIPPED 时整列省略
 
 通过 AskUserQuestion 一次性确认所有 ⚠ 和 ? 项（≤4 问）。确认后跳到 Step 4。
 
@@ -107,24 +147,25 @@ Design 阶段易陷入"只看 SRS 转写、不看原文"的细节断片。本 st
 **How it works**: [1-2 sentences]
 **Pros / Cons**: [bullets]
 **Third-party dependencies**: [key libs with versions]
+**复用覆盖率**: N/M FR 走 DIRECT+EXTEND（由 Step 2b `reuse_map` 统计；Step 2b PASS-SKIPPED 时本行省略）
 
 ## Approach B: [Name]
 ...
 
 ## Recommendation: [X]
-**Reason**: [why this fits given SRS constraints + ESI]
+**Reason**: [why this fits given SRS constraints + ESI + 复用覆盖率]
 ```
 
 每个方案对照 SRS 约束与 ESI 现状评估。用户选定 → 进入 Step 4。
 
 ## Step 4 — 合成完整草稿（内部）
 
-按 Step 2 加载的模板 + `输入档位` 分支，一次性装配全部章节内容到内存缓冲。不在对话中按章节呈现。
+按 Step 2a 加载的模板 + `输入档位` 分支 + Step 2b `reuse_map`（若有），一次性装配全部章节内容到内存缓冲。不在对话中按章节呈现。
 
 ### L1 输入章节填法（全结构填写）
 
 #### §0 项目结构
-目标目录树，标记 [existing] / [new] / [modified]。存量项目基于 Step 2 探索标注影响区。
+目标目录树，标记 [existing] / [new] / [modified]。存量项目基于 Step 2b `reuse_map` 标注影响区。
 
 #### §1 设计驱动因素
 - 关键 SRS 输入：约束、接口需求、用户画像（L1 输入下 SRS 含 §3 干系人；L2/L3 输入通常整节 `[不适用]`，本项跳过）
@@ -209,7 +250,7 @@ schema、关系、存储策略。有持久存储必须 Mermaid `erDiagram`。
 
 ## Step 5 — 草稿落盘（未 commit）
 
-读取 Step 2 加载的模板（`docs/templates/design-template.md` 或用户自定义）：
+读取 Step 2a 加载的模板（`docs/templates/design-template.md` 或用户自定义）：
 1. 保留标题结构
 2. 每个标题下替换指导文本为 Step 4 / 4b 合成的章节内容
 3. 顶部元数据必须包含：`日期`、**`状态`: 待审批**、`SRS 引用`、`输入档位`（从 SRS 元数据继承）
@@ -249,6 +290,12 @@ Step 5 落盘后立即执行（按 SRS `输入档位` 分支强度）。结果�
    - SRS §4 FR / §5 IFR 中出现的每个 camelCase / snake_case 标识 / 文件路径 / 类型范围 / 默认值 / 枚举集合，是否在 Design §6.2 内部 API 契约（6.2.1 / 6.2.2 / 6.2.3 任一）中 1:1 出现 → 缺失则标记
    - **完全一致**：标识符大小写、路径分隔符、范围记号 — 不允许"美化"为本地化命名
    - 检查方法：从 SRS 提取 Step 1.6 笔记 H5 清单 → grep Design 文件 → 0 缺失才 PASS
+
+### 复用映射落地（brownfield 强制）
+
+6. **复用映射落地**（仅 Step 2b `status=pass` 时执行）：
+   - Step 2b `next_step_input.reuse_map` 每行对应 FR，需在 Design §4 功能设计中出现对应 `file:line` 引用（`DIRECT` / `EXTEND` / `REFACTOR` 路径）或明说「新造」（`NEW` / `REPLACE`）→ 缺失则标记
+   - Step 2b `PASS-SKIPPED`（greenfield 或无复用面）→ 本项 PASS-SKIPPED，需附一句 skip 理由
 
 进入 Step 5c。
 
@@ -295,3 +342,5 @@ Step 5 落盘后立即执行（按 SRS `输入档位` 分支强度）。结果�
 | "Design 不需要再读用户原文了，SRS 转写已足够" | Step 1.6 强制读原文做二次吸收。否则细节断片 — 用户在 H1-H5 维度的隐含期望必丢失。 |
 | "L2 输入也要硬填 §1 设计驱动 / §3 架构概览 / §5 数据模型 / §7 第三方依赖" | 这些章节在增量参数配置场景下是空洞填充。整节标 `[不适用]` + 附一句理由，不硬凑内容。 |
 | "把 SRS 里的 `UrbanBuildingSearchRadius` 改名为 `urban_building_search_radius` 更符合 Python 风格" | 标识符大小写必须 1:1 与 SRS 一致。Step 5b 第 4 条审查会标记。代码内部命名转换是实现细节，不是设计决策。 |
+| "Design Step 2 我自己扫一下存量代码就行，不必 DISPATCH" | 主 agent 上下文会被存量代码淹没；Requirements 1.6 / Increment 3.5 已是 DISPATCH 模式，Design Step 2b 保持一致 — 探索独立 SubAgent，主 agent 只消费 `reuse_map` 结构化返回。 |
+| "探索出的假定与 SRS 矛盾，在 Design §10 记一笔就行" | SRS 是下游 reviewer 的判决源；冲突必须经 Step 2c AskUserQuestion 裁决 — 刷 SRS 或显式接受（走 §10 登记为选项 B，且用户知情），不能默默带病进 Design。 |

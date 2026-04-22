@@ -137,7 +137,7 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 - **Deprecated features excluded**: Worker skips; routing counts only active features.
 - **二方件 constraints binding**: Design §11.1 mandatory internal libraries are binding for all new code.
 - **Codebase scan before requirements or design**: no `docs/rules/` → invoke `long-task-codebase-scanner`. Scanner self-adapts: source files ≥ 3 → full scan produces `coding-*.md` / `build-*.md`; < 3 → fast-path writes `docs/rules/project-state.md` placeholder and exits.
-- **Targeted explore in requirements/increment (brownfield)**: Requirements Step 1.6 and Increment Step 3.5 auto-trigger `long-task-explore` (quick/standard) when brownfield context + concrete focus direction exist. Non-blocking — failure never prevents proceeding.
+- **Targeted explore in requirements/increment/design (brownfield)**: Requirements Step 1.6 / Increment Step 3.5 / Design Step 2b auto-trigger `long-task-explore` when brownfield context + concrete focus direction exist. Design Step 2b 锚定"复用视角"（focus 默认 `architecture,domain,deps`），返回 `reuse_map` 驱动 Step 3 方案决策；`[SRS-CONFLICT]` blockers 经 Step 2c `AskUserQuestion` 闭环同步回 SRS。Non-blocking — failure never prevents proceeding.
 - **Scanner vs Explore — 两条探索线职责不重叠**：
 
   | 维度 | `long-task-codebase-scanner` | `long-task-explore` |

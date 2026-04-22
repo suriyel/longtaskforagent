@@ -342,7 +342,7 @@ FAIL 双轨：
 
 保存到 `docs/plans/YYYY-MM-DD-<topic>-srs.md`，延迟积压一并保存。Git commit。
 
-**关键**：`输入档位` 元数据是下游 `long-task-design` Step 1.6 / Step 2 模板加载、reviewer Group P 判决的输入。
+**关键**：`输入档位` 元数据是下游 `long-task-design` Step 1.6 / Step 2a 模板加载、reviewer Group P 判决的输入。
 
 ### 8.3 过渡
 
