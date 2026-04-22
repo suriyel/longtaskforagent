@@ -66,17 +66,6 @@
 4. 如果工具/环境错误 → 诊断、修复、重新运行。绝不跳过。
 5. 修复受阻时，先 grep 项目中类似测试的写法作为参考。
 
-## 步骤 5：质量审计（iron-law 指标注入）
-
-运行 `scripts/test_quality_audit.py` 自动统计 iron-law R2/R3/R4/R6/R8/R9 指标。禁止 SubAgent 手填。
-
-1. 运行：`python scripts/test_quality_audit.py --target tests/ --feature <feature_id>`
-2. 产物 `docs/reports/test_quality_<feature_id>.json` 必读；字段直接注入返回契约：
-   - `next_step_input.audit_report_path = docs/reports/test_quality_<feature_id>.json`
-   - `evidence.negative_ratio`、`evidence.low_value_ratio`、`evidence.r4_missing`、`evidence.r6_missing`、`evidence.r8_violations`、`evidence.r9_violations` — 全部从 JSON 复制，不得手写
-3. 若报告 `verdict=fail` → 返 `status: blocked`，`blockers: ["[AUDIT-FAIL] <rule>: <detail>"]`；修正测试后重跑，不得跳过
-4. 若脚本退出码 2（脚本错）→ 返 `status: blocked`，`blockers: ["[AUDIT-SCRIPT-ERROR] ..."]`
-
 ## 总结
 
-返回五字段契约；`evidence.*` 由步骤 5 的 JSON 报告填充。
+按 `SKILL.md` 中的结构化返回契约格式返回。

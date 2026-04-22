@@ -60,15 +60,6 @@
 
 运行 `[test-quiet]` -- 所有测试通过，静态分析零违规，S11 合规检查通过。
 
-## 步骤 6：测试质量审计门禁
-
-重新运行 `scripts/test_quality_audit.py`（iron-law R2/R3/R4/R6/R8/R9）确认 Red 阶段的指标未因重构回退：
-
-1. `python scripts/test_quality_audit.py --target tests/ --feature <feature_id>`
-2. 读取 `docs/reports/test_quality_<feature_id>.json`；指标直接注入返回契约 `evidence.*`（禁止手写）
-3. `verdict=fail` 或任一指标比 Red 阶段**回退** → `status: fail`，`blockers: ["[AUDIT-REGRESSION] <rule>: <before>→<after>"]`
-4. 脚本退出码 2 → `status: blocked`，`blockers: ["[AUDIT-SCRIPT-ERROR] ..."]`
-
 ## 总结
 
-返回五字段契约；`evidence.*` 含重构后的 audit 指标。
+按 `SKILL.md` 中的结构化返回契约格式返回。

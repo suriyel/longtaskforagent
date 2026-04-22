@@ -37,8 +37,6 @@ negative_test_count / total_test_count >= 0.40
 - 断言返回空集 / None / 拒绝 / 失败状态
 - 测试名含 `_error_` / `_rejects_` / `_invalid_` / `_fails_`
 
-由 `scripts/test_quality_audit.py` 自动统计；禁止 SubAgent 手填此比例。
-
 ## 规则 R3：低价值断言 ≤ 20%
 
 ```
@@ -53,8 +51,6 @@ low_value_count / total_assertion_count <= 0.20
 - `assert "k" in d` 且不检查 `d["k"]` 的值
 - `assert bool(x)` / 仅真值性
 - 纯导入断言：`from m import X; assert X`
-
-由 `scripts/test_quality_audit.py` 自动统计。
 
 ## 规则 R4：错误实现挑战（WRONG_IMPL 留痕）
 
@@ -71,7 +67,7 @@ def test_discount_applies_member_rate():
     ...
 ```
 
-设想来源：feature.md 的边界决策表 / 错误处理表（§接口契约子表）已预分析可能的错误实现；直接引用。脚本按 regex `#\s*WRONG_IMPL:` 统计缺失。
+设想来源：feature.md 的边界决策表 / 错误处理表（§接口契约子表）已预分析可能的错误实现；直接引用。
 
 ## 规则 R5：测试层级 — UT + 集成双层
 
@@ -99,8 +95,6 @@ def test_add_item_updates_cart():
     assert cart.contains("apple")
     assert cart.quantity_of("apple") == 2
 ```
-
-缺任一段 → 脚本记为 R6 违规，并计入 R3 低价值分母。
 
 ## 规则 R7：LLM 退化陷阱自检
 
@@ -139,11 +133,10 @@ def test_add_item_updates_cart():
 
 判据：某段私有逻辑复杂到觉得"值得独立测" ⇒ 设计气味 ⇒ 提炼为协作者类（或独立模块）的公共方法，在该协作者的 UT 里测。
 
-## 度量与门禁
+## 度量与自证
 
-- 由 `scripts/test_quality_audit.py` 自动统计 R2/R3/R4/R6/R8/R9，产物 `docs/reports/test_quality_<feature_id>.json`
-- TDD Red / Refactor SubAgent 返回契约的 `next_step_input.audit_report_path` 和 `evidence.*` 由脚本注入，禁止 LLM 手填
-- `long-task-work-tdd` Persist 前读最新报告，未 pass 禁止标记 `status=passing`
-- 命令详情：`scripts/test_quality_audit.py --help`
+- R1–R9 由 TDD Red / Refactor SubAgent 在返回契约中走读自证（Summary 段简述对照结果）
+- 负面测试比例（R2）、低价值断言比例（R3）等数值目标为**建议**，非机械化门禁
+- 测试质量的**客观兜底**：`/coverage-retrofit`（行 + 分支覆盖率）与 `/mutation-retrofit`（变异分）—— 二者独立于 TDD 主链路，按需运行
 
 完整反模式目录见 `testing-anti-patterns.md`。

@@ -308,7 +308,6 @@ def main():
         "feature_paths.py",
         "auto_loop.py",
         "auto_loop_opencode.py",
-        "test_quality_audit.py",
     ]
     for script_name in helper_scripts:
         src = os.path.join(plugin_scripts_dir, script_name)
