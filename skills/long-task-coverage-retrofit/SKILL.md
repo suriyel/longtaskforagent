@@ -194,7 +194,7 @@ Coverage Gaps format:  file:line-range | type (line|branch) | description
 
 ### 6b：覆盖率修复
 
-> **分派** 创建独立 SubAgent（使用 General 或 Agent）— 在 SubAgent 中加载并执行 skill `long-task:long-task-coverage-fix`
+> **分派** 创建独立 SubAgent（使用 General 或 Agent）— 在 SubAgent 中加载并执行 skill `long-task:long-task-coverage-fix`。不可并行。
 
 **提示必须提供内联上下文**：
 
