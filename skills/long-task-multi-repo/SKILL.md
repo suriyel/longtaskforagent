@@ -79,7 +79,7 @@ description: "当 repos-manifest.json 存在时使用 - 处理多仓库探索、
    - 这些约束可能影响需求可行性，应在获取过程中予以考虑
 4. 检查 SRS 模板：
    - 如果用户指定了模板路径 → 读取并验证
-   - 否则 → 读取 `docs/templates/srs-template.md`（本 skill 随附的默认模板）
+   - 否则 → 读取 `docs/templates/srs-template.md`（多仓库全局 SRS 按全结构填写；L2/L3 输入场景下空洞章节按需标 `[不适用]` + 附理由）
    - **验证**：模板必须是包含至少一个 `## ` 标题的 `.md` 文件
 
 ## 步骤 2：多仓库探索

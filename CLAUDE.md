@@ -112,7 +112,7 @@ long-task-mutation-retrofit (standalone — no pipeline dependency)
 |-------|-------|------------|
 | 0-pre: Codebase Scan | `long-task-codebase-scanner` | `docs/rules/*.md` — coding style, 二方件 constraints, build patterns (greenfield: `project-state.md` placeholder only) |
 | 0-multi: Multi-Repo | `long-task-multi-repo` | Global SRS + per-repo SRS split + dependency distribution; session ends with handoff |
-| 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; Lite 3-5 rounds / Expert 10-20 rounds; Step 10c: single-round mode confirmation) |
+| 0a: Requirements | `long-task-requirements` | `docs/plans/*-srs.md` (ISO/IEC/IEEE 29148; L2/L3 inputs: 3-5 light rounds / L1 input: 10-20 in-depth rounds; Step 10c: single-round mode confirmation) |
 | 0b: Design | `long-task-design` | `docs/plans/*-design.md` (merges `docs/rules/` into §11; empty §11 when only `project-state.md`) |
 | Hotfix | `long-task-hotfix` | Bugfix enqueued as `category=bugfix` feature; root cause confirmed |
 | 1.5: Increment | `long-task-increment` | SRS/Design updated in place; new features appended with `wave` metadata |

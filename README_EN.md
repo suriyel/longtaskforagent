@@ -294,10 +294,12 @@ Long-Task Agent provides two customizable document templates for generating stan
 
 ### Built-in Templates
 
-| Template | Path | Purpose | Standard |
+| Template | Path | Purpose | Filling Intensity |
 |----------|------|---------|----------|
-| SRS Template | `docs/templates/srs-template.md` | Software Requirements Specification | ISO/IEC/IEEE 29148 |
-| Design Template | `docs/templates/design-template.md` | Technical Design Document | - |
+| SRS Template | `docs/templates/srs-template.md` | Full SRS aligned with ISO/IEC/IEEE 29148 (empty sections marked `[N/A]` per `Input Maturity Level`) | L1: all sections; L2/L3: §1.3 / §3 personas / §3.1 use-case view may be marked `[N/A]` |
+| Design Template | `docs/templates/design-template.md` | Full technical design (§0-§11 with §3.5 impact surface / §6.2.1 config schema / §6.2.2 message schema subtables for L2/L3 incremental specs; empty sections omittable) | L1: architecture + data model filled; L2/L3: §1 drivers / §3.1-§3.4 architecture / §5 data model / §7 3rd-party deps may be marked `[N/A]` |
+
+> **`Input Maturity Level` (L1/L2/L3) is auto-evaluated by `long-task-requirements` Step 1.2** (based on hard-identifier density + colloquial-word density); level determines section filling intensity. One template set, empty sections omitted per level.
 
 ### Customization Methods
 
@@ -307,6 +309,7 @@ During the **Requirements Phase** (`long-task-requirements`), specify a custom t
 
 ```
 Please use my custom SRS template: docs/templates/my-srs-template.md
+(when unspecified, the default template is loaded; section omission granularity follows `Input Maturity Level`)
 ```
 
 **Requirements**: Template must be a `.md` file containing at least one `## ` heading.
@@ -317,6 +320,7 @@ During the **Design Phase** (`long-task-design`), specify a custom template path
 
 ```
 Please use my custom design template: docs/templates/my-design-template.md
+(when unspecified, the default template is loaded; section omission granularity follows `Input Maturity Level`)
 ```
 
 **Requirements**: Template must be a `.md` file containing at least one `## ` heading.
