@@ -29,6 +29,23 @@ description: "当 increment-request.json 存在时使用 - 收集增量需求，
 - 运行 `git log --oneline -10` — 近期上下文
 - 确定当前批次编号：`max(wave for all features) + 1`（如果不存在 wave 字段则默认为 1）
 
+### 1.5. 设计完整性前置校验
+
+对 `docs/plans/*-design.md` 检查：
+1. 前 10 行含 `**状态**: 已批准`
+2. 全文无 `## 待审阅事项` 段
+3. `grep -oE "IAPI-[0-9]+"` 全文集合 ⊆ `### 6.2.3` 表集合
+
+任一 FAIL → 列 blockers，`AskUserQuestion` 单选：
+
+| 选项 | 动作 |
+|---|---|
+| A 回退修复 | 终止 skill，提示跑 `long-task:long-task-design` 修复后重启 |
+| B 带病继续 | blockers 追加 `task-progress.md ## Design Integrity Warnings — Wave N`，进 Step 2 |
+| C 中止 | 终止，不动文件 |
+
+全 PASS 静默进 Step 2。
+
 ### 2. 增量需求获取
 
 通过结构化获取收集新增/变更需求（与 Phase 0a 同等严格度）：

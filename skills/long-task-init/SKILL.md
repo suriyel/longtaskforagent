@@ -42,7 +42,9 @@ description: "当设计文档存在但 feature-list.json 未创建时使用 — 
      - 将 `test_framework` 与检测到的测试框架工具名匹配
      - 将 `coverage_tool` 与检测到的覆盖率工具名匹配
      - 将 `mutation_tool` 与检测到的变异工具名匹配
-     - 冲突时优先使用扫描值（实际项目状态）并更新 `feature-list.json`
+     - **冲突处理**（任一工具 scanner ≠ Design §11.7）：`AskUserQuestion` 单选覆盖整组：
+       - **A scanner 为准 + 回写 Design**：`feature-list.json.tech_stack` = scanner 值；Edit Design §11.7 冲突行 + 注释 `<!-- Init Wave 0 同步自 scanner — YYYY-MM-DD -->`；单独 `git commit docs(design): sync §11.7 with scanner per init`
+       - **C 跳过 + 记录漂移**：`feature-list.json.tech_stack` = Design 值；`task-progress.md` 追加 `## Tech Stack Drift` 条目（冲突项 + 日期）
      - 若工具类别在扫描文档中显示"none detected"，保留设计文档/语言预设值
    - 验证工具命令正确解析：
      ```bash
