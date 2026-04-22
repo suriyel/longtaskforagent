@@ -1,7 +1,7 @@
 # <Project Name> — 设计文档
 
 **日期**: YYYY-MM-DD
-**状态**: 已批准
+**状态**: 待审批 <!-- 初次落盘为"待审批"；用户审阅门批准后改为"已批准" -->
 **SRS 引用**: docs/plans/YYYY-MM-DD-<topic>-srs.md
 **输入档位**: L1 / L2 / L3（从 SRS 元数据继承）
 
