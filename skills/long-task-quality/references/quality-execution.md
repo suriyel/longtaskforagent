@@ -6,7 +6,7 @@
 
 # Quality Gates & Verification（关卡与验证）
 
-四道顺序关卡（Gate 0 → 0.5 → 1 → 2），在特性被标记为 "passing" 之前**必须**全部通过。无捷径，无例外。
+三道顺序关卡（Gate 0 → 0.5 → 1），在特性被标记为 "passing" 之前**必须**全部通过。无捷径，无例外。原 Gate 2（Verify & Mark）的 fresh-execution 与 cross-check 语义已并入 Gate 1（Coverage & Final Verify），不再独立列出。
 
 ## 铁律
 
@@ -141,9 +141,18 @@ Gate 0.5 Result:
 - Gate 0.5: PASS/FAIL
 ```
 
-## Gate 1：Coverage（覆盖率）
+## Gate 1：Coverage & Final Verify（覆盖率与最终验证）
 
-TDD Green 之后（全部测试通过），运行覆盖率工具。
+TDD Green 之后（全部测试通过），运行覆盖率工具并完成最终验证。**本关卡是 Quality SubAgent 的最后一道**——原 Gate 2（Verify & Mark）的 fresh-execution 与 cross-check 语义已并入此处，**不再独立复跑命令**。
+
+### Fresh Execution Requirement（新鲜执行约束）
+
+覆盖率命令**必须**在当前 SubAgent message 内执行：
+- 不得引用 Refactor / Green SubAgent 末尾跑过的全量结果——那是**另一个 SubAgent 的 message**，不算本消息内的 fresh evidence
+- 不得复用 `/tmp/cov-*.log` 中的历史日志——每次执行用新的 `$$` PID 后缀
+- 不得以"应该通过 / 之前已跑过 / 看着差不多"作为门禁依据（参见本文件"红旗词汇"段）
+
+### 执行步骤
 
 1. **运行**覆盖率工具，采用**静默执行**（按 `env-guide.md` §2 激活环境；从 `env-guide.md` §3 读取 coverage 命令）：
    ```bash
@@ -154,39 +163,26 @@ TDD Green 之后（全部测试通过），运行覆盖率工具。
    - 非零 → 提取最后 100 行；诊断工具错误
 3. **验证**：行覆盖率 >= `[thresholds] line_coverage`，分支覆盖率 >= `[thresholds] branch_coverage`
 4. **若覆盖率 FAIL**（低于阈值但工具成功运行）：从摘要识别未覆盖行 / 分支 → 增加测试 → 对这些路径重跑 TDD 循环。修复后重跑时，仅作用域到变更的测试文件 — 不要全量。
-5. **若 PASS**：进入 Gate 2
+5. **若 PASS**：进入 Final Cross-Check（下方）。
 
-**所需证据：**
+### Final Cross-Check（标记 passing 前的最终交叉验证）
+
+返回 `status=pass` 之前，**逐项确认**本消息内已有的覆盖率命令输出同时满足下列三项（命令本身 = test + coverage，无需另跑）：
+
+- (a) **测试结果**：从输出统计 `passed / failed / skipped`；**failed=0 且 skipped=0**（skipped>0 视同 fail，参照 Gate 0 Skip 检测规则）
+- (b) **行覆盖率**：line% ≥ `quality_gates.line_coverage_min`
+- (c) **分支覆盖率**：branch% ≥ `quality_gates.branch_coverage_min`
+
+任一项不满足 → STOP，**不得**返 `status=pass`；按上方步骤 4 的 FAIL 路径修复后**重跑覆盖率命令**并重新交叉验证。
+
+### 所需证据
+
 ```
 - Coverage summary showing line % and branch %
 - Line coverage >= threshold
 - Branch coverage >= threshold
+- Test results: passed=N, failed=0, skipped=0
 - List of uncovered lines (if any, with justification)
-```
-
-## Gate 2：Verify & Mark（验证并标记）
-
-将特性标记为 "passing" 前的最后一道关卡。
-
-```
-
-1. IDENTIFY → 从 `env-guide.md` §3 获取 test 与 coverage 命令（单一事实源）
-
-2. RUN → 执行每个命令（在本消息内新鲜执行 — 不复用先前缓存）
-
-3. READ → 逐命令读取输出：
-   - 检查退出码（PASS/FAIL）
-   - 从输出统计 test 通过 / 失败 / 跳过 数量
-   - 从输出读取覆盖率百分比
-
-4. VERIFY → 所有输出是否确证声明？
-   - 全部测试通过（0 failures）？
-   - 覆盖率 >= 阈值？
-
-5. THEN CLAIM → 现在才：
-   - 带证据报告结果
-
-若任一步失败 → STOP。**不要**声称 passing。先修复问题。
 ```
 
 ## 红旗词汇
@@ -216,9 +212,8 @@ TDD Green 之后（全部测试通过），运行覆盖率工具。
 | TDD Green + Refactor 之后 | `check_real_tests.py` 输出 PASS，所有真实测试通过 |
 | TDD Green 之后 | 完整测试套件输出 |
 | Gate 0.5 | `check_srs_trace_coverage.py --feature {id}` 返回 PASS；每个 `srs_trace` ID 至少 1 处字面命中 |
-| Coverage Gate 之后 | 覆盖率报告（line% + branch%） |
-| TDD Refactor 之后 | 完整测试套件（仍通过） |
-| 标记 "passing" 之前 | 上述全部（Gate 0.5 已对 srs_trace 做字面锚定验证）|
+| TDD Refactor 之后 | 完整测试套件（仍通过；属 Refactor SubAgent 自身关卡） |
+| Gate 1 (Coverage & Final Verify) | 覆盖率报告（line% + branch%）+ 全测试 0 failure 0 skipped + 阈值达标 + Gate 0.5 srs_trace 字面锚定 |
 | git commit 之前 | 完整测试套件（不提交损坏代码） |
 
 ## 反模式
