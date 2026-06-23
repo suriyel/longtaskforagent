@@ -446,12 +446,12 @@ tool-bindings.json          →  apply_tool_bindings.py  →  .long-task-binding
 
 `tool-bindings.json` 定义了四种能力绑定：
 
-| 能力 | 默认（CLI/Chrome DevTools） | 企业 MCP 替换 |
+| 能力 | 默认（CLI/Chrome DevTools） | 自定义 MCP 替换 |
 |------|---------------------------|--------------|
-| `test` | `pytest` / `jest` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `coverage` | `pytest-cov` / `c8` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `mutation` | `mutmut` / `stryker` 等 CLI 命令 | 企业 CI MCP 服务器 |
-| `ui_tools` | Chrome DevTools MCP 工具名 | 企业浏览器自动化 MCP |
+| `test` | `pytest` / `jest` 等 CLI 命令 | 自定义 测试 MCP  |
+| `coverage` | `pytest-cov` / `c8` 等 CLI 命令 | 自定义 覆盖率 MCP |
+| `mutation` | `mutmut` / `stryker` 等 CLI 命令 | 自定义 变异测试 MCP |
+| `ui_tools` | Chrome DevTools MCP 工具名 | 自定义 UI自动化测试 MCP |
 
 ### 配置示例
 
